@@ -1,0 +1,24 @@
+message Log
+{
+    required uint32 Time = 1;// UNIX Time Format
+    message Content
+    {
+        required string Key = 1;
+        required string Value = 2;
+    }
+    repeated Content Contents= 2;
+}
+
+message LogGroup
+{
+    repeated Log Logs= 1;
+    optional string Reserved =2; // 内部字段，不需要填写
+    optional string Topic = 3;
+    optional string Source = 4;
+}
+
+message LogGroupList
+{
+    repeated LogGroup LogGroups = 1;
+}
+

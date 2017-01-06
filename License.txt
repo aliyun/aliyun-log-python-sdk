@@ -1,0 +1,20 @@
+﻿阿里云计算日志服务软件开发工具包Python语言版
+Aliyun log service SDK for Python
+
+版权所有 （C）阿里云计算有限公司
+Copyright (C) Alibaba Cloud Computing
+All rights reserved.
+http://www.aliyun.com
+
+==============================================================================
+本软件包还包含多个第三方软件库。使用本软件包代表你同时同意如下第三方软件包许可。
+
+This distribution contains multiple components, someof which fall 
+under different licenses. By using this package or any of the bundled 
+components enumerated below, you agree to be bound by the conditions 
+of the license for each respective component.
+
+protobuf 
+------------------
+License：New BSD License (http://opensource.org/licenses/BSD-3-Clause)
+Website：http://code.google.com/p/protobuf-csharp-port/ 	 
