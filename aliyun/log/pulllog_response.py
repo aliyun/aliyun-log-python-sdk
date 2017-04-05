@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+from aliyun.log.logexception import LogException
 from aliyun.log.util import Util
 from logresponse import LogResponse
 from log_logs_pb2 import LogGroup
@@ -59,7 +60,7 @@ class PullLogResponse(LogResponse) :
 
     def _parse_loggroup_list(self, data) : 
         if self.loggroup_list.ParseFromString(data)  == False:
-            raise  LogException('BadResponse' , 'failed to parse data to LogGroupList')
+            raise LogException('BadResponse' , 'failed to parse data to LogGroupList')
 
     def _transfer_to_json(self) :
         self.loggroup_list_json = []
