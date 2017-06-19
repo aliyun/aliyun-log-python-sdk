@@ -18,19 +18,31 @@ class IndexKeyConfig :
 
     :type case_sensitive: bool
     :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
+
+    :type index_type : string 
+    :param index_type : one of ['text', 'long', 'double']
     """
-    def __init__(self, token_list = [] ,  case_sensitive = False) :
+
+    def __init__(self, token_list = [] ,  case_sensitive = False, index_type = 'text') :
         self.token_list = token_list
         self.case_sensitive = case_sensitive
+        self.index_type = index_type
     def to_json(self) : 
         json_value = {}
-        json_value["token"] = self.token_list
-        json_value["caseSensitive"] = bool(self.case_sensitive)
+        if self.index_type != "" and self.index_type != None : 
+            json_value['type'] = self.index_type
+        if self.index_type == 'text' : 
+            json_value["token"] = self.token_list
+            json_value["caseSensitive"] = bool(self.case_sensitive)
         return json_value 
 
     def from_json(self, json_value) : 
-        self.token_list = json_value["token"]
-        self.case_sensitive = bool(json_value["caseSensitive"])
+        self.index_type = 'text'
+        if 'type' in json_value : 
+            self.index_type = json_value['type']
+        if self.index_type == 'text' : 
+            self.token_list = json_value["token"]
+            self.case_sensitive = bool(json_value["caseSensitive"])
 
 class IndexLineConfig : 
     """ The index config of the log line
