@@ -141,7 +141,7 @@ class GetShipperTasksResponse(LogResponse) :
     def get_running_task_ids(self):
         return self._get_task_ids("running")
 
-    def get_running_task_ids(self):
+    def get_success_task_ids(self):
         return self._get_task_ids("success")
     
     def get_taks(self) : 
