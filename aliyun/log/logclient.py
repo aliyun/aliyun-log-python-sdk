@@ -103,7 +103,7 @@ class LogClient(object):
     __version__ = API_VERSION
     Version = __version__
     
-    def __init__(self, endpoint, accessKeyId, accessKey,securityToken = None):
+    def __init__(self, endpoint, accessKeyId, accessKey,securityToken = None, source = None):
         if isinstance(endpoint, unicode): # ensure is ascii str
             endpoint = endpoint.encode('ascii')
         if isinstance(accessKeyId, unicode):
@@ -116,7 +116,10 @@ class LogClient(object):
         self._accessKeyId = accessKeyId
         self._accessKey = accessKey
         self._timeout = CONNECTION_TIME_OUT
-        self._source = Util.get_host_ip(self._logHost)
+        if source == None : 
+            self._source = Util.get_host_ip(self._logHost)
+        else : 
+            self._source = source
         self._securityToken = securityToken;
 
     def _setendpoint(self, endpoint):
@@ -222,6 +225,8 @@ class LogClient(object):
             key = unicode(key, 'utf-8')
         return key
     
+    def set_source(self, source) : 
+        self._source = source
         
     def put_logs(self, request):
         """ Put logs to log service.
