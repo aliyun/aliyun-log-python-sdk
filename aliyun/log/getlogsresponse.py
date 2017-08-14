@@ -24,10 +24,14 @@ class GetLogsResponse(LogResponse):
         self.logs = []
         for data in resp:
             contents = {}
+            source = ""
+            if(data.has_key("__source__")):
+                source = data['__source__']
+
             for key in data.iterkeys():
                 if key!='__time__' and key!='__source__':
                     contents[key.encode('utf-8')] = data[key].encode('utf-8')
-            self.logs.append(QueriedLog(data['__time__'], data['__source__'], contents))
+            self.logs.append(QueriedLog(data['__time__'], source, contents))
 
     
     def get_count(self):
