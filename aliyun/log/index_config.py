@@ -21,12 +21,16 @@ class IndexKeyConfig :
 
     :type index_type : string 
     :param index_type : one of ['text', 'long', 'double']
+
+    :type doc_value : bool
+    :param doc_value : True if enable doc_value, used for fast sql execution
     """
 
-    def __init__(self, token_list = [] ,  case_sensitive = False, index_type = 'text') :
+    def __init__(self, token_list = [] ,  case_sensitive = False, index_type = 'text', doc_value = False) :
         self.token_list = token_list
         self.case_sensitive = case_sensitive
         self.index_type = index_type
+        self.doc_value = doc_value
     def to_json(self) : 
         json_value = {}
         if self.index_type != "" and self.index_type != None : 
@@ -34,6 +38,7 @@ class IndexKeyConfig :
         if self.index_type == 'text' : 
             json_value["token"] = self.token_list
             json_value["caseSensitive"] = bool(self.case_sensitive)
+        json_value["doc_value"] = bool(self.doc_value)
         return json_value 
 
     def from_json(self, json_value) : 
@@ -43,6 +48,8 @@ class IndexKeyConfig :
         if self.index_type == 'text' : 
             self.token_list = json_value["token"]
             self.case_sensitive = bool(json_value["caseSensitive"])
+        if 'doc_value' in json_value : 
+            self.doc_value = bool(json_value["doc_value"])
 
 class IndexLineConfig : 
     """ The index config of the log line
@@ -85,8 +92,8 @@ class IndexLineConfig :
 
 class IndexConfig :
     """The index config of a logstore
-    :type ttl : int
-    :param ttl : the indexed data life cycle in days, only support 7, 30, 90
+    :type ttl : int 
+    :param ttl : this parameter is deprecated, the ttl is same as logstore's ttl
 
     :type line_config : IndexLineConfig
     :param line_config : the index config of the whole log line
