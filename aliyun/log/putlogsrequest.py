@@ -24,11 +24,14 @@ class PutLogsRequest(LogRequest):
     :type logitems: list<LogItem>
     :param logitems: log data
 
+    :type logtags: list 
+    :param logtags : list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
+
     :type hashKey : String
     :param hashKey : put data with set hash, the data will be send to shard whose range contains the hashKey
     """
     
-    def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey = None, compress = False):
+    def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey = None, compress = False, logtags = None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.topic = topic
@@ -36,6 +39,7 @@ class PutLogsRequest(LogRequest):
         self.logitems = logitems
         self.hashkey = hashKey;
         self.compress = compress
+        self.logtags = logtags
 
     def get_compress(self):
         return self.compress
@@ -106,6 +110,21 @@ class PutLogsRequest(LogRequest):
         """
         self.logitems = logitems
 
+    def get_log_tags(self):
+        """ Get all the log tags
+        
+        :return: Logtags list, log data
+        """
+        return self.logtags
+
+    def set_log_tags(self, logtags) : 
+        """ Set the log tags
+        
+        :type logtags: logtags list
+        :param logtags: log tags
+        """
+        self.logtags = logtags
+        
 
     def set_hash_key(self,hashKey):
 

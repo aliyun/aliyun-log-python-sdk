@@ -258,6 +258,12 @@ class LogClient(object):
                 content = log.Contents.add()
                 content.Key = self.get_unicode(key)
                 content.Value = self.get_unicode(value)
+        if request.get_log_tags() != None : 
+            tags = request.get_log_tags() 
+            for key, value in tags : 
+                pb_tag = logGroup.LogTags.add()
+                pb_tag.Key = key
+                pb_tag.Value = value
         body = logGroup.SerializeToString()
         if len(body) > 3 * 1024 * 1024:  # 3 MB
             raise LogException('InvalidLogSize', 
