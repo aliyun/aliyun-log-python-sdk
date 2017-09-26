@@ -9,12 +9,20 @@ message Log
     repeated Content Contents= 2;
 }
 
+message LogTag
+{
+    required string Key = 1;
+    required string Value = 2;
+}
+
 message LogGroup
 {
     repeated Log Logs= 1;
     optional string Reserved =2; // 内部字段，不需要填写
     optional string Topic = 3;
     optional string Source = 4;
+    optional string MachineUUID = 5;
+    repeated LogTag LogTags = 6;
 }
 
 message LogGroupList
