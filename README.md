@@ -2,7 +2,7 @@
 
 ## 版本
 
-0.6.0
+0.6.4
 
 ## 发布时间
 
@@ -25,11 +25,14 @@
 
 ## 环境要求：
 
-1. Python 2.5及其以后版本
+1. Python 2.6, Python 2.7
+
+## 安装
+pip install aliyun-log-python-sdk
 
 ## 支持API版本：
 
-1. Log Service API 0.6.0
+1. Log Service API 0.6
 
 ## 其他资源：
 
