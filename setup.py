@@ -46,15 +46,14 @@ version = '0.6.4'
 classifiers = [
             'Development Status :: 5 - Production/Stable',
             'Programming Language :: Python :: 2.6',
-            'Programming Language :: Python :: 2.7',
-            'License :: Copyright (C) Alibaba Cloud Computing. All rights reserved.'
+            'Programming Language :: Python :: 2.7'
             ]
 
 setup(
-      name='LogService',
+      name='aliyun-log-python-sdk',
       version=version,
-      description='log service Python client SDK',
-      author='sls_dev',
+      description='Aliyun log service Python client SDK',
+      author='Aliyun',
       url='http://www.aliyun.com/product/sls',
       install_requires=install_requires,
       packages=packages,
