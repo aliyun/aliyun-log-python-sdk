@@ -2,11 +2,11 @@
 
 ## 版本
 
-0.6.4
+0.6.5
 
 ## 发布时间
 
-2015-11-16
+2017-10-31
 
 ## 基本介绍：
 
@@ -25,7 +25,7 @@
 
 ## 环境要求：
 
-1. Python 2.6, Python 2.7
+1. Python 2.6, Python 2.7, Python 3.3+
 
 ## 安装
 pip install aliyun-log-python-sdk

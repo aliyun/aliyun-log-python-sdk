@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
@@ -16,15 +16,15 @@ class LogException(Exception):
     :type requestId: string
     :param requestId: the request id of the response, '' is set if client error
     """
-    
+
     def __init__(self, errorCode, errorMessage, requestId=''):
         self._errorCode = errorCode
         self._errorMessage = errorMessage
         self._requestId = requestId
 
     def __str__(self):
-        return "LogException: \n{\n    ErrorCode: %s\n    ErrorMessage: %s\n    RequestId: %s\n}\n"\
-                % (self._errorCode, self._errorMessage, self._requestId)
+        return "LogException: \n{\n    ErrorCode: %s\n    ErrorMessage: %s\n    RequestId: %s\n}\n" \
+               % (self._errorCode, self._errorMessage, self._requestId)
 
     def get_error_code(self):
         """ return error code of exception

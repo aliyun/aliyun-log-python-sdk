@@ -16,37 +16,31 @@ http://pypi.python.org/pypi/simplejson/
 
 """
 
-import sys
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-if float("%d.%d" % sys.version_info[:2]) < 2.6 or float("%d.%d" % sys.version_info[:2]) >= 3.0:
-    sys.stderr.write("Your Python version %d.%d.%d is not supported.\n" % sys.version_info[:3])
-    sys.stderr.write("log service SDK requires Python version 2.6 and 2.7.\n")
-    sys.exit(1)
 
-install_requires = []
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson
-    except ImportError:
-        install_requires.append('simplejson')
+install_requires = ['requests', 'protobuf', 'six']
 
 packages = [
             'aliyun',
             'aliyun.log'
             ]
 
-version = '0.6.4'
+version = '0.6.5'
 
 classifiers = [
             'Development Status :: 5 - Production/Stable',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7'
+            'Programming Language :: Python :: 3'
+            'Programming Language :: Python :: 3'
+            'Programming Language :: Python :: 3.3'
+            'Programming Language :: Python :: 3.4'
+            'Programming Language :: Python :: 3.5'
+            'Programming Language :: Python :: 3.6'
             ]
 
 setup(

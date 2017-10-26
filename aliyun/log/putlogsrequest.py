@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from logrequest import LogRequest
+from .logrequest import LogRequest
+
 
 class PutLogsRequest(LogRequest):
     """ The request used to send data to log. 
@@ -30,21 +31,22 @@ class PutLogsRequest(LogRequest):
     :type hashKey : String
     :param hashKey : put data with set hash, the data will be send to shard whose range contains the hashKey
     """
-    
-    def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey = None, compress = False, logtags = None):
+
+    def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey=None,
+                 compress=False, logtags=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.topic = topic
         self.source = source
         self.logitems = logitems
-        self.hashkey = hashKey;
+        self.hashkey = hashKey
         self.compress = compress
         self.logtags = logtags
 
     def get_compress(self):
         return self.compress
 
-    def set_compress(self, compress) : 
+    def set_compress(self, compress):
         self.compress = compress
 
     def get_logstore(self):
@@ -53,7 +55,7 @@ class PutLogsRequest(LogRequest):
         :return: string, logstore name
         """
         return self.logstore if self.logstore else ''
-    
+
     def set_logstore(self, logstore):
         """ Set logstore name
         
@@ -61,15 +63,14 @@ class PutLogsRequest(LogRequest):
         :param logstore: logstore name
         """
         self.logstore = logstore
-    
-    
+
     def get_topic(self):
         """ Get topic name
         
         :return: string, topic name
         """
         return self.topic if self.topic else ''
-    
+
     def set_topic(self, topic):
         """ Set topic name
         
@@ -77,15 +78,14 @@ class PutLogsRequest(LogRequest):
         :param topic: topic name
         """
         self.topic = topic
-    
-    
+
     def get_source(self):
         """ Get log source
         
         :return: string, log source
         """
         return self.source
-    
+
     def set_source(self, source):
         """ Set log source
         
@@ -93,15 +93,14 @@ class PutLogsRequest(LogRequest):
         :param source: log source
         """
         self.source = source
-    
-    
+
     def get_log_items(self):
         """ Get all the log data
         
         :return: LogItem list, log data
         """
         return self.logitems
-    
+
     def set_log_items(self, logitems):
         """ Set the log data
         
@@ -117,17 +116,16 @@ class PutLogsRequest(LogRequest):
         """
         return self.logtags
 
-    def set_log_tags(self, logtags) : 
+    def set_log_tags(self, logtags):
         """ Set the log tags
         
         :type logtags: logtags list
         :param logtags: log tags
         """
         self.logtags = logtags
-        
 
-    def set_hash_key(self,hashKey):
-
+    def set_hash_key(self, hashKey):
         self.hashkey = hashKey
+
     def get_hash_key(self):
-        return self.hashkey;
+        return self.hashkey

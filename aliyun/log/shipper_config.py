@@ -1,16 +1,11 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
-
-class OdpsShipperConfig:
+class OdpsShipperConfig(object):
     """ init a odps shipper config
 
     :type odps_endpoint: string
@@ -23,7 +18,9 @@ class OdpsShipperConfig:
     :param odps_table: the odps table name
 
     :type log_fields_list: string array
-    :param log_fields_list: the log field(keys in log) list mapping to the odps table column. e.g log_fields_list=['__time__', 'key_a', 'key_b'], the $log_time, $log_key_a, $log_key_b will mapping to odps table column No.1, No.2, No.3
+    :param log_fields_list: the log field(keys in log) list mapping to the odps table column.
+    e.g log_fields_list=['__time__', 'key_a', 'key_b'], the $log_time, $log_key_a, $log_key_b will
+    mapping to odps table column No.1, No.2, No.3
 
     :type partition_column: string array
     :param partition_column: the log fields mapping to odps table partition column
@@ -32,28 +29,26 @@ class OdpsShipperConfig:
     :param partition_time_format : the time format of __partition_time__, e.g yyyy_MM_dd_HH_mm
 
     """
-    def __init__(self, odps_endpoint, odps_project, odps_table,  log_fields_list, partition_column , partition_time_format) : 
+
+    def __init__(self, odps_endpoint, odps_project, odps_table, log_fields_list, partition_column,
+                 partition_time_format, bufferInterval=1800):
         self.odps_endpoint = odps_endpoint
         self.odps_project = odps_project
         self.odps_table = odps_table
         self.log_fields_list = log_fields_list
         self.partition_column = partition_column
         self.partition_time_format = partition_time_format
-        self.buffer_interval = 1800
+        self.buffer_interval = bufferInterval
 
-    def to_json(self) : 
-        json_value = {}
-        json_value["odpsEndpoint"] = self.odps_endpoint
-        json_value["odpsProject"] = self.odps_project
-        json_value["odpsTable"] = self.odps_table
-        json_value["fields"] = self.log_fields_list
-        json_value["partitionColumn"] = self.partition_column
-        json_value["partitionTimeFormat"] = self.partition_time_format
-        json_value["bufferInterval"] = self.buffer_interval
+    def to_json(self):
+        json_value = {"odpsEndpoint": self.odps_endpoint, "odpsProject": self.odps_project,
+                      "odpsTable": self.odps_table, "fields": self.log_fields_list,
+                      "partitionColumn": self.partition_column, "partitionTimeFormat": self.partition_time_format,
+                      "bufferInterval": self.buffer_interval}
         return json_value
 
 
-class OssShipperConfig : 
+class OssShipperConfig(object):
     """Init a oss ship config
     :type oss_bucket: string
     :param oss_bucket: the oss bucket name
@@ -73,7 +68,9 @@ class OssShipperConfig :
     :type compress_type: string
     :param compress_type : the compress type, only support 'snappy' or 'none'
     """
-    def __init__(self, oss_bucket, oss_prefix, oss_role_arn, buffer_interval = 300 , buffer_mb = 128, compress_type = 'snappy') :
+
+    def __init__(self, oss_bucket, oss_prefix, oss_role_arn, buffer_interval=300, buffer_mb=128,
+                 compress_type='snappy'):
         self.oss_bucket = oss_bucket
         self.oss_prefix = oss_prefix
         self.oss_role_arn = oss_role_arn
@@ -81,20 +78,15 @@ class OssShipperConfig :
         self.buffer_mb = buffer_mb
         self.compress_type = compress_type
 
-    def to_json(self) : 
-        json_value = {}
-        json_value['ossBucket'] = self.oss_bucket
-        json_value['ossPrefix'] = self.oss_prefix
-        json_value['roleArn'] = self.oss_role_arn
-        json_value['bufferInterval'] = self.buffer_interval
-        json_value['bufferSize'] = self.buffer_mb
-        json_value['compressType'] = self.compress_type
-        print json_value
+    def to_json(self):
+        json_value = {'ossBucket': self.oss_bucket, 'ossPrefix': self.oss_prefix, 'roleArn': self.oss_role_arn,
+                      'bufferInterval': self.buffer_interval, 'bufferSize': self.buffer_mb,
+                      'compressType': self.compress_type}
+        print(json_value)
         return json_value
 
 
-class ShipperTask:
-
+class ShipperTask(object):
     """init a shipper task
     :type task_id: string
     :param task_id: the task id
@@ -114,7 +106,9 @@ class ShipperTask:
     :type task_finish_time: int
     :param task_finish_time: the task finish time (timestamp)
     """
-    def __init__(self, task_id, task_status , task_message, task_create_time, task_last_data_receive_time, task_finish_time) : 
+
+    def __init__(self, task_id, task_status, task_message, task_create_time, task_last_data_receive_time,
+                 task_finish_time):
         self.task_id = task_id
         self.task_status = task_status
         self.task_message = task_message
@@ -122,13 +116,9 @@ class ShipperTask:
         self.task_last_data_receive_time = task_last_data_receive_time
         self.task_finish_time = task_finish_time
 
-    def to_json(self) : 
-        json_value = {}
-        json_value['id'] = self.task_id
-        json_value['taskStatus'] = self.task_status
-        json_value['taskMessage'] = self.task_message
-        json_value['taskCreateTime'] = self.task_create_time
-        json_value['taskLastDataReceiveTime'] = self.task_last_data_receive_time
-        json_value['taskFinishTime'] = self.task_finish_time
+    def to_json(self):
+        json_value = {'id': self.task_id, 'taskStatus': self.task_status, 'taskMessage': self.task_message,
+                      'taskCreateTime': self.task_create_time,
+                      'taskLastDataReceiveTime': self.task_last_data_receive_time,
+                      'taskFinishTime': self.task_finish_time}
         return json_value
-    

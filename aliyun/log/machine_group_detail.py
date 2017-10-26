@@ -1,19 +1,15 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import time
+
 from aliyun.log.util import Util
 
 
-class MachineGroupDetail:
+class MachineGroupDetail(object):
     """ The machine group detail info
     :type group_name: string
     :param group_name: group name
@@ -24,7 +20,7 @@ class MachineGroupDetail:
     :type machine_list : string list
     :param machine_list: the list of machine ips or machine userdefined, e.g ["127.0.0.1", "127.0.0.2"]
 
-    :type gruop_type : string "" or "Armory"
+    :type group_type : string "" or "Armory"
     :param group_type : the machine group type
 
     :type group_attribute : dict
@@ -32,26 +28,25 @@ class MachineGroupDetail:
             1. "externalName" : only used if the group_type is "Armory", its the Armory name
             2. "groupTopic" : group topic value
     """
-    def __init__(self, group_name, machine_type, machine_list, group_type = "", group_attribute = {}) : 
+
+    def __init__(self, group_name, machine_type, machine_list, group_type="", group_attribute=None):
+        if group_attribute is None:
+            group_attribute = {}
         self.group_name = group_name
         self.machine_type = machine_type
         self.machine_list = machine_list
         self.group_type = group_type
         self.group_attribute = group_attribute
-        self.create_time = (int)(time.time())
+        self.create_time = int(time.time())
         self.last_modify_time = self.create_time
 
-    def to_json(self) : 
-        json_value = {}
-        json_value['groupName'] = self.group_name
-        json_value['groupType'] = self.group_type
-        json_value['groupAttribute'] = self.group_attribute
-        json_value['machineIdentifyType'] = self.machine_type
-        json_value['machineList'] = self.machine_list
+    def to_json(self):
+        json_value = {'groupName': self.group_name, 'groupType': self.group_type,
+                      'groupAttribute': self.group_attribute, 'machineIdentifyType': self.machine_type,
+                      'machineList': self.machine_list}
         return json_value
 
-
-    def from_json(self, json_value) : 
+    def from_json(self, json_value):
         self.group_name = Util.get_json_value(json_value, "groupName")
         self.group_type = Util.get_json_value(json_value, "groupType", "")
         self.group_attribute = Util.get_json_value(json_value, "groupAttribute", {})
@@ -60,7 +55,8 @@ class MachineGroupDetail:
         self.create_time = Util.get_json_value(json_value, "crateTime")
         self.last_modify_time = Util.get_json_value(json_value, "lastModifyTime")
 
-class MachineStatus : 
+
+class MachineStatus(object):
     """ the machine status
     :type ip: string
     :param ip: the machine ip
@@ -75,9 +71,8 @@ class MachineStatus :
     :param heartbeat_time : last updated heartbeat_time
     """
 
-    def __init__(self, ip , machine_unique_id, user_defined_id, heartbeat_time):
+    def __init__(self, ip, machine_unique_id, user_defined_id, heartbeat_time):
         self.ip = ip
         self.machine_unique_id = machine_unique_id
         self.user_defined_id = user_defined_id
         self.heartbeat_time = heartbeat_time
-

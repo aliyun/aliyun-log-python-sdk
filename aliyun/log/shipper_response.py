@@ -1,105 +1,110 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from aliyun.log.util import Util
+__all__ = ['CreateShipperResponse', 'UpdateShipperResponse', 'DeleteShipperResponse',
+           'GetShipperConfigResponse', 'ListShipperResponse', 'GetShipperTasksResponse',
+           'RetryShipperTasksResponse']
+
+
 from aliyun.log.logresponse import LogResponse
 from aliyun.log.shipper_config import OdpsShipperConfig
 from aliyun.log.shipper_config import OssShipperConfig
 from aliyun.log.shipper_config import ShipperTask
 
 
-class CreateShipperResponse(LogResponse) : 
+class CreateShipperResponse(LogResponse):
     def __init__(self, header):
         LogResponse.__init__(self, header)
 
     def log_print(self):
-        print 'CreateShipperResponse:'
-        print 'headers:', self.get_all_headers()
+        print('CreateShipperResponse:')
+        print('headers:', self.get_all_headers())
 
 
-
-
-class UpdateShipperResponse(LogResponse) : 
+class UpdateShipperResponse(LogResponse):
     def __init__(self, header):
         LogResponse.__init__(self, header)
 
     def log_print(self):
-        print 'UpdateShipperResponse:'
-        print 'headers:', self.get_all_headers()
+        print('UpdateShipperResponse:')
+        print('headers:', self.get_all_headers())
 
-class DeleteShipperResponse(LogResponse) : 
+
+class DeleteShipperResponse(LogResponse):
     def __init__(self, header):
         LogResponse.__init__(self, header)
 
     def log_print(self):
-        print 'DeleteShipperResponse:'
-        print 'headers:', self.get_all_headers()
+        print('DeleteShipperResponse:')
+        print('headers:', self.get_all_headers())
 
-class GetShipperConfigResponse(LogResponse) : 
+
+class GetShipperConfigResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
         self.create_time = resp['createTime']
         self.last_modify_time = resp['lastModifyTime']
         self.type = resp['targetType']
         target_config = resp['targetConfiguration']
-        if self.type == 'odps' : 
+        if self.type == 'odps':
             self.config = OdpsShipperConfig(target_config["odpsEndpoint"],
-                    target_config["odpsProject"],
-                    target_config["odpsTable"],
-                    target_config["fields"],
-                    target_config["partitionColumn"],
-                    target_config["partitionTimeFormat"],
-                    target_config["bufferInterval"])
-        elif self.type == 'oss' : 
+                                            target_config["odpsProject"],
+                                            target_config["odpsTable"],
+                                            target_config["fields"],
+                                            target_config["partitionColumn"],
+                                            target_config["partitionTimeFormat"],
+                                            target_config["bufferInterval"])
+        elif self.type == 'oss':
             self.config = OssShipperConfig(target_config['ossBucket'],
-                    target_config['ossPrefix'],
-                    target_config['roleArn'],
-                    target_config['bufferInterval'],
-                    target_config['bufferSize'],
-                    target_config['compressType'])
+                                           target_config['ossPrefix'],
+                                           target_config['roleArn'],
+                                           target_config['bufferInterval'],
+                                           target_config['bufferSize'],
+                                           target_config['compressType'])
 
-
-    def get_config(self) : 
+    def get_config(self):
         return self.config
 
-    def get_create_time(self) : 
+    def get_create_time(self):
         return self.create_time
 
     def get_last_modify_time(self):
         return self.last_modify_time
 
-    def log_print(self) : 
-        print 'GetShipperConfigResponse:'
-        print 'type:' + self.type
-        print 'config:' + str(self.config.to_json())
+    def log_print(self):
+        print('GetShipperConfigResponse:')
+        print('type:' + self.type)
+        print('config:' + str(self.config.to_json()))
 
-class ListShipperResponse(LogResponse) : 
-    def __init__(self, resp, header) : 
+
+class ListShipperResponse(LogResponse):
+    def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        self.count =  resp['count']
+        self.count = resp['count']
         self.total = resp['total']
         self.shipper_names = resp['shipper']
-        
-    def get_shipper_count(self) : 
+
+    def get_shipper_count(self):
         return self.count
 
-    def get_shipper_total(self) : 
+    def get_shipper_total(self):
         return self.total
 
-    def get_shipper_names(self) : 
+    def get_shipper_names(self):
         return self.shipper_names
 
-    def log_print(self) : 
-        print 'ListShipperResponse:'
-        print 'shipper count : ' + str(self.count)
-        print 'shipper total : ' + str(self.total)
-        print 'shipper names : ' + str(self.shipper_names)
+    def log_print(self):
+        print('ListShipperResponse:')
+        print('shipper count : ' + str(self.count))
+        print('shipper total : ' + str(self.total))
+        print('shipper names : ' + str(self.shipper_names))
 
-class GetShipperTasksResponse(LogResponse) :
-    def __init__(self, resp, header) : 
+
+class GetShipperTasksResponse(LogResponse):
+    def __init__(self, resp, header):
         LogResponse.__init__(self, header)
         self.count = resp['count']
         self.total = resp['total']
@@ -107,31 +112,31 @@ class GetShipperTasksResponse(LogResponse) :
         self.success_count = resp['statistics']['success']
         self.fail_count = resp['statistics']['fail']
         self.tasks = []
-        for task_res in resp['tasks'] : 
-            task = ShipperTask(task_res['id'], task_res['taskStatus'] , task_res['taskMessage'], task_res['taskCreateTime'],
-                    task_res['taskLastDataReceiveTime'], task_res['taskFinishTime'])
+        for task_res in resp['tasks']:
+            task = ShipperTask(task_res['id'], task_res['taskStatus'], task_res['taskMessage'],
+                               task_res['taskCreateTime'],
+                               task_res['taskLastDataReceiveTime'], task_res['taskFinishTime'])
             self.tasks.append(task)
 
-    def get_task_count(self) : 
+    def get_task_count(self):
         return self.count
 
-    def get_task_total(self) : 
+    def get_task_total(self):
         return self.total
 
-    def get_running_task_count(self) : 
+    def get_running_task_count(self):
         return self.running_count
 
-    def get_success_task_count(self) : 
+    def get_success_task_count(self):
         return self.success_count
 
-    def get_fail_task_count(self) : 
+    def get_fail_task_count(self):
         return self.fail_count
 
-
-    def _get_task_ids(self, status) : 
+    def _get_task_ids(self, status):
         task_ids = []
-        for task in self.tasks : 
-            if task.task_status == status : 
+        for task in self.tasks:
+            if task.task_status == status:
                 task_ids.append(task.task_id)
         return task_ids
 
@@ -143,29 +148,25 @@ class GetShipperTasksResponse(LogResponse) :
 
     def get_success_task_ids(self):
         return self._get_task_ids("success")
-    
-    def get_taks(self) : 
+
+    def get_taks(self):
         return self.tasks
 
-    def log_print(self) : 
-        print 'GetShipperTasksResponse:'
-        print 'ship count : ' + str(self.count)
-        print 'ship total : ' + str(self.total)
-        print 'ship running_count : ' + str(self.running_count)
-        print 'ship success_count : ' + str(self.success_count)
-        print 'ship fail_count : ' + str(self.fail_count)
-        print 'ship taks : '
-        for task in self.tasks : 
-            print str(task.to_json())
+    def log_print(self):
+        print('GetShipperTasksResponse:')
+        print('ship count : ' + str(self.count))
+        print('ship total : ' + str(self.total))
+        print('ship running_count : ' + str(self.running_count))
+        print('ship success_count : ' + str(self.success_count))
+        print('ship fail_count : ' + str(self.fail_count))
+        print('ship taks : ')
+        for task in self.tasks:
+            print(str(task.to_json()))
 
 
-def RetryShipperTasksResponse(LogResponse) : 
-    def __init__(self, header) : 
+def RetryShipperTasksResponse(LogResponse):
+    def __init__(self, header):
         LogResponse.__init__(self, header)
 
-    def log_print(self) : 
-        print 'RetryShipperTasksResponse' 
-
-
-        
-        
+    def log_print(self):
+        print('RetryShipperTasksResponse')

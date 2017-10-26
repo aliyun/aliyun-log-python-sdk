@@ -4,20 +4,17 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-import sys
 import requests
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
-try : 
+import json
+
+try:
     import logservice_lz4
 except ImportError:
     pass
 
 from datetime import datetime
-from log_logs_pb2 import LogGroup
+from .log_logs_pb2 import LogGroup
 from aliyun.log.util import Util
 from aliyun.log.logexception import LogException
 from aliyun.log.getlogsresponse import GetLogsResponse
@@ -26,55 +23,21 @@ from aliyun.log.listtopicsresponse import ListTopicsResponse
 from aliyun.log.listlogstoresresponse import ListLogstoresResponse
 from aliyun.log.gethistogramsresponse import GetHistogramsResponse
 
-from aliyun.log.logstore_config_response import CreateLogStoreResponse
-from aliyun.log.logstore_config_response import DeleteLogStoreResponse
-from aliyun.log.logstore_config_response import GetLogStoreResponse
-from aliyun.log.logstore_config_response import UpdateLogStoreResponse
-from aliyun.log.logstore_config_response import ListLogStoreResponse
+from aliyun.log.logstore_config_response import *
 
 from aliyun.log.pulllog_response import PullLogResponse
 from aliyun.log.cursor_response import GetCursorResponse
 from aliyun.log.cursor_time_response import GetCursorTimeResponse
 
-from aliyun.log.index_config_response import CreateIndexResponse
-from aliyun.log.index_config_response import UpdateIndexResponse
-from aliyun.log.index_config_response import DeleteIndexResponse
-from aliyun.log.index_config_response import GetIndexResponse
+from aliyun.log.index_config_response import *
 
-from aliyun.log.logtail_config_response import CreateLogtailConfigResponse
-from aliyun.log.logtail_config_response import UpdateLogtailConfigResponse
-from aliyun.log.logtail_config_response import DeleteLogtailConfigResponse
-from aliyun.log.logtail_config_response import GetLogtailConfigResponse
-from aliyun.log.logtail_config_response import ListLogtailConfigResponse
-
-from aliyun.log.machinegroup_response import CreateMachineGroupResponse
-from aliyun.log.machinegroup_response import UpdateMachineGroupResponse
-from aliyun.log.machinegroup_response import DeleteMachineGroupResponse
-from aliyun.log.machinegroup_response import GetMachineGroupResponse
-from aliyun.log.machinegroup_response import ListMachineGroupResponse
-
-from aliyun.log.machinegroup_response import ListMachinesResponse
-from aliyun.log.machinegroup_response import ApplyConfigToMachineGroupResponse
-from aliyun.log.machinegroup_response import RemoveConfigToMachineGroupResponse
-from aliyun.log.machinegroup_response import GetMachineGroupAppliedConfigResponse
-from aliyun.log.machinegroup_response import GetConfigAppliedMachineGroupsResponse
-from aliyun.log.acl_response import UpdateAclResponse
-from aliyun.log.acl_response import ListAclResponse
-
-from aliyun.log.shard_response import ListShardResponse
-from aliyun.log.shard_response import DeleteShardResponse
-
-from aliyun.log.shipper_response import CreateShipperResponse
-from aliyun.log.shipper_response import UpdateShipperResponse
-from aliyun.log.shipper_response import DeleteShipperResponse
-from aliyun.log.shipper_response import GetShipperConfigResponse
-from aliyun.log.shipper_response import ListShipperResponse
-from aliyun.log.shipper_response import GetShipperTasksResponse
-from aliyun.log.shipper_response import RetryShipperTasksResponse
-
-from aliyun.log.project_response import CreateProjectResponse
-from aliyun.log.project_response import DeleteProjectResponse
-from aliyun.log.project_response import GetProjectResponse
+from aliyun.log.logtail_config_response import *
+from aliyun.log.machinegroup_response import *
+from aliyun.log.acl_response import *
+from aliyun.log.shard_response import *
+from aliyun.log.shipper_response import *
+from aliyun.log.project_response import *
+import six
 
 CONNECTION_TIME_OUT = 20
 API_VERSION = '0.6.0'
@@ -84,8 +47,9 @@ USER_AGENT = 'log-python-sdk-v-0.6.1'
 LogClient class is the main class in the SDK. It can be used to communicate with 
 log service server to put/get data.
 
-:Author: log_dev
+:Author: Aliyun
 """
+
 
 class LogClient(object):
     """ Construct the LogClient with endpoint, accessKeyId, accessKey.
@@ -99,28 +63,31 @@ class LogClient(object):
     :type accessKey: string
     :param accessKey: aliyun accessKey
     """
-    
+
     __version__ = API_VERSION
     Version = __version__
-    
-    def __init__(self, endpoint, accessKeyId, accessKey,securityToken = None, source = None):
-        if isinstance(endpoint, unicode): # ensure is ascii str
-            endpoint = endpoint.encode('ascii')
-        if isinstance(accessKeyId, unicode):
-            accessKeyId = accessKeyId.encode('ascii')
-        if isinstance(accessKey, unicode):
-            accessKey = accessKey.encode('ascii')
-        self._isRowIp = True
+
+    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
+        # if isinstance(accessKeyId, six.text_type):
+        #     accessKeyId = accessKeyId.encode('utf8')
+        # if isinstance(accessKey, six.text_type):
+        #     accessKey = accessKey.encode('utf8')
+
+        self._isRowIp = Util.is_row_ip(endpoint)
+
+        # if isinstance(endpoint, six.text_type):
+        #     endpoint = endpoint.encode('utf8')
+
         self._port = 80
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
         self._accessKey = accessKey
         self._timeout = CONNECTION_TIME_OUT
-        if source == None : 
+        if source is None:
             self._source = Util.get_host_ip(self._logHost)
-        else : 
+        else:
             self._source = source
-        self._securityToken = securityToken;
+        self._securityToken = securityToken
 
     def _setendpoint(self, endpoint):
         pos = endpoint.find('://')
@@ -133,101 +100,105 @@ class LogClient(object):
         if pos != -1:
             self._port = int(endpoint[pos + 1:])
             endpoint = endpoint[:pos]
-        self._isRowIp = Util.is_row_ip(endpoint)
         self._logHost = endpoint
         self._endpoint = endpoint + ':' + str(self._port)
 
-    def _getGMT(self):
+    @staticmethod
+    def _getGMT():
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
-    def _loadJson(self, respText, requestId):
+    @staticmethod
+    def _loadJson(respText, requestId):
         if not respText:
             return None
         try:
             return json.loads(respText)
-        except:
-            raise LogException('BadResponse', 
+        except Exception:
+            raise LogException('BadResponse',
                                'Bad json format:\n%s' % respText,
                                requestId)
-    
-    def _getHttpResponse(self, method, url, params, body, headers): # ensure method, url, body is str
-        try : 
+
+    def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
+        try:
             headers['User-Agent'] = USER_AGENT
             r = None
-            if method.lower() == 'get' : 
-                r = requests.get(url, params = params, data = body, headers = headers, timeout = self._timeout)
-            elif method.lower() == 'post': 
-                r = requests.post(url, params = params, data = body, headers = headers, timeout = self._timeout)
-            elif method.lower() == 'put': 
-                r = requests.put(url, params = params, data = body, headers = headers, timeout = self._timeout)
-            elif method.lower() == 'delete': 
-                r = requests.delete(url, params = params, data = body, headers = headers, timeout = self._timeout)
-            return (r.status_code, r.content, r.headers) 
-        except Exception, ex:
+            if method.lower() == 'get':
+                r = requests.get(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            elif method.lower() == 'post':
+                r = requests.post(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            elif method.lower() == 'put':
+                r = requests.put(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            elif method.lower() == 'delete':
+                r = requests.delete(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            return r.status_code, r.content, r.headers
+        except Exception as ex:
             raise LogException('LogRequestError', str(ex))
-    
-    def _sendRequest(self, method, url, params, body, headers, respons_body_type = 'json'):
+
+    def _sendRequest(self, method, url, params, body, headers, respons_body_type='json'):
         (status, respText, respHeader) = self._getHttpResponse(method, url, params, body, headers)
         header = {}
         for key, value in respHeader.items():
             header[key] = value
-        
-        requestId = header['x-log-requestid'] if 'x-log-requestid' in header else ''
-        exJson = None
 
-        header = Util.convert_unicode_to_str(header)
-        if status == 200 : 
-            if respons_body_type == 'json' : 
+        requestId = header['x-log-requestid'] if 'x-log-requestid' in header else ''
+
+        if status == 200:
+            if respons_body_type == 'json':
                 exJson = self._loadJson(respText, requestId)
-                #exJson = Util.convert_unicode_to_str(exJson)
-                return (exJson, header)
-            else : 
-                return (respText, header)
-            
-        exJson = self._loadJson(respText.encode('utf-8'), requestId)
+                exJson = Util.convert_unicode_to_str(exJson)
+                return exJson, header
+            else:
+                return respText, header
+
+        exJson = self._loadJson(respText, requestId)
         exJson = Util.convert_unicode_to_str(exJson)
 
         if 'errorCode' in exJson and 'errorMessage' in exJson:
             raise LogException(exJson['errorCode'], exJson['errorMessage'], requestId)
         else:
-            exJson = '. Return json is '+str(exJson) if exJson else '.'
-            raise LogException('LogRequestError', 
-                               'Request is failed. Http code is '+str(status)+exJson, requestId)
-    
-    def _send(self, method, project, body, resource, params, headers, respons_body_type ='json'):
+            exJson = '. Return json is ' + str(exJson) if exJson else '.'
+            raise LogException('LogRequestError',
+                               'Request is failed. Http code is ' + str(status) + exJson, requestId)
+
+    def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))
             headers['Content-MD5'] = Util.cal_md5(body)
         else:
             headers['Content-Length'] = '0'
             headers["x-log-bodyrawsize"] = '0'
-        
+
         headers['x-log-apiversion'] = API_VERSION
         headers['x-log-signaturemethod'] = 'hmac-sha1'
-        url = ''
         if self._isRowIp:
             url = "http://" + self._endpoint
         else:
             url = "http://" + project + "." + self._endpoint
+
         headers['Host'] = project + "." + self._logHost
+
         headers['Date'] = self._getGMT()
-        if self._securityToken != None and self._securityToken != "" :
+
+        if self._securityToken:
             headers["x-acs-security-token"] = self._securityToken
-        
+
         signature = Util.get_request_authorization(method, resource,
-            self._accessKey, params, headers)
+                                                   self._accessKey, params, headers)
+
         headers['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
         url = url + resource
+
         return self._sendRequest(method, url, params, body, headers, respons_body_type)
-    
-    def get_unicode(self, key):
-        if isinstance(key, str):
-            key = unicode(key, 'utf-8')
+
+    @staticmethod
+    def get_unicode(key):
+        if isinstance(key, six.binary_type):
+            key = key.decode('utf-8')
         return key
-    
-    def set_source(self, source) : 
+
+    def set_source(self, source):
         self._source = source
-        
+
     def put_logs(self, request):
         """ Put logs to log service.
         Unsuccessful opertaion will cause an LogException.
@@ -240,14 +211,14 @@ class LogClient(object):
         :raise: LogException
         """
         if len(request.get_log_items()) > 4096:
-            raise LogException('InvalidLogSize', 
-                            "logItems' length exceeds maximum limitation: 4096 lines.")
+            raise LogException('InvalidLogSize',
+                               "logItems' length exceeds maximum limitation: 4096 lines.")
         logGroup = LogGroup()
         logGroup.Topic = request.get_topic()
         if request.get_source():
             logGroup.Source = request.get_source()
         else:
-            if self._source=='127.0.0.1':
+            if self._source == '127.0.0.1':
                 self._source = Util.get_host_ip(request.get_project() + '.' + self._logHost)
             logGroup.Source = self._source
         for logItem in request.get_log_items():
@@ -258,45 +229,41 @@ class LogClient(object):
                 content = log.Contents.add()
                 content.Key = self.get_unicode(key)
                 content.Value = self.get_unicode(value)
-        if request.get_log_tags() != None : 
-            tags = request.get_log_tags() 
-            for key, value in tags : 
+        if request.get_log_tags() is not None:
+            tags = request.get_log_tags()
+            for key, value in tags:
                 pb_tag = logGroup.LogTags.add()
                 pb_tag.Key = key
                 pb_tag.Value = value
         body = logGroup.SerializeToString()
         if len(body) > 3 * 1024 * 1024:  # 3 MB
-            raise LogException('InvalidLogSize', 
-                            "logItems' size exceeds maximum limitation: 3 MB.")
-        
-        headers = {}
-        headers['x-log-bodyrawsize'] = str(len(body))
-        headers['Content-Type'] = 'application/x-protobuf'
+            raise LogException('InvalidLogSize',
+                               "logItems' size exceeds maximum limitation: 3 MB.")
+
+        headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
         is_compress = request.get_compress()
 
         compress_data = None
-        if is_compress : 
+        if is_compress:
             headers['x-log-compresstype'] = 'lz4'
-            compress_data = logservice_lz4.compress(body) 
+            compress_data = logservice_lz4.compress(body)
 
         params = {}
         logstore = request.get_logstore()
         project = request.get_project()
-        resource = '/logstores/' + logstore
         if request.get_hash_key() is not None:
-            resource = '/logstores/' + logstore+"/shards/route"
-            params["key"] = request.get_hash_key() 
+            resource = '/logstores/' + logstore + "/shards/route"
+            params["key"] = request.get_hash_key()
         else:
-            resource = '/logstores/' + logstore+"/shards/lb"
+            resource = '/logstores/' + logstore + "/shards/lb"
 
-        respHeaders = None
-        if is_compress : 
+        if is_compress:
             respHeaders = self._send('POST', project, compress_data, resource, params, headers)
-        else : 
+        else:
             respHeaders = self._send('POST', project, body, resource, params, headers)
 
         return PutLogsResponse(respHeaders[1])
-    
+
     def list_logstores(self, request):
         """ List all logstores of requested project.
         Unsuccessful opertaion will cause an LogException.
@@ -314,7 +281,7 @@ class LogClient(object):
         project = request.get_project()
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return ListLogstoresResponse(resp, header)
-    
+
     def list_topics(self, request):
         """ List all topics in a logstore.
         Unsuccessful opertaion will cause an LogException.
@@ -328,15 +295,17 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        if request.get_token()!=None:
+        if request.get_token() is not None:
             params['token'] = request.get_token()
-        if request.get_line()!=None:
+        if request.get_line() is not None:
             params['line'] = request.get_line()
         params['type'] = 'topic'
         logstore = request.get_logstore()
         project = request.get_project()
         resource = "/logstores/" + logstore
         (resp, header) = self._send("GET", project, None, resource, params, headers)
+
+        # print("***debug: list topic res: ", resp, header)
         return ListTopicsResponse(resp, header)
 
     def get_histograms(self, request):
@@ -352,13 +321,13 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        if request.get_topic()!=None:
+        if request.get_topic() is not None:
             params['topic'] = request.get_topic()
-        if request.get_from()!=None:
+        if request.get_from() is not None:
             params['from'] = request.get_from()
-        if request.get_to()!=None:
+        if request.get_to() is not None:
             params['to'] = request.get_to()
-        if request.get_query()!=None:
+        if request.get_query() is not None:
             params['query'] = request.get_query()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
@@ -380,29 +349,28 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        if request.get_topic()!=None:
+        if request.get_topic() is not None:
             params['topic'] = request.get_topic()
-        if request.get_from()!=None:
+        if request.get_from() is not None:
             params['from'] = request.get_from()
-        if request.get_to()!=None:
+        if request.get_to() is not None:
             params['to'] = request.get_to()
-        if request.get_query()!=None:
+        if request.get_query() is not None:
             params['query'] = request.get_query()
         params['type'] = 'log'
-        if request.get_line()!=None:
+        if request.get_line() is not None:
             params['line'] = request.get_line()
-        if request.get_offset()!=None:
+        if request.get_offset() is not None:
             params['offset'] = request.get_offset()
-        if request.get_reverse()!=None:
+        if request.get_reverse() is not None:
             params['reverse'] = 'true' if request.get_reverse() else 'false'
         logstore = request.get_logstore()
         project = request.get_project()
         resource = "/logstores/" + logstore
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetLogsResponse(resp, header)
-    
 
-    def get_cursor(self, project_name, logstore_name, shard_id, start_time) : 
+    def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
@@ -414,26 +382,22 @@ class LogClient(object):
         :type shard_id: int
         :param shard_id: the shard id
 
-        :type start_time: int
-        :param start_time: the start time of cursor, e.g 1441093445
+        :type start_time: string/int
+        :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end"
 
         :return: GetCursorResponse
         
         :raise: LogException
         """
 
-        headers = {}
-        headers['Content-Type'] = 'application/json'
-        params = {}
+        headers = {'Content-Type': 'application/json'}
+        params = {'type': 'cursor', 'from': str(start_time)}
+
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
-        params['type'] = 'cursor'
-        params['from'] = str(start_time)
-        
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetCursorResponse(resp, header)
 
-
-    def get_cursor_time(self, project_name, logstore_name, shard_id, cursor) : 
+    def get_cursor_time(self, project_name, logstore_name, shard_id, cursor):
         """ Get cursor time from log service
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
@@ -453,17 +417,14 @@ class LogClient(object):
         :raise: LogException
         """
 
-        headers = {}
-        headers['Content-Type'] = 'application/json'
-        params = {}
+        headers = {'Content-Type': 'application/json'}
+        params = {'type': 'cursor_time', 'cursor': cursor}
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
-        params['type'] = 'cursor_time'
-        params['cursor'] = cursor
-        
+
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetCursorTimeResponse(resp, header)
 
-    def get_begin_cursor(self, project_name, logstore_name, shard_id) :
+    def get_begin_cursor(self, project_name, logstore_name, shard_id):
         """ Get begin cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
@@ -481,7 +442,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "begin")
 
-    def get_end_cursor(self, project_name, logstore_name, shard_id) : 
+    def get_end_cursor(self, project_name, logstore_name, shard_id):
         """ Get end cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
@@ -499,7 +460,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count = 1000, end_cursor = None, compress=False):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=1000, end_cursor=None, compress=False):
         """ batch pull log data from log service
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
@@ -520,7 +481,7 @@ class LogClient(object):
         :type end_cursor : string
         :param end_cursor: the end cursor position to get data
 
-        :type comress : boolean
+        :type compress : boolean
         :param compress : if use lz4 compress for transfer data
 
         :return: PullLogResponse
@@ -528,29 +489,27 @@ class LogClient(object):
         :raise: LogException
         """
         headers = {}
-        if compress :
+        if compress:
             headers['Accept-Encoding'] = 'lz4'
-        else : 
+        else:
             headers['Accept-Encoding'] = ''
 
         headers['Accept'] = 'application/x-protobuf'
-        
+
         params = {}
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
         params['type'] = 'log'
         params['cursor'] = cursor
         params['count'] = str(count)
-        if end_cursor != None and len(end_cursor) > 0 :
+        if end_cursor:
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
-        if compress : 
+        if compress:
             raw_size = int(header['x-log-bodyrawsize'])
             raw_data = logservice_lz4.uncompress(raw_size, resp)
             return PullLogResponse(raw_data, header)
-        else :         
+        else:
             return PullLogResponse(resp, header)
-    
-
 
     def create_logstore(self, project_name, logstore_name, ttl, shard_count):
         """ create log store 
@@ -572,19 +531,15 @@ class LogClient(object):
         
         :raise: LogException
         """
-        headers = {}
         params = {}
-        headers["x-log-bodyrawsize"] = '0'
-        headers["Content-Type"] = "application/json"
         resource = "/logstores"
-        body = {}
-        body["logstoreName"] = logstore_name.encode("utf-8");
-        body["ttl"] = (int)(ttl);
-        body["shardCount"] = (int)(shard_count);
-        body_str = json.dumps(body);
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count)}
+
+        body_str = six.b(json.dumps(body))
+
         (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
         return CreateLogStoreResponse(header)
-
 
     def delete_logstore(self, project_name, logstore_name):
         """ delete log store
@@ -649,21 +604,16 @@ class LogClient(object):
         :raise: LogException
         """
 
-        headers = {}
-        headers["x-log-bodyrawsize"] = '0'
-        headers["Content-Type"] = "application/json"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+
         params = {}
         resource = "/logstores/" + logstore_name
-        body = {}
-        body["logstoreName"] = logstore_name
-        body["ttl"] = (int)(ttl);
-        body["shardCount"] = (int)(shard_count);
-        body_str = json.dumps(body);
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count)}
+        body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogStoreResponse(header)
 
-
-    def list_logstore(self, project_name, logstore_name_pattern = None, offset = 0, size = 100) :
+    def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
         """ list the logstore in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -671,7 +621,8 @@ class LogClient(object):
         :param project_name: the Project name 
 
         :type logstore_name_pattern: string
-        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names contain this sub name
+        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names
+        contain this sub name
 
         :type offset: int
         :param offset: the offset of all the matched names
@@ -686,15 +637,14 @@ class LogClient(object):
         headers = {}
         params = {}
         resource = "/logstores"
-        if logstore_name_pattern != None :
+        if logstore_name_pattern is not None:
             params['logstorename'] = logstore_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
 
-
-    def list_shards(self, project_name, logstore_name) :
+    def list_shards(self, project_name, logstore_name):
         """ list the shard meta of a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -713,7 +663,8 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/shards"
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListShardResponse(resp, header)
-    def split_shard(self,project_name,logstore_name,shardId,split_hash):
+
+    def split_shard(self, project_name, logstore_name, shardId, split_hash):
         """ split a  readwrite shard into two shards
         Unsuccessful opertaion will cause an LogException.
 
@@ -735,12 +686,12 @@ class LogClient(object):
         """
 
         headers = {}
-        params = {"action":"split","key":split_hash}
-        resource = "/logstores/"+logstore_name+"/shards/"+str(shardId);
-        (resp,header) =  self._send("POST",project_name,None,resource,params,headers);
-        return ListShardResponse(resp,header);
+        params = {"action": "split", "key": split_hash}
+        resource = "/logstores/" + logstore_name + "/shards/" + str(shardId)
+        (resp, header) = self._send("POST", project_name, None, resource, params, headers)
+        return ListShardResponse(resp, header)
 
-    def merge_shard(self,project_name,logstore_name,shardId):
+    def merge_shard(self, project_name, logstore_name, shardId):
         """ split two adjacent  readwrite hards into one shards
         Unsuccessful opertaion will cause an LogException.
 
@@ -758,12 +709,12 @@ class LogClient(object):
         :raise: LogException
         """
         headers = {}
-        params = {"action":"merge"}
-        resource = "/logstores/"+logstore_name+"/shards/"+str(shardId);
-        (resp,header) =  self._send("POST",project_name,None,resource,params,headers);
-        return ListShardResponse(resp,header);
+        params = {"action": "merge"}
+        resource = "/logstores/" + logstore_name + "/shards/" + str(shardId)
+        (resp, header) = self._send("POST", project_name, None, resource, params, headers)
+        return ListShardResponse(resp, header)
 
-    def delete_shard(self,project_name,logstore_name,shardId):
+    def delete_shard(self, project_name, logstore_name, shardId):
         """ delete a readonly shard 
         Unsuccessful opertaion will cause an LogException.
 
@@ -782,13 +733,11 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        resource = "/logstores/"+logstore_name+"/shards/"+str(shardId);
-        (resp,header) =  self._send("DELETE",project_name,None,resource,params,headers);
-        return DeleteShardResponse(header);
+        resource = "/logstores/" + logstore_name + "/shards/" + str(shardId)
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteShardResponse(header)
 
-
-
-    def create_index(self, project_name, logstore_name, index_detail) : 
+    def create_index(self, project_name, logstore_name, index_detail):
         """ create index for a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -809,13 +758,13 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name + "/index"
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(index_detail.to_json())
+        body = six.b(json.dumps(index_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
         return CreateIndexResponse(header)
 
-    def update_index(self, project_name, logstore_name, index_detail) : 
+    def update_index(self, project_name, logstore_name, index_detail):
         """ update index for a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -837,13 +786,13 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name + "/index"
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(index_detail.to_json())
+        body = six.b(json.dumps(index_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
 
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateIndexResponse(header)
-    
-    def delete_index(self, project_name, logstore_name) :
+
+    def delete_index(self, project_name, logstore_name):
         """ delete index of a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -864,7 +813,7 @@ class LogClient(object):
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteIndexResponse(header)
 
-    def get_index_config(self, project_name , logstore_name) :
+    def get_index_config(self, project_name, logstore_name):
         """ get index config detail of a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -885,16 +834,17 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetIndexResponse(resp, header)
 
-
-    def create_logtail_config(self, project_name, config_detail) : 
+    def create_logtail_config(self, project_name, config_detail):
         """ create logtail config in a project
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or logtail_config_detail.ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs ,the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or
+        logtail_config_detail.ApsaraLogConfigDetail
+        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create
+        common regex logs ,the ApsaraLogConfigDetail is used to create apsara log
 
         :return: CreateLogtailConfigResponse
         
@@ -905,20 +855,22 @@ class LogClient(object):
         params = {}
         resource = "/configs"
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(config_detail.to_json())
+        body = six.b(json.dumps(config_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
         return CreateLogtailConfigResponse(headers)
 
-    def update_logtail_config(self, project_name, config_detail) : 
+    def update_logtail_config(self, project_name, config_detail):
         """ update logtail config in a project
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or logtail_config_detail.ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs, the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or
+        logtail_config_detail.ApsaraLogConfigDetail
+        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create
+        common regex logs, the ApsaraLogConfigDetail is used to create apsara log
 
         :return: UpdateLogtailConfigResponse
         
@@ -929,11 +881,10 @@ class LogClient(object):
         params = {}
         resource = "/configs/" + config_detail.config_name
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(config_detail.to_json())
+        body = six.b(json.dumps(config_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateLogtailConfigResponse(headers)
-
 
     def delete_logtail_config(self, project_name, config_name):
         """ delete logtail config in a project
@@ -956,8 +907,7 @@ class LogClient(object):
         (resp, headers) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteLogtailConfigResponse(headers)
 
-
-    def get_logtail_config(self, project_name, config_name) : 
+    def get_logtail_config(self, project_name, config_name):
         """ get logtail config in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -977,8 +927,7 @@ class LogClient(object):
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogtailConfigResponse(resp, headers)
 
-
-    def list_logtail_config(self, project_name, offset = 0, size = 100) :
+    def list_logtail_config(self, project_name, offset=0, size=100):
         """ list logtail config name in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1003,8 +952,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogtailConfigResponse(resp, header)
 
-
-    def create_machine_group(self, project_name, group_detail) : 
+    def create_machine_group(self, project_name, group_detail):
         """ create machine group in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1023,7 +971,7 @@ class LogClient(object):
         params = {}
         resource = "/machinegroups"
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(group_detail.to_json())
+        body = six.b(json.dumps(group_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
         return CreateMachineGroupResponse(headers)
@@ -1049,7 +997,7 @@ class LogClient(object):
         (resp, headers) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteMachineGroupResponse(headers)
 
-    def update_machine_group(self, project_name, group_detail) : 
+    def update_machine_group(self, project_name, group_detail):
         """ update machine group in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1068,12 +1016,12 @@ class LogClient(object):
         params = {}
         resource = "/machinegroups/" + group_detail.group_name
         headers['Content-Type'] = 'application/json'
-        body = json.dumps(group_detail.to_json())
+        body = six.b(json.dumps(group_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateMachineGroupResponse(headers)
 
-    def get_machine_group(self, project_name, group_name) : 
+    def get_machine_group(self, project_name, group_name):
         """ get machine group in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1094,7 +1042,7 @@ class LogClient(object):
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return GetMachineGroupResponse(resp, headers)
 
-    def list_machine_group(self, project_name, offset = 0, size = 100) :
+    def list_machine_group(self, project_name, offset=0, size=100):
         """ list machine group names in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1120,7 +1068,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListMachineGroupResponse(resp, header)
 
-    def list_machines(self, project_name, group_name, offset = 0, size = 100) : 
+    def list_machines(self, project_name, group_name, offset=0, size=100):
         """ list machines in a machine group
         Unsuccessful opertaion will cause an LogException.
 
@@ -1149,7 +1097,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListMachinesResponse(resp, header)
 
-    def apply_config_to_machine_group(self, project_name, config_name, group_name) : 
+    def apply_config_to_machine_group(self, project_name, config_name, group_name):
         """ apply a logtail config to a machine group
         Unsuccessful opertaion will cause an LogException.
 
@@ -1172,7 +1120,7 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return ApplyConfigToMachineGroupResponse(header)
 
-    def remove_config_to_machine_group(self, project_name, config_name, group_name) : 
+    def remove_config_to_machine_group(self, project_name, config_name, group_name):
         """ remove a logtail config to a machine group
         Unsuccessful opertaion will cause an LogException.
 
@@ -1194,7 +1142,6 @@ class LogClient(object):
         resource = "/machinegroups/" + group_name + "/configs/" + config_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return RemoveConfigToMachineGroupResponse(header)
-
 
     def get_machine_group_applied_configs(self, project_name, group_name):
         """ get the logtail config names applied in a machine group
@@ -1237,22 +1184,22 @@ class LogClient(object):
         resource = "/configs/" + config_name + "/machinegroups"
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetConfigAppliedMachineGroupsResponse(resp, header)
-    def _update_acl(self, project_name, logstore_name, acl_action, acl_config) : 
+
+    def _update_acl(self, project_name, logstore_name, acl_action, acl_config):
         headers = {}
-        params = {}
-        params['type'] = 'acl'
+        params = {'type': 'acl'}
         resource = "/"
-        if logstore_name != None and len(logstore_name) > 0 : 
+        if logstore_name:
             resource = "/logstores/" + logstore_name
         body = acl_config.to_json()
         body['action'] = acl_action
-        body = json.dumps(body)
+        body = six.b(json.dumps(body))
         headers['Content-Type'] = 'application/json'
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateAclResponse(headers)
 
-    def update_project_acl(self, project_name, acl_action, acl_config): 
+    def update_project_acl(self, project_name, acl_action, acl_config):
         """ update acl of a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1272,7 +1219,7 @@ class LogClient(object):
 
         return self._update_acl(project_name, None, acl_action, acl_config)
 
-    def update_logstore_acl(self, project_name, logstore_name, acl_action, acl_config): 
+    def update_logstore_acl(self, project_name, logstore_name, acl_action, acl_config):
         """ update acl of a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -1294,28 +1241,21 @@ class LogClient(object):
         """
         return self._update_acl(project_name, logstore_name, acl_action, acl_config)
 
-
-    def _list_acl(self, project_name, logstore_name, offset = 0 , size = 100) : 
+    def _list_acl(self, project_name, logstore_name, offset=0, size=100):
         headers = {}
-        params = {}
-        params['type'] = 'acl'
-        params['offset'] = str(offset)
-        params['size'] = str(size)
+        params = {'type': 'acl', 'offset': str(offset), 'size': str(size)}
         resource = "/"
-        if logstore_name != None and len(logstore_name) > 0 : 
+        if logstore_name:
             resource = "/logstores/" + logstore_name
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return ListAclResponse(resp, headers)
 
-    def list_project_acl(self, project_name, offset = 0 , size = 100) :
+    def list_project_acl(self, project_name, offset=0, size=100):
         """ list acl of a project
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
-
-        :type logstore_name: string
-        :param logstore_name: the logstore name
 
         :type offset: int
         :param offset: the offset of all acl
@@ -1329,7 +1269,7 @@ class LogClient(object):
         """
         return self._list_acl(project_name, None, offset, size)
 
-    def list_logstore_acl(self, project_name, logstore_name, offset = 0 ,size = 100) :
+    def list_logstore_acl(self, project_name, logstore_name, offset=0, size=100):
         """ list acl of a logstore
         Unsuccessful opertaion will cause an LogException.
 
@@ -1352,7 +1292,7 @@ class LogClient(object):
 
         return self._list_acl(project_name, logstore_name, offset, size)
 
-    def create_shipper(self, project_name, logstore_name, shipper_name, shipper_type, shipper_config) : 
+    def create_shipper(self, project_name, logstore_name, shipper_name, shipper_type, shipper_config):
         """ create odps/oss shipper
         for every type, it only allowed one shipper
         Unsuccessful opertaion will cause an LogException.
@@ -1376,21 +1316,18 @@ class LogClient(object):
         
         :raise: LogException
         """
-        headers = {}
         params = {}
         resource = "/logstores/" + logstore_name + "/shipper"
-        body = {}
-        body["shipperName"] = shipper_name
-        body["targetType"] = shipper_type
-        body["targetConfiguration"] = shipper_config.to_json()
-        body = json.dumps(body)
-        headers['Content-Type'] = 'application/json'
-        headers['x-log-bodyrawsize'] = str(len(body))
+        body = {"shipperName": shipper_name,
+                "targetType": shipper_type,
+                "targetConfiguration": shipper_config.to_json()}
+        body = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
 
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
         return CreateShipperResponse(headers)
 
-    def update_shipper(self, project_name, logstore_name, shipper_name, shipper_type, shipper_config) : 
+    def update_shipper(self, project_name, logstore_name, shipper_name, shipper_type, shipper_config):
         """ update  odps/oss shipper
         for every type, it only allowed one shipper
         Unsuccessful opertaion will cause an LogException.
@@ -1414,21 +1351,17 @@ class LogClient(object):
         
         :raise: LogException
         """
-        headers = {}
         params = {}
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name
-        body = {}
-        body["shipperName"] = shipper_name
-        body["targetType"] = shipper_type
-        body["targetConfiguration"] = shipper_config.to_json()
-        body = json.dumps(body)
-        headers['Content-Type'] = 'application/json'
-        headers['x-log-bodyrawsize'] = str(len(body))
+        body = {"shipperName": shipper_name, "targetType": shipper_type,
+                "targetConfiguration": shipper_config.to_json()}
+        body = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
 
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateShipperResponse(headers)
 
-    def delete_shipper(self, project_name, logstore_name, shipper_name) :
+    def delete_shipper(self, project_name, logstore_name, shipper_name):
         """ delete  odps/oss shipper
         Unsuccessful opertaion will cause an LogException.
 
@@ -1450,8 +1383,8 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteShipperResponse(header)
-    
-    def get_shipper_config(self, project_name, logstore_name, shipper_name) : 
+
+    def get_shipper_config(self, project_name, logstore_name, shipper_name):
         """ get  odps/oss shipper
         Unsuccessful opertaion will cause an LogException.
 
@@ -1474,7 +1407,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetShipperConfigResponse(resp, header)
 
-    def list_shipper(self, project_name, logstore_name) : 
+    def list_shipper(self, project_name, logstore_name):
         """ list  odps/oss shipper
         Unsuccessful opertaion will cause an LogException.
 
@@ -1493,8 +1426,9 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/shipper"
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListShipperResponse(resp, header)
-    
-    def get_shipper_tasks(self, project_name, logstore_name, shipper_name, start_time, end_time, status_type = '',  offset = 0, size = 100):
+
+    def get_shipper_tasks(self, project_name, logstore_name, shipper_name, start_time, end_time, status_type='',
+                          offset=0, size=100):
         """ get  odps/oss shipper tasks in a certain time range
         Unsuccessful opertaion will cause an LogException.
 
@@ -1514,7 +1448,8 @@ class LogClient(object):
         :param end_time: the end timestamp 
 
         :type status_type : string
-        :param status_type : support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
+        :param status_type : support one of ['', 'fail', 'success', 'running'] ,
+        if the status_type = '' , return all kinds of status type
 
         :type offset : int
         :param offset : the begin task offset
@@ -1527,18 +1462,17 @@ class LogClient(object):
         :raise: LogException
         """
         headers = {}
-        params = {}
-        params["from"] = str(int(start_time))
-        params["to"] = str(int(end_time))
-        params["status"] = status_type
-        params["offset"] = str(int(offset))
-        params["size"] = str(int(size))
-        
+        params = {"from": str(int(start_time)),
+                  "to": str(int(end_time)),
+                  "status": status_type,
+                  "offset": str(int(offset)),
+                  "size": str(int(size))}
+
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name + "/tasks"
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetShipperTasksResponse(resp, header)
 
-    def retry_shipper_tasks(self, project_name, logstore_name, shipper_name,  task_list) : 
+    def retry_shipper_tasks(self, project_name, logstore_name, shipper_name, task_list):
         """ retry failed tasks , only the failed task can be retried
         Unsuccessful opertaion will cause an LogException.
 
@@ -1552,7 +1486,8 @@ class LogClient(object):
         :param shipper_name: the shipper name
 
         :type task_list: string array
-        :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...], currently the max retry task count 10 every time 
+        :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...],
+        currently the max retry task count 10 every time
 
         :return: RetryShipperTasksResponse
         
@@ -1560,15 +1495,15 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        body = json.dumps(task_list)
+        body = six.b(json.dumps(task_list))
         headers['Content-Type'] = 'application/json'
         headers['x-log-bodyrawsize'] = str(len(body))
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name + "/tasks"
 
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return RetryShipperTasksResponse(header)
-    
-    def create_project(self, project_name, project_des) : 
+
+    def create_project(self, project_name, project_des):
         """ Create a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1583,22 +1518,17 @@ class LogClient(object):
         :raise: LogException
         """
 
-        headers = {}
         params = {}
-        body = {}
-        body["projectName"] = project_name
-        body["description"] = project_des
+        body = {"projectName": project_name, "description": project_des}
 
-        body = json.dumps(body)
-        headers['Content-Type'] = 'application/json'
-        headers['x-log-bodyrawsize'] = str(len(body))
+        body = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
         resource = "/"
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
         return CreateProjectResponse(header)
 
-
-    def get_project(self, project_name) : 
+    def get_project(self, project_name):
         """ get project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1611,12 +1541,11 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        body = {}
         resource = "/"
 
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetProjectResponse(resp, header)
-        
+
     def delete_project(self, project_name):
         """ delete project
         Unsuccessful opertaion will cause an LogException.
@@ -1630,9 +1559,7 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        body = {}
         resource = "/"
 
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteProjectResponse(header)
-
