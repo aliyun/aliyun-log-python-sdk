@@ -3,7 +3,7 @@
 from google.protobuf import descriptor
 from google.protobuf import message
 from google.protobuf import reflection
-
+import six
 # @@protoc_insertion_point(imports)
 
 import six
@@ -11,7 +11,7 @@ import six
 DESCRIPTOR = descriptor.FileDescriptor(
     name='log_logs.proto',
     package='',
-    serialized_pb='\n\x0elog_logs.proto\"Z\n\x03Log\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12\x1e\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0c.Log.Content\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"O\n\x08LogGroup\x12\x12\n\x04Logs\x18\x01 \x03(\x0b\x32\x04.Log\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\",\n\x0cLogGroupList\x12\x1c\n\tLogGroups\x18\x01 \x03(\x0b\x32\t.LogGroup')
+    serialized_pb=six.b('\n\x0elog_logs.proto\"Z\n\x03Log\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12\x1e\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0c.Log.Content\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"O\n\x08LogGroup\x12\x12\n\x04Logs\x18\x01 \x03(\x0b\x32\x04.Log\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\",\n\x0cLogGroupList\x12\x1c\n\tLogGroups\x18\x01 \x03(\x0b\x32\t.LogGroup'))
 
 _LOG_CONTENT = descriptor.Descriptor(
     name='Content',
