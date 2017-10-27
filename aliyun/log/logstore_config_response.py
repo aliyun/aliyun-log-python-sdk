@@ -5,7 +5,7 @@
 # All rights reserved.
 
 __all__ = ['CreateLogStoreResponse', 'DeleteLogStoreResponse', 'GetLogStoreResponse',
-           'UpdateLogStoreResponse',  'ListLogStoreResponse']
+           'UpdateLogStoreResponse', 'ListLogStoreResponse']
 
 from aliyun.log.util import Util
 from .logresponse import LogResponse

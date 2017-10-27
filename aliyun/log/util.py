@@ -130,8 +130,8 @@ class Util(object):
             return dict((Util.convert_unicode_to_str(k), Util.convert_unicode_to_str(v)) for k, v in six.iteritems(data))
         elif isinstance(data, collections.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
             return type(data)(map(Util.convert_unicode_to_str, data))
-        else:
-            return data
+
+        return data
 
     @staticmethod
     def get_json_value(json_map, key, default_value=None):

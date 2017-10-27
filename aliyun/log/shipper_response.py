@@ -164,9 +164,10 @@ class GetShipperTasksResponse(LogResponse):
             print(str(task.to_json()))
 
 
-def RetryShipperTasksResponse(LogResponse):
+class RetryShipperTasksResponse(LogResponse):
     def __init__(self, header):
         LogResponse.__init__(self, header)
 
-    def log_print(self):
+    @staticmethod
+    def log_print():
         print('RetryShipperTasksResponse')
