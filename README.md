@@ -28,7 +28,9 @@
 1. Python 2.6, Python 2.7, Python 3.3+
 
 ## 安装
-pip install aliyun-log-python-sdk
+```shell
+pip install -U aliyun-log-python-sdk
+```
 
 ## 支持API版本：
 
