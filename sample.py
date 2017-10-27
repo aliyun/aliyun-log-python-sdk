@@ -13,6 +13,7 @@ from aliyun.log.logtail_config_detail import *
 from aliyun.log.machine_group_detail import *
 from aliyun.log.putlogsrequest import PutLogsRequest
 import time
+import random
 
 
 # import six
@@ -190,7 +191,7 @@ def main():
     accessKeyId = ''
     accessKey = ''
     project = ''
-    logstore = ''
+    logstore = 'sdk-test' + str(random.randint(1, 1000))
     token = ""
 
     client = LogClient(endpoint, accessKeyId, accessKey, token)

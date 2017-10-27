@@ -127,7 +127,7 @@ class Util(object):
         elif six.PY3 and isinstance(data, six.binary_type):
             return data.decode('utf8')
         elif isinstance(data, collections.Mapping):
-            return {Util.convert_unicode_to_str(k): Util.convert_unicode_to_str(v) for k, v in six.iteritems(data)}
+            return dict((Util.convert_unicode_to_str(k), Util.convert_unicode_to_str(v)) for k, v in six.iteritems(data))
         elif isinstance(data, collections.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
             return type(data)(map(Util.convert_unicode_to_str, data))
         else:

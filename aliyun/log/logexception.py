@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
 class LogException(Exception):
     """The Exception of the log request & response.
     

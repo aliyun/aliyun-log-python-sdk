@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
 class LogResponse(object):
     """ The base response class of all log response. 
     

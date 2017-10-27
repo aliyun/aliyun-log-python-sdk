@@ -124,7 +124,7 @@ class IndexConfig(object):
         if self.line_config is not None:
             json_value["line"] = self.line_config.to_json()
         if len(self.key_config_list) != 0:
-            json_value["keys"] = {key: value.to_json() for key, value in self.key_config_list.items()}
+            json_value["keys"] = dict((key, value.to_json()) for key, value in self.key_config_list.items())
             # for key, value in self.key_config_list.items():
             #     json_value["keys"][key] = value.to_json()
 

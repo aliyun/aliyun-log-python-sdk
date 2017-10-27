@@ -3,7 +3,6 @@
 from google.protobuf import descriptor
 from google.protobuf import message
 from google.protobuf import reflection
-import six
 # @@protoc_insertion_point(imports)
 
 import six

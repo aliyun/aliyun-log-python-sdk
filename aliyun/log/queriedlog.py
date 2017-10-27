@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
 class QueriedLog(object):
     """ The QueriedLog is a log of the GetLogsResponse which obtained from the log.
 
