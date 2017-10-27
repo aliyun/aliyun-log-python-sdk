@@ -4,15 +4,14 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-import requests
 
-import json
 
 try:
     import logservice_lz4
 except ImportError:
     pass
 
+import json
 from datetime import datetime
 from .log_logs_pb2 import LogGroup
 from aliyun.log.util import Util
@@ -38,6 +37,8 @@ from aliyun.log.shard_response import *
 from aliyun.log.shipper_response import *
 from aliyun.log.project_response import *
 import six
+import requests
+
 
 CONNECTION_TIME_OUT = 20
 API_VERSION = '0.6.0'
@@ -112,6 +113,8 @@ class LogClient(object):
         if not respText:
             return None
         try:
+            if six.PY3 and isinstance(respText, six.binary_type):
+                return json.loads(respText.decode('utf8'))
             return json.loads(respText)
         except Exception:
             raise LogException('BadResponse',
