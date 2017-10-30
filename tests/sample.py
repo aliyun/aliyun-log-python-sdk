@@ -205,6 +205,9 @@ def main():
     if not logstore:
         logstore = 'sdk-test' + str(random.randint(1, 1000))
 
+    assert endpoint and accessKeyId and accessKey and project, ValueError("endpoint/access_id/key and "
+                                                                          "project cannot be empty")
+
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
     sample_logstore(client, project, logstore)
