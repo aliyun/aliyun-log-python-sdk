@@ -88,7 +88,7 @@ class Util(object):
         if params:
             urlString = ''
             for key, value in sorted(six.iteritems(params)):
-                urlString += "{}={}&".format(key, value.decode('utf8') if isinstance(value, six.binary_type) else value)
+                urlString += "{0}={1}&".format(key, value.decode('utf8') if isinstance(value, six.binary_type) else value)
             resource += '?' + urlString[:-1]
 
         return resource
