@@ -195,11 +195,11 @@ def sample_cleanup(client, project, logstore):
 
 
 def main():
-    endpoint = os.environ.get('ALIYUN-LOG-SAMPLE-ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
-    accessKeyId = os.environ.get('ALIYUN-LOG-SAMPLE-ACCESSID', '')
-    accessKey = os.environ.get('ALIYUN-LOG-SAMPLE-ACCESSKEY', '')
-    project = os.environ.get('ALIYUN-LOG-SAMPLE-PROJECT', '')
-    logstore = os.environ.get('ALIYUN-LOG-SAMPLE-LOGSTORE', '')
+    endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
+    accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
+    accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
+    project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
+    logstore = os.environ.get('ALIYUN_LOG_SAMPLE_LOGSTORE', '')
     token = ""
 
     if not logstore:
