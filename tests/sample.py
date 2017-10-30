@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 from __future__ import print_function
 
@@ -14,9 +13,8 @@ from aliyun.log.machine_group_detail import *
 from aliyun.log.putlogsrequest import PutLogsRequest
 import time
 import random
+import os
 
-
-# import six
 
 # def log_enter_exit(fn):
 #     def wrapped(*args, **kwargs):
@@ -94,7 +92,7 @@ def sample_get_histograms(client, project, logstore):
 
 # @log_enter_exit
 def sample_machine_group(client, project, logstore):
-    group_name = logstore + "sample-group"
+    group_name = logstore + "-sample-group"
 
     machine_group = MachineGroupDetail(group_name, "ip", ["127.0.0.1", "127.0.0.2"], "Armory",
                                        {"externalName": "test-1", "groupTopic": "yyy"})
@@ -161,7 +159,7 @@ def sample_apply_config(client, project, logstore):
 
     client.create_logtail_config(project, logtail_config)
 
-    group_name = logstore + "sample-group"
+    group_name = logstore + "-sample-group"
     res = client.get_machine_group_applied_configs(project, group_name)
     res.log_print()
 
@@ -186,21 +184,34 @@ def sample_logstore(client, project, logstore):
     client.delete_logstore(project, logstore)
 
 
+def sample_cleanup(client, project, logstore):
+    logtail_config_name = logstore + "-stt1-logtail"
+    group_name = logstore + "-sample-group"
+
+    # delete all created items
+    client.delete_machine_group(project, group_name)
+    client.delete_logtail_config(project, logtail_config_name)
+    client.delete_logstore(project, logstore)
+
+
 def main():
-    endpoint = ''
-    accessKeyId = ''
-    accessKey = ''
-    project = ''
-    logstore = 'sdk-test' + str(random.randint(1, 1000))
+    endpoint = os.environ.get('ALIYUN-LOG-SAMPLE-ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
+    accessKeyId = os.environ.get('ALIYUN-LOG-SAMPLE-ACCESSID', '')
+    accessKey = os.environ.get('ALIYUN-LOG-SAMPLE-ACCESSKEY', '')
+    project = os.environ.get('ALIYUN-LOG-SAMPLE-PROJECT', '')
+    logstore = os.environ.get('ALIYUN-LOG-SAMPLE-LOGSTORE', '')
     token = ""
+
+    if not logstore:
+        logstore = 'sdk-test' + str(random.randint(1, 1000))
 
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
     sample_logstore(client, project, logstore)
-    time.sleep(1)
+    time.sleep(2)
 
     client.create_logstore(project, logstore, 1, 1)
-    time.sleep(1)
+    time.sleep(2)
 
     sample_list_logstores(client, project)
     sample_logtail_config(client, project, logstore)
@@ -217,6 +228,9 @@ def main():
 
     time.sleep(40)
     sample_get_logs(client, project, logstore)
+
+    time.sleep(10)
+    sample_cleanup(client, project, logstore)
 
 
 if __name__ == '__main__':
