@@ -1,20 +1,25 @@
 # Python SDK for AliCloud Log Service
 
-## Version:
+[![Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
+[![Build](https://travis-ci.org/wjo1212/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+
+**[README of Chinese](https://github.com/wjo1212/aliyun-log-python-sdk/blob/master/README_CN.md)**
+
+## Version
 
 0.6.5
 
-## Release Date:
+## Release Date
 
 2017-10-31
 
-## Introduction:
+## Introduction
 
 This is the open source version of Python SDK for AliCloud Log Service. It's a Python programming interfaces of Alicloud
 Log Service, providing encapsulations of Log Service Rest API. It helps Pythoner to connect to Alicloud Log Service more
 efficiently.
 
-### Features：
+### Features
 1. Wrap Rest API
 2. Implement the signature of API request
 3. Use format of Protocol Buffer to transfer data
@@ -29,17 +34,17 @@ efficiently.
 3. Python 3.3
 4. Python 3.4
 5. Python 3.5
-5. Python 3.6
+6. Python 3.6
 
-## Installation:
+## Installation
 ```shell
 pip install -U aliyun-log-python-sdk
 ```
 
-## Supported Log Service API：
+## Supported Log Service API
 1. Log Service API 0.6
 
-## Other resources：
+## Other resources
 
 1. Alicloud Log Service homepage：http://www.aliyun.com/product/sls/
 2. Alicloud Log Service doc：http://docs.aliyun.com/#/sls
