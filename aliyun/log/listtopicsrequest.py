@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from logrequest import LogRequest
+from .logrequest import LogRequest
+
 
 class ListTopicsRequest(LogRequest):
     """ The request used to get topics of a query from log. 
@@ -21,7 +22,7 @@ class ListTopicsRequest(LogRequest):
     :type line: int
     :param line: max topic counts to return
     """
-    
+
     def __init__(self, project=None, logstore=None, token=None, line=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
@@ -34,7 +35,7 @@ class ListTopicsRequest(LogRequest):
         :return: string, logstore name.
         """
         return self.logstore if self.logstore else ''
-    
+
     def set_logstore(self, logstore):
         """ Set logstore name
         
@@ -42,14 +43,14 @@ class ListTopicsRequest(LogRequest):
         :param logstore: logstore name
         """
         self.logstore = logstore
-    
+
     def get_token(self):
         """ Get start token to list topics
         
         :return: string, start token to list topics
         """
         return self.token
-    
+
     def set_token(self, token):
         """ Set start token to list topics
         
@@ -57,15 +58,14 @@ class ListTopicsRequest(LogRequest):
         :param token: start token to list topics
         """
         self.token = token
-    
-    
+
     def get_line(self):
         """ Get max topic counts to return
         
         :return: int, max topic counts to return
         """
         return self.line
-    
+
     def set_line(self, line):
         """ Set max topic counts to return
         
@@ -73,4 +73,3 @@ class ListTopicsRequest(LogRequest):
         :param line: max topic counts to return
         """
         self.line = line
-

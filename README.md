@@ -1,41 +1,51 @@
-# 阿里云日志服务Python SDK
+# Python SDK for AliCloud Log Service
 
-## 版本
+[![Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
+[![Build](https://travis-ci.org/wjo1212/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
 
-0.6.4
+**[README of Chinese](https://github.com/wjo1212/aliyun-log-python-sdk/blob/master/README_CN.md)**
 
-## 发布时间
+## Version
 
-2015-11-16
+0.6.5
 
-## 基本介绍：
+## Release Date
 
-这是Log Service SDK for Python的开源版本。Log Service SDK for Python是阿里云日志服务
-（Log Service）API的Python编程接口，提供了对于Log Service Rest API所有接口的封装
-和支持，帮助Python开发人员更快编程使用阿里云Log Service服务。
+2017-10-31
 
-### 具体功能：
+## Introduction
 
-1. 封装Rest API。
-2. 实现API请求的数字签名
-3. 实现API的Protocol Buffer格式发送日志
-4. 支持API定义的数据压缩方式
-5. 实现API查询数据和批量消费数据
-6. 使用异常统一处理错误
+This is the open source version of Python SDK for AliCloud Log Service. It's a Python programming interfaces of Alicloud
+Log Service, providing encapsulations of Log Service Rest API. It helps Pythoner to connect to Alicloud Log Service more
+efficiently.
 
-## 环境要求：
+### Features
+1. Wrap Rest API
+2. Implement the signature of API request
+3. Use format of Protocol Buffer to transfer data
+4. Support API defined compression style
+5. Support API to do batch query and data consumption
+6. Use exception to uncover errors
 
-1. Python 2.6, Python 2.7
+## Supported Python：
 
-## 安装
-pip install aliyun-log-python-sdk
+1. Python 2.6
+2. Python 2.7
+3. Python 3.3
+4. Python 3.4
+5. Python 3.5
+6. Python 3.6
 
-## 支持API版本：
+## Installation
+```shell
+pip install -U aliyun-log-python-sdk
+```
 
+## Supported Log Service API
 1. Log Service API 0.6
 
-## 其他资源：
+## Other resources
 
-1. 日志服务产品介绍：http://www.aliyun.com/product/sls/
-2. 日志服务产品文档：http://docs.aliyun.com/#/sls
-3. 其他问题请提工单
+1. Alicloud Log Service homepage：http://www.aliyun.com/product/sls/
+2. Alicloud Log Service doc：http://docs.aliyun.com/#/sls
+3. for any issues, please submit support tickets
