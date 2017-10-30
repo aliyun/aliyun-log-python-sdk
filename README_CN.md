@@ -3,6 +3,8 @@
 [![Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
 [![Build](https://travis-ci.org/wjo1212/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
 
+**[英文版README](https://github.com/wjo1212/aliyun-log-python-sdk/blob/master/README.md)**
+
 ## 版本
 
 0.6.5
