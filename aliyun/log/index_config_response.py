@@ -1,12 +1,14 @@
 #!/usr/bin/env python
-#encoding: utf-8
+# encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from aliyun.log.util import Util
-from aliyun.log.logresponse import LogResponse
+__all__ = ['CreateIndexResponse', 'UpdateIndexResponse', 'DeleteIndexResponse', 'GetIndexResponse']
+
 from aliyun.log.index_config import *
+from aliyun.log.logresponse import LogResponse
+
 
 class CreateIndexResponse(LogResponse):
     """ The response of the create_index API from log.
@@ -14,13 +16,14 @@ class CreateIndexResponse(LogResponse):
     :type header: dict
     :param header: CreateIndexResponse HTTP response header
     """
-    
+
     def __init__(self, header):
         LogResponse.__init__(self, header)
-    
+
     def log_print(self):
-        print 'CreateIndexResponse:'
-        print 'headers:', self.get_all_headers()
+        print('CreateIndexResponse:')
+        print('headers:', self.get_all_headers())
+
 
 class UpdateIndexResponse(LogResponse):
     """ The response of the update_index API from log.
@@ -28,13 +31,14 @@ class UpdateIndexResponse(LogResponse):
     :type header: dict
     :param header: UpdateIndexResponse HTTP response header
     """
-    
+
     def __init__(self, header):
         LogResponse.__init__(self, header)
-    
+
     def log_print(self):
-        print 'UpdateIndexResponse:'
-        print 'headers:', self.get_all_headers()
+        print('UpdateIndexResponse:')
+        print('headers:', self.get_all_headers())
+
 
 class DeleteIndexResponse(LogResponse):
     """ The response of the delete_index API from log.
@@ -42,13 +46,14 @@ class DeleteIndexResponse(LogResponse):
     :type header: dict
     :param header: DeleteIndexResponse HTTP response header
     """
-    
+
     def __init__(self, header):
         LogResponse.__init__(self, header)
-    
+
     def log_print(self):
-        print 'DeleteIndexResponse:'
-        print 'headers:', self.get_all_headers()
+        print('DeleteIndexResponse:')
+        print('headers:', self.get_all_headers())
+
 
 class GetIndexResponse(LogResponse):
     """ The response of the get_index_config API from log.
@@ -59,18 +64,16 @@ class GetIndexResponse(LogResponse):
     :type resp: dict
     :param resp: the HTTP response body
     """
-    
+
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        self.index_config = IndexConfig() 
+        self.index_config = IndexConfig()
         self.index_config.from_json(resp)
 
-
-    def get_index_config(self) : 
+    def get_index_config(self):
         return self.index_config
-    
-    def log_print(self):
-        print 'GetLogStoreResponse:'
-        print 'headers:', self.get_all_headers()
-        print 'index_configs:', str(self.index_config.to_json()) 
 
+    def log_print(self):
+        print('GetLogStoreResponse:')
+        print('headers:', self.get_all_headers())
+        print('index_configs:', str(self.index_config.to_json()))
