@@ -115,7 +115,7 @@ class ListMachineGroupResponse(LogResponse):
         print('headers:', self.get_all_headers())
         print('count:', str(self.count))
         print('total:', str(self.total))
-        print('m(achine_groups:', str(self.machine_groups))
+        print('machine_groups:', str(self.machine_groups))
 
 
 class ListMachinesResponse(LogResponse):
