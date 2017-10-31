@@ -22,11 +22,13 @@ except ImportError:
     from distutils.core import setup
 
 
-install_requires = ['requests', 'protobuf', 'six']
+install_requires = ['requests', 'protobuf', 'six', 'enum34', 'futures']
 
 packages = [
             'aliyun',
-            'aliyun.log'
+            'aliyun.log',
+            'aliyun.log.consumer',
+            'aliyun.log.consumer.loghub_exceptions'
             ]
 
 version = '0.6.5'
@@ -41,6 +43,13 @@ classifiers = [
             'Programming Language :: Python :: 3.6'
             ]
 
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    print("........")
+    long_description = open('README.md').read()
+
 setup(
       name='aliyun-log-python-sdk',
       version=version,
@@ -49,6 +58,7 @@ setup(
       url='http://www.aliyun.com/product/sls',
       install_requires=install_requires,
       packages=packages,
-      classifiers=classifiers
+      classifiers=classifiers,
+      long_description=long_description
      )
 
