@@ -65,58 +65,14 @@ class SampleConsumer(ConsumerProcessorBase):
             traceback.print_exc()
 
 
-# def sample_crud_consumer_group():
-#     client = LogClient(endpoint, accessKeyId, accessKey, token)
-#     ret = client.create_logstore(project, logstore, 2, 4)
-#     ret.log_print()
-#     time.sleep(60)
-#
-#     ret = client.list_shards(project, logstore)
-#     ret.log_print()
-#     assert [shard['shardID'] for shard in ret.get_shards_info()] == [0,1,2,3]
-#
-#     ret = client.create_consumer_group(project, logstore, consumer_group, 30, False)
-#     ret.log_print()
-#
-#     ret = client.list_consumer_group(project, logstore)
-#     ret.log_print()
-#
-#     time.sleep(60)
-#     ret = client.heart_beat(project, logstore, consumer_group, consumer_name1, [])
-#     ret.log_print()
-#
-#     ret = client.update_check_point(project, logstore, consumer_group, 0, base64_encodestring('0'),
-#                                     consumer_name1, force_success=True)
-#     ret.log_print()
-#
-#     ret = client.get_check_point(project, logstore, consumer_group)
-#     ret.log_print()
-#
-#     ret = client.delete_consumer_group(project, logstore, consumer_group)
-#     ret.log_print()
-#
-#     ret = client.delete_logstore(project, logstore)
-#     ret.log_print()
-#     time.sleep(5)
+test_item_count = 20
 
-# def _get_logs(client, project, logstore):
-#     res = client.get_cursor(project, logstore, 0, int(time.time() - 600))
-#     res.log_print()
-#     cursor = res.get_cursor()
-#
-#     res = client.pull_logs(project, logstore, 0, cursor, 100)
-#     res.log_print()
-#     ret = str(res.loggroup_list_json)
-#
-#     assert 'magic_user_0' in ret and 'magic_age_0' in ret \
-#            and 'magic_user_99' in ret and 'magic_age_99' in ret
-#
 
 def _prepare_data(client, project, logstore):
     topic = ''
     source = ''
 
-    for i in range(0, 100):
+    for i in range(0, test_item_count):
         logitemList = []  # LogItem list
 
         contents = [
@@ -133,6 +89,22 @@ def _prepare_data(client, project, logstore):
 
         response = client.put_logs(request)
         response.log_print()
+
+
+def sleep_until(seconds, exit_condition=None, expect_error=False):
+    if not exit_condition:
+        time.sleep(seconds)
+        return
+
+    s = time.time()
+    while time.time() - s < seconds:
+        try:
+            if exit_condition():
+                break
+        except Exception:
+            if expect_error:
+                continue
+        time.sleep(1)
 
 
 def sample_consumer_group():
@@ -157,19 +129,20 @@ def sample_consumer_group():
     client = LogClient(endpoint, accessKeyId, accessKey, token)
     ret = client.create_logstore(project, logstore, 2, 4)
     ret.log_print()
+
     time.sleep(60)
 
     # prepare data
     _prepare_data(client, project, logstore)
-    time.sleep(20)
+
     SampleConsumer.log_results = []
 
     # create two consumers in the consumer group
     option1 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=10,
+                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
                            data_fetch_interval=1)
     option2 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=10,
+                           consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
                            data_fetch_interval=1)
 
     print("*** start to consume data...")
@@ -178,7 +151,7 @@ def sample_consumer_group():
     client_worker2 = ConsumerWorker(SampleConsumer, consumer_option=option2)
     client_worker2.start()
 
-    time.sleep(60)
+    sleep_until(120, lambda: len(SampleConsumer.log_results) >= test_item_count)
 
     print("*** stopping workers")
     client_worker1.shutdown()
@@ -194,7 +167,8 @@ def sample_consumer_group():
     print(ret)
 
     assert 'magic_user_0' in ret and 'magic_age_0' in ret \
-           and 'magic_user_99' in ret and 'magic_age_99' in ret
+           and 'magic_user_' + str(test_item_count-1) in ret \
+           and 'magic_age_' + str(test_item_count-1) in ret
 
 
 if __name__ == '__main__':
