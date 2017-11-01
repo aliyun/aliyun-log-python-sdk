@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import os
-import random
 import time
 
 from aliyun.log.consumer import ConsumerProcessorBase
 from aliyun.log.consumer.config import LogHubConfig, CursorPosition
 from aliyun.log.consumer.worker import ConsumerWorker
 from aliyun.log.logclient import LogClient
+from aliyun.log.logitem import LogItem
+from aliyun.log.putlogsrequest import PutLogsRequest
+from random import randint as rd
+from threading import RLock
 
 
 class SampleConsumer(ConsumerProcessorBase):
     shard_id = -1
     last_check_time = 0
+    log_results = []
+    lock = RLock()
 
     def initialize(self, shard):
         self.shard_id = shard
@@ -30,18 +35,22 @@ class SampleConsumer(ConsumerProcessorBase):
             log_items['topic'] = log_group.Topic
             log_items['source'] = log_group.Source
             log_items['logs'] = items
-            print(log_items)
+
+            with SampleConsumer.lock:
+                SampleConsumer.log_results.append(log_items)
+                print(log_items)
+
         current_time = time.time()
         if current_time - self.last_check_time > 3:
             try:
                 check_point_tracker.save_check_point(True)
-            except:
+            except Exception:
                 import traceback
                 traceback.print_exc()
         else:
             try:
                 check_point_tracker.save_check_point(False)
-            except:
+            except Exception:
                 import traceback
                 traceback.print_exc()
 
@@ -52,79 +61,119 @@ class SampleConsumer(ConsumerProcessorBase):
     def shutdown(self, check_point_tracker):
         try:
             check_point_tracker.save_check_point(True)
-        except Exception as e:
+        except Exception:
             import traceback
             traceback.print_exc()
 
 
-endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'ap-southeast-1.log.aliyuncs.com')
-accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
-accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
-project = 'dlq-test-consumer'
-logstore = 'test1'
-consumer_group = 'consumer-group-5'
-consumer_name1 = "consumer-group-1-A"
-consumer_name2 = "consumer-group-1-B"
-token = ""
+# def sample_crud_consumer_group():
+#     client = LogClient(endpoint, accessKeyId, accessKey, token)
+#     ret = client.create_logstore(project, logstore, 2, 4)
+#     ret.log_print()
+#     time.sleep(60)
+#
+#     ret = client.list_shards(project, logstore)
+#     ret.log_print()
+#     assert [shard['shardID'] for shard in ret.get_shards_info()] == [0,1,2,3]
+#
+#     ret = client.create_consumer_group(project, logstore, consumer_group, 30, False)
+#     ret.log_print()
+#
+#     ret = client.list_consumer_group(project, logstore)
+#     ret.log_print()
+#
+#     time.sleep(60)
+#     ret = client.heart_beat(project, logstore, consumer_group, consumer_name1, [])
+#     ret.log_print()
+#
+#     ret = client.update_check_point(project, logstore, consumer_group, 0, base64_encodestring('0'),
+#                                     consumer_name1, force_success=True)
+#     ret.log_print()
+#
+#     ret = client.get_check_point(project, logstore, consumer_group)
+#     ret.log_print()
+#
+#     ret = client.delete_consumer_group(project, logstore, consumer_group)
+#     ret.log_print()
+#
+#     ret = client.delete_logstore(project, logstore)
+#     ret.log_print()
+#     time.sleep(5)
 
-if not logstore:
-    logstore = 'sdk-test' + str(random.randint(1, 1000))
+# def _get_logs(client, project, logstore):
+#     res = client.get_cursor(project, logstore, 0, int(time.time() - 600))
+#     res.log_print()
+#     cursor = res.get_cursor()
+#
+#     res = client.pull_logs(project, logstore, 0, cursor, 100)
+#     res.log_print()
+#     ret = str(res.loggroup_list_json)
+#
+#     assert 'magic_user_0' in ret and 'magic_age_0' in ret \
+#            and 'magic_user_99' in ret and 'magic_age_99' in ret
+#
 
-assert endpoint and accessKeyId and accessKey and project, ValueError("endpoint/access_id/key and "
-                                                                      "project cannot be empty")
+def _prepare_data(client, project, logstore):
+    topic = ''
+    source = ''
 
-client = LogClient(endpoint, accessKeyId, accessKey, token)
+    for i in range(0, 100):
+        logitemList = []  # LogItem list
+
+        contents = [
+            ('user', 'magic_user_' + str(i)),
+            ('avg', 'magic_age_' + str(i))
+        ]
+        logItem = LogItem()
+        logItem.set_time(int(time.time()))
+        logItem.set_contents(contents)
+
+        logitemList.append(logItem)
+
+        request = PutLogsRequest(project, logstore, topic, source, logitemList)
+
+        response = client.put_logs(request)
+        response.log_print()
 
 
-def main2():
-    # CRUD consumer group
-    ret = client.list_consumer_group(project, logstore)
+def sample_consumer_group():
+    # load options from envs
+    endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', '')
+    accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
+    accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
+    project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
+    logstore = ''
+    consumer_group = 'consumer-group-1'
+    consumer_name1 = "consumer-group-1-A"
+    consumer_name2 = "consumer-group-1-B"
+    token = ""
+
+    if not logstore:
+        logstore = 'consumer_group_test_' + str(rd(1, 1000))
+
+    assert endpoint and accessKeyId and accessKey and project, ValueError("endpoint/access_id/key and "
+                                                                          "project cannot be empty")
+
+    # prepare clients
+    client = LogClient(endpoint, accessKeyId, accessKey, token)
+    ret = client.create_logstore(project, logstore, 2, 4)
     ret.log_print()
-
-    ret = client.list_shards(project, logstore)
-    ret.log_print()
-
-    ret = client.create_consumer_group(project, logstore, consumer_group, 30, in_order=False)
-    ret.log_print()
-
-    ret = client.heart_beat(project, logstore, consumer_group, consumer_name1, [])
-    ret.log_print()
-
-    ret = client.heart_beat(project, logstore, consumer_group, consumer_name2, [])
-    ret.log_print()
-
-    ret = client.update_check_point(project, logstore, consumer_group, 0, util.base64_encodestring('0'),
-                                    consumer_name1, force_success=True)
-    ret.log_print()
-
-    ret = client.get_check_point(project, logstore, consumer_group)
-    ret.log_print()
-
-    ret = client.delete_consumer_group(project, logstore, consumer_group)
-    ret.log_print()
-
-
-def main1():
-    option1 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=30,
-                           data_fetch_interval=1)
-
-    client_worker1 = ConsumerWorker(SampleConsumer, consumer_option=option1)
-    client_worker1.start()
-
     time.sleep(60)
 
-    client_worker1.shutdown()
+    # prepare data
+    _prepare_data(client, project, logstore)
+    time.sleep(20)
+    SampleConsumer.log_results = []
 
-
-def main3():
+    # create two consumers in the consumer group
     option1 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=30,
+                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=10,
                            data_fetch_interval=1)
     option2 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=30,
+                           consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=10,
                            data_fetch_interval=1)
 
+    print("*** start to consume data...")
     client_worker1 = ConsumerWorker(SampleConsumer, consumer_option=option1)
     client_worker1.start()
     client_worker2 = ConsumerWorker(SampleConsumer, consumer_option=option2)
@@ -136,6 +185,18 @@ def main3():
     client_worker1.shutdown()
     client_worker2.shutdown()
 
+    # clean-up
+    ret = client.delete_logstore(project, logstore)
+    ret.log_print()
+
+    # validate
+    ret = str(SampleConsumer.log_results)
+    print("*** get content:")
+    print(ret)
+
+    assert 'magic_user_0' in ret and 'magic_age_0' in ret \
+           and 'magic_user_99' in ret and 'magic_age_99' in ret
+
 
 if __name__ == '__main__':
-    main3()
+    sample_consumer_group()

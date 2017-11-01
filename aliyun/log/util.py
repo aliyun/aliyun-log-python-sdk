@@ -16,6 +16,8 @@ def base64_encodestring(s):
     if six.PY2:
         return base64.encodestring(s)
     else:
+        if isinstance(s, str):
+            s = s.encode('utf8')
         return base64.encodebytes(s).decode('utf8')
 
 
