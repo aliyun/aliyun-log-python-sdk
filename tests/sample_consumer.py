@@ -9,7 +9,6 @@ from aliyun.log.consumer.worker import ConsumerWorker
 from aliyun.log.logclient import LogClient
 from aliyun.log.logitem import LogItem
 from aliyun.log.putlogsrequest import PutLogsRequest
-from random import randint as rd
 from threading import RLock
 
 
@@ -149,7 +148,7 @@ def sample_consumer_group():
     token = ""
 
     if not logstore:
-        logstore = 'consumer_group_test_' + str(rd(1, 1000))
+        logstore = 'consumer_group_test_' + str(time.time()).replace('.', '_')
 
     assert endpoint and accessKeyId and accessKey and project, ValueError("endpoint/access_id/key and "
                                                                           "project cannot be empty")

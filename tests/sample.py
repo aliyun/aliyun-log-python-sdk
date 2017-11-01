@@ -14,7 +14,6 @@ from aliyun.log.putlogsrequest import PutLogsRequest
 from aliyun.log.util import base64_encodestring
 
 import time
-import random
 import os
 
 
@@ -219,7 +218,7 @@ def main():
     token = ""
 
     if not logstore:
-        logstore = 'sdk-test' + str(random.randint(1, 1000))
+        logstore = 'sdk-test' + str(time.time()).replace('.', '_')
 
     assert endpoint and accessKeyId and accessKey and project, ValueError("endpoint/access_id/key and "
                                                                           "project cannot be empty")
