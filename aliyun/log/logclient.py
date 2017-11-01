@@ -305,7 +305,6 @@ class LogClient(object):
         resource = "/logstores/" + logstore
         (resp, header) = self._send("GET", project, None, resource, params, headers)
 
-        # print("***debug: list topic res: ", resp, header)
         return ListTopicsResponse(resp, header)
 
     def get_histograms(self, request):

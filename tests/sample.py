@@ -227,10 +227,10 @@ def main():
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
     sample_logstore(client, project, logstore)
-    time.sleep(2)
+    time.sleep(40)
 
     client.create_logstore(project, logstore, 1, 1)
-    time.sleep(2)
+    time.sleep(40)
 
     sample_list_logstores(client, project)
     sample_logtail_config(client, project, logstore)
