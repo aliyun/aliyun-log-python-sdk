@@ -27,8 +27,7 @@ install_requires = ['requests', 'protobuf', 'six', 'enum34', 'futures']
 packages = [
             'aliyun',
             'aliyun.log',
-            'aliyun.log.consumer',
-            'aliyun.log.consumer.loghub_exceptions'
+            'aliyun.log.consumer'
             ]
 
 version = '0.6.5'
@@ -47,7 +46,6 @@ try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
 except(IOError, ImportError):
-    print("........")
     long_description = open('README.md').read()
 
 setup(
@@ -61,4 +59,3 @@ setup(
       classifiers=classifiers,
       long_description=long_description
      )
-
