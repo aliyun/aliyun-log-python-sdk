@@ -44,5 +44,5 @@ pip install -U aliyun-log-python-sdk
 ## 其他资源：
 
 1. 日志服务产品介绍：http://www.aliyun.com/product/sls/
-2. 日志服务产品文档：http://docs.aliyun.com/#/sls
+2. 日志服务产品文档：https://help.aliyun.com/product/28958.html
 3. 其他问题请提工单
