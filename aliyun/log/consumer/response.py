@@ -8,7 +8,6 @@ from ..logresponse import LogResponse
 class CreateConsumerGroupResponse(LogResponse):
     def __init__(self, headers):
         LogResponse.__init__(self, headers)
-        # super(CreateConsumerGroupResponce, self).__init__(headers)
 
 
 class ConsumerGroupCheckPointResponse(LogResponse):
@@ -62,7 +61,7 @@ class ListConsumerGroupResponse(LogResponse):
         LogResponse.__init__(self, headers)
         self.count = len(resp)
         self.resp = resp
-        self.consumer_groups = [ConsumerGroupEntity(group[u'name'], group[u'timeout'], group[u'order']) for group in
+        self.consumer_groups = [ConsumerGroupEntity(group['name'], group['timeout'], group['order']) for group in
                                 self.resp]
 
     def get_count(self):

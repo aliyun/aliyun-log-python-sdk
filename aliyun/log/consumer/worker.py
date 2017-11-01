@@ -29,7 +29,7 @@ class ConsumerWorker(Thread):
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval)
 
     def run(self):
-        logging.debug('worker start')
+        self.logger.debug('worker start')
         self.heart_beat.start()
         while not self.shut_down_flag:
             held_shards = self.heart_beat.get_held_shards()
@@ -48,11 +48,11 @@ class ConsumerWorker(Thread):
         for shard, consumer in self.shard_consumers.items():
             if shard not in owned_shards:
                 consumer.shut_down()
-                self.logger.warning('Try to shut down consumer shard: ' + str(shard))
+                self.logger.info('Try to shut down unassigned consumer shard: ' + str(shard))
             if consumer.is_shutdown():
                 self.heart_beat.remove_heart_shard(shard)
                 remove_shards.append(shard)
-                self.logger.warning('Remove a consumer shard:' + str(shard))
+                self.logger.info('Remove an unassigned consumer shard:' + str(shard))
 
         for shard in remove_shards:
             self.shard_consumers.pop(shard)
@@ -60,7 +60,7 @@ class ConsumerWorker(Thread):
     def shutdown(self):
         self.shut_down_flag = True
         self.heart_beat.shutdown()
-        logging.debug('worker stop')
+        self.logger.debug('worker stop')
 
     def _get_shard_consumer(self, shard_id):
         consumer = self.shard_consumers.get(shard_id, None)

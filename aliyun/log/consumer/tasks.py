@@ -140,7 +140,7 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor):
                 and 'invalidcursor' in exception.get_error_code().lower():
             try:
                 cursor = loghub_client_adapter.get_end_cursor(shard_id)
-            except Exception as e:
+            except Exception:
                 return TaskResult(exception)
         else:
             break
@@ -163,7 +163,7 @@ def consumer_shutdown_task(processor, check_point_tracker):
 
     try:
         check_point_tracker.get_check_point()
-    except Exception as e:
+    except Exception:
         logger.error('Failed to flush check point', exc_info=True)
 
     return TaskResult(exception)

@@ -14,7 +14,6 @@ except ImportError:
 from datetime import datetime
 
 import requests
-import six
 
 from aliyun.log.acl_response import *
 from aliyun.log.cursor_response import GetCursorResponse

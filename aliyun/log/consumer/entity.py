@@ -3,8 +3,8 @@
 import json
 import six
 
-class ConsumerGroupEntity(object):
 
+class ConsumerGroupEntity(object):
     def __init__(self, consumer_group_name, timeout, in_order=False):
         self.consumer_group_name = consumer_group_name
         self.timeout = timeout

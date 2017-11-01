@@ -19,7 +19,7 @@ class ConsumerHeatBeat(Thread):
         self.shut_down_flag = False
 
     def run(self):
-        logging.debug('heart beat start')
+        logger.debug('heart beat start')
         while not self.shut_down_flag:
             try:
                 response_shards = []
@@ -28,8 +28,7 @@ class ConsumerHeatBeat(Thread):
                 self.mheart_shards = self.mheld_shards[:]
                 time.sleep(self.heartbeat_interval/2.0)
             except Exception as e:
-                #print(e)
-                pass
+                logger.warning("fail to heat beat", e)
 
     def get_held_shards(self):
         """
@@ -39,7 +38,7 @@ class ConsumerHeatBeat(Thread):
         return self.mheld_shards[:]
 
     def shutdown(self):
-        logging.debug('heart beat stop')
+        logger.debug('heart beat stop')
         self.shut_down_flag = True
 
     def remove_heart_shard(self, shard):

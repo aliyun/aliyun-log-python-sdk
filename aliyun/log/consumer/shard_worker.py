@@ -43,7 +43,7 @@ class ShardConsumerWorker(object):
         self.logger = logging.getLogger(__name__)
 
     def consume(self):
-        logging.debug('consumer start consuming')
+        self.logger.debug('consumer start consuming')
         self.check_and_generate_next_task()
         if self.consumer_status == ConsumerStatus.PROCESSING and self.last_fetch_log_group is None:
             self.fetch_data()
@@ -136,6 +136,7 @@ class ShardConsumerWorker(object):
                     roll_back_checkpoint = process_task_result.get_rollback_check_point()
                     if roll_back_checkpoint:
                         self.last_fetch_log_group = None
+                        self.logger.info("user defined to roll-back check-point, cancel current fetching task")
                         self.cancel_current_fetch()
                         self.next_fetch_cursor = roll_back_checkpoint
 
@@ -172,13 +173,14 @@ class ShardConsumerWorker(object):
 
         elif self.consumer_status == ConsumerStatus.SHUTTING_DOWN:
             self.current_task_exist = True
+            self.logger.info("start to cancel fetch job")
             self.cancel_current_fetch()
             self.task_future = self.executor.submit(consumer_shutdown_task, self.processor, self.checkpoint_tracker)
 
     def cancel_current_fetch(self):
         if self.fetch_data_future is not None:
             self.fetch_data_future.cancel()
-            self.logger.warning('Cancel a fetch task, shard id: ' + str(self.shard_id))
+            self.logger.info('Cancel a fetch task, shard id: ' + str(self.shard_id))
             self.fetch_data_future = None
 
     def _sample_log_error(self, result):
