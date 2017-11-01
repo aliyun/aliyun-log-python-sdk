@@ -11,34 +11,31 @@ try:
 except ImportError:
     pass
 
-import json
 from datetime import datetime
-from .log_logs_pb2 import LogGroup
-from aliyun.log.util import Util
-from aliyun.log.logexception import LogException
-from aliyun.log.getlogsresponse import GetLogsResponse
-from aliyun.log.putlogsresponse import PutLogsResponse
-from aliyun.log.listtopicsresponse import ListTopicsResponse
-from aliyun.log.listlogstoresresponse import ListLogstoresResponse
-from aliyun.log.gethistogramsresponse import GetHistogramsResponse
 
-from aliyun.log.logstore_config_response import *
-
-from aliyun.log.pulllog_response import PullLogResponse
-from aliyun.log.cursor_response import GetCursorResponse
-from aliyun.log.cursor_time_response import GetCursorTimeResponse
-
-from aliyun.log.index_config_response import *
-
-from aliyun.log.logtail_config_response import *
-from aliyun.log.machinegroup_response import *
-from aliyun.log.acl_response import *
-from aliyun.log.shard_response import *
-from aliyun.log.shipper_response import *
-from aliyun.log.project_response import *
-import six
 import requests
 
+from aliyun.log.acl_response import *
+from aliyun.log.cursor_response import GetCursorResponse
+from aliyun.log.cursor_time_response import GetCursorTimeResponse
+from aliyun.log.gethistogramsresponse import GetHistogramsResponse
+from aliyun.log.getlogsresponse import GetLogsResponse
+from aliyun.log.index_config_response import *
+from aliyun.log.listlogstoresresponse import ListLogstoresResponse
+from aliyun.log.listtopicsresponse import ListTopicsResponse
+from aliyun.log.logexception import LogException
+from aliyun.log.logstore_config_response import *
+from aliyun.log.logtail_config_response import *
+from aliyun.log.machinegroup_response import *
+from aliyun.log.project_response import *
+from aliyun.log.pulllog_response import PullLogResponse
+from aliyun.log.putlogsresponse import PutLogsResponse
+from aliyun.log.shard_response import *
+from aliyun.log.shipper_response import *
+from aliyun.log.util import Util
+from .consumer.request import *
+from .consumer.response import *
+from .log_logs_pb2 import LogGroup
 
 CONNECTION_TIME_OUT = 20
 API_VERSION = '0.6.0'
@@ -308,7 +305,6 @@ class LogClient(object):
         resource = "/logstores/" + logstore
         (resp, header) = self._send("GET", project, None, resource, params, headers)
 
-        # print("***debug: list topic res: ", resp, header)
         return ListTopicsResponse(resp, header)
 
     def get_histograms(self, request):
@@ -1566,3 +1562,95 @@ class LogClient(object):
 
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteProjectResponse(header)
+
+    def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
+        request = CreateConsumerGroupRequest(project, logstore, ConsumerGroupEntity(consumer_group, timeout, in_order))
+        consumer_group = request.consumer_group
+        body_str = consumer_group.to_request_json()
+
+        headers = {
+            "x-log-bodyrawsize": '0',
+            "Content-Type": "application/json"
+        }
+        params = {}
+
+        project = request.get_project()
+        resource = "/logstores/" + request.get_logstore() + "/consumergroups"
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateConsumerGroupResponse(header)
+
+    def update_consumer_group(self, project, logstore, consumer_group, timeout=None, in_order=None):
+        if in_order is None and timeout is None:
+            raise ValueError('in_order and timeout can\'t all be None')
+        elif in_order is not None and timeout is not None:
+            body_dict = {
+                'order': in_order,
+                'timeout': timeout
+            }
+        elif in_order is not None:
+            body_dict = {
+                'order': in_order
+            }
+        else:
+            body_dict = {
+                'timeout': timeout
+            }
+        body_str = six.b(json.dumps(body_dict))
+
+        headers = {
+            "x-log-bodyrawsize": str(len(body_str)),
+            "Content-Type": "application/json"
+        }
+        params = {}
+        resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
+        (resp, header) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateConsumerGroupResponse(header)
+
+    def delete_consumer_group(self, project, logstore, consumer_group):
+
+        headers = {"x-log-bodyrawsize": '0'}
+        params = {}
+
+        resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteConsumerGroupResponse(header)
+
+    def list_consumer_group(self, project, logstore):
+
+        resource = "/logstores/" + logstore + "/consumergroups"
+        params = {}
+        headers = {}
+
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListConsumerGroupResponse(resp, header)
+
+    def update_check_point(self, project, logstore, consumer_group, shard, check_point,
+                           consumer='', force_success=True):
+
+        request = ConsumerGroupUpdateCheckPointRequest(project, logstore, consumer_group,
+                                                       consumer, shard, check_point, force_success)
+        params = request.get_request_params()
+        body_str = request.get_request_body()
+        headers = {"Content-Type": "application/json"}
+        resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return ConsumerGroupUpdateCheckPointResponse(header)
+
+    def get_check_point(self, project, logstore, consumer_group, shard=-1):
+        request = ConsumerGroupGetCheckPointRequest(project, logstore, consumer_group, shard)
+        params = request.get_params()
+        headers = {}
+        resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ConsumerGroupCheckPointResponse(resp, header)
+
+    def heart_beat(self, project, logstore, consumer_group, consumer, shards=None):
+        if shards is None:
+            shards = []
+        request = ConsumerGroupHeartBeatRequest(project, logstore, consumer_group, consumer, shards)
+        body_str = request.get_request_body()
+        params = request.get_params()
+        headers = {"Content-Type": "application/json"}
+        resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
+        (resp, header) = self._send('POST', project, body_str, resource, params, headers)
+        return ConsumerGroupHeartBeatResponse(resp, header)
