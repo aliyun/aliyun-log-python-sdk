@@ -11,20 +11,11 @@ from aliyun.log.logitem import LogItem
 from aliyun.log.logtail_config_detail import *
 from aliyun.log.machine_group_detail import *
 from aliyun.log.putlogsrequest import PutLogsRequest
+from aliyun.log.util import base64_encodestring
+
 import time
 import random
 import os
-
-
-# def log_enter_exit(fn):
-#     def wrapped(*args, **kwargs):
-#         print("** enter: ", fn.__name__)
-#         ret = fn(*args, **kwargs)
-#         print("** exit: ", fn.__name__)
-#         return ret
-#
-#     return wrapped
-
 
 
 def sample_put_logs(client, project, logstore):
@@ -194,12 +185,37 @@ def sample_cleanup(client, project, logstore):
     client.delete_logstore(project, logstore)
 
 
+def sample_crud_consumer_group(client, project, logstore, consumer_group):
+    consumer_name1 = 'consumer_A'
+
+    ret = client.create_consumer_group(project, logstore, consumer_group, 30, False)
+    ret.log_print()
+
+    ret = client.list_consumer_group(project, logstore)
+    ret.log_print()
+
+    time.sleep(60)
+    ret = client.heart_beat(project, logstore, consumer_group, consumer_name1, [])
+    ret.log_print()
+
+    ret = client.update_check_point(project, logstore, consumer_group, 0, base64_encodestring('0'),
+                                    consumer_name1, force_success=True)
+    ret.log_print()
+
+    ret = client.get_check_point(project, logstore, consumer_group)
+    ret.log_print()
+
+    ret = client.delete_consumer_group(project, logstore, consumer_group)
+    ret.log_print()
+
+
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
     accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
     accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
     project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
     logstore = os.environ.get('ALIYUN_LOG_SAMPLE_LOGSTORE', '')
+    consumer_group = 'sample_consumer_group_1'
     token = ""
 
     if not logstore:
@@ -231,6 +247,9 @@ def main():
 
     time.sleep(40)
     sample_get_logs(client, project, logstore)
+
+    time.sleep(10)
+    sample_crud_consumer_group(client, project, logstore, consumer_group)
 
     time.sleep(10)
     sample_cleanup(client, project, logstore)
