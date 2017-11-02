@@ -7,6 +7,7 @@
 from aliyun.log.util import Util
 from .log_logs_pb2 import LogGroupList
 from .logresponse import LogResponse
+from .util import Util
 
 
 class PullLogResponse(LogResponse):
@@ -21,8 +22,8 @@ class PullLogResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        self.next_cursor = Util.convert_unicode_to_str(header["x-log-cursor"])
-        self.log_count = int(header["x-log-count"])
+        self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
+        self.log_count = int(Util.h_v_t(header, "x-log-count"))
         self.loggroup_list = LogGroupList()
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None

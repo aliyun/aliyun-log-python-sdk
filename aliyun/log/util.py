@@ -74,7 +74,7 @@ class Util(object):
     def canonicalized_log_headers(headers):
         content = ''
         for key in sorted(six.iterkeys(headers)):
-            if key[:6] == 'x-log-' or key[:6] == 'x-acs-':  # x-log- header
+            if key[:6].lower() in ('x-log-', 'x-acs-'):  # x-log- header
                 content += key + ':' + str(headers[key]) + "\n"
         return content
 
@@ -140,3 +140,33 @@ class Util(object):
         if key in json_map:
             return json_map[key]
         return default_value
+
+    @staticmethod
+    def h_v_t(header, key):
+        """
+        get header value with title
+        try to get key from header and consider case sensitive
+        e.g. header['x-log-abc'] or header['X-Log-Abc']
+        :param header:
+        :param key:
+        :return:
+        """
+        if key not in header:
+            key = key.title()
+
+        return header[key]
+
+    @staticmethod
+    def h_v_td(header, key, default):
+        """
+        get header value with title with default value
+        try to get key from header and consider case sensitive
+        e.g. header['x-log-abc'] or header['X-Log-Abc']
+        :param header:
+        :param key:
+        :return:
+        """
+        if key not in header:
+            key = key.title()
+
+        return header.get(key, default)

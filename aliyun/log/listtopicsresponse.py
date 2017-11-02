@@ -5,7 +5,7 @@
 # All rights reserved.
 
 from .logresponse import LogResponse
-
+from .util import Util
 
 class ListTopicsResponse(LogResponse):
     """ The response of the ListTopic API from log.
@@ -19,8 +19,8 @@ class ListTopicsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        self.count = header['x-log-count']
-        self.nextToken = header['x-log-nexttoken']
+        self.count = Util.h_v_t(header, 'x-log-count')
+        self.nextToken = Util.h_v_t(header, 'x-log-nexttoken')
         self.topics = resp
 
     def get_count(self):

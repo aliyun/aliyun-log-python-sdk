@@ -36,10 +36,10 @@ from aliyun.log.util import Util
 from .consumer.request import *
 from .consumer.response import *
 from .log_logs_pb2 import LogGroup
+from .util import Util
+from aliyun.log import API_VERSION, USER_AGENT
 
 CONNECTION_TIME_OUT = 20
-API_VERSION = '0.6.0'
-USER_AGENT = 'log-python-sdk-v-0.6.1'
 
 """
 LogClient class is the main class in the SDK. It can be used to communicate with 
@@ -140,7 +140,7 @@ class LogClient(object):
         for key, value in respHeader.items():
             header[key] = value
 
-        requestId = header['x-log-requestid'] if 'x-log-requestid' in header else ''
+        requestId = Util.h_v_td(header, 'x-log-requestid', '')
 
         if status == 200:
             if respons_body_type == 'json':
@@ -504,7 +504,7 @@ class LogClient(object):
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
         if compress:
-            raw_size = int(header['x-log-bodyrawsize'])
+            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
             raw_data = logservice_lz4.uncompress(raw_size, resp)
             return PullLogResponse(raw_data, header)
         else:
