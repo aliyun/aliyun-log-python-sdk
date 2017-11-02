@@ -1,5 +1,14 @@
 # Release History
 
+### 0.6.6 (2017-11-10)
+----------------------------
+**Implementations**
+- Add support for Consumer Group
+
+**Newly Supported Python**
+- PyPy2
+- PyPy3
+
 
 ### 0.6.5 (2017-10-30)
 ----------------------------

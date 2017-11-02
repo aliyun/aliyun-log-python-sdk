@@ -36,7 +36,7 @@ packages = [
             'aliyun.log.consumer'
             ]
 
-version = '0.6.5'
+version = '0.6.6'
 
 classifiers = [
             'Development Status :: 5 - Production/Stable',

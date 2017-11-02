@@ -7,11 +7,11 @@
 
 ## Version
 
-0.6.5
+0.6.6
 
 ## Release Date
 
-2017-10-31
+2017-11-10
 
 ## Introduction
 
@@ -35,6 +35,9 @@ efficiently.
 4. Python 3.4
 5. Python 3.5
 6. Python 3.6
+7. Pypy2
+8. Pypy3
+
 
 ## Installation
 ```shell
