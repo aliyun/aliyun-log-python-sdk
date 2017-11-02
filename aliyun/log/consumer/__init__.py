@@ -1,0 +1,3 @@
+
+from .tasks import ConsumerProcessorBase
+

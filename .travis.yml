@@ -13,3 +13,4 @@ install:
 
 script:
   - python tests/sample.py
+  - python tests/sample_consumer.py
