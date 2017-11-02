@@ -50,5 +50,5 @@ pip install -U aliyun-log-python-sdk
 ## Other resources
 
 1. Alicloud Log Service homepage：http://www.aliyun.com/product/sls/
-2. Alicloud Log Service doc：http://docs.aliyun.com/#/sls
+2. Alicloud Log Service doc：https://www.alibabacloud.com/help/product/28958.htm
 3. for any issues, please submit support tickets
