@@ -8,7 +8,7 @@ from .logresponse import LogResponse
 from .queriedlog import QueriedLog
 
 import six
-
+from .util import Util
 
 class GetLogsResponse(LogResponse):
     """ The response of the GetLog API from log.
@@ -22,8 +22,7 @@ class GetLogsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        # self.count = header['x-log-count']
-        self.progress = header['x-log-progress']
+        self.progress = Util.h_v_t(header, 'x-log-progress')
         self.logs = []
         for data in resp:
             contents = {}

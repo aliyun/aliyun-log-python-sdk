@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+from .util import Util
 
 class LogResponse(object):
     """ The base response class of all log response. 
@@ -20,7 +21,7 @@ class LogResponse(object):
         
         :return: string, request id
         """
-        return self.headers['x-log-requestid'] if 'x-log-requestid' in self.headers else ''
+        return Util.h_v_td(self.headers, 'x-log-requestid', '')
 
     def get_all_headers(self):
         """ Get all http header of the response

@@ -1,17 +1,21 @@
 # Python SDK for AliCloud Log Service
 
-[![Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
-[![Build](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+[![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
+[![GitHub Releases](https://img.shields.io/github/tag/aliyun/aliyun-log-python-sdk.svg?label=github+release)](https://github.com/aliyun/aliyun-log-python-sdk/releases)
+[![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+[![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
+[![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
+![License](https://img.shields.io/pypi/l/aliyun-log-python-sdk.svg)
 
-**[README of Chinese](https://github.com/wjo1212/aliyun-log-python-sdk/blob/master/README_CN.md)**
+#### [README in Chinese](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README_CN.md)
 
 ## Version
 
-0.6.5
+0.6.6
 
 ## Release Date
 
-2017-10-31
+2017-11-10
 
 ## Introduction
 
@@ -35,6 +39,9 @@ efficiently.
 4. Python 3.4
 5. Python 3.5
 6. Python 3.6
+7. Pypy2
+8. Pypy3
+
 
 ## Installation
 ```shell
@@ -47,5 +54,5 @@ pip install -U aliyun-log-python-sdk
 ## Other resources
 
 1. Alicloud Log Service homepage：http://www.aliyun.com/product/sls/
-2. Alicloud Log Service doc：http://docs.aliyun.com/#/sls
+2. Alicloud Log Service doc：https://www.alibabacloud.com/help/product/28958.htm
 3. for any issues, please submit support tickets

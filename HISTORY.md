@@ -1,9 +1,17 @@
-.. :changelog:
+# Release History
 
-Release History
----------------
-0.6.5 (2017-10-30)
-+++++++++++++++++++
+### 0.6.6 (2017-11-10)
+----------------------------
+**Implementations**
+- Add support for Consumer Group
+
+**Newly Supported Python**
+- PyPy2
+- PyPy3
+
+
+### 0.6.5 (2017-10-30)
+----------------------------
 **Implementations**
 - Add support for Python 3.x
 
@@ -15,18 +23,15 @@ Release History
 - Python 3.5
 - Python 3.6
 
-
-0.6.4 (2017-10-25)
-+++++++++++++++++++
+### 0.6.4 (2017-10-25)
+----------------------------
 **Improvements**
 - Uploaded to Pypi to support pip installation
 
 
-0.6.0 (2015-11-16)
-+++++++++++++++++++
-
+### 0.6.0 (2015-11-16)
+----------------------------
 **Implementations**
-
 - Wrap Rest API
 - Implement the signature of API request
 - Use format of Protocol Buffer to transfer data
