@@ -9,6 +9,9 @@
 - PyPy2
 - PyPy3
 
+**Fixing**
+- Support case insensitive in header name via REST
+
 
 ### 0.6.5 (2017-10-30)
 ----------------------------

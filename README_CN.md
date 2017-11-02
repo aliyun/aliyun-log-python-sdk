@@ -1,7 +1,6 @@
 # 阿里云日志服务Python SDK
 
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
-[![GitHub Releases](https://img.shields.io/github/tag/aliyun/aliyun-log-python-sdk.svg?label=github+release)](https://github.com/aliyun/aliyun-log-python-sdk/releases)
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
 [![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
