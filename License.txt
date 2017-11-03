@@ -1,7 +1,0 @@
-﻿阿里云计算日志服务软件开发工具包Python语言版
-Aliyun log service SDK for Python
-
-版权所有 （C）阿里云计算有限公司
-Copyright (C) Alibaba Cloud Computing
-All rights reserved.
-http://www.aliyun.com

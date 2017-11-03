@@ -40,6 +40,8 @@ version = '0.6.6'
 
 classifiers = [
             'Development Status :: 5 - Production/Stable',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: OS Independent',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3.3',
