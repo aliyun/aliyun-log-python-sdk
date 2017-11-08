@@ -127,7 +127,8 @@ def sample_logtail_config(client, project, logstore):
     logtail_config = CommonRegLogConfigDetail(logtail_config_name, logstore,
                                               "http://cn-hangzhou-devcommon-intranet.sls.aliyuncs.com", "/apsara/xxx",
                                               "*.LOG",
-                                              "%Y-%m-%d %H:%M:%S", "xxx.*", "(.*)(.*)", ["time", "value"])
+                                              r"%Y-%m-%d %H:%M:%S", "xxx.*", "xxx ([\w\-]+\s[\d\:]+)\s+(.*)", ["time", "value"],
+                                              logSample="xxx 2017-11-11 11:11:11 hello alicloud.")
 
     res = client.create_logtail_config(project, logtail_config)
     res.log_print()
@@ -145,7 +146,8 @@ def sample_apply_config(client, project, logstore):
     logtail_config = CommonRegLogConfigDetail(logtail_config_name, logstore,
                                               "http://cn-hangzhou-devcommon-intranet.sls.aliyuncs.com", "/apsara/xxx",
                                               "*.LOG",
-                                              "%Y-%m-%d %H:%M:%S", "xxx.*", "(.*)(.*)", ["time", "value"])
+                                              r"%Y-%m-%d %H:%M:%S", "xxx.*", "xxx ([\w\-]+\s[\d\:]+)\s+(.*)", ["time", "value"],
+                                              logSample="xxx 2017-11-11 11:11:11 hello alicloud.")
 
     client.create_logtail_config(project, logtail_config)
 
