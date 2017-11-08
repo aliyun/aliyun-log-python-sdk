@@ -6,10 +6,14 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "pypy"
+  - "pypy3"
 
 install:
-  - pip install -r requirements.txt
+  - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install -r requirements-py2.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install -r requirements-py2.txt; fi
   - pip install .
 
 script:
   - python tests/sample.py
+  - python tests/sample_consumer.py

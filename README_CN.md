@@ -1,17 +1,20 @@
 # 阿里云日志服务Python SDK
 
-[![Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
-[![Build](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+[![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
+[![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+[![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
+[![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
+![License](https://img.shields.io/pypi/l/aliyun-log-python-sdk.svg)
 
-**[英文版README](https://github.com/wjo1212/aliyun-log-python-sdk/blob/master/README.md)**
+#### [英文版README](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
 
 ## 版本
 
-0.6.5
+0.6.6
 
 ## 发布时间
 
-2017-10-31
+2017-11-10
 
 ## 基本介绍：
 
@@ -27,10 +30,19 @@
 4. 支持API定义的数据压缩方式
 5. 实现API查询数据和批量消费数据
 6. 使用异常统一处理错误
+7. 提供消费组高级API
 
-## 环境要求：
+## 支持Python版本：
 
-1. Python 2.6, Python 2.7, Python 3.3+
+1. Python 2.6
+2. Python 2.7
+3. Python 3.3
+4. Python 3.4
+5. Python 3.5
+6. Python 3.6
+7. Pypy2
+8. Pypy3
+
 
 ## 安装
 ```shell
@@ -44,5 +56,5 @@ pip install -U aliyun-log-python-sdk
 ## 其他资源：
 
 1. 日志服务产品介绍：http://www.aliyun.com/product/sls/
-2. 日志服务产品文档：http://docs.aliyun.com/#/sls
+2. 日志服务产品文档：https://help.aliyun.com/product/28958.html
 3. 其他问题请提工单

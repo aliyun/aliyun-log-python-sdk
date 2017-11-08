@@ -6,7 +6,7 @@
 
 from .logresponse import LogResponse
 from .histogram import Histogram
-
+from .util import Util
 
 class GetHistogramsResponse(LogResponse):
     """ The response of the GetHistograms API from log.
@@ -20,7 +20,7 @@ class GetHistogramsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header)
-        self.progress = header['x-log-progress']
+        self.progress = Util.h_v_t(header, 'x-log-progress')
         self.count = 0  # header['x-log-count']
         self.histograms = []
 
