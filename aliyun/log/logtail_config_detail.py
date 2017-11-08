@@ -40,10 +40,14 @@ class LogtailConfigDetail(object):
     The size of filter_keys_reg and filter_keys should be same.\
         If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys,
         match the regex set in filter_keys_reg
+
+    :param logSample : string
+    :param logSample : sample strings for the log, up to 1000 bytes
+
     """
 
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern, log_begin_regex, topic_format,
-                 filter_keys, filter_keys_reg):
+                 filter_keys, filter_keys_reg, logSample=''):
         self.config_name = config_name
         self.logstore_name = logstore_name
         self.endpoint = endpoint
@@ -56,6 +60,7 @@ class LogtailConfigDetail(object):
         self.filter_keys_reg = filter_keys_reg
         self.create_time = int(time.time())
         self.last_modify_time = int(time.time())
+        self.logSample = logSample
 
     def set_create_time(self, create_time):
         self.create_time = create_time
@@ -104,11 +109,16 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
     The size of filter_keys_reg and filter_keys should be same.
         If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys,
         match the regex set in filter_keys_reg
+
+    :param logSample : string
+    :param logSample : sample strings for the log, up to 1000 bytes
+
+
     """
 
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern, time_format, log_begin_regex,
                  log_parse_regex, reg_keys,
-                 topic_format="none", filter_keys=None, filter_keys_reg=None):
+                 topic_format="none", filter_keys=None, filter_keys_reg=None, logSample=''):
         if filter_keys is None:
             filter_keys = []
         if filter_keys_reg is None:
@@ -116,7 +126,7 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
 
         LogtailConfigDetail.__init__(self, config_name, logstore_name, endpoint, log_path, file_pattern,
                                      log_begin_regex,
-                                     topic_format, filter_keys, filter_keys_reg)
+                                     topic_format, filter_keys, filter_keys_reg, logSample)
 
         self.time_format = time_format
         self.log_parse_regex = log_parse_regex
@@ -124,6 +134,11 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
 
     def to_json(self):
         json_value = {"configName": self.config_name, "inputType": "file"}
+
+        # add log sample
+        if self.logSample:
+            json_value["logSample"] = self.logSample
+
         detail = {'logType': 'common_reg_log', 'logPath': self.log_path, 'filePattern': self.file_pattern,
                   'localStorage': True, 'timeFormat': self.time_format, 'logBeginRegex': self.log_begin_regex,
                   'regex': self.log_parse_regex, 'key': self.keys, 'filterKey': self.filter_keys,
