@@ -26,7 +26,7 @@ class ConsumerHeatBeat(Thread):
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
                 self.mheld_shards = response_shards
                 self.mheart_shards = self.mheld_shards[:]
-                time.sleep(self.heartbeat_interval/2.0)
+                time.sleep(self.heartbeat_interval)
             except Exception as e:
                 logger.warning("fail to heat beat", e)
 

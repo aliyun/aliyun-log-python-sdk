@@ -25,7 +25,7 @@ class ConsumerWorker(Thread):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.shard_consumers = {}
 
-        self.consumer_client.create_consumer_group(consumer_option.heartbeat_interval, consumer_option.in_order)
+        self.consumer_client.create_consumer_group(consumer_option.heartbeat_interval*2, consumer_option.in_order)
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval)
 
     def run(self):
