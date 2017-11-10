@@ -18,7 +18,7 @@ class ListLogstoresResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.logstores = resp['logstores']
 

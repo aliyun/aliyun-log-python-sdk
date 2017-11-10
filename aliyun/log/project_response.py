@@ -11,8 +11,8 @@ from aliyun.log.logresponse import LogResponse
 
 
 class CreateProjectResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateProjectResponse:')
@@ -20,8 +20,8 @@ class CreateProjectResponse(LogResponse):
 
 
 class DeleteProjectResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteProjectResponse:')
@@ -30,7 +30,7 @@ class DeleteProjectResponse(LogResponse):
 
 class GetProjectResponse(LogResponse):
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.status = resp['status']
         self.description = resp['description']
         self.projectName = resp['projectName']

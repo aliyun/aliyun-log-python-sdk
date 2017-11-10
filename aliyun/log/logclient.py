@@ -106,17 +106,17 @@ class LogClient(object):
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     @staticmethod
-    def _loadJson(respText, requestId):
-        if not respText:
+    def _loadJson(resp_status, resp_header, resp_body, requestId):
+        if not resp_body:
             return None
         try:
-            if six.PY3 and isinstance(respText, six.binary_type):
-                return json.loads(respText.decode('utf8'))
-            return json.loads(respText)
+            if six.PY3 and isinstance(resp_body, six.binary_type):
+                return json.loads(resp_body.decode('utf8'))
+            return json.loads(resp_body)
         except Exception:
             raise LogException('BadResponse',
-                               'Bad json format:\n%s' % respText,
-                               requestId)
+                               'Bad json format:\n%s' % resp_body,
+                               requestId, resp_status, resp_header, resp_body)
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
@@ -135,30 +135,32 @@ class LogClient(object):
             raise LogException('LogRequestError', str(ex))
 
     def _sendRequest(self, method, url, params, body, headers, respons_body_type='json'):
-        (status, respText, respHeader) = self._getHttpResponse(method, url, params, body, headers)
+        (resp_status, resp_body, resp_header) = self._getHttpResponse(method, url, params, body, headers)
         header = {}
-        for key, value in respHeader.items():
+        for key, value in resp_header.items():
             header[key] = value
 
         requestId = Util.h_v_td(header, 'x-log-requestid', '')
 
-        if status == 200:
+        if resp_status == 200:
             if respons_body_type == 'json':
-                exJson = self._loadJson(respText, requestId)
+                exJson = self._loadJson(resp_status, resp_header, resp_body, requestId)
                 exJson = Util.convert_unicode_to_str(exJson)
                 return exJson, header
             else:
-                return respText, header
+                return resp_body, header
 
-        exJson = self._loadJson(respText, requestId)
+        exJson = self._loadJson(resp_status, resp_header, resp_body, requestId)
         exJson = Util.convert_unicode_to_str(exJson)
 
         if 'errorCode' in exJson and 'errorMessage' in exJson:
-            raise LogException(exJson['errorCode'], exJson['errorMessage'], requestId)
+            raise LogException(exJson['errorCode'], exJson['errorMessage'], requestId,
+                               resp_status, resp_header, resp_body)
         else:
             exJson = '. Return json is ' + str(exJson) if exJson else '.'
             raise LogException('LogRequestError',
-                               'Request is failed. Http code is ' + str(status) + exJson, requestId)
+                               'Request is failed. Http code is ' + str(resp_status) + exJson, requestId,
+                               resp_status, resp_header, resp_body)
 
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
@@ -258,11 +260,11 @@ class LogClient(object):
             resource = '/logstores/' + logstore + "/shards/lb"
 
         if is_compress:
-            respHeaders = self._send('POST', project, compress_data, resource, params, headers)
+            (resp, header) = self._send('POST', project, compress_data, resource, params, headers)
         else:
-            respHeaders = self._send('POST', project, body, resource, params, headers)
+            (resp, header) = self._send('POST', project, body, resource, params, headers)
 
-        return PutLogsResponse(respHeaders[1])
+        return PutLogsResponse(header, resp)
 
     def list_logstores(self, request):
         """ List all logstores of requested project.
@@ -538,7 +540,7 @@ class LogClient(object):
         body_str = six.b(json.dumps(body))
 
         (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
-        return CreateLogStoreResponse(header)
+        return CreateLogStoreResponse(header, resp)
 
     def delete_logstore(self, project_name, logstore_name):
         """ delete log store
@@ -558,7 +560,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteLogStoreResponse(header)
+        return DeleteLogStoreResponse(header, resp)
 
     def get_logstore(self, project_name, logstore_name):
         """ get the logstore meta info
@@ -610,7 +612,7 @@ class LogClient(object):
         body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count)}
         body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
-        return UpdateLogStoreResponse(header)
+        return UpdateLogStoreResponse(header, resp)
 
     def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
         """ list the logstore in a project
@@ -734,7 +736,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name + "/shards/" + str(shardId)
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteShardResponse(header)
+        return DeleteShardResponse(header, resp)
 
     def create_index(self, project_name, logstore_name, index_detail):
         """ create index for a logstore
@@ -761,7 +763,7 @@ class LogClient(object):
         headers['x-log-bodyrawsize'] = str(len(body))
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
-        return CreateIndexResponse(header)
+        return CreateIndexResponse(header, resp)
 
     def update_index(self, project_name, logstore_name, index_detail):
         """ update index for a logstore
@@ -789,7 +791,7 @@ class LogClient(object):
         headers['x-log-bodyrawsize'] = str(len(body))
 
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
-        return UpdateIndexResponse(header)
+        return UpdateIndexResponse(header, resp)
 
     def delete_index(self, project_name, logstore_name):
         """ delete index of a logstore
@@ -810,7 +812,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name + "/index"
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteIndexResponse(header)
+        return DeleteIndexResponse(header, resp)
 
     def get_index_config(self, project_name, logstore_name):
         """ get index config detail of a logstore
@@ -857,7 +859,7 @@ class LogClient(object):
         body = six.b(json.dumps(config_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
-        return CreateLogtailConfigResponse(headers)
+        return CreateLogtailConfigResponse(headers, resp)
 
     def update_logtail_config(self, project_name, config_detail):
         """ update logtail config in a project
@@ -883,7 +885,7 @@ class LogClient(object):
         body = six.b(json.dumps(config_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
-        return UpdateLogtailConfigResponse(headers)
+        return UpdateLogtailConfigResponse(headers, resp)
 
     def delete_logtail_config(self, project_name, config_name):
         """ delete logtail config in a project
@@ -904,7 +906,7 @@ class LogClient(object):
         params = {}
         resource = "/configs/" + config_name
         (resp, headers) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteLogtailConfigResponse(headers)
+        return DeleteLogtailConfigResponse(headers, resp)
 
     def get_logtail_config(self, project_name, config_name):
         """ get logtail config in a project
@@ -973,7 +975,7 @@ class LogClient(object):
         body = six.b(json.dumps(group_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
-        return CreateMachineGroupResponse(headers)
+        return CreateMachineGroupResponse(headers, resp)
 
     def delete_machine_group(self, project_name, group_name):
         """ delete machine group in a project
@@ -994,7 +996,7 @@ class LogClient(object):
         params = {}
         resource = "/machinegroups/" + group_name
         (resp, headers) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteMachineGroupResponse(headers)
+        return DeleteMachineGroupResponse(headers, resp)
 
     def update_machine_group(self, project_name, group_detail):
         """ update machine group in a project
@@ -1018,7 +1020,7 @@ class LogClient(object):
         body = six.b(json.dumps(group_detail.to_json()))
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
-        return UpdateMachineGroupResponse(headers)
+        return UpdateMachineGroupResponse(headers, resp)
 
     def get_machine_group(self, project_name, group_name):
         """ get machine group in a project
@@ -1117,7 +1119,7 @@ class LogClient(object):
         params = {}
         resource = "/machinegroups/" + group_name + "/configs/" + config_name
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
-        return ApplyConfigToMachineGroupResponse(header)
+        return ApplyConfigToMachineGroupResponse(header, resp)
 
     def remove_config_to_machine_group(self, project_name, config_name, group_name):
         """ remove a logtail config to a machine group
@@ -1140,7 +1142,7 @@ class LogClient(object):
         params = {}
         resource = "/machinegroups/" + group_name + "/configs/" + config_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return RemoveConfigToMachineGroupResponse(header)
+        return RemoveConfigToMachineGroupResponse(header, resp)
 
     def get_machine_group_applied_configs(self, project_name, group_name):
         """ get the logtail config names applied in a machine group
@@ -1196,7 +1198,7 @@ class LogClient(object):
         headers['Content-Type'] = 'application/json'
         headers['x-log-bodyrawsize'] = str(len(body))
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
-        return UpdateAclResponse(headers)
+        return UpdateAclResponse(headers, resp)
 
     def update_project_acl(self, project_name, acl_action, acl_config):
         """ update acl of a project
@@ -1324,7 +1326,7 @@ class LogClient(object):
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
 
         (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
-        return CreateShipperResponse(headers)
+        return CreateShipperResponse(headers, resp)
 
     def update_shipper(self, project_name, logstore_name, shipper_name, shipper_type, shipper_config):
         """ update  odps/oss shipper
@@ -1358,7 +1360,7 @@ class LogClient(object):
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
 
         (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
-        return UpdateShipperResponse(headers)
+        return UpdateShipperResponse(headers, resp)
 
     def delete_shipper(self, project_name, logstore_name, shipper_name):
         """ delete  odps/oss shipper
@@ -1381,7 +1383,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteShipperResponse(header)
+        return DeleteShipperResponse(header, resp)
 
     def get_shipper_config(self, project_name, logstore_name, shipper_name):
         """ get  odps/oss shipper
@@ -1500,7 +1502,7 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name + "/tasks"
 
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
-        return RetryShipperTasksResponse(header)
+        return RetryShipperTasksResponse(header, resp)
 
     def create_project(self, project_name, project_des):
         """ Create a project
@@ -1564,6 +1566,24 @@ class LogClient(object):
         return DeleteProjectResponse(header)
 
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
+        """ create consumer group
+        :type project string:
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type timeout: int
+        :param timeout: time-out
+
+        :type in_order: bool
+        :param in_order:
+
+        :return: CreateConsumerGroupResponse
+        """
         request = CreateConsumerGroupRequest(project, logstore, ConsumerGroupEntity(consumer_group, timeout, in_order))
         consumer_group = request.consumer_group
         body_str = consumer_group.to_request_json()
@@ -1580,6 +1600,24 @@ class LogClient(object):
         return CreateConsumerGroupResponse(header)
 
     def update_consumer_group(self, project, logstore, consumer_group, timeout=None, in_order=None):
+        """ Update consumer group
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type timeout: int
+        :param timeout: timeout
+
+        :type in_order: bool
+        :param in_order: order
+
+        :return:
+        """
         if in_order is None and timeout is None:
             raise ValueError('in_order and timeout can\'t all be None')
         elif in_order is not None and timeout is not None:
@@ -1607,6 +1645,19 @@ class LogClient(object):
         return UpdateConsumerGroupResponse(header)
 
     def delete_consumer_group(self, project, logstore, consumer_group):
+        """ Delete consumer group
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :return:
+        """
 
         headers = {"x-log-bodyrawsize": '0'}
         params = {}
@@ -1616,6 +1667,16 @@ class LogClient(object):
         return DeleteConsumerGroupResponse(header)
 
     def list_consumer_group(self, project, logstore):
+        """ List consumer group
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :return: ListConsumerGroupResponse
+        """
 
         resource = "/logstores/" + logstore + "/consumergroups"
         params = {}
@@ -1626,7 +1687,31 @@ class LogClient(object):
 
     def update_check_point(self, project, logstore, consumer_group, shard, check_point,
                            consumer='', force_success=True):
+        """ Update check point
 
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type shard: int
+        :param shard: shard id
+
+        :type check_point: string
+        :param check_point: checkpoint name
+
+        :type consumer: string
+        :param consumer: consumer name
+
+        :type force_success: bool
+        :param force_success: if force to succeed
+
+        :return:
+        """
         request = ConsumerGroupUpdateCheckPointRequest(project, logstore, consumer_group,
                                                        consumer, shard, check_point, force_success)
         params = request.get_request_params()
@@ -1637,6 +1722,22 @@ class LogClient(object):
         return ConsumerGroupUpdateCheckPointResponse(header)
 
     def get_check_point(self, project, logstore, consumer_group, shard=-1):
+        """ Get check point
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type shard: int
+        :param shard: shard id
+
+        :return: ConsumerGroupCheckPointResponse
+        """
         request = ConsumerGroupGetCheckPointRequest(project, logstore, consumer_group, shard)
         params = request.get_params()
         headers = {}
@@ -1645,6 +1746,24 @@ class LogClient(object):
         return ConsumerGroupCheckPointResponse(resp, header)
 
     def heart_beat(self, project, logstore, consumer_group, consumer, shards=None):
+        """ Heatbeat consumer group
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type consumer: string
+        :param consumer: consumer name
+
+        :type shard: int
+        :param shard: shard id
+        :return:
+        """
         if shards is None:
             shards = []
         request = ConsumerGroupHeartBeatRequest(project, logstore, consumer_group, consumer, shards)

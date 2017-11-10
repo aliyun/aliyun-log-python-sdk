@@ -17,8 +17,8 @@ class CreateIndexResponse(LogResponse):
     :param header: CreateIndexResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateIndexResponse:')
@@ -32,8 +32,8 @@ class UpdateIndexResponse(LogResponse):
     :param header: UpdateIndexResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateIndexResponse:')
@@ -47,8 +47,8 @@ class DeleteIndexResponse(LogResponse):
     :param header: DeleteIndexResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteIndexResponse:')
@@ -66,7 +66,7 @@ class GetIndexResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.index_config = IndexConfig()
         self.index_config.from_json(resp)
 

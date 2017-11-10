@@ -17,8 +17,8 @@ class UpdateAclResponse(LogResponse):
     :param header: UpdateAclResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateAclResponse:')
@@ -33,7 +33,7 @@ class ListAclResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.total = int(resp["total"])
         self.acl_list = []
