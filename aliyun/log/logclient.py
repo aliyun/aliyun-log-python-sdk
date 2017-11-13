@@ -1527,7 +1527,7 @@ class LogClient(object):
         resource = "/"
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
-        return CreateProjectResponse(header)
+        return CreateProjectResponse(header, resp)
 
     def get_project(self, project_name):
         """ get project
@@ -1563,7 +1563,7 @@ class LogClient(object):
         resource = "/"
 
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
-        return DeleteProjectResponse(header)
+        return DeleteProjectResponse(header, resp)
 
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
         """ create consumer group
@@ -1597,7 +1597,7 @@ class LogClient(object):
         project = request.get_project()
         resource = "/logstores/" + request.get_logstore() + "/consumergroups"
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
-        return CreateConsumerGroupResponse(header)
+        return CreateConsumerGroupResponse(header, resp)
 
     def update_consumer_group(self, project, logstore, consumer_group, timeout=None, in_order=None):
         """ Update consumer group
@@ -1642,7 +1642,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send("PUT", project, body_str, resource, params, headers)
-        return UpdateConsumerGroupResponse(header)
+        return UpdateConsumerGroupResponse(header, resp)
 
     def delete_consumer_group(self, project, logstore, consumer_group):
         """ Delete consumer group
@@ -1664,7 +1664,7 @@ class LogClient(object):
 
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send("DELETE", project, None, resource, params, headers)
-        return DeleteConsumerGroupResponse(header)
+        return DeleteConsumerGroupResponse(header, resp)
 
     def list_consumer_group(self, project, logstore):
         """ List consumer group
@@ -1719,7 +1719,7 @@ class LogClient(object):
         headers = {"Content-Type": "application/json"}
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
-        return ConsumerGroupUpdateCheckPointResponse(header)
+        return ConsumerGroupUpdateCheckPointResponse(header, resp)
 
     def get_check_point(self, project, logstore, consumer_group, shard=-1):
         """ Get check point

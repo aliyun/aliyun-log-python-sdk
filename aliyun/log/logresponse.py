@@ -16,7 +16,8 @@ class LogResponse(object):
 
     def __init__(self, headers, body=''):
         self.headers = headers
-        body = body or '' # filter None
+        if body is None:
+            body = ''
         self.body = body
 
     def get_request_id(self):
