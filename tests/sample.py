@@ -187,7 +187,7 @@ def sample_cleanup(client, project, logstore, delete_project=False):
     client.delete_logstore(project, logstore)
 
     if delete_project:
-        time.sleep(10)
+        time.sleep(30)
         client.delete_project(project)
 
 
