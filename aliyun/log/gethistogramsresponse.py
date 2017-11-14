@@ -8,6 +8,7 @@ from .logresponse import LogResponse
 from .histogram import Histogram
 from .util import Util
 
+
 class GetHistogramsResponse(LogResponse):
     """ The response of the GetHistograms API from log.
 

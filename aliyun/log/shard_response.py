@@ -21,7 +21,7 @@ class ListShardResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.shards = Util.convert_unicode_to_str(resp)
 
     def get_shards_info(self):
@@ -40,8 +40,8 @@ class DeleteShardResponse(LogResponse):
     :param header: DeleteShardResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteShardResponse:')

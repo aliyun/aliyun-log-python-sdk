@@ -18,10 +18,18 @@ class LogException(Exception):
     :param requestId: the request id of the response, '' is set if client error
     """
 
-    def __init__(self, errorCode, errorMessage, requestId=''):
+    def __init__(self, errorCode, errorMessage, requestId='', resp_status=200, resp_header='', resp_body=''):
         self._errorCode = errorCode
         self._errorMessage = errorMessage
         self._requestId = requestId
+        self.resp_status = resp_status
+        self.resp_header = resp_header
+        self.resp_body = resp_body
+
+        if not self.resp_body:
+            self.resp_body = r'{"ErrorCode": "%s", "ErrorMessage": "%s"}, "RequestID": "%s"' % (errorCode,
+                                                                                                errorMessage,
+                                                                                                requestId)
 
     def __str__(self):
         return "LogException: \n{\n    ErrorCode: %s\n    ErrorMessage: %s\n    RequestId: %s\n}\n" \
@@ -47,3 +55,6 @@ class LogException(Exception):
         :return: string, request id of exception.
         """
         return self._requestId
+
+    def get_resp_body(self):
+        return self.resp_body

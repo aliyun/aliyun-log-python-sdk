@@ -23,8 +23,8 @@ class CreateMachineGroupResponse(LogResponse):
     :param header: CreateMachineGroupResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateMachineGroupResponse:')
@@ -38,8 +38,8 @@ class DeleteMachineGroupResponse(LogResponse):
     :param header: DeleteMachineGroupResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteMachineGroupResponse:')
@@ -57,7 +57,7 @@ class GetMachineGroupResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.machine_group = MachineGroupDetail(None, None, None)
         self.machine_group.from_json(resp)
 
@@ -77,8 +77,8 @@ class UpdateMachineGroupResponse(LogResponse):
     :param header: UpdateMachineGroupResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateMachineGroupResponse:')
@@ -96,7 +96,7 @@ class ListMachineGroupResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.total = int(resp["total"])
         self.machine_groups = Util.convert_unicode_to_str(resp["machinegroups"])
@@ -129,7 +129,7 @@ class ListMachinesResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.total = resp['total']
         self.machines = []
@@ -162,8 +162,8 @@ class ApplyConfigToMachineGroupResponse(LogResponse):
     :param header: ApplyConfigToMachineGroupResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('ApplyConfigToMachineGroupResponse:')
@@ -177,8 +177,8 @@ class RemoveConfigToMachineGroupResponse(LogResponse):
     :param header: RemoveConfigToMachineGroupResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('RemoveConfigToMachineGroupResponse:')
@@ -196,7 +196,7 @@ class GetMachineGroupAppliedConfigResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.configs = resp['configs']
 
@@ -224,7 +224,7 @@ class GetConfigAppliedMachineGroupsResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.machine_groups = resp['machinegroups']
 

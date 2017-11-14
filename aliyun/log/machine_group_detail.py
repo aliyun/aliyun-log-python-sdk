@@ -20,8 +20,8 @@ class MachineGroupDetail(object):
     :type machine_list : string list
     :param machine_list: the list of machine ips or machine userdefined, e.g ["127.0.0.1", "127.0.0.2"]
 
-    :type group_type : string "" or "Armory"
-    :param group_type : the machine group type
+    :type group_type : string
+    :param group_type : the machine group type, "" or "Armory"
 
     :type group_attribute : dict
     :param group_attribute : the attributes in group, it contains two optional key : 
