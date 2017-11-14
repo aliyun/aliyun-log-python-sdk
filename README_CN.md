@@ -4,17 +4,10 @@
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
 [![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
-![License](https://img.shields.io/pypi/l/aliyun-log-python-sdk.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/LICENSE)
 
-#### [英文版README](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
+#### [README in English](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
 
-## 版本
-
-0.6.6
-
-## 发布时间
-
-2017-11-10
 
 ## 基本介绍：
 
