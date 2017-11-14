@@ -15,7 +15,6 @@ from aliyun.log.util import base64_encodestring
 from random import randint
 import time
 import os
-from aliyun.log.logclient_operator import copy_project
 
 
 def sample_put_logs(client, project, logstore):
@@ -266,7 +265,7 @@ def main():
 
     # test copy project
     project_new = project + str(randint(1, 10000)) + "-copied"
-    copy_project(client, client, project, project_new)
+    client.copy_project(project, project_new)
 
     time.sleep(10)
     sample_cleanup(client, project, logstore, delete_project=True)
