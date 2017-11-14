@@ -12,7 +12,7 @@ from aliyun.log.logtail_config_detail import *
 from aliyun.log.machine_group_detail import *
 from aliyun.log.putlogsrequest import PutLogsRequest
 from aliyun.log.util import base64_encodestring
-
+from random import randint
 import time
 import os
 from aliyun.log.logclient_operator import copy_project
@@ -177,7 +177,7 @@ def sample_logstore(client, project, logstore):
     client.delete_logstore(project, logstore)
 
 
-def sample_cleanup(client, project, logstore):
+def sample_cleanup(client, project, logstore, delete_project=False):
     logtail_config_name = logstore + "-stt1-logtail"
     group_name = logstore + "-sample-group"
 
@@ -185,6 +185,10 @@ def sample_cleanup(client, project, logstore):
     client.delete_machine_group(project, group_name)
     client.delete_logtail_config(project, logtail_config_name)
     client.delete_logstore(project, logstore)
+
+    if delete_project:
+        time.sleep(10)
+        client.delete_project(project)
 
 
 def sample_crud_consumer_group(client, project, logstore, consumer_group):
@@ -215,10 +219,11 @@ def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
     accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
     accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
-    project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
     logstore = os.environ.get('ALIYUN_LOG_SAMPLE_LOGSTORE', '')
     consumer_group = 'sample_consumer_group_1'
     token = ""
+
+    project = 'python-sdk-test' + str(time.time()).replace('.', '-')
 
     if not logstore:
         logstore = 'sdk-test' + str(time.time()).replace('.', '_')
@@ -228,6 +233,9 @@ def main():
 
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
+    client.create_project(project, "SDK test")
+    time.sleep(10)
+
     sample_logstore(client, project, logstore)
     time.sleep(40)
 
@@ -236,6 +244,8 @@ def main():
 
     sample_list_logstores(client, project)
     sample_logtail_config(client, project, logstore)
+    time.sleep(10)
+
     sample_machine_group(client, project, logstore)
     sample_apply_config(client, project, logstore)
     sample_index(client, project, logstore)
@@ -255,12 +265,12 @@ def main():
     time.sleep(10)
 
     # test copy project
-    project_new = project + "-copied"
+    project_new = project + str(randint(1, 10000)) + "-copied"
     copy_project(client, client, project, project_new)
 
     time.sleep(10)
-    sample_cleanup(client, project, logstore)
-    sample_cleanup(client, project_new, logstore)
+    sample_cleanup(client, project, logstore, delete_project=True)
+    sample_cleanup(client, project_new, logstore, delete_project=True)
 
 
 if __name__ == '__main__':
