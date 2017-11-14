@@ -188,17 +188,21 @@ class ApsaraLogConfigDetail(LogtailConfigDetail):
 
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern,
                  log_begin_regex=r'\[\d+-\d+-\d+ \d+:\d+:\d+\.\d+.*', topic_format="none", filter_keys=None,
-                 filter_keys_reg=None):
+                 filter_keys_reg=None, logSample=''):
         if filter_keys_reg is None:
             filter_keys_reg = []
         if filter_keys is None:
             filter_keys = []
         LogtailConfigDetail.__init__(self, config_name, logstore_name, endpoint, log_path, file_pattern,
                                      log_begin_regex,
-                                     topic_format, filter_keys, filter_keys_reg)
+                                     topic_format, filter_keys, filter_keys_reg, logSample)
 
     def to_json(self):
         json_value = {"configName": self.config_name, "inputType": "file"}
+        # add log sample
+        if self.logSample:
+            json_value["logSample"] = self.logSample
+
         detail = {'logType': 'apsara_log', 'logPath': self.log_path, 'filePattern': self.file_pattern,
                   'localStorage': True, 'logBeginRegex': self.log_begin_regex, 'timeFormat': '',
                   'filterKey': self.filter_keys, 'filterRegex': self.filter_keys_reg, 'topicFormat': self.topic_format}
@@ -217,7 +221,7 @@ class LogtailConfigHelper(object):
     def generate_common_reg_log_config(json_value):
         input_detail = json_value['inputDetail']
         output_detail = json_value['outputDetail']
-
+        logSample = json_value.get('logSample', '')
         config_name = json_value['configName']
         logstore_name = output_detail['logstoreName']
         endpoint = Util.get_json_value(output_detail, 'endpoint')
@@ -235,7 +239,7 @@ class LogtailConfigHelper(object):
 
         config = CommonRegLogConfigDetail(config_name, logstore_name, endpoint, log_path, file_pattern, time_format,
                                           log_begin_regex, log_parse_regex, reg_keys,
-                                          topic_format, filter_keys, filter_keys_reg)
+                                          topic_format, filter_keys, filter_keys_reg, logSample)
         return config
 
     @staticmethod
@@ -243,6 +247,7 @@ class LogtailConfigHelper(object):
         input_detail = json_value['inputDetail']
         output_detail = json_value['outputDetail']
         config_name = json_value['configName']
+        logSample = json_value.get('logSample', '')
 
         logstore_name = output_detail['logstoreName']
         endpoint = Util.get_json_value(output_detail, 'endpoint')
@@ -255,7 +260,7 @@ class LogtailConfigHelper(object):
         filter_keys_reg = input_detail['filterRegex']
 
         config = ApsaraLogConfigDetail(config_name, logstore_name, endpoint, log_path, file_pattern,
-                                       log_begin_regex, topic_format, filter_keys, filter_keys_reg)
+                                       log_begin_regex, topic_format, filter_keys, filter_keys_reg, logSample)
         return config
 
     @staticmethod
