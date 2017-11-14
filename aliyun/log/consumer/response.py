@@ -6,13 +6,13 @@ from ..logresponse import LogResponse
 
 
 class CreateConsumerGroupResponse(LogResponse):
-    def __init__(self, headers):
-        LogResponse.__init__(self, headers)
+    def __init__(self, headers, resp=''):
+        LogResponse.__init__(self, headers, resp)
 
 
 class ConsumerGroupCheckPointResponse(LogResponse):
     def __init__(self, resp, headers):
-        LogResponse.__init__(self, headers)
+        LogResponse.__init__(self, headers, resp)
         self.count = len(resp)
         self.consumer_group_check_poins = resp
 
@@ -31,7 +31,7 @@ class ConsumerGroupCheckPointResponse(LogResponse):
 
 class ConsumerGroupHeartBeatResponse(LogResponse):
     def __init__(self, resp, headers):
-        LogResponse.__init__(self, headers)
+        LogResponse.__init__(self, headers, resp)
         self.shards = resp
 
     def get_shards(self):
@@ -47,18 +47,18 @@ class ConsumerGroupHeartBeatResponse(LogResponse):
 
 
 class ConsumerGroupUpdateCheckPointResponse(LogResponse):
-    def __init__(self, headers):
-        LogResponse.__init__(self, headers)
+    def __init__(self, headers, resp=''):
+        LogResponse.__init__(self, headers, resp)
 
 
 class DeleteConsumerGroupResponse(LogResponse):
-    def __init__(self, headers):
-        LogResponse.__init__(self, headers)
+    def __init__(self, headers, resp=''):
+        LogResponse.__init__(self, headers, resp)
 
 
 class ListConsumerGroupResponse(LogResponse):
     def __init__(self, resp, headers):
-        LogResponse.__init__(self, headers)
+        LogResponse.__init__(self, headers, resp)
         self.count = len(resp)
         self.resp = resp
         self.consumer_groups = [ConsumerGroupEntity(group['name'], group['timeout'], group['order']) for group in
@@ -78,5 +78,5 @@ class ListConsumerGroupResponse(LogResponse):
 
 
 class UpdateConsumerGroupResponse(LogResponse):
-    def __init__(self, headers):
-        LogResponse.__init__(self, headers)
+    def __init__(self, headers, resp):
+        LogResponse.__init__(self, headers, resp)

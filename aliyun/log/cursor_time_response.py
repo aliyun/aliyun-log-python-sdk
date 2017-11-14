@@ -18,7 +18,7 @@ class GetCursorTimeResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.cursor_time = resp['cursor_time']
 
     def get_cursor_time(self):

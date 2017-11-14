@@ -16,8 +16,8 @@ from aliyun.log.shipper_config import ShipperTask
 
 
 class CreateShipperResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateShipperResponse:')
@@ -25,8 +25,8 @@ class CreateShipperResponse(LogResponse):
 
 
 class UpdateShipperResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateShipperResponse:')
@@ -34,8 +34,8 @@ class UpdateShipperResponse(LogResponse):
 
 
 class DeleteShipperResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteShipperResponse:')
@@ -44,7 +44,7 @@ class DeleteShipperResponse(LogResponse):
 
 class GetShipperConfigResponse(LogResponse):
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.create_time = resp['createTime']
         self.last_modify_time = resp['lastModifyTime']
         self.type = resp['targetType']
@@ -82,7 +82,7 @@ class GetShipperConfigResponse(LogResponse):
 
 class ListShipperResponse(LogResponse):
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.total = resp['total']
         self.shipper_names = resp['shipper']
@@ -105,7 +105,7 @@ class ListShipperResponse(LogResponse):
 
 class GetShipperTasksResponse(LogResponse):
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.total = resp['total']
         self.running_count = resp['statistics']['running']
@@ -165,8 +165,8 @@ class GetShipperTasksResponse(LogResponse):
 
 
 class RetryShipperTasksResponse(LogResponse):
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     @staticmethod
     def log_print():

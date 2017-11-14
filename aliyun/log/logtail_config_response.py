@@ -20,8 +20,8 @@ class CreateLogtailConfigResponse(LogResponse):
     :param header: CreateLogtailConfigResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateLogtailConfigResponse:')
@@ -35,8 +35,8 @@ class DeleteLogtailConfigResponse(LogResponse):
     :param header: DeleteLogtailConfigResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteLogtailConfigResponse:')
@@ -54,7 +54,7 @@ class GetLogtailConfigResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.logtail_config = LogtailConfigHelper.generate_logtail_config(resp)
 
     def log_print(self):
@@ -70,8 +70,8 @@ class UpdateLogtailConfigResponse(LogResponse):
     :param header: UpdateLogtailConfigResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateLogtailConfigResponse:')
@@ -89,7 +89,7 @@ class ListLogtailConfigResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.count = int(resp["total"])
         self.logtail_configs = Util.convert_unicode_to_str(resp["configs"])

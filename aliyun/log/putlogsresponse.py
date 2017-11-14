@@ -14,8 +14,8 @@ class PutLogsResponse(LogResponse):
     :param header: PutLogsResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('PutLogsResponse:')

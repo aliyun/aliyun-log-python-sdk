@@ -18,8 +18,8 @@ class CreateLogStoreResponse(LogResponse):
     :param header: CreateLogStoreResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('CreateLogStoreResponse:')
@@ -33,8 +33,8 @@ class DeleteLogStoreResponse(LogResponse):
     :param header: DeleteLogStoreResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('DeleteLogStoreResponse:')
@@ -52,7 +52,7 @@ class GetLogStoreResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.logstore_name = Util.convert_unicode_to_str(resp["logstoreName"])
         self.ttl = int(resp["ttl"])
         self.shard_count = int(resp["shardCount"])
@@ -78,8 +78,8 @@ class UpdateLogStoreResponse(LogResponse):
     :param header: UpdateLogStoreResponse HTTP response header
     """
 
-    def __init__(self, header):
-        LogResponse.__init__(self, header)
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
 
     def log_print(self):
         print('UpdateLogStoreResponse:')
@@ -97,7 +97,7 @@ class ListLogStoreResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.logstores = Util.convert_unicode_to_str(resp["logstores"])
 

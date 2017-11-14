@@ -19,7 +19,7 @@ class GetCursorResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.cursor = Util.convert_unicode_to_str(resp["cursor"])
 
     def get_cursor(self):

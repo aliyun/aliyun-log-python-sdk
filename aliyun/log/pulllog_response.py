@@ -21,7 +21,7 @@ class PullLogResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
         self.loggroup_list = LogGroupList()
