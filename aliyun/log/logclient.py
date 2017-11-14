@@ -38,6 +38,7 @@ from .consumer.response import *
 from .log_logs_pb2 import LogGroup
 from .util import Util
 from aliyun.log import API_VERSION, USER_AGENT
+import aliyun.log.logclient_operator as log_op
 
 CONNECTION_TIME_OUT = 20
 
@@ -1773,3 +1774,22 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send('POST', project, body_str, resource, params, headers)
         return ConsumerGroupHeartBeatResponse(resp, header)
+
+    def copy_project(self, from_project, to_project, to_client=None):
+        """
+        copy project, logstore, machine group and logtail config to target project,
+        expecting the target project doens't exist
+        :type from_project: string
+        :param from_project: project name
+
+        :type to_project: string
+        :param to_project: project name
+
+        :type to_client: logclient
+        :param to_client: logclient instance
+
+        :return:
+        """
+        if to_client is None:
+            to_client = self
+        return log_op.copy_project(self, to_client, from_project, to_project)
