@@ -15,6 +15,7 @@ from aliyun.log.util import base64_encodestring
 
 import time
 import os
+from aliyun.log.logclient_operator import copy_project
 
 
 def sample_put_logs(client, project, logstore):
@@ -251,9 +252,15 @@ def main():
 
     time.sleep(10)
     sample_crud_consumer_group(client, project, logstore, consumer_group)
+    time.sleep(10)
+
+    # test copy project
+    project_new = project + "-copied"
+    copy_project(client, client, project, project_new)
 
     time.sleep(10)
     sample_cleanup(client, project, logstore)
+    sample_cleanup(client, project_new, logstore)
 
 
 if __name__ == '__main__':
