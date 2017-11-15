@@ -38,6 +38,7 @@ from .consumer.response import *
 from .log_logs_pb2 import LogGroup
 from .util import Util
 from aliyun.log import API_VERSION, USER_AGENT
+import aliyun.log.logclient_operator as log_op
 
 CONNECTION_TIME_OUT = 20
 
@@ -87,6 +88,11 @@ class LogClient(object):
             self._source = source
         self._securityToken = securityToken
 
+        self._user_agent = USER_AGENT
+
+    def set_user_agent(self, user_agent):
+        self._user_agent = user_agent
+
     def _setendpoint(self, endpoint):
         pos = endpoint.find('://')
         if pos != -1:
@@ -120,7 +126,7 @@ class LogClient(object):
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
-            headers['User-Agent'] = USER_AGENT
+            headers['User-Agent'] = self._user_agent
             r = None
             if method.lower() == 'get':
                 r = requests.get(url, params=params, data=body, headers=headers, timeout=self._timeout)
@@ -172,12 +178,15 @@ class LogClient(object):
 
         headers['x-log-apiversion'] = API_VERSION
         headers['x-log-signaturemethod'] = 'hmac-sha1'
-        if self._isRowIp:
+        if self._isRowIp or not project:
             url = "http://" + self._endpoint
         else:
             url = "http://" + project + "." + self._endpoint
 
-        headers['Host'] = project + "." + self._logHost
+        if project:
+            headers['Host'] = project + "." + self._logHost
+        else:
+            headers['Host'] = self._logHost
 
         headers['Date'] = self._getGMT()
 
@@ -619,7 +628,7 @@ class LogClient(object):
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name_pattern: string
         :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names
@@ -632,7 +641,7 @@ class LogClient(object):
         :param size: the max return names count
 
         :return: ListLogStoreResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1773,3 +1782,44 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send('POST', project, body_str, resource, params, headers)
         return ConsumerGroupHeartBeatResponse(resp, header)
+
+    def copy_project(self, from_project, to_project, to_client=None):
+        """
+        copy project, logstore, machine group and logtail config to target project,
+        expecting the target project doens't exist
+        :type from_project: string
+        :param from_project: project name
+
+        :type to_project: string
+        :param to_project: project name
+
+        :type to_client: logclient
+        :param to_client: logclient instance
+
+        :return:
+        """
+        if to_client is None:
+            to_client = self
+        return log_op.copy_project(self, to_client, from_project, to_project)
+
+    def list_project(self, offset=0, size=100):
+        """ list the project
+        Unsuccessful opertaion will cause an LogException.
+
+        :type offset: int
+        :param offset: the offset of all the matched names
+
+        :type size: int
+        :param size: the max return names count
+
+        :return: ListProjectResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/"
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListProjectResponse(resp, header)

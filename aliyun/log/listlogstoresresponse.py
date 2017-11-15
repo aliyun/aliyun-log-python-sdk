@@ -20,7 +20,8 @@ class ListLogstoresResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self.count = resp['count']
-        self.logstores = resp['logstores']
+        self.total = resp['total']
+        self.logstores = resp.get('logstores', [])
 
     def get_count(self):
         """ Get total count of logstores from the response
@@ -28,6 +29,9 @@ class ListLogstoresResponse(LogResponse):
         :return: int, the number of total logstores from the response
         """
         return self.count
+
+    def get_total(self):
+        return self.total
 
     def get_logstores(self):
         """ Get all the logstores from the response
@@ -40,4 +44,5 @@ class ListLogstoresResponse(LogResponse):
         print('ListLogstoresResponse:')
         print('headers:', self.get_all_headers())
         print('count:', self.count)
+        print('total:', self.total)
         print('logstores:', self.logstores)

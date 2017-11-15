@@ -37,7 +37,7 @@ class ListAclResponse(LogResponse):
         self.count = int(resp["count"])
         self.total = int(resp["total"])
         self.acl_list = []
-        for acl in resp["acls"]:
+        for acl in resp.get("acls", []):
             acl_config = AclConfig(None, None)
             acl_config.from_json(acl)
             self.acl_list.append(acl_config)

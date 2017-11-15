@@ -91,8 +91,8 @@ class ListLogtailConfigResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
-        self.count = int(resp["total"])
-        self.logtail_configs = Util.convert_unicode_to_str(resp["configs"])
+        self.total_count = int(resp["total"])
+        self.logtail_configs = Util.convert_unicode_to_str(resp.get("configs", []))
 
     def get_configs(self):
         return self.logtail_configs
@@ -100,8 +100,12 @@ class ListLogtailConfigResponse(LogResponse):
     def get_configs_count(self):
         return self.count
 
+    def get_configs_total(self):
+        return self.total_count
+
     def log_print(self):
         print('ListLogtailConfigResponse:')
         print('headers:', self.get_all_headers())
         print('configs_count:', str(self.count))
+        print('configs_total:', str(self.total_count))
         print('configs:', str(self.logtail_configs))
