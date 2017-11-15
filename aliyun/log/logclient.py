@@ -88,6 +88,11 @@ class LogClient(object):
             self._source = source
         self._securityToken = securityToken
 
+        self._user_agent = USER_AGENT
+
+    def _set_user_agent(self, user_agent):
+        self._user_agent = user_agent
+
     def _setendpoint(self, endpoint):
         pos = endpoint.find('://')
         if pos != -1:
@@ -121,7 +126,7 @@ class LogClient(object):
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
-            headers['User-Agent'] = USER_AGENT
+            headers['User-Agent'] = self._user_agent
             r = None
             if method.lower() == 'get':
                 r = requests.get(url, params=params, data=body, headers=headers, timeout=self._timeout)
