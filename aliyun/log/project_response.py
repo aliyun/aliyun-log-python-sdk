@@ -4,10 +4,11 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-__all__ = ['CreateProjectResponse', 'DeleteProjectResponse', 'GetProjectResponse']
+__all__ = ['CreateProjectResponse', 'DeleteProjectResponse', 'GetProjectResponse', 'ListProjectResponse']
 
 
 from aliyun.log.logresponse import LogResponse
+from aliyun.log.util import Util
 
 
 class CreateProjectResponse(LogResponse):
@@ -70,3 +71,28 @@ class GetProjectResponse(LogResponse):
         print('status:' + self.get_status())
         print('create_time:' + self.get_create_time())
         print('last_modify_time:' + self.get_last_modify_time())
+
+
+class ListProjectResponse(LogResponse):
+    def __init__(self, resp, header):
+        LogResponse.__init__(self, header, resp)
+        self.count = int(resp['count'])
+        self.total = int(resp['total'])
+        self.projects = Util.convert_unicode_to_str(resp.get("projects", []))
+
+    def get_count(self):
+        return self.count
+
+    def get_total(self):
+        return self.total
+
+    def get_projects(self):
+        return self.projects
+
+    def log_print(self):
+        print('ListProjectResponse:')
+        print('headers:', self.get_all_headers())
+        print('count:', self.count)
+        print('total:', self.total)
+        print('projects:', self.get_projects())
+
