@@ -99,7 +99,7 @@ class ListMachineGroupResponse(LogResponse):
         LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.total = int(resp["total"])
-        self.machine_groups = Util.convert_unicode_to_str(resp["machinegroups"])
+        self.machine_groups = Util.convert_unicode_to_str(resp.get("machinegroups", []))
 
     def get_machine_group(self):
         return self.machine_groups

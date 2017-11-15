@@ -99,7 +99,8 @@ class ListLogStoreResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
-        self.logstores = Util.convert_unicode_to_str(resp["logstores"])
+        self.total_count = int(resp["total"])
+        self.logstores = Util.convert_unicode_to_str(resp.get("logstores", []))
 
     def get_logstores(self):
         return self.logstores
@@ -107,8 +108,12 @@ class ListLogStoreResponse(LogResponse):
     def get_logstores_count(self):
         return self.count
 
+    def get_logstores_total(self):
+        return self.total_count
+
     def log_print(self):
         print('ListLogStoreResponse:')
         print('headers:', self.get_all_headers())
         print('logstores_count:', str(self.count))
+        print('logstores_total:', str(self.total_count))
         print('logstores:', str(self.logstores))

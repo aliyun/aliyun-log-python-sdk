@@ -90,7 +90,7 @@ class LogClient(object):
 
         self._user_agent = USER_AGENT
 
-    def _set_user_agent(self, user_agent):
+    def set_user_agent(self, user_agent):
         self._user_agent = user_agent
 
     def _setendpoint(self, endpoint):
