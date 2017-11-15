@@ -35,7 +35,7 @@ def sample_put_logs(client, project, logstore):
     response = client.put_logs(request)
     response.log_print()
 
-    time.sleep(10)
+    time.sleep(5)
 
     # check cursor time
     res = client.get_end_cursor(project, logstore, 0)
@@ -44,13 +44,8 @@ def sample_put_logs(client, project, logstore):
     res = client.get_cursor_time(project, logstore, 0, end_cursor)
     res.log_print()
 
-    res = client.get_begin_cursor(project, logstore, 0)
-    begin_cursor = res.get_cursor()
-
-    if end_cursor != begin_cursor:
-        res = client.get_previous_cursor_time(project, logstore, 0, end_cursor)
-        res.log_print()
-
+    res = client.get_previous_cursor_time(project, logstore, 0, end_cursor)
+    res.log_print()
 
 # @log_enter_exit
 def sample_pull_logs(client, project, logstore):
