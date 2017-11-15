@@ -436,7 +436,8 @@ class LogClient(object):
         return GetCursorTimeResponse(resp, header)
 
     def get_previous_cursor_time(self, project_name, logstore_name, shard_id, cursor):
-        """ Get previous cursor time from log service
+        """ Get previous cursor time from log service.
+        Note: if it's begin cursor, it will also raise an exception
         Unsuccessful opertaion will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
@@ -455,15 +456,10 @@ class LogClient(object):
         :raise: LogException
         """
 
-        res = self.get_begin_cursor(project_name, logstore_name, shard_id)
-        if res.get_cursor() == cursor:
-            # it's begin cursor, cannot move ahead
-            return self.get_cursor_time(project_name, logstore_name, shard_id, cursor)
-
         try:
             pre_cursor = e64(str(int(d64(cursor)) - 1)).strip()
         except Exception:
-            raise ValueError("Invalid cursor format:" + str(cursor))
+            raise LogException("InvalidCursor", "Cursor {0} is invalid".format(cursor))
 
         return self.get_cursor_time(project_name, logstore_name, shard_id, pre_cursor)
 
@@ -1786,6 +1782,30 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return ConsumerGroupCheckPointResponse(resp, header)
+
+    def get_check_point_fixed(self, project, logstore, consumer_group, shard=-1):
+        """ Get check point
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type shard: int
+        :param shard: shard id
+
+        :return: ConsumerGroupCheckPointResponse
+        """
+
+        res = self.get_check_point(project, logstore, consumer_group, shard)
+        res.check_checkpoint(self, project, logstore)
+
+        return res
+
 
     def heart_beat(self, project, logstore, consumer_group, consumer, shards=None):
         """ Heatbeat consumer group

@@ -153,6 +153,14 @@ def sample_consumer_group():
 
     sleep_until(120, lambda: len(SampleConsumer.log_results) >= test_item_count)
 
+    print("*** consumer group status ***")
+    ret = client.list_consumer_group(project, logstore)
+    ret.log_print()
+
+    for c in ret.get_consumer_groups():
+        ret = client.get_check_point_fixed(project, logstore, c.get_consumer_group_name())
+        ret.log_print()
+
     print("*** stopping workers")
     client_worker1.shutdown()
     client_worker2.shutdown()

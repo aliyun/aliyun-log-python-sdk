@@ -3,6 +3,7 @@
 
 from .entity import ConsumerGroupEntity
 from ..logresponse import LogResponse
+from ..logexception import LogException
 
 
 class CreateConsumerGroupResponse(LogResponse):
@@ -27,6 +28,22 @@ class ConsumerGroupCheckPointResponse(LogResponse):
         print('headers:', self.get_all_headers())
         print('count:', self.count)
         print('consumer_group_check_points:', self.consumer_group_check_poins)
+
+    def check_checkpoint(self, client, project_name, logstore_name):
+        for checkpoint in self.consumer_group_check_poins:
+            cursor = checkpoint["checkpoint"]
+            shard_id = checkpoint["shard"]
+            try:
+                ret = client.get_previous_cursor_time(project_name, logstore_name, shard_id, cursor)
+                checkpoint["checkpoint_previous_cursor_time"] = ret.get_cursor_time()
+            except LogException as ex:
+                if ex.get_error_code() == 'InvalidCursor':
+                    # it indicates the cursor is invalid, reset it as begin cursor
+                    ret = client.get_begin_cursor(project_name, logstore_name, shard_id)
+                    cursor = ret.get_cursor()
+                    checkpoint["checkpoint"] = cursor
+                    ret = client.get_cursor_time(project_name, logstore_name, shard_id, cursor)
+                    checkpoint["checkpoint_previous_cursor_time"] = ret.get_cursor_time()
 
 
 class ConsumerGroupHeartBeatResponse(LogResponse):
