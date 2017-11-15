@@ -232,6 +232,10 @@ def main():
 
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
+    # test list project
+    ret = client.list_project()
+    print("**project count:", ret.get_count())
+
     client.create_project(project, "SDK test")
     time.sleep(10)
 

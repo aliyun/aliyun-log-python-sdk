@@ -21,7 +21,7 @@ class ListLogstoresResponse(LogResponse):
         LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self.total = resp['total']
-        self.logstores = resp['logstores']
+        self.logstores = resp.get('logstores', [])
 
     def get_count(self):
         """ Get total count of logstores from the response
