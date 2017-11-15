@@ -23,11 +23,14 @@ def copy_project(from_client, to_client, from_project, to_project):
     ret = from_client.get_project(from_project)
     ret = to_client.create_project(to_project, ret.get_description())
 
+    default_fetch_size = 100
+
     # list logstore and copy them
-    offset, size = 0, 100
+    offset, size = 0, default_fetch_size
     while True:
         ret = from_client.list_logstore(from_project, offset=offset, size=size)
         count = ret.get_logstores_count()
+        total = ret.get_logstores_total()
         for logstore_name in ret.get_logstores():
             # copy logstore
             ret = from_client.get_logstore(from_project, logstore_name)
@@ -41,27 +44,31 @@ def copy_project(from_client, to_client, from_project, to_project):
                 if ex.get_error_code() == 'IndexConfigNotExist':
                     pass
 
-        if count < size:
+        offset += count
+        if count < size or offset >= total:
             break
 
     # list logtail config and copy them
-    offset, size = 0, 100
+    offset, size = 0, default_fetch_size
     while True:
         ret = from_client.list_logtail_config(from_project, offset=offset, size=size)
         count = ret.get_configs_count()
+        total = ret.get_configs_total()
 
         for config_name in ret.get_configs():
             ret = from_client.get_logtail_config(from_project, config_name)
             ret = to_client.create_logtail_config(to_project, ret.logtail_config)
 
-        if count < size:
+        offset += count
+        if count < size or offset >= total:
             break
 
     # list machine group and copy them
-    offset, size = 0, 100
+    offset, size = 0, default_fetch_size
     while True:
         ret = from_client.list_machine_group(from_project, offset=offset, size=size)
         count = ret.get_machine_group_count()
+        total = ret.get_machine_group_total()
 
         for group_name in ret.get_machine_group():
             ret = from_client.get_machine_group(from_project, group_name)
@@ -72,6 +79,7 @@ def copy_project(from_client, to_client, from_project, to_project):
             for config_name in ret.get_configs():
                 to_client.apply_config_to_machine_group(to_project, config_name, group_name)
 
-        if count < size:
+        offset += count
+        if count < size or offset >= total:
             break
 
