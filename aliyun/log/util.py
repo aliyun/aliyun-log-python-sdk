@@ -21,6 +21,15 @@ def base64_encodestring(s):
         return base64.encodebytes(s).decode('utf8')
 
 
+def base64_decodestring(s):
+    if six.PY2:
+        return base64.decodestring(s)
+    else:
+        if isinstance(s, str):
+            s = s.encode('utf8')
+        return base64.decodebytes(s).decode('utf8')
+
+
 class Util(object):
     @staticmethod
     def is_row_ip(ip):

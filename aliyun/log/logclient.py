@@ -39,6 +39,7 @@ from .log_logs_pb2 import LogGroup
 from .util import Util
 from aliyun.log import API_VERSION, USER_AGENT
 import aliyun.log.logclient_operator as log_op
+from .util import base64_encodestring as e64, base64_decodestring as d64
 
 CONNECTION_TIME_OUT = 20
 
@@ -423,7 +424,7 @@ class LogClient(object):
         :param cursor: the cursor to get its service receive time
 
         :return: GetCursorTimeResponse
-        
+
         :raise: LogException
         """
 
@@ -433,6 +434,38 @@ class LogClient(object):
 
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetCursorTimeResponse(resp, header)
+
+    def get_previous_cursor_time(self, project_name, logstore_name, shard_id, cursor):
+        """ Get previous cursor time from log service
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type shard_id: int
+        :param shard_id: the shard id
+
+        :type cursor: string
+        :param cursor: the cursor to get its service receive time
+
+        :return: GetCursorTimeResponse
+
+        :raise: LogException
+        """
+
+        res = self.get_begin_cursor(project_name, logstore_name, shard_id)
+        if res.get_cursor() == cursor:
+            # it's begin cursor, cannot move ahead
+            return self.get_cursor_time(project_name, logstore_name, shard_id, cursor)
+
+        try:
+            pre_cursor = e64(str(int(d64(cursor)) - 1)).strip()
+        except Exception:
+            raise ValueError("Invalid cursor format:" + str(cursor))
+
+        return self.get_cursor_time(project_name, logstore_name, shard_id, pre_cursor)
 
     def get_begin_cursor(self, project_name, logstore_name, shard_id):
         """ Get begin cursor from log service for batch pull logs

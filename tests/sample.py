@@ -45,6 +45,13 @@ def sample_pull_logs(client, project, logstore):
     res = client.pull_logs(project, logstore, 0, cursor, 1)
     res.log_print()
 
+    # check cursor time
+    res = client.get_cursor_time(project, logstore, 0, cursor)
+    res.log_print()
+
+    res = client.get_previous_cursor_time(project, logstore, 0, cursor)
+    res.log_print()
+
 
 # @log_enter_exit
 def sample_list_logstores(client, project):
