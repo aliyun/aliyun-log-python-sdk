@@ -120,9 +120,9 @@ class LogClient(object):
             if six.PY3 and isinstance(resp_body, six.binary_type):
                 return json.loads(resp_body.decode('utf8'))
             return json.loads(resp_body)
-        except Exception:
+        except Exception as ex:
             raise LogException('BadResponse',
-                               'Bad json format:\n%s' % resp_body,
+                               'Bad json format:\n%s' % resp_body + '\n' + str(ex),
                                requestId, resp_status, resp_header, resp_body)
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
