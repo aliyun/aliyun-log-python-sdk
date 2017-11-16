@@ -39,6 +39,7 @@ from .log_logs_pb2 import LogGroup
 from .util import Util
 from aliyun.log import API_VERSION, USER_AGENT
 import aliyun.log.logclient_operator as log_op
+from .util import base64_encodestring as e64, base64_decodestring as d64
 
 CONNECTION_TIME_OUT = 20
 
@@ -119,9 +120,9 @@ class LogClient(object):
             if six.PY3 and isinstance(resp_body, six.binary_type):
                 return json.loads(resp_body.decode('utf8'))
             return json.loads(resp_body)
-        except Exception:
+        except Exception as ex:
             raise LogException('BadResponse',
-                               'Bad json format:\n%s' % resp_body,
+                               'Bad json format:\n%s' % resp_body + '\n' + str(ex),
                                requestId, resp_status, resp_header, resp_body)
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
@@ -423,7 +424,7 @@ class LogClient(object):
         :param cursor: the cursor to get its service receive time
 
         :return: GetCursorTimeResponse
-        
+
         :raise: LogException
         """
 
@@ -433,6 +434,58 @@ class LogClient(object):
 
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetCursorTimeResponse(resp, header)
+
+    @staticmethod
+    def _get_cursor_as_int(cursor):
+        return int(d64(cursor))
+
+    def get_previous_cursor_time(self, project_name, logstore_name, shard_id, cursor, normalize=True):
+        """ Get previous cursor time from log service.
+        Note: normalize = true: if the cursor is out of range, it will be nornalized to nearest cursor
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type shard_id: int
+        :param shard_id: the shard id
+
+        :type cursor: string
+        :param cursor: the cursor to get its service receive time
+
+        :type normalize: bool
+        :param normalize: fix the cursor or not if it's out of scope
+
+        :return: GetCursorTimeResponse
+
+        :raise: LogException
+        """
+
+        try:
+            pre_cursor_int = self._get_cursor_as_int(cursor) - 1
+            pre_cursor = e64(str(pre_cursor_int)).strip()
+        except Exception:
+            raise LogException("InvalidCursor", "Cursor {0} is invalid".format(cursor))
+
+        try:
+            return self.get_cursor_time(project_name, logstore_name, shard_id, pre_cursor)
+        except LogException as ex:
+            if normalize and ex.get_error_code() == "InvalidCursor":
+                ret = self.get_begin_cursor(project_name, logstore_name, shard_id)
+                begin_cursor_int = self._get_cursor_as_int(ret.get_cursor())
+
+                if pre_cursor_int < begin_cursor_int:
+                    return self.get_cursor_time(project_name, logstore_name, shard_id, e64(str(begin_cursor_int)))
+
+                ret = self.get_end_cursor(project_name, logstore_name, shard_id)
+                end_cursor_int = self._get_cursor_as_int(ret.get_cursor())
+
+                if pre_cursor_int > end_cursor_int:
+                    return self.get_cursor_time(project_name, logstore_name, shard_id, e64(str(end_cursor_int)))
+
+            raise ex
 
     def get_begin_cursor(self, project_name, logstore_name, shard_id):
         """ Get begin cursor from log service for batch pull logs
@@ -1753,6 +1806,30 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/consumergroups/" + consumer_group
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return ConsumerGroupCheckPointResponse(resp, header)
+
+    def get_check_point_fixed(self, project, logstore, consumer_group, shard=-1):
+        """ Get check point
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type consumer_group: string
+        :param consumer_group: consumer group name
+
+        :type shard: int
+        :param shard: shard id
+
+        :return: ConsumerGroupCheckPointResponse
+        """
+
+        res = self.get_check_point(project, logstore, consumer_group, shard)
+        res.check_checkpoint(self, project, logstore)
+
+        return res
+
 
     def heart_beat(self, project, logstore, consumer_group, consumer, shards=None):
         """ Heatbeat consumer group
