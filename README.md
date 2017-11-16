@@ -101,7 +101,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
   res.log_print()
   ```
 
-  ** 注意: ** 只能删除空的项目.
+  **注意：** 只能删除空的项目.
 
 - 复制
   复制一个项目的所有日志库和相应的配置(包括机器组合索引等), 要求目标项目不存在.
@@ -170,7 +170,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   **注意：** 默认获取100个配置项，通过传入参数`offset`和`size`来获取更多
 
-  **输出:**
+  **输出：**
   ```json
   {"count": 2, "configs": ["config_name1", "config_name2"], "total": 2}
   ```
@@ -208,7 +208,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
   res.log_print()
   ```
 
-  **注意:**
+  **注意：**
   - 创建的配置的名字`config_name`和关联的日志库名字`logstore_name`都是放在传入的`request`中.
   - 创建的Logtail的配置还没有应用到任何一个机器组, 需要调用后面的API`apply_config_to_machine_group`来进行配置.
 
@@ -238,7 +238,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   **注意：** 默认获取100个机器组，通过传入参数`offset`和`size`来获取更多
 
-  **输出:**
+  **输出：**
   ```json
   {"count": 2, "machinegroups": ["group_name1", "group_name2"], "total": 2}
   ```
@@ -267,7 +267,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
   res.log_print()
   ```
 
-  **注意:**
+  **注意：**
   - 创建的机器组的名字`group_name`是放在传入的`request`中.
   - 创建的机器组还没有应用到任何一个Logtail配置, 需要调用后面的API`apply_config_to_machine_group`来进行配置.
 
@@ -306,7 +306,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
   res.log_print()
   ```
 
-  ** 输出: **
+  **输出：**
   ```json
   {"count": 2, "machinegroups": ["group1", "group2"]}
   ```
@@ -317,7 +317,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
   res.log_print()
   ```
 
-  ** 输出: **
+  **输出：**
   ```json
   {"count": 2, "configs": ["config1", "config2"]}
   ```
@@ -442,7 +442,7 @@ res = client.pull_logs('project1', 'logstore1', shard_id=0, cursor=res.get_curso
 res.log_print()
 ```
 
-**注意:** 默认获取1000条, 可以通过参数`count`来调节. 也可以通过参数`end_cursor`来设定设定一个结束的游标.
+**注意：** 默认获取1000条, 可以通过参数`count`来调节. 也可以通过参数`end_cursor`来设定设定一个结束的游标.
 
 
 ### 获取(Get)数据
