@@ -10,6 +10,7 @@ from .logresponse import LogResponse
 from .util import Util
 from aliyun.log.logexception import LogException
 
+
 class PullLogResponse(LogResponse):
     """ The response of the pull_logs API from log.
     
@@ -62,7 +63,7 @@ class PullLogResponse(LogResponse):
             self.loggroup_list.ParseFromString(data)
         except Exception as ex:
             raise LogException('BadResponse', 'failed to parse data to LogGroupList: \n'
-                               + str(ex) + '\nraw data:\n' + data)
+                               + str(ex) + '\nraw data:\n' + str(data))
 
     def _transfer_to_json(self):
         self.loggroup_list_json = []
