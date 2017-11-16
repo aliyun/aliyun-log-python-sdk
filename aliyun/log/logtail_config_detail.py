@@ -230,7 +230,7 @@ class LogtailConfigHelper(object):
         file_pattern = input_detail['filePattern']
 
         time_format = input_detail['timeFormat']
-        log_begin_regex = input_detail['logBeginRegex']
+        log_begin_regex = input_detail.get('logBeginRegex','')
         log_parse_regex = input_detail['regex']
         reg_keys = input_detail['key']
         topic_format = input_detail['topicFormat']
@@ -254,7 +254,7 @@ class LogtailConfigHelper(object):
         log_path = input_detail['logPath']
         file_pattern = input_detail['filePattern']
 
-        log_begin_regex = input_detail['logBeginRegex']
+        log_begin_regex = input_detail.get('logBeginRegex','')
         topic_format = input_detail['topicFormat']
         filter_keys = input_detail['filterKey']
         filter_keys_reg = input_detail['filterRegex']
