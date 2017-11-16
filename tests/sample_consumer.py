@@ -42,6 +42,7 @@ class SampleConsumer(ConsumerProcessorBase):
         current_time = time.time()
         if current_time - self.last_check_time > 3:
             try:
+                self.last_check_time = current_time
                 check_point_tracker.save_check_point(True)
             except Exception:
                 import traceback
