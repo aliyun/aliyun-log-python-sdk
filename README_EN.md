@@ -23,7 +23,7 @@ efficiently.
 6. Use exception to uncover errors
 7. Support high level API for consumer group
 
-## Supported Python：
+### Supported Python：
 
 1. Python 2.6
 2. Python 2.7
@@ -34,14 +34,17 @@ efficiently.
 7. Pypy2
 8. Pypy3
 
+### Supported Log Service API
+1. Log Service API 0.6
 
 ## Installation
 ```shell
 pip install -U aliyun-log-python-sdk
 ```
 
-## Supported Log Service API
-1. Log Service API 0.6
+## Sample Code:
+- [Sample Code](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests)
+
 
 ## Other resources
 
