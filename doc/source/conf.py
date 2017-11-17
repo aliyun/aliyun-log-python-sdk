@@ -183,6 +183,6 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-# import pypandoc
-# open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
-# open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
+import pypandoc
+open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
+open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))

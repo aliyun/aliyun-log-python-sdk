@@ -1,4 +1,4 @@
-# 阿里云日志服务Python SDK
+# User Guide (中文)
 
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
@@ -41,16 +41,16 @@
 
 1. Log Service API 0.6
 
-## 安装:
+## 安装
 ```shell
 pip install -U aliyun-log-python-sdk
 ```
 
-## 代码示例:
+## 代码示例
 - [代码示例](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests)
 
 
-## 配置SDK:
+## 配置SDK
 参考[SDK配置](https://help.aliyun.com/document_detail/29064.html?spm=5176.doc29068.2.8.SWJhYZ)
 获得访问秘钥的ID和Key以及访问入口Endpoint, 构建一个LogClient的客户端.
 
@@ -68,8 +68,8 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 # 使用client的方法来操作日志服务
 ```
 
-## 数据采集配置:
-### 管理日志项目:
+## 数据采集配置
+### 管理日志项目
 
 - 获取列表
 
@@ -111,7 +111,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
   ```
 
 
-### 管理日志库(logstore):
+### 管理日志库(logstore)
 
 日志库属于某一个项目, 所有的操作都需要传入项目名称.
 
@@ -146,7 +146,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 - 更新
   通过`update_logstore`删除日志库
 
-### 管理日志库分区(shard):
+### 管理日志库分区(shard)
 分区属于某一个日志库, 所有的操作都需要传入项目名称和日志库名称.
 
 - 获取列表
@@ -158,7 +158,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 - 合并
   通过`merge_shard`合并分区
 
-### 管理日志库Logtail配置:
+### 管理日志库Logtail配置
 Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一一对应的关系.
 
 - 获取列表
@@ -226,7 +226,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 删除
   通过`delete_logtail_config`来删除Logtail配置.
 
-### 管理机器组:
+### 管理机器组
 机器组(MachineGroup)主要是用于应用Logtail配置的. 其与Logtail配置的关系是多对多的关系. 一个Logtail配置可以应用到多个机器组上, 放置一个机器组也可以应用多个Logtail配置.
 
 - 获取列表
@@ -285,7 +285,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 删除
   通过`delete_logtail_config`来删除Logtail配置.
 
-### 关联Logtail配置到机器组:
+### 关联Logtail配置到机器组
 机器组与Logtail配置的关系是多对多的关系. 一个Logtail配置可以应用到多个机器组上, 反之一个机器组也可以应用多个Logtail配置.
 
 - 应用Logtail配置到特定机器组
@@ -473,8 +473,8 @@ res.log_print()
 通过`get_histograms`来根据索引获取数据特定日志时间范围内的分布图.
 
 
-## 实时消费(Consumer Group)
-通过消费组可以获得可保障的自动扩展的日志消费服务.
+## 实时消费
+通过消费组(Consumer Group)可以获得可保障的自动扩展的日志消费服务.
 
 ### 高级接口
 1. 构建消费逻辑
