@@ -22,6 +22,10 @@ class GetCursorTimeResponse(LogResponse):
         self.cursor_time = resp['cursor_time']
 
     def get_cursor_time(self):
+        """
+
+        :return:
+        """
         return self.cursor_time
 
     def log_print(self):

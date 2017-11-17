@@ -1,4 +1,4 @@
-# Python SDK for AliCloud Log Service
+# User Guide
 
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
@@ -6,7 +6,7 @@
 [![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/LICENSE)
 
-#### [中文版README](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README_CN.md)
+[中文版README](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README_CN.md)
 
 ## Introduction
 

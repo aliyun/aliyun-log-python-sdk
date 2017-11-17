@@ -6,22 +6,23 @@
 
 import time
 
-from aliyun.log.util import Util
+from .util import Util
 
 
 class IndexKeyConfig(object):
     """ The index config of a special log key
+
     :type token_list: string list
     :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"] 
 
     :type case_sensitive: bool
     :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
 
-    :type index_type : string 
-    :param index_type : one of ['text', 'long', 'double']
+    :type index_type: string
+    :param index_type: one of ['text', 'long', 'double']
 
-    :type doc_value : bool
-    :param doc_value : True if enable doc_value, used for fast sql execution
+    :type doc_value: bool
+    :param doc_value: True if enable doc_value, used for fast sql execution
     """
 
     def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False):
@@ -55,6 +56,7 @@ class IndexKeyConfig(object):
 
 class IndexLineConfig(object):
     """ The index config of the log line
+
     :type token_list: string list
     :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"] 
 
@@ -96,18 +98,18 @@ class IndexLineConfig(object):
 
 class IndexConfig(object):
     """The index config of a logstore
-    :type ttl : int 
-    :param ttl : this parameter is deprecated, the ttl is same as logstore's ttl
 
-    :type line_config : IndexLineConfig
-    :param line_config : the index config of the whole log line
+    :type ttl: int
+    :param ttl: this parameter is deprecated, the ttl is same as logstore's ttl
 
-    :type key_config_list : dict (string => IndexKeyConfig)
-    :param key_config_list: the index key configs of the keys
+    :type line_config: IndexLineConfig
+    :param line_config: the index config of the whole log line
 
-    :type all_keys_config : IndexKeyConfig
-    :param all_keys_config : the key config of all keys, the new create logstore should never user this param,
-    it only used to compatible with old config
+    :type key_config_list: dict
+    :param key_config_list: dict (string => IndexKeyConfig), the index key configs of the keys
+
+    :type all_keys_config: IndexKeyConfig
+    :param all_keys_config: the key config of all keys, the new create logstore should never user this param, it only used to compatible with old config
     """
 
     def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None):

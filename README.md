@@ -1,4 +1,4 @@
-# 阿里云日志服务Python SDK
+# User Guide (中文)
 
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
@@ -6,16 +6,16 @@
 [![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/LICENSE)
 
-#### [README in English](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
+[README in English](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
 
 
-## 基本介绍：
+## 基本介绍
 
 这是Log Service SDK for Python的开源版本。Log Service SDK for Python是阿里云日志服务
 （Log Service）API的Python编程接口，提供了对于Log Service Rest API所有接口的封装
 和支持，帮助Python开发人员更快编程使用阿里云Log Service服务。
 
-### 具体功能：
+### 具体功能
 
 1. 封装Rest API。
 2. 实现API请求的数字签名
@@ -25,7 +25,7 @@
 6. 使用异常统一处理错误
 7. 提供消费组高级API
 
-### 支持Python版本：
+### 支持Python版本
 
 1. Python 2.6
 2. Python 2.7
@@ -37,25 +37,25 @@
 8. Pypy3
 
 
-### 支持API版本：
+### 支持API版本
 
 1. Log Service API 0.6
 
-## 安装:
+## 安装
 ```shell
 pip install -U aliyun-log-python-sdk
 ```
 
-## 代码示例:
+## 代码示例
 - [代码示例](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests)
 
 
-## 配置SDK:
+## 配置SDK
 参考[SDK配置](https://help.aliyun.com/document_detail/29064.html?spm=5176.doc29068.2.8.SWJhYZ)
 获得访问秘钥的ID和Key以及访问入口Endpoint, 构建一个LogClient的客户端.
 
 ```python
-from aliyun.log.logclient import LogClient
+from aliyun.log import LogClient
 
 # “华东 1 (杭州)” Region 的日志服务入口。
 endpoint = 'cn-hangzhou.sls.aliyuncs.com'
@@ -68,8 +68,8 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 # 使用client的方法来操作日志服务
 ```
 
-## 数据采集配置:
-### 管理日志项目:
+## 数据采集配置
+### 管理日志项目
 
 - 获取列表
 
@@ -111,14 +111,14 @@ client = LogClient(endpoint, accessKeyId, accessKey)
   ```
 
 
-### 管理日志库(logstore):
+### 管理日志库(logstore)
 
 日志库属于某一个项目, 所有的操作都需要传入项目名称.
 
 - 获取列表
   获取一个项目下的所有日志库：
   ```python
-  from aliyun.log.listlogstoresrequest import ListLogstoresRequest
+  from aliyun.log import ListLogstoresRequest
   request = ListLogstoresRequest('project1')
   res = client.list_logstores(request)
   res.log_print()
@@ -146,7 +146,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 - 更新
   通过`update_logstore`删除日志库
 
-### 管理日志库分区(shard):
+### 管理日志库分区(shard)
 分区属于某一个日志库, 所有的操作都需要传入项目名称和日志库名称.
 
 - 获取列表
@@ -158,7 +158,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 - 合并
   通过`merge_shard`合并分区
 
-### 管理日志库Logtail配置:
+### 管理日志库Logtail配置
 Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一一对应的关系.
 
 - 获取列表
@@ -178,7 +178,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 创建
   创建一个Logtail配置, 并关联到日志库上:
   ```python
-  from aliyun.log.logtail_config_detail import LogtailConfigHelper as helper
+  from aliyun.log import LogtailConfigHelper as helper
   config_detail_json = {
         "config_name": "config_name1",
         "logstore_name": "logstore1",
@@ -226,7 +226,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 删除
   通过`delete_logtail_config`来删除Logtail配置.
 
-### 管理机器组:
+### 管理机器组
 机器组(MachineGroup)主要是用于应用Logtail配置的. 其与Logtail配置的关系是多对多的关系. 一个Logtail配置可以应用到多个机器组上, 放置一个机器组也可以应用多个Logtail配置.
 
 - 获取列表
@@ -246,7 +246,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 创建
   创建一个机器组:
   ```python
-  from aliyun.log.machine_group_detail import MachineGroupDetail
+  from aliyun.log import MachineGroupDetail
   config_detail_json = {
       "group_name": "group_name1",
       "machine_list": [
@@ -285,7 +285,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 删除
   通过`delete_logtail_config`来删除Logtail配置.
 
-### 关联Logtail配置到机器组:
+### 关联Logtail配置到机器组
 机器组与Logtail配置的关系是多对多的关系. 一个Logtail配置可以应用到多个机器组上, 反之一个机器组也可以应用多个Logtail配置.
 
 - 应用Logtail配置到特定机器组
@@ -328,7 +328,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 - 创建
 	给一个日志库创建索引
 	```python
-	from aliyun.log.index_config import IndexConfig
+	from aliyun.log import IndexConfig
 	request_json = {
 	     "keys": {
 	       "f1": {
@@ -375,7 +375,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 ### 其他操作
 - 获取日志库主题列表
   ```python
-  from aliyun.log.listtopicsrequest import ListTopicsRequest
+  from aliyun.log import ListTopicsRequest
   request = ListTopicsRequest('project1', 'logstore1')
   res = client.list_topic(request)
   res.log_print()
@@ -451,7 +451,7 @@ res.log_print()
 
 ```python
 from time import time
-from aliyun.log.getlogsrequest import GetLogsRequest
+from aliyun.log import GetLogsRequest
 request_json = {
   "project": "project1",
   "logstore": "logstore1",
@@ -473,10 +473,10 @@ res.log_print()
 通过`get_histograms`来根据索引获取数据特定日志时间范围内的分布图.
 
 
-## 实时消费(Consumer Group)
-通过消费组可以获得可保障的自动扩展的日志消费服务.
+## 实时消费
+通过消费组(Consumer Group)可以获得可保障的自动扩展的日志消费服务.
 
-
+### 高级接口
 1. 构建消费逻辑
 
 	继承类`ConsumerProcessorBase`重写方法`initialize`, `process`和`shutdown`定义特定逻辑.
@@ -518,7 +518,7 @@ res.log_print()
 	这里在同一消费组下准备2个消费者的配置项:
 
 	```python
-	from aliyun.log.consumer.config import LogHubConfig, CursorPosition
+	from aliyun.log.consumer import LogHubConfig, CursorPosition
 
 	# 准备配置项
 	option1 = LogHubConfig(endpoint, access_id, access_key, "project1", "logstore1", "consume_group1",
@@ -548,6 +548,53 @@ res.log_print()
 	worker1.shutdown()
 	worker2.shutdown()
 	```
+
+### 基础接口
+高级接口已经对基础接口进行了封装. 个别情况下也可以通过基础接口进行一些特定的操作.
+
+- 获取列表
+  通过`list_consumer_group`h获得当前消费组列表.
+
+
+- 创建
+  通过`create_consumer_group`创建一个消费组.
+
+- 更新
+  通过`update_consumer_group`更新一个消费组, 例如延迟和消费顺序等.
+
+- 删除
+  通过`delete_consumer_group`删除一个消费组.
+
+- 获取消费进度
+  可以通过`get_check_point`获得消费组的消费检查点(Checkpoint), 来了解消费进度信息
+
+- 更新消费进度
+  消费者需要通过`update_check_point`来存储和更新消费检查点(Checkpoint)
+
+## 投递管理
+投递的配置一般称为Job, 包含了投递的具体配置以及调度日程安排. 而某一个具体时间的运行实例称为Task.
+
+- 获取配置列表
+  通过`list_shipper`获取投递配置的列表
+
+- 创建配置
+  通过`create_shipper`创建一个投递配置.
+
+- 获取配置
+  通过`get_shipper_config`获取一个投递配置的具体信息.
+
+- 更新配置
+  通过`update_shipper`更新一个投递配置.
+
+- 删除配置
+  通过`delete_shipper`删除一个投递配置.
+
+- 获取运行实例列表
+  通过`get_shipper_tasks`获取投递运行实例.
+
+- 重试运行实例
+  通过`retry_shipper_tasks`重试某一个运行实例.
+
 
 ## 其他资源：
 

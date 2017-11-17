@@ -1,0 +1,3 @@
+sphinxcontrib-github_ribbon
+pypandoc
+six

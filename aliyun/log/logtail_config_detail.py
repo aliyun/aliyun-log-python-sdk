@@ -6,43 +6,43 @@
 
 import time
 
-from aliyun.log.util import Util
+from .util import Util
 
 
 class LogtailConfigDetail(object):
     """The common parts of logtail config
-    :type config_name : string
-    :param config_name : the config name
+    :type config_name: string
+    :param config_name: the config name
 
     :type logstore_name: string
     :param logstore_name: the logstore name for the config 
 
-    :type endpoint : string
-    :param endpoint : log data endpoint, it should base on the region of this project
+    :type endpoint: string
+    :param endpoint: log data endpoint, it should base on the region of this project
 
-    :type log_path : string
-    :param log_path : the log file dir path
+    :type log_path: string
+    :param log_path: the log file dir path
 
     :type file_pattern: string
-    :param file_pattern : the log file name pattern, e.g *.LOG , access.log
+    :param file_pattern: the log file name pattern, e.g *.LOG , access.log
 
-    :type log_begin_regex : string
-    :param log_begin_regex : the regular express to match the first line of a log
+    :type log_begin_regex: string
+    :param log_begin_regex: the regular express to match the first line of a log
 
-    :type topic_format : string
+    :type topic_format: string
     :param topic_format: "none" or "group_topic"
 
-    :param filter_keys : string list
-    :param filter_keys : the keys used to filter logs, e.g ["key_1", "key_2"]
+    :type filter_keys: string list
+    :param filter_keys: the keys used to filter logs, e.g ["key_1", "key_2"]
 
-    :param filter_keys_reg : string list
-    :param filter_keys_reg : the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i].
+    :type filter_keys_reg: string list
+    :param filter_keys_reg: the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i].
     The size of filter_keys_reg and filter_keys should be same.\
         If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys,
         match the regex set in filter_keys_reg
 
-    :param logSample : string
-    :param logSample : sample strings for the log, up to 1000 bytes
+    :type logSample: string
+    :param logSample: sample strings for the log, up to 1000 bytes
 
     """
 
@@ -71,47 +71,45 @@ class LogtailConfigDetail(object):
 
 class CommonRegLogConfigDetail(LogtailConfigDetail):
     """The logtail config for common_reg_log
-    :type config_name : string
-    :param config_name : the config name
+
+    :type config_name: string
+    :param config_name: the config name
 
     :type logstore_name: string
     :param logstore_name: the logstore name for the config 
 
-    :type endpoint : string
-    :param endpoint : log data endpoint, it should base on the region of this project
+    :type endpoint: string
+    :param endpoint: log data endpoint, it should base on the region of this project
 
-    :type log_path : string
-    :param log_path : the log file dir path
+    :type log_path: string
+    :param log_path: the log file dir path
 
     :type file_pattern: string
-    :param file_pattern : the log file name pattern, e.g *.LOG , access.log
+    :param file_pattern: the log file name pattern, e.g \*.LOG , access.log
 
-    :type time_format : string
-    :parma time_format : the time format of the logs, e.g.  "%Y-%m-%d %M:%H:%S"
+    :type time_format: string
+    :param time_format: the time format of the logs, e.g.  "%Y-%m-%d %M:%H:%S"
 
-    :type log_begin_regex : string
-    :param log_begin_regex : the regular express to match the first line of a log
+    :type log_begin_regex: string
+    :param log_begin_regex: the regular express to match the first line of a log
 
     :type log_parse_regex: string
-    :param log_parse_regex : the regular express to match a log, e.g (\d+-\d+\d+ \d+:\d+:\d+) (\S+) (.*)
+    :param log_parse_regex: the regular express to match a log, e.g (\d+-\d+\d+ \d+:\d+:\d+) (\S+) (.*)
 
-    :type reg_keys : string list
-    :param reg_keys : the key for every captured value in log_parse_reg, e.g ["time", "level", "message"]
+    :type reg_keys: string list
+    :param reg_keys: the key for every captured value in log_parse_reg, e.g ["time", "level", "message"]
 
-    :type topic_format : string
+    :type topic_format: string
     :param topic_format: "none" or "group_topic"
 
-    :param filter_keys : string list
-    :param filter_keys : the keys used to filter logs, e.g ["key_1", "key_2"]
+    :type filter_keys: string list
+    :param filter_keys: the keys used to filter logs, e.g ["key_1", "key_2"]
 
-    :param filter_keys_reg : string list
-    :param filter_keys_reg : the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i].
-    The size of filter_keys_reg and filter_keys should be same.
-        If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys,
-        match the regex set in filter_keys_reg
+    :type filter_keys_reg: string list
+    :param filter_keys_reg: the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i]. The size of filter_keys_reg and filter_keys should be same. If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys, match the regex set in filter_keys_reg
 
-    :param logSample : string
-    :param logSample : sample strings for the log, up to 1000 bytes
+    :type logSample: string
+    :param logSample: sample strings for the log, up to 1000 bytes
 
 
     """
@@ -155,35 +153,32 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
 
 class ApsaraLogConfigDetail(LogtailConfigDetail):
     """The logtail config for apsara_log
-    :type config_name : string
-    :param config_name : the config name
+    :type config_name: string
+    :param config_name: the config name
 
     :type logstore_name: string
     :param logstore_name: the logstore name for the config 
 
-    :type endpoint : string
-    :param endpoint : log data endpoint, it should base on the region of this project
+    :type endpoint: string
+    :param endpoint: log data endpoint, it should base on the region of this project
 
-    :type log_path : string
-    :param log_path : the log file dir path
+    :type log_path: string
+    :param log_path: the log file dir path
 
     :type file_pattern: string
-    :param file_pattern : the log file name pattern, e.g *.LOG , access.log
+    :param file_pattern: the log file name pattern, e.g *.LOG , access.log
 
-    :type log_begin_regex : string
-    :param log_begin_regex : the regular express to match the first line of a log
+    :type log_begin_regex: string
+    :param log_begin_regex: the regular express to match the first line of a log
 
-    :type topic_format : string
+    :type topic_format: string
     :param topic_format: "none" or "group_topic"
 
-    :param filter_keys : string list
-    :param filter_keys : the keys used to filter logs, e.g ["key_1", "key_2"]
+    :type filter_keys: string list
+    :param filter_keys: the keys used to filter logs, e.g ["key_1", "key_2"]
 
-    :param filter_keys_reg : string list
-    :param filter_keys_reg : the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i].
-    The size of filter_keys_reg and filter_keys should be same.
-        If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys,
-        match the regex set in filter_keys_reg
+    :type filter_keys_reg: string list
+    :param filter_keys_reg: the regex for filter_keys to filter the log, filter_keys_reg[i] is for filter_keys[i]. The size of filter_keys_reg and filter_keys should be same. If a log is matched only if the size of filter_keys is 0, or all the value of the related keys in filter_keys, match the regex set in filter_keys_reg
     """
 
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern,
@@ -217,8 +212,17 @@ class ApsaraLogConfigDetail(LogtailConfigDetail):
 
 
 class LogtailConfigHelper(object):
+    """
+    A helper to generate logtail config object from dict object (loaded from json)
+    """
+
     @staticmethod
     def generate_common_reg_log_config(json_value):
+        """Generate common logtail config from loaded json value
+
+        :param json_value:
+        :return:
+        """
         input_detail = json_value['inputDetail']
         output_detail = json_value['outputDetail']
         logSample = json_value.get('logSample', '')
@@ -230,7 +234,7 @@ class LogtailConfigHelper(object):
         file_pattern = input_detail['filePattern']
 
         time_format = input_detail['timeFormat']
-        log_begin_regex = input_detail.get('logBeginRegex','')
+        log_begin_regex = input_detail.get('logBeginRegex', '')
         log_parse_regex = input_detail['regex']
         reg_keys = input_detail['key']
         topic_format = input_detail['topicFormat']
@@ -244,6 +248,11 @@ class LogtailConfigHelper(object):
 
     @staticmethod
     def generate_apsara_log_config(json_value):
+        """Generate apsara logtail config from loaded json value
+
+        :param json_value:
+        :return:
+        """
         input_detail = json_value['inputDetail']
         output_detail = json_value['outputDetail']
         config_name = json_value['configName']
@@ -254,7 +263,7 @@ class LogtailConfigHelper(object):
         log_path = input_detail['logPath']
         file_pattern = input_detail['filePattern']
 
-        log_begin_regex = input_detail.get('logBeginRegex','')
+        log_begin_regex = input_detail.get('logBeginRegex', '')
         topic_format = input_detail['topicFormat']
         filter_keys = input_detail['filterKey']
         filter_keys_reg = input_detail['filterRegex']
@@ -265,6 +274,11 @@ class LogtailConfigHelper(object):
 
     @staticmethod
     def generate_logtail_config(json_value):
+        """Generate logtail config from loaded json value
+
+        :param json_value:
+        :return:
+        """
         if json_value['inputDetail']['logType'] == 'common_reg_log':
             return LogtailConfigHelper.generate_common_reg_log_config(json_value)
         return LogtailConfigHelper.generate_apsara_log_config(json_value)

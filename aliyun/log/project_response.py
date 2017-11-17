@@ -4,14 +4,17 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
+from .logresponse import LogResponse
+from .util import Util
+
 __all__ = ['CreateProjectResponse', 'DeleteProjectResponse', 'GetProjectResponse', 'ListProjectResponse']
 
 
-from aliyun.log.logresponse import LogResponse
-from aliyun.log.util import Util
-
-
 class CreateProjectResponse(LogResponse):
+    """
+    Response of create_project
+    """
     def __init__(self, header, resp=''):
         LogResponse.__init__(self, header, resp)
 

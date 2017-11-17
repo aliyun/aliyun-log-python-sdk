@@ -1,12 +1,7 @@
 # encoding: utf-8
 
 import time
-from aliyun.log.logitem import LogItem
-from aliyun.log.logclient import LogClient
-from aliyun.log.getlogsrequest import GetLogsRequest
-from aliyun.log.putlogsrequest import PutLogsRequest
-from aliyun.log.listlogstoresrequest import ListLogstoresRequest
-from aliyun.log.gethistogramsrequest import GetHistogramsRequest
+from aliyun.log import *
 
 
 def main():

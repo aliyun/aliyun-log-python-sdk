@@ -8,11 +8,11 @@
 class AclConfig(object):
     def __init__(self, aliyun_id, privilege_list=None):
         """ The acl config
-        :type aliyun_id : string
-        :param aliyun_id : the aliyun id e.g  "12312313131"
+        :type aliyun_id: string
+        :param aliyun_id: the aliyun id e.g  "12312313131"
 
-        :type privilege_list : string list
-        :param privilege_list : the privilege list array, e.g ["WRITE", "READ", "ADMIN", "LIST"]
+        :type privilege_list: string list
+        :param privilege_list: the privilege list array, e.g ["WRITE", "READ", "ADMIN", "LIST"]
         """
         if privilege_list is None:
             privilege_list = []

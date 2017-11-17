@@ -1,17 +1,17 @@
 # -×- coding: utf-8 -*-
 
-# import rwlock
 import logging
 
 from .exceptions import CheckPointException
 from .exceptions import ClientWorkerException
-from ..logclient import LogClient
 from ..logexception import LogException
+from .. import LogClient
 
 
 class ConsumerClient(object):
     def __init__(self, endpoint, access_key_id, access_key, project,
                  logstore, consumer_group, consumer, security_token=None):
+
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token)
         self.mproject = project
         self.mlogstore = logstore
@@ -36,10 +36,10 @@ class ConsumerClient(object):
                     if consumer_group is not None \
                             and (consumer_group.is_in_order() != in_order
                                  or consumer_group.get_timeout() != timeout):
-                            raise ClientWorkerException(
-                                "consumer group is not agreed, AlreadyExistedConsumerGroup: {\"consumeInOrder\": " +
-                                str(consumer_group.is_in_order()) + ", \"timeoutInMillSecond\": " +
-                                str(consumer_group.get_timeout()) + "}")
+                        raise ClientWorkerException(
+                            "consumer group is not agreed, AlreadyExistedConsumerGroup: {\"consumeInOrder\": " +
+                            str(consumer_group.is_in_order()) + ", \"timeoutInMillSecond\": " +
+                            str(consumer_group.get_timeout()) + "}")
                 except LogException as e1:
                     raise ClientWorkerException("error occour when get consumer group, errorCode: " +
                                                 e1.get_error_code() + ", errorMessage: " + e1.get_error_message())
