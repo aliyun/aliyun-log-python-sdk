@@ -37,6 +37,8 @@ from .shipper_response import *
 from .util import Util
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
+import json
+import six
 
 CONNECTION_TIME_OUT = 20
 
