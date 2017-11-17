@@ -41,6 +41,7 @@ extensions = ['sphinx.ext.autodoc',
 # github location
 html_show_sourcelink = False
 github_ribbon_repo = 'aliyun/aliyun-log-python-sdk'
+github_ribbon_color = "green"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -65,7 +66,13 @@ author = 'Alibaba Cloud'
 #
 # The short X.Y version.
 from aliyun.log import __version__
-version = __version__
+import re
+version = '0.6'
+with open(os.path.abspath('../../aliyun/log/version.py'), 'r') as fd:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        fd.read(), re.MULTILINE).group(1)
+
+
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -74,7 +81,7 @@ release = version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -176,6 +183,6 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-import pypandoc
-open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
-open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
+# import pypandoc
+# open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
+# open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
