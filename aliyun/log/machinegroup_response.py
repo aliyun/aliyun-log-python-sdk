@@ -10,10 +10,10 @@ __all__ = ['CreateMachineGroupResponse', 'DeleteMachineGroupResponse',
            'ApplyConfigToMachineGroupResponse', 'RemoveConfigToMachineGroupResponse',
            'GetMachineGroupAppliedConfigResponse', 'GetConfigAppliedMachineGroupsResponse']
 
-from aliyun.log.util import Util
-from aliyun.log.logresponse import LogResponse
-from aliyun.log.machine_group_detail import MachineGroupDetail
-from aliyun.log.machine_group_detail import MachineStatus
+from .util import Util
+from .logresponse import LogResponse
+from .machine_group_detail import MachineGroupDetail
+from .machine_group_detail import MachineStatus
 
 
 class CreateMachineGroupResponse(LogResponse):
@@ -62,9 +62,17 @@ class GetMachineGroupResponse(LogResponse):
         self.machine_group.from_json(resp)
 
     def get_machine_group(self):
+        """
+
+        :return:
+        """
         return self.machine_group
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetMachineGroupResponse:')
         print('headers:', self.get_all_headers())
         print('machine_group', self.machine_group.to_json())
@@ -102,15 +110,31 @@ class ListMachineGroupResponse(LogResponse):
         self.machine_groups = Util.convert_unicode_to_str(resp.get("machinegroups", []))
 
     def get_machine_group(self):
+        """
+
+        :return:
+        """
         return self.machine_groups
 
     def get_machine_group_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_machine_group_total(self):
+        """
+
+        :return:
+        """
         return self.total
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('ListMachineGroupResponse:')
         print('headers:', self.get_all_headers())
         print('count:', str(self.count))
@@ -139,12 +163,24 @@ class ListMachinesResponse(LogResponse):
             self.machines.append(machine)
 
     def get_machine_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_machine_total(self):
+        """
+
+        :return:
+        """
         return self.total
 
     def get_machines(self):
+        """
+
+        :return:
+        """
         return self.machines
 
     def log_print(self):
@@ -201,9 +237,17 @@ class GetMachineGroupAppliedConfigResponse(LogResponse):
         self.configs = resp['configs']
 
     def get_config_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_configs(self):
+        """
+
+        :return:
+        """
         return self.configs
 
     def log_print(self):
@@ -229,12 +273,24 @@ class GetConfigAppliedMachineGroupsResponse(LogResponse):
         self.machine_groups = resp['machinegroups']
 
     def get_machine_group_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_machine_groups(self):
+        """
+
+        :return:
+        """
         return self.machine_groups
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetConfigAppliedMachineGroupsResponse:')
         print('headers:', self.get_all_headers())
         print('count:', self.count)

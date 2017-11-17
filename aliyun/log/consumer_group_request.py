@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from ..logrequest import LogRequest
+from aliyun.log.logrequest import LogRequest
 import json
 import six
+
+__all__ = ['CreateConsumerGroupRequest', 'ConsumerGroupGetCheckPointRequest',
+           'ConsumerGroupHeartBeatRequest', 'ConsumerGroupUpdateCheckPointRequest']
+
 
 class ConsumerGroupRequest(LogRequest):
     def __init__(self, project, logstore):

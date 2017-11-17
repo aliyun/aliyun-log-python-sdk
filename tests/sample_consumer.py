@@ -3,12 +3,8 @@
 import os
 import time
 
-from aliyun.log.consumer import ConsumerProcessorBase
-from aliyun.log.consumer.config import LogHubConfig, CursorPosition
-from aliyun.log.consumer.worker import ConsumerWorker
-from aliyun.log.logclient import LogClient
-from aliyun.log.logitem import LogItem
-from aliyun.log.putlogsrequest import PutLogsRequest
+from aliyun.log.consumer import *
+from aliyun.log import *
 from threading import RLock
 
 

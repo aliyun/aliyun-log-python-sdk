@@ -6,7 +6,7 @@
 
 
 class OdpsShipperConfig(object):
-    """ init a odps shipper config
+    """ Odps shipper config
 
     :type odps_endpoint: string
     :param odps_endpoint: the odps endpoint
@@ -18,15 +18,13 @@ class OdpsShipperConfig(object):
     :param odps_table: the odps table name
 
     :type log_fields_list: string array
-    :param log_fields_list: the log field(keys in log) list mapping to the odps table column.
-    e.g log_fields_list=['__time__', 'key_a', 'key_b'], the $log_time, $log_key_a, $log_key_b will
-    mapping to odps table column No.1, No.2, No.3
+    :param log_fields_list: the log field(keys in log) list mapping to the odps table column. e.g log_fields_list=['__time__', 'key_a', 'key_b'], the $log_time, $log_key_a, $log_key_b will mapping to odps table column No.1, No.2, No.3
 
     :type partition_column: string array
     :param partition_column: the log fields mapping to odps table partition column
 
-    :type partition_time_format : string
-    :param partition_time_format : the time format of __partition_time__, e.g yyyy_MM_dd_HH_mm
+    :type partition_time_format: string
+    :param partition_time_format: the time format of __partition_time__, e.g yyyy_MM_dd_HH_mm
 
     """
 
@@ -49,24 +47,25 @@ class OdpsShipperConfig(object):
 
 
 class OssShipperConfig(object):
-    """Init a oss ship config
+    """A oss ship config
+
     :type oss_bucket: string
     :param oss_bucket: the oss bucket name
 
     :type oss_prefix: string
     :param oss_prefix: the the prefix path where to save the log
 
-    :type oss_role_arn : string
-    :param oss_role_arn : the ram arn used to get the temporary write permission to the oss bucket
+    :type oss_role_arn: string
+    :param oss_role_arn: the ram arn used to get the temporary write permission to the oss bucket
 
-    :type buffer_interval : int
-    :param buffer_interval : the time(seconds) to buffer before save to oss
+    :type buffer_interval: int
+    :param buffer_interval: the time(seconds) to buffer before save to oss
 
-    :type buffer_mb : int
-    :param buffer_mb : the data size(MB) to buffer before save to oss 
+    :type buffer_mb: int
+    :param buffer_mb: the data size(MB) to buffer before save to oss
 
     :type compress_type: string
-    :param compress_type : the compress type, only support 'snappy' or 'none'
+    :param compress_type: the compress type, only support 'snappy' or 'none'
     """
 
     def __init__(self, oss_bucket, oss_prefix, oss_role_arn, buffer_interval=300, buffer_mb=128,
@@ -87,18 +86,19 @@ class OssShipperConfig(object):
 
 
 class ShipperTask(object):
-    """init a shipper task
+    """A shipper task
+
     :type task_id: string
     :param task_id: the task id
 
     :type task_status: string
     :param task_status: one of ['success', 'running', 'fail']
 
-    :type task_message : string
+    :type task_message: string
     :param task_message: the error message of task_status is 'fail'
 
-    :type task_create_time :  int
-    :param task_create_time : the task create time (timestamp from 1970.1.1)
+    :type task_create_time:  int
+    :param task_create_time: the task create time (timestamp from 1970.1.1)
 
     :type task_last_data_receive_time: int
     :param task_last_data_receive_time: last log data receive time (timestamp)

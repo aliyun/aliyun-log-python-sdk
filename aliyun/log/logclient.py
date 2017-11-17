@@ -5,41 +5,38 @@
 # All rights reserved.
 
 
-
 try:
     import logservice_lz4
 except ImportError:
     pass
 
+import requests
 from datetime import datetime
 
-import requests
-
-from aliyun.log.acl_response import *
-from aliyun.log.cursor_response import GetCursorResponse
-from aliyun.log.cursor_time_response import GetCursorTimeResponse
-from aliyun.log.gethistogramsresponse import GetHistogramsResponse
-from aliyun.log.getlogsresponse import GetLogsResponse
-from aliyun.log.index_config_response import *
-from aliyun.log.listlogstoresresponse import ListLogstoresResponse
-from aliyun.log.listtopicsresponse import ListTopicsResponse
-from aliyun.log.logexception import LogException
-from aliyun.log.logstore_config_response import *
-from aliyun.log.logtail_config_response import *
-from aliyun.log.machinegroup_response import *
-from aliyun.log.project_response import *
-from aliyun.log.pulllog_response import PullLogResponse
-from aliyun.log.putlogsresponse import PutLogsResponse
-from aliyun.log.shard_response import *
-from aliyun.log.shipper_response import *
-from aliyun.log.util import Util
-from .consumer.request import *
-from .consumer.response import *
+from .consumer_group_request import *
+from .acl_response import *
+from .consumer_group_response import *
+from .cursor_response import GetCursorResponse
+from .cursor_time_response import GetCursorTimeResponse
+from .gethistogramsresponse import GetHistogramsResponse
+from .getlogsresponse import GetLogsResponse
+from .index_config_response import *
+from .listlogstoresresponse import ListLogstoresResponse
+from .listtopicsresponse import ListTopicsResponse
 from .log_logs_pb2 import LogGroup
+from .logclient_operator import copy_project
+from .logexception import LogException
+from .logstore_config_response import *
+from .logtail_config_response import *
+from .machinegroup_response import *
+from .project_response import *
+from .pulllog_response import PullLogResponse
+from .putlogsresponse import PutLogsResponse
+from .shard_response import *
+from .shipper_response import *
 from .util import Util
-from aliyun.log import API_VERSION, USER_AGENT
-import aliyun.log.logclient_operator as log_op
 from .util import base64_encodestring as e64, base64_decodestring as d64
+from .version import API_VERSION, USER_AGENT
 
 CONNECTION_TIME_OUT = 20
 
@@ -68,16 +65,7 @@ class LogClient(object):
     Version = __version__
 
     def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
-        # if isinstance(accessKeyId, six.text_type):
-        #     accessKeyId = accessKeyId.encode('utf8')
-        # if isinstance(accessKey, six.text_type):
-        #     accessKey = accessKey.encode('utf8')
-
         self._isRowIp = Util.is_row_ip(endpoint)
-
-        # if isinstance(endpoint, six.text_type):
-        #     endpoint = endpoint.encode('utf8')
-
         self._port = 80
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -92,6 +80,15 @@ class LogClient(object):
         self._user_agent = USER_AGENT
 
     def set_user_agent(self, user_agent):
+        """
+        set user agent
+
+        :type user_agent: string
+        :param user_agent: user agent
+
+        :return: None
+
+        """
         self._user_agent = user_agent
 
     def _setendpoint(self, endpoint):
@@ -209,6 +206,14 @@ class LogClient(object):
         return key
 
     def set_source(self, source):
+        """
+        Set the source of the log client
+
+        :type source: string
+        :param source: new source
+
+        :return: None
+        """
         self._source = source
 
     def put_logs(self, request):
@@ -384,6 +389,7 @@ class LogClient(object):
     def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -411,6 +417,7 @@ class LogClient(object):
     def get_cursor_time(self, project_name, logstore_name, shard_id, cursor):
         """ Get cursor time from log service
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -443,6 +450,7 @@ class LogClient(object):
         """ Get previous cursor time from log service.
         Note: normalize = true: if the cursor is out of range, it will be nornalized to nearest cursor
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name
 
@@ -490,6 +498,7 @@ class LogClient(object):
     def get_begin_cursor(self, project_name, logstore_name, shard_id):
         """ Get begin cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -508,6 +517,7 @@ class LogClient(object):
     def get_end_cursor(self, project_name, logstore_name, shard_id):
         """ Get end cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -526,6 +536,7 @@ class LogClient(object):
     def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=1000, end_cursor=None, compress=False):
         """ batch pull log data from log service
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -541,11 +552,11 @@ class LogClient(object):
         :type count: int
         :param count: the required pull log package count, default 1000 packages
 
-        :type end_cursor : string
+        :type end_cursor: string
         :param end_cursor: the end cursor position to get data
 
-        :type compress : boolean
-        :param compress : if use lz4 compress for transfer data
+        :type compress: boolean
+        :param compress: if use lz4 compress for transfer data
 
         :return: PullLogResponse
         
@@ -577,6 +588,7 @@ class LogClient(object):
     def create_logstore(self, project_name, logstore_name, ttl, shard_count):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
+
         :type project_name: string
         :param project_name: the Project name 
 
@@ -684,8 +696,7 @@ class LogClient(object):
         :param project_name: the Project name
 
         :type logstore_name_pattern: string
-        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names
-        contain this sub name
+        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names contain this sub name
 
         :type offset: int
         :param offset: the offset of all the matched names
@@ -738,7 +749,7 @@ class LogClient(object):
         :param logstore_name: the logstore name
         
         :type shardId: int
-        :param shardId : the shard id
+        :param shardId: the shard id
 
         :type split_hash: string
         :param split_hash: the internal hash between the shard begin and end hash
@@ -765,7 +776,7 @@ class LogClient(object):
         :param logstore_name: the logstore name
         
         :type shardId: int
-        :param shardId : the shard id of the left shard, server will determine the right adjacent  shardId
+        :param shardId: the shard id of the left shard, server will determine the right adjacent shardId
 
         :return: ListShardResponse
         
@@ -788,7 +799,7 @@ class LogClient(object):
         :param logstore_name: the logstore name
         
         :type shardId: int
-        :param shardId : the read only shard id  
+        :param shardId: the read only shard id
 
         :return: ListShardResponse
         
@@ -810,7 +821,7 @@ class LogClient(object):
         :type logstore_name: string
         :param logstore_name: the logstore name
 
-        :type index_detail: index_config.IndexConfig
+        :type index_detail: IndexConfig
         :param index_detail: the index config detail used to create index
 
         :return: CreateIndexResponse
@@ -837,7 +848,7 @@ class LogClient(object):
         :type logstore_name: string
         :param logstore_name: the logstore name
 
-        :type index_detail: index_config.IndexConfig
+        :type index_detail: IndexConfig
         :param index_detail: the index config detail used to update index
 
         :return: UpdateIndexResponse
@@ -904,10 +915,8 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or
-        logtail_config_detail.ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create
-        common regex logs ,the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: CommonRegLogConfigDetail or ApsaraLogConfigDetail
+        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs ,the ApsaraLogConfigDetail is used to create apsara log
 
         :return: CreateLogtailConfigResponse
         
@@ -930,10 +939,8 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: logtail_config_detail.CommonRegLogConfigDetail or
-        logtail_config_detail.ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create
-        common regex logs, the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: CommonRegLogConfigDetail or ApsaraLogConfigDetail
+        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs, the ApsaraLogConfigDetail is used to create apsara log
 
         :return: UpdateLogtailConfigResponse
         
@@ -1022,7 +1029,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type group_detail: machine_group_detail.MachineGroupDetail
+        :type group_detail: MachineGroupDetail
         :param group_detail: the machine group detail config
 
         :return: CreateMachineGroupResponse
@@ -1067,7 +1074,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type group_detail: machine_group_detail.MachineGroupDetail
+        :type group_detail: MachineGroupDetail
         :param group_detail: the machine group detail config
 
         :return: UpdateMachineGroupResponse
@@ -1372,8 +1379,8 @@ class LogClient(object):
         :type shipper_type: string
         :param shipper_type: only support "odps" or "oss" 
 
-        :type shipper_config : OssShipperConfig or OdpsShipperConfig 
-        :param shipper_config : the detail shipper config, must be OssShipperConfig or OdpsShipperConfig type
+        :type shipper_config: OssShipperConfig or OdpsShipperConfig
+        :param shipper_config: the detail shipper config, must be OssShipperConfig or OdpsShipperConfig type
 
         :return: CreateShipperResponse
         
@@ -1407,8 +1414,8 @@ class LogClient(object):
         :type shipper_type: string
         :param shipper_type: only support "odps" or "oss" , the type must be same with the oringal shipper
 
-        :type shipper_config : OssShipperConfig or OdpsShipperConfig 
-        :param shipper_config : the detail shipper config, must be OssShipperConfig or OdpsShipperConfig type
+        :type shipper_config: OssShipperConfig or OdpsShipperConfig
+        :param shipper_config: the detail shipper config, must be OssShipperConfig or OdpsShipperConfig type
 
         :return: UpdateShipperResponse
         
@@ -1510,15 +1517,14 @@ class LogClient(object):
         :type end_time: int
         :param end_time: the end timestamp 
 
-        :type status_type : string
-        :param status_type : support one of ['', 'fail', 'success', 'running'] ,
-        if the status_type = '' , return all kinds of status type
+        :type status_type: string
+        :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
 
-        :type offset : int
-        :param offset : the begin task offset
+        :type offset: int
+        :param offset: the begin task offset
 
-        :type size : int
-        :param size : the needed tasks count 
+        :type size: int
+        :param size: the needed tasks count
 
         :return: ListShipperResponse
         
@@ -1549,8 +1555,7 @@ class LogClient(object):
         :param shipper_name: the shipper name
 
         :type task_list: string array
-        :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...],
-        currently the max retry task count 10 every time
+        :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...], currently the max retry task count 10 every time
 
         :return: RetryShipperTasksResponse
         
@@ -1629,7 +1634,8 @@ class LogClient(object):
 
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
         """ create consumer group
-        :type project string:
+
+        :type project: string
         :param project: project name
 
         :type logstore: string
@@ -1663,6 +1669,7 @@ class LogClient(object):
 
     def update_consumer_group(self, project, logstore, consumer_group, timeout=None, in_order=None):
         """ Update consumer group
+
         :type project: string
         :param project: project name
 
@@ -1678,7 +1685,7 @@ class LogClient(object):
         :type in_order: bool
         :param in_order: order
 
-        :return:
+        :return: None
         """
         if in_order is None and timeout is None:
             raise ValueError('in_order and timeout can\'t all be None')
@@ -1718,7 +1725,7 @@ class LogClient(object):
         :type consumer_group: string
         :param consumer_group: consumer group name
 
-        :return:
+        :return: None
         """
 
         headers = {"x-log-bodyrawsize": '0'}
@@ -1772,7 +1779,7 @@ class LogClient(object):
         :type force_success: bool
         :param force_success: if force to succeed
 
-        :return:
+        :return: None
         """
         request = ConsumerGroupUpdateCheckPointRequest(project, logstore, consumer_group,
                                                        consumer, shard, check_point, force_success)
@@ -1830,7 +1837,6 @@ class LogClient(object):
 
         return res
 
-
     def heart_beat(self, project, logstore, consumer_group, consumer, shards=None):
         """ Heatbeat consumer group
 
@@ -1846,9 +1852,10 @@ class LogClient(object):
         :type consumer: string
         :param consumer: consumer name
 
-        :type shard: int
-        :param shard: shard id
-        :return:
+        :type shards: int list
+        :param shards: shard id list e.g. [0,1,2]
+
+        :return: None
         """
         if shards is None:
             shards = []
@@ -1864,20 +1871,21 @@ class LogClient(object):
         """
         copy project, logstore, machine group and logtail config to target project,
         expecting the target project doens't exist
+
         :type from_project: string
         :param from_project: project name
 
         :type to_project: string
         :param to_project: project name
 
-        :type to_client: logclient
+        :type to_client: LogClient
         :param to_client: logclient instance
 
-        :return:
+        :return: None
         """
         if to_client is None:
             to_client = self
-        return log_op.copy_project(self, to_client, from_project, to_project)
+        return copy_project(self, to_client, from_project, to_project)
 
     def list_project(self, offset=0, size=100):
         """ list the project
@@ -1900,3 +1908,4 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
+

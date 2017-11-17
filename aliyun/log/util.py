@@ -7,7 +7,6 @@ import hashlib
 import hmac
 import re
 import socket
-import zlib
 
 import six
 
@@ -63,6 +62,7 @@ class Util(object):
 
     @staticmethod
     def compress_data(data):
+        import zlib
         return zlib.compress(data, 6)
 
     @staticmethod
@@ -99,7 +99,8 @@ class Util(object):
         if params:
             urlString = ''
             for key, value in sorted(six.iteritems(params)):
-                urlString += "{0}={1}&".format(key, value.decode('utf8') if isinstance(value, six.binary_type) else value)
+                urlString += "{0}={1}&".format(
+                    key, value.decode('utf8') if isinstance(value, six.binary_type) else value)
             resource += '?' + urlString[:-1]
 
         return resource
@@ -138,7 +139,8 @@ class Util(object):
         elif six.PY3 and isinstance(data, six.binary_type):
             return data.decode('utf8')
         elif isinstance(data, collections.Mapping):
-            return dict((Util.convert_unicode_to_str(k), Util.convert_unicode_to_str(v)) for k, v in six.iteritems(data))
+            return dict((Util.convert_unicode_to_str(k), Util.convert_unicode_to_str(v))
+                        for k, v in six.iteritems(data))
         elif isinstance(data, collections.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
             return type(data)(map(Util.convert_unicode_to_str, data))
 
@@ -173,6 +175,7 @@ class Util(object):
         e.g. header['x-log-abc'] or header['X-Log-Abc']
         :param header:
         :param key:
+        :param default:
         :return:
         """
         if key not in header:

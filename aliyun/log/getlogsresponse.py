@@ -10,6 +10,7 @@ from .queriedlog import QueriedLog
 import six
 from .util import Util
 
+
 class GetLogsResponse(LogResponse):
     """ The response of the GetLog API from log.
     

@@ -4,10 +4,10 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-__all__ = ['CreateIndexResponse', 'UpdateIndexResponse', 'DeleteIndexResponse', 'GetIndexResponse']
+from .index_config import *
+from .logresponse import LogResponse
 
-from aliyun.log.index_config import *
-from aliyun.log.logresponse import LogResponse
+__all__ = ['CreateIndexResponse', 'UpdateIndexResponse', 'DeleteIndexResponse', 'GetIndexResponse']
 
 
 class CreateIndexResponse(LogResponse):
@@ -71,9 +71,17 @@ class GetIndexResponse(LogResponse):
         self.index_config.from_json(resp)
 
     def get_index_config(self):
+        """
+
+        :return:
+        """
         return self.index_config
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetLogStoreResponse:')
         print('headers:', self.get_all_headers())
         print('index_configs:', str(self.index_config.to_json()))

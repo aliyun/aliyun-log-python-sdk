@@ -7,6 +7,7 @@
 from .logresponse import LogResponse
 from .util import Util
 
+
 class ListTopicsResponse(LogResponse):
     """ The response of the ListTopic API from log.
 

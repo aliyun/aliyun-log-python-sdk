@@ -6,27 +6,28 @@
 
 import time
 
-from aliyun.log.util import Util
+from .util import Util
 
 
 class MachineGroupDetail(object):
     """ The machine group detail info
+
     :type group_name: string
     :param group_name: group name
 
-    :type machine_type : string
-    :param machine_type : "ip" or "userdefined"
+    :type machine_type: string
+    :param machine_type: "ip" or "userdefined"
 
-    :type machine_list : string list
+    :type machine_list: string list
     :param machine_list: the list of machine ips or machine userdefined, e.g ["127.0.0.1", "127.0.0.2"]
 
-    :type group_type : string
-    :param group_type : the machine group type, "" or "Armory"
+    :type group_type: string
+    :param group_type: the machine group type, "" or "Armory"
 
-    :type group_attribute : dict
-    :param group_attribute : the attributes in group, it contains two optional key : 
-            1. "externalName" : only used if the group_type is "Armory", its the Armory name
-            2. "groupTopic" : group topic value
+    :type group_attribute: dict
+    :param group_attribute: the attributes in group, it contains two optional key :
+            1. "externalName": only used if the group_type is "Armory", its the Armory name
+            2. "groupTopic": group topic value
     """
 
     def __init__(self, group_name, machine_type, machine_list, group_type="", group_attribute=None):
@@ -68,7 +69,7 @@ class MachineStatus(object):
     :param user_defined_id: the user defined id
 
     :type heartbeat_time: int
-    :param heartbeat_time : last updated heartbeat_time
+    :param heartbeat_time: last updated heartbeat_time
     """
 
     def __init__(self, ip, machine_unique_id, user_defined_id, heartbeat_time):

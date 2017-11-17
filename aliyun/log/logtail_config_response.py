@@ -4,13 +4,13 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+from .util import Util
+from .logresponse import LogResponse
+from .logtail_config_detail import LogtailConfigHelper
+
 __all__ = ['CreateLogtailConfigResponse', 'DeleteLogtailConfigResponse',
            'GetLogtailConfigResponse', 'UpdateLogtailConfigResponse',
            'ListLogtailConfigResponse']
-
-from aliyun.log.util import Util
-from aliyun.log.logresponse import LogResponse
-from aliyun.log.logtail_config_detail import LogtailConfigHelper
 
 
 class CreateLogtailConfigResponse(LogResponse):

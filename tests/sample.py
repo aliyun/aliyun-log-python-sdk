@@ -1,16 +1,7 @@
 # encoding: utf-8
 from __future__ import print_function
 
-from aliyun.log.gethistogramsrequest import GetHistogramsRequest
-from aliyun.log.getlogsrequest import GetLogsRequest
-from aliyun.log.index_config import *
-from aliyun.log.listlogstoresrequest import ListLogstoresRequest
-from aliyun.log.listtopicsrequest import ListTopicsRequest
-from aliyun.log.logclient import LogClient
-from aliyun.log.logitem import LogItem
-from aliyun.log.logtail_config_detail import *
-from aliyun.log.machine_group_detail import *
-from aliyun.log.putlogsrequest import PutLogsRequest
+from aliyun.log import *
 from aliyun.log.util import base64_encodestring
 from random import randint
 import time
