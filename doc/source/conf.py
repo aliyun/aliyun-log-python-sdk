@@ -34,8 +34,13 @@ sys.path.insert(0, os.path.abspath('../..'))
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.autosummary',
-              'sphinx.ext.napoleon'
+              'sphinx.ext.napoleon',
+              'sphinxcontrib.github_ribbon'
               ]
+
+# github location
+html_show_sourcelink = False
+github_ribbon_repo = 'aliyun/aliyun-log-python-sdk'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +55,7 @@ source_suffix = ['.rst']
 master_doc = 'index'
 
 # General information about the project.
-project = 'aliyun-log-python-sdk'
+project = 'Aliyun Log Service Python SDK'
 copyright = '2017, Alibaba Cloud'
 author = 'Alibaba Cloud'
 
@@ -108,6 +113,7 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
+        'about.html',
         'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
     ]
@@ -171,6 +177,5 @@ texinfo_documents = [
 ]
 
 import pypandoc
-
 open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
 open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
