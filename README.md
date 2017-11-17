@@ -9,13 +9,13 @@
 [README in English](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README.md)
 
 
-## 基本介绍：
+## 基本介绍
 
 这是Log Service SDK for Python的开源版本。Log Service SDK for Python是阿里云日志服务
 （Log Service）API的Python编程接口，提供了对于Log Service Rest API所有接口的封装
 和支持，帮助Python开发人员更快编程使用阿里云Log Service服务。
 
-### 具体功能：
+### 具体功能
 
 1. 封装Rest API。
 2. 实现API请求的数字签名
@@ -25,7 +25,7 @@
 6. 使用异常统一处理错误
 7. 提供消费组高级API
 
-### 支持Python版本：
+### 支持Python版本
 
 1. Python 2.6
 2. Python 2.7
@@ -37,7 +37,7 @@
 8. Pypy3
 
 
-### 支持API版本：
+### 支持API版本
 
 1. Log Service API 0.6
 

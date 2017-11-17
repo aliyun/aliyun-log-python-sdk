@@ -19,6 +19,7 @@
 #
 import os
 import sys
+import six
 sys.path.insert(0, os.path.abspath('../..'))
 
 
@@ -184,5 +185,9 @@ texinfo_documents = [
 ]
 
 import pypandoc
-open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
-open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
+if six.PY3:
+    open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
+    open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst'))
+else:
+    open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst').encode('utf8'))
+    open("README_EN.rst", "w").write(pypandoc.convert('../../README_EN.md', 'rst').encode('utf8'))
