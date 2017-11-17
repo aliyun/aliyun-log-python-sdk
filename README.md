@@ -1,5 +1,6 @@
 # User Guide (中文)
 
+[![Documentation Status](https://readthedocs.org/projects/aliyun-log-python-sdk/badge/?version=latest)](http://aliyun-log-python-sdk.readthedocs.io/?badge=latest)
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
 [![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
 [![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
