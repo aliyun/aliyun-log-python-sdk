@@ -4,10 +4,10 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-__all__ = ['ListShardResponse', 'DeleteShardResponse']
-
-from aliyun.log.util import Util
+from .util import Util
 from .logresponse import LogResponse
+
+__all__ = ['ListShardResponse', 'DeleteShardResponse']
 
 
 class ListShardResponse(LogResponse):

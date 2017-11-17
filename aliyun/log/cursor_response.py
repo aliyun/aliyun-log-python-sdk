@@ -4,7 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from aliyun.log.util import Util
+from .util import Util
 from .logresponse import LogResponse
 
 
@@ -23,6 +23,10 @@ class GetCursorResponse(LogResponse):
         self.cursor = Util.convert_unicode_to_str(resp["cursor"])
 
     def get_cursor(self):
+        """
+
+        :return:
+        """
         return self.cursor
 
     def log_print(self):

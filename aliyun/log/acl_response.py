@@ -6,7 +6,7 @@
 
 __all__ = ['UpdateAclResponse', 'ListAclResponse']
 
-from aliyun.log.acl_config import AclConfig
+from .acl_config import AclConfig
 from .logresponse import LogResponse
 
 

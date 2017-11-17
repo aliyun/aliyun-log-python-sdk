@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
 class Histogram(object):
     """
     The class used to present the result of log histogram status. For every log

@@ -4,6 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+
 class LogRequest(object):
     """ The base request of all log request. 
     

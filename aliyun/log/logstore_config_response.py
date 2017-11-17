@@ -7,7 +7,7 @@
 __all__ = ['CreateLogStoreResponse', 'DeleteLogStoreResponse', 'GetLogStoreResponse',
            'UpdateLogStoreResponse', 'ListLogStoreResponse']
 
-from aliyun.log.util import Util
+from .util import Util
 from .logresponse import LogResponse
 
 
@@ -58,12 +58,24 @@ class GetLogStoreResponse(LogResponse):
         self.shard_count = int(resp["shardCount"])
 
     def get_shard_count(self):
+        """
+
+        :return:
+        """
         return self.shard_count
 
     def get_ttl(self):
+        """
+
+        :return:
+        """
         return self.ttl
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetLogStoreResponse:')
         print('headers:', self.get_all_headers())
         print('logstore_name:', self.logstore_name)
@@ -103,15 +115,31 @@ class ListLogStoreResponse(LogResponse):
         self.logstores = Util.convert_unicode_to_str(resp.get("logstores", []))
 
     def get_logstores(self):
+        """
+
+        :return:
+        """
         return self.logstores
 
     def get_logstores_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_logstores_total(self):
+        """
+
+        :return:
+        """
         return self.total_count
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('ListLogStoreResponse:')
         print('headers:', self.get_all_headers())
         print('logstores_count:', str(self.count))

@@ -9,10 +9,10 @@ __all__ = ['CreateShipperResponse', 'UpdateShipperResponse', 'DeleteShipperRespo
            'RetryShipperTasksResponse']
 
 
-from aliyun.log.logresponse import LogResponse
-from aliyun.log.shipper_config import OdpsShipperConfig
-from aliyun.log.shipper_config import OssShipperConfig
-from aliyun.log.shipper_config import ShipperTask
+from .logresponse import LogResponse
+from .shipper_config import OdpsShipperConfig
+from .shipper_config import OssShipperConfig
+from .shipper_config import ShipperTask
 
 
 class CreateShipperResponse(LogResponse):
@@ -66,15 +66,31 @@ class GetShipperConfigResponse(LogResponse):
                                            target_config['compressType'])
 
     def get_config(self):
+        """
+
+        :return:
+        """
         return self.config
 
     def get_create_time(self):
+        """
+
+        :return:
+        """
         return self.create_time
 
     def get_last_modify_time(self):
+        """
+
+        :return:
+        """
         return self.last_modify_time
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetShipperConfigResponse:')
         print('type:' + self.type)
         print('config:' + str(self.config.to_json()))
@@ -88,15 +104,31 @@ class ListShipperResponse(LogResponse):
         self.shipper_names = resp['shipper']
 
     def get_shipper_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_shipper_total(self):
+        """
+
+        :return:
+        """
         return self.total
 
     def get_shipper_names(self):
+        """
+
+        :return:
+        """
         return self.shipper_names
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('ListShipperResponse:')
         print('shipper count : ' + str(self.count))
         print('shipper total : ' + str(self.total))
@@ -119,18 +151,38 @@ class GetShipperTasksResponse(LogResponse):
             self.tasks.append(task)
 
     def get_task_count(self):
+        """
+
+        :return:
+        """
         return self.count
 
     def get_task_total(self):
+        """
+
+        :return:
+        """
         return self.total
 
     def get_running_task_count(self):
+        """
+
+        :return:
+        """
         return self.running_count
 
     def get_success_task_count(self):
+        """
+
+        :return:
+        """
         return self.success_count
 
     def get_fail_task_count(self):
+        """
+
+        :return:
+        """
         return self.fail_count
 
     def _get_task_ids(self, status):
@@ -141,18 +193,38 @@ class GetShipperTasksResponse(LogResponse):
         return task_ids
 
     def get_fail_task_ids(self):
+        """
+
+        :return:
+        """
         return self._get_task_ids("fail")
 
     def get_running_task_ids(self):
+        """
+
+        :return:
+        """
         return self._get_task_ids("running")
 
     def get_success_task_ids(self):
+        """
+
+        :return:
+        """
         return self._get_task_ids("success")
 
     def get_taks(self):
+        """
+
+        :return:
+        """
         return self.tasks
 
     def log_print(self):
+        """
+
+        :return:
+        """
         print('GetShipperTasksResponse:')
         print('ship count : ' + str(self.count))
         print('ship total : ' + str(self.total))
@@ -168,6 +240,5 @@ class RetryShipperTasksResponse(LogResponse):
     def __init__(self, header, resp=''):
         LogResponse.__init__(self, header, resp)
 
-    @staticmethod
-    def log_print():
+    def log_print(self,):
         print('RetryShipperTasksResponse')

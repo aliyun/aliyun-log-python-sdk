@@ -4,11 +4,11 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from aliyun.log.util import Util
 from .log_logs_pb2 import LogGroupList
+from .logexception import LogException
 from .logresponse import LogResponse
 from .util import Util
-from aliyun.log.logexception import LogException
+from .util import base64_encodestring as b64e
 
 
 class PullLogResponse(LogResponse):
@@ -62,8 +62,10 @@ class PullLogResponse(LogResponse):
         try:
             self.loggroup_list.ParseFromString(data)
         except Exception as ex:
-            raise LogException('BadResponse', 'failed to parse data to LogGroupList: \n'
-                               + str(ex) + '\nraw data:\n' + str(data))
+            err = 'failed to parse data to LogGroupList: \n' \
+                  + str(ex) + '\nb64 raw data:\n' + b64e(data)\
+                  + '\nheader:' + str(self.headers)
+            raise LogException('BadResponse', err)
 
     def _transfer_to_json(self):
         self.loggroup_list_json = []
