@@ -75,6 +75,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 - 获取列表
 
   列出本region下面的所有可见项目:
+
   ```python
   res = client.list_project()
   res.log_print()
@@ -84,12 +85,14 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 - 获取信息
   获取单个项目的较为详细的信息.
+
   ```python
   res = client.get_project('project1')
   res.log_print()
   ```
 
 - 创建
+
   ```python
   res = client.create_project("new_project", "a simple project"")
   res.log_print()
@@ -97,6 +100,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 
 - 删除
+
   ```python
   res = client.delete_project("project1")
   res.log_print()
@@ -106,6 +110,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 - 复制
   复制一个项目的所有日志库和相应的配置(包括机器组合索引等), 要求目标项目不存在.
+
   ```python
   res = client.copy_project("project1", "project2")
   res.log_print()
@@ -118,6 +123,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 - 获取列表
   获取一个项目下的所有日志库：
+
   ```python
   from aliyun.log import ListLogstoresRequest
   request = ListLogstoresRequest('project1')
@@ -127,6 +133,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 - 创建
   创建一个日志库：
+
   ```python
   res = client.create_logstore('project1', 'logstore1', ttl=30, shard_count=3)
   res.log_print()
@@ -137,6 +144,7 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
 - 获取信息
   获取单个日志库较为详细的信息.
+
   ```python
   res = client.get_logstore('project1', 'logstore1')
   res.log_print()
@@ -164,6 +172,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取列表
   列出本项目下所有Logtail的配置名单:
+
   ```python
   res = client.list_logtail_config('project1')
   res.log_print()
@@ -178,6 +187,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 创建
   创建一个Logtail配置, 并关联到日志库上:
+
   ```python
   from aliyun.log import LogtailConfigHelper as helper
   config_detail_json = {
@@ -216,6 +226,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取信息
   获取Logtail配置的具体信息:
+
   ```python
   res = client.get_logtail_config('project1', 'config1')
   res.log_print()
@@ -232,6 +243,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取列表
   列出本项目下所有机器组的名单:
+
   ```python
   res = client.list_machine_group('project1')
   res.log_print()
@@ -246,6 +258,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 创建
   创建一个机器组:
+
   ```python
   from aliyun.log import MachineGroupDetail
   config_detail_json = {
@@ -275,6 +288,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取信息
   获取机器组的具体信息:
+
   ```python
   res = client.get_machine_group('project1', 'group1')
   res.log_print()
@@ -290,18 +304,21 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 机器组与Logtail配置的关系是多对多的关系. 一个Logtail配置可以应用到多个机器组上, 反之一个机器组也可以应用多个Logtail配置.
 
 - 应用Logtail配置到特定机器组
+
   ```python
   res = client.apply_config_to_machine_group('project1', 'config1', 'group1')
   res.log_print()
   ```
 
 - 去除机器组的Logtail配置
+
   ```python
   res = client.remove_config_to_machine_group('project1', 'config1', 'group1')
   res.log_print()
   ```
 
 - 获取Logtail配置应用到的机器组名单
+
   ```python
   res = client.get_config_applied_machine_groups('project1', 'config1')
   res.log_print()
@@ -313,6 +330,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
   ```
 
 - 获取机器组应用的Logtail配置名单
+
   ```python
   res = client.get_machine_group_applied_configs('project1', 'group1')
   res.log_print()
@@ -328,6 +346,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 创建
 	给一个日志库创建索引
+
 	```python
 	from aliyun.log import IndexConfig
 	request_json = {
@@ -375,6 +394,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 ### 其他操作
 - 获取日志库主题列表
+
   ```python
   from aliyun.log import ListTopicsRequest
   request = ListTopicsRequest('project1', 'logstore1')
@@ -396,6 +416,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取开头游标
   获取日志库特定分区的最开头的游标.
+
   ```python
   res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
   print(res.get_cursor())
@@ -403,6 +424,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取结尾游标
   获取日志库特定分区的结尾的游标.
+
   ```python
   res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
   print(res.get_cursor())
@@ -410,6 +432,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取特定时间的游标
   可以特定日志库分区的特定接受时间最接近的一个游标.
+
   ```python
   res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=1510837205)
   print(res.get_cursor())
@@ -417,6 +440,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取游标时间
   获得特定日志库分区的某个游标说对应的服务器时间, 如果是结尾游标, 一般对应于服务器的的当前时间.
+
   ```python
   res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
   res = client.get_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
@@ -425,6 +449,7 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取游标时间
   获得特定日志库分区的某个游标的上一个游标所对应的服务器时间, 如果是开头游标, 则对应于服务器的的开头游标的时间.
+
   ```python
   res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
   res = client.get_previous_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
