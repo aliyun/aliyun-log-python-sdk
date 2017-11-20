@@ -76,10 +76,10 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
   列出本region下面的所有可见项目:
 
-	```python
-	res = client.list_project()
-	res.log_print()
-	```
+```python
+res = client.list_project()
+res.log_print()
+```
 
   **注意：** 默认获取100个项目，通过传入参数`offset`和`size`来获取更多
 
@@ -87,25 +87,25 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
   获取单个项目的较为详细的信息.
 
-	```python
-	res = client.get_project('project1')
-	res.log_print()
-	```
+```python
+res = client.get_project('project1')
+res.log_print()
+```
 
 - 创建
 
-	```python
-	res = client.create_project("new_project", "a simple project"")
-	res.log_print()
-	```
+```python
+res = client.create_project("new_project", "a simple project"")
+res.log_print()
+```
 
 
 - 删除
 
-	```python
-	res = client.delete_project("project1")
-	res.log_print()
-	```
+```python
+res = client.delete_project("project1")
+res.log_print()
+```
 
   **注意：** 只能删除空的项目.
 
@@ -113,10 +113,10 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
   复制一个项目的所有日志库和相应的配置(包括机器组合索引等), 要求目标项目不存在.
 
-	```python
-	res = client.copy_project("project1", "project2")
-	res.log_print()
-	```
+```python
+res = client.copy_project("project1", "project2")
+res.log_print()
+```
 
 
 ### 管理日志库(logstore)
@@ -127,21 +127,21 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
   获取一个项目下的所有日志库：
 
-	```python
-	from aliyun.log import ListLogstoresRequest
-	request = ListLogstoresRequest('project1')
-	res = client.list_logstores(request)
-	res.log_print()
-	```
+```python
+from aliyun.log import ListLogstoresRequest
+request = ListLogstoresRequest('project1')
+res = client.list_logstores(request)
+res.log_print()
+```
 
 - 创建
 
   创建一个日志库：
 
-	```python
-	res = client.create_logstore('project1', 'logstore1', ttl=30, shard_count=3)
-	res.log_print()
-	```
+```python
+res = client.create_logstore('project1', 'logstore1', ttl=30, shard_count=3)
+res.log_print()
+```
 
   **注意：** 参数`ttl`和`shard_count`表示日志存储日期和分区数量.
 
@@ -150,10 +150,10 @@ client = LogClient(endpoint, accessKeyId, accessKey)
 
   获取单个日志库较为详细的信息.
 
-	```python
-	res = client.get_logstore('project1', 'logstore1')
-	res.log_print()
-	```
+```python
+res = client.get_logstore('project1', 'logstore1')
+res.log_print()
+```
 
 - 删除
 
@@ -185,52 +185,53 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 	列出本项目下所有Logtail的配置名单:
 
-	```python
-	res = client.list_logtail_config('project1')
-	res.log_print()
-	```
+```python
+res = client.list_logtail_config('project1')
+res.log_print()
+```
 
   **注意：** 默认获取100个配置项，通过传入参数`offset`和`size`来获取更多
 
   **输出：**
-	```json
-	{"count": 2, "configs": ["config_name1", "config_name2"], "total": 2}
-	```
+
+```json
+{"count": 2, "configs": ["config_name1", "config_name2"], "total": 2}
+```
 
 - 创建
 
 创建一个Logtail配置, 并关联到日志库上:
 
-	```python
-	from aliyun.log import LogtailConfigHelper as helper
-	config_detail_json = {
-	      "config_name": "config_name1",
-	      "logstore_name": "logstore1",
-	      "file_pattern": "file_pattern",
-	      "time_format": "time_format",
-	      "log_path": "/log_path",
-	      "endpoint": "endpoint",
-	      "log_parse_regex": "xxx ([\\w\\-]+\\s[\\d\\:]+)\\s+(.*)",
-	      "log_begin_regex": "xxx.*",
-	      "reg_keys": [
-	        "time",
-	        "value"
-	      ],
-	      "topic_format": "none",
-	      "filter_keys": [
-	        "time",
-	        "value"
-	      ],
-	      "filter_keys_reg": [
-	        "time",
-	        "value"
-	      ],
-	      "logSample": "xxx 2017-11-11 11:11:11 hello alicloud."
-	    }
-	request = helper.generate_common_reg_log_config(config_detail)
-	res = client.create_logtail_config('project1', request)
-	res.log_print()
-	```
+```python
+from aliyun.log import LogtailConfigHelper as helper
+config_detail_json = {
+      "config_name": "config_name1",
+      "logstore_name": "logstore1",
+      "file_pattern": "file_pattern",
+      "time_format": "time_format",
+      "log_path": "/log_path",
+      "endpoint": "endpoint",
+      "log_parse_regex": "xxx ([\\w\\-]+\\s[\\d\\:]+)\\s+(.*)",
+      "log_begin_regex": "xxx.*",
+      "reg_keys": [
+        "time",
+        "value"
+      ],
+      "topic_format": "none",
+      "filter_keys": [
+        "time",
+        "value"
+      ],
+      "filter_keys_reg": [
+        "time",
+        "value"
+      ],
+      "logSample": "xxx 2017-11-11 11:11:11 hello alicloud."
+    }
+request = helper.generate_common_reg_log_config(config_detail)
+res = client.create_logtail_config('project1', request)
+res.log_print()
+```
 
   **注意：**
   - 创建的配置的名字`config_name`和关联的日志库名字`logstore_name`都是放在传入的`request`中.
@@ -241,10 +242,10 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   获取Logtail配置的具体信息:
 
-	```python
-	res = client.get_logtail_config('project1', 'config1')
-	res.log_print()
-	```
+```python
+res = client.get_logtail_config('project1', 'config1')
+res.log_print()
+```
 
 - 修改
 
@@ -261,43 +262,44 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   列出本项目下所有机器组的名单:
 
-	```python
-	res = client.list_machine_group('project1')
-	res.log_print()
-	```
+```python
+res = client.list_machine_group('project1')
+res.log_print()
+```
 
   **注意：** 默认获取100个机器组，通过传入参数`offset`和`size`来获取更多
 
   **输出：**
-	```json
-	{"count": 2, "machinegroups": ["group_name1", "group_name2"], "total": 2}
-	```
+
+```json
+{"count": 2, "machinegroups": ["group_name1", "group_name2"], "total": 2}
+```
 
 - 创建
 
   创建一个机器组:
 
-	```python
-	from aliyun.log import MachineGroupDetail
-	config_detail_json = {
-	    "group_name": "group_name1",
-	    "machine_list": [
-	      "machine1",
-	      "machine2"
-	    ],
-	    "machine_type": "userdefined",
-	    "group_type": "Armory",
-	    "group_attribute": {
-	      "externalName": "ex name",
-	      "groupTopic": "topic x"
-	    }
-	  }
+```python
+from aliyun.log import MachineGroupDetail
+config_detail_json = {
+    "group_name": "group_name1",
+    "machine_list": [
+      "machine1",
+      "machine2"
+    ],
+    "machine_type": "userdefined",
+    "group_type": "Armory",
+    "group_attribute": {
+      "externalName": "ex name",
+      "groupTopic": "topic x"
+    }
+  }
 
-	request = MachineGroupDetail()
-	request.from_json(config_detail_json)
-	res = client.create_machine_group('project1', request)
-	res.log_print()
-	```
+request = MachineGroupDetail()
+request.from_json(config_detail_json)
+res = client.create_machine_group('project1', request)
+res.log_print()
+```
 
   **注意：**
   - 创建的机器组的名字`group_name`是放在传入的`request`中.
@@ -308,10 +310,10 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   获取机器组的具体信息:
 
-	```python
-	res = client.get_machine_group('project1', 'group1')
-	res.log_print()
-	```
+```python
+res = client.get_machine_group('project1', 'group1')
+res.log_print()
+```
 
 - 修改
 
@@ -326,41 +328,43 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 应用Logtail配置到特定机器组
 
-	```python
-	res = client.apply_config_to_machine_group('project1', 'config1', 'group1')
-	res.log_print()
-	```
+```python
+res = client.apply_config_to_machine_group('project1', 'config1', 'group1')
+res.log_print()
+```
 
 - 去除机器组的Logtail配置
 
-		```python
-	res = client.remove_config_to_machine_group('project1', 'config1', 'group1')
-	res.log_print()
-	```
+```python
+res = client.remove_config_to_machine_group('project1', 'config1', 'group1')
+res.log_print()
+```
 
 - 获取Logtail配置应用到的机器组名单
 
-	```python
-	res = client.get_config_applied_machine_groups('project1', 'config1')
-	res.log_print()
-	```
+```python
+res = client.get_config_applied_machine_groups('project1', 'config1')
+res.log_print()
+```
 
   **输出：**
-	```json
-	{"count": 2, "machinegroups": ["group1", "group2"]}
-	```
+
+```json
+{"count": 2, "machinegroups": ["group1", "group2"]}
+```
 
 - 获取机器组应用的Logtail配置名单
 
-	```python
-	res = client.get_machine_group_applied_configs('project1', 'group1')
-	res.log_print()
-	```
+```python
+res = client.get_machine_group_applied_configs('project1', 'group1')
+res.log_print()
+```
 
   **输出：**
-	```json
-	{"count": 2, "configs": ["config1", "config2"]}
-	```
+
+```json
+{"count": 2, "configs": ["config1", "config2"]}
+```
 
 ### 日志库索引管理
 只有配置了索引的日志库才能使用SQL查询日志.
@@ -369,40 +373,40 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 给一个日志库创建索引
 
-	```python
-	from aliyun.log import IndexConfig
-	request_json = {
-	     "keys": {
-	       "f1": {
-	         "caseSensitive": false,
-	         "token": [
-	           ",", " ", "\"", "\"", ";", "=",  "(", ")", "[", "]",
-	           "{", "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
-	         ],
-	         "type": "text",
-	         "doc_value": true
-	       },
-	       "f2": {
-	         "doc_value": true,
-	         "type": "long"
-	       }
-	     },
-	     "storage": "pg",
-	     "ttl": 2,
-	     "index_mode": "v2",
-	     "line": {
-	       "caseSensitive": false,
-	       "token": [
-	         ",", " ", "\"", "\"", ";", "=", "(", ")", "[", "]", "{",
-	         "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
-	       ]
-	     }
-	   }
-	request = IndexConfig()
-	request.from_json(request_json)
-	res = client.create_index('project1', 'logstore1', request)
-	res.log_print()
-	```
+```python
+from aliyun.log import IndexConfig
+request_json = {
+     "keys": {
+       "f1": {
+         "caseSensitive": false,
+         "token": [
+           ",", " ", "\"", "\"", ";", "=",  "(", ")", "[", "]",
+           "{", "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
+         ],
+         "type": "text",
+         "doc_value": true
+       },
+       "f2": {
+         "doc_value": true,
+         "type": "long"
+       }
+     },
+     "storage": "pg",
+     "ttl": 2,
+     "index_mode": "v2",
+     "line": {
+       "caseSensitive": false,
+       "token": [
+         ",", " ", "\"", "\"", ";", "=", "(", ")", "[", "]", "{",
+         "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
+       ]
+     }
+   }
+request = IndexConfig()
+request.from_json(request_json)
+res = client.create_index('project1', 'logstore1', request)
+res.log_print()
+```
 
 - 修改
 
@@ -421,12 +425,12 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
 - 获取日志库主题列表
 
-	```python
-	from aliyun.log import ListTopicsRequest
-	request = ListTopicsRequest('project1', 'logstore1')
-	res = client.list_topic(request)
-	res.log_print()
-	```
+```python
+from aliyun.log import ListTopicsRequest
+request = ListTopicsRequest('project1', 'logstore1')
+res = client.list_topic(request)
+res.log_print()
+```
 
 
 ## 日志消费
@@ -444,48 +448,48 @@ Logtail的配置拥有独立的名字, 但其与日志库(logstore)一般是一�
 
   获取日志库特定分区的最开头的游标.
 
-	```python
-	res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
-	print(res.get_cursor())
-	```
+```python
+res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
+print(res.get_cursor())
+```
 
 - 获取结尾游标
 
   获取日志库特定分区的结尾的游标.
 
-	```python
-	res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
-	print(res.get_cursor())
-	```
+```python
+res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
+print(res.get_cursor())
+```
 
 - 获取特定时间的游标
 
   可以特定日志库分区的特定接受时间最接近的一个游标.
 
-	```python
-	res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=1510837205)
-	print(res.get_cursor())
-	```
+```python
+res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=1510837205)
+print(res.get_cursor())
+```
 
 - 获取游标时间
 
   获得特定日志库分区的某个游标说对应的服务器时间, 如果是结尾游标, 一般对应于服务器的的当前时间.
 
-	```python
-	res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
-	res = client.get_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
-	print(res.get_cursor_time())
-	```
+```python
+res = client.get_begin_cursor('project1', 'logstore1', shard_id=0)
+res = client.get_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
+print(res.get_cursor_time())
+```
 
 - 获取游标时间
 
   获得特定日志库分区的某个游标的上一个游标所对应的服务器时间, 如果是开头游标, 则对应于服务器的的开头游标的时间.
 
-	```python
-	res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
-	res = client.get_previous_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
-	print(res.get_cursor_time())
-	```
+```python
+res = client.get_end_cursor('project1', 'logstore1', shard_id=0)
+res = client.get_previous_cursor_time('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
+print(res.get_cursor_time())
+```
 
 
 ### 拉取(Pull)数据
