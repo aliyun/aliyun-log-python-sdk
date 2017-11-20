@@ -25,11 +25,15 @@ class PutLogsRequest(LogRequest):
     :type logitems: list<LogItem>
     :param logitems: log data
 
-    :type logtags: list 
-    :param logtags: list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
-
     :type hashKey: String
     :param hashKey: put data with set hash, the data will be send to shard whose range contains the hashKey
+
+    :type compress: bool
+    :param compress: if need to compress the logs
+
+    :type logtags: list
+    :param logtags: list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
+
     """
 
     def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey=None,
