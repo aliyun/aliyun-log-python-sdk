@@ -8,7 +8,7 @@ import time
 import os
 
 
-def sample_put_logs(client, project, logstore):
+def sample_put_logs(client, project, logstore, compress=False):
     topic = 'TestTopic_2'
     source = ''
     contents = [
@@ -21,7 +21,7 @@ def sample_put_logs(client, project, logstore):
     logItem.set_contents(contents)
     for i in range(0, 1):
         logitemList.append(logItem)
-    request = PutLogsRequest(project, logstore, topic, source, logitemList)
+    request = PutLogsRequest(project, logstore, topic, source, logitemList, compress=compress)
 
     response = client.put_logs(request)
     response.log_print()
@@ -39,12 +39,12 @@ def sample_put_logs(client, project, logstore):
     res.log_print()
 
 # @log_enter_exit
-def sample_pull_logs(client, project, logstore):
+def sample_pull_logs(client, project, logstore, compress=False):
     res = client.get_cursor(project, logstore, 0, int(time.time() - 60))
     res.log_print()
     cursor = res.get_cursor()
 
-    res = client.pull_logs(project, logstore, 0, cursor, 1)
+    res = client.pull_logs(project, logstore, 0, cursor, 1, compress=compress)
     res.log_print()
 
 # @log_enter_exit
@@ -258,8 +258,10 @@ def main():
     sample_list_topics(client, project, logstore)
     time.sleep(40)
     sample_put_logs(client, project, logstore)
+    sample_put_logs(client, project, logstore, compress=True)
 
     sample_pull_logs(client, project, logstore)
+    sample_pull_logs(client, project, logstore, compress=True)
 
     time.sleep(40)
     sample_get_logs(client, project, logstore)
