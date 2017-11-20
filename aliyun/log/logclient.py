@@ -39,6 +39,7 @@ from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 import json
 import six
+import zlib
 
 CONNECTION_TIME_OUT = 20
 
@@ -264,8 +265,9 @@ class LogClient(object):
 
         compress_data = None
         if is_compress:
-            headers['x-log-compresstype'] = 'lz4'
-            compress_data = logservice_lz4.compress(body)
+            headers['x-log-compresstype'] = 'deflate'
+            compress_data = zlib.compress(body)
+            #compress_data = logservice_lz4.compress(body)
 
         params = {}
         logstore = request.get_logstore()
@@ -566,7 +568,7 @@ class LogClient(object):
         """
         headers = {}
         if compress:
-            headers['Accept-Encoding'] = 'lz4'
+            headers['Accept-Encoding'] = 'gzip'
         else:
             headers['Accept-Encoding'] = ''
 
@@ -580,9 +582,15 @@ class LogClient(object):
         if end_cursor:
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
-        if compress:
+
+        compress_type = Util.h_v_td(header,'x-log-compresstype', '').lower()
+        if compress_type == 'lz4':
             raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
             raw_data = logservice_lz4.uncompress(raw_size, resp)
+            return PullLogResponse(raw_data, header)
+        elif compress_type in ('gzip', 'deflate'):
+            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+            raw_data = zlib.decompress(resp)
             return PullLogResponse(raw_data, header)
         else:
             return PullLogResponse(resp, header)
