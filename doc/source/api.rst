@@ -204,7 +204,7 @@ Logs
    pull_logs
    get_logs
    get_histograms
-
+   get_project_logs
 
 Consumer group
 ----------------
