@@ -3,6 +3,7 @@ from .logclient import LogClient
 from .logexception import LogException
 from .gethistogramsrequest import GetHistogramsRequest
 from .getlogsrequest import GetLogsRequest
+from .getprojectlogsrequest import GetProjectLogsRequest
 from .index_config import IndexConfig, IndexKeyConfig, IndexLineConfig
 from .listtopicsrequest import ListTopicsRequest
 from .listlogstoresrequest import ListLogstoresRequest
