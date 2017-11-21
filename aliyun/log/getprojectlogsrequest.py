@@ -4,7 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from logrequest import LogRequest
+from .logrequest import LogRequest
 
 class GetProjectLogsRequest(LogRequest):
     """ The request used to get logs by a query from log.
