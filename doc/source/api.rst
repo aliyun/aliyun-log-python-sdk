@@ -21,6 +21,7 @@ Request and Config Class
 .. autosummary::
    GetHistogramsRequest
    GetLogsRequest
+   GetProjectLogsRequest
    ListTopicsRequest
    ListLogstoresRequest
    PutLogsRequest
@@ -237,6 +238,7 @@ Definitions
 .. autoclass:: LogException
 .. autoclass:: GetHistogramsRequest
 .. autoclass:: GetLogsRequest
+.. autoclass:: GetProjectLogsRequest
 .. autoclass:: IndexConfig
 .. autoclass:: ListTopicsRequest
 .. autoclass:: ListLogstoresRequest

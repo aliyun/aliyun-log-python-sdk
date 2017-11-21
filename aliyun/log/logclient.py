@@ -403,8 +403,8 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        if request.get_query()!=None:
-            params['query'] = request.get_query();
+        if request.get_query() is not None:
+            params['query'] = request.get_query()
         project = request.get_project()
         resource = "/logs" 
         (resp, header) = self._send("GET", project, None, resource, params, headers)
