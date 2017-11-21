@@ -394,8 +394,8 @@ class LogClient(object):
         """ Get logs from log service.
         Unsuccessful opertaion will cause an LogException.
         
-        :type query: query string
-        :param request: the GetLogs request parameters class.
+        :type request: GetProjectLogsRequest
+        :param request: the GetProjectLogs request parameters class.
         
         :return: GetLogsResponse
         
