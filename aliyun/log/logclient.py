@@ -390,6 +390,26 @@ class LogClient(object):
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetLogsResponse(resp, header)
 
+    def get_project_logs(self, request):
+        """ Get logs from log service.
+        Unsuccessful opertaion will cause an LogException.
+        
+        :type query: query string
+        :param request: the GetLogs request parameters class.
+        
+        :return: GetLogsResponse
+        
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        if request.get_query()!=None:
+            params['query'] = request.get_query();
+        project = request.get_project()
+        resource = "/logs" 
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetLogsResponse(resp, header)
+
     def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs
         Unsuccessful opertaion will cause an LogException.

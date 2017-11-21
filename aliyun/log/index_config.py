@@ -23,15 +23,19 @@ class IndexKeyConfig(object):
 
     :type doc_value: bool
     :param doc_value: True if enable doc_value, used for fast sql execution
+
+    :type alias : string
+    :param alias : alias name for index key
     """
 
-    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False):
+    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False,alias=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
         self.case_sensitive = case_sensitive
         self.index_type = index_type
         self.doc_value = doc_value
+        self.alias = alias
 
     def to_json(self):
         json_value = {}
@@ -40,6 +44,8 @@ class IndexKeyConfig(object):
         if self.index_type == 'text':
             json_value["token"] = self.token_list
             json_value["caseSensitive"] = bool(self.case_sensitive)
+        if self.alias is not None:
+            json_value['alias'] = self.alias;
         json_value["doc_value"] = bool(self.doc_value)
         return json_value
 
@@ -52,6 +58,8 @@ class IndexKeyConfig(object):
             self.case_sensitive = bool(json_value["caseSensitive"])
         if 'doc_value' in json_value:
             self.doc_value = bool(json_value["doc_value"])
+        if 'alias'  in json_value:
+            self.alias = json_value['alias']
 
 
 class IndexLineConfig(object):

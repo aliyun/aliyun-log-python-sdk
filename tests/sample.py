@@ -214,6 +214,10 @@ def sample_crud_consumer_group(client, project, logstore, consumer_group):
     ret = client.delete_consumer_group(project, logstore, consumer_group)
     ret.log_print()
 
+def sample_get_project_log(client,project,logstore):
+    req = GetProjectLogsRequest(project,"select count(method_b) from %s where __date__ >'2017-11-10 00:00:00' and __date__ < '2017-11-13 00:00:00'" %(logstore));
+    res = client.get_project_logs(req)
+    res.log_print();
 
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
@@ -265,6 +269,7 @@ def main():
 
     time.sleep(40)
     sample_get_logs(client, project, logstore)
+    sample_get_project_log(client,project,logstore);
 
     time.sleep(10)
     sample_crud_consumer_group(client, project, logstore, consumer_group)
