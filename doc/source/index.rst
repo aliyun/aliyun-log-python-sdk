@@ -10,7 +10,7 @@ Aliyun Log Python SDK
    :maxdepth: 2
 
    README.rst
-   README_EN.rst
+   README_CN.rst
    api.rst
 
 
