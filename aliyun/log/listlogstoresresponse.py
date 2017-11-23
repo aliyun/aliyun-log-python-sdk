@@ -46,3 +46,20 @@ class ListLogstoresResponse(LogResponse):
         print('count:', self.count)
         print('total:', self.total)
         print('logstores:', self.logstores)
+
+    def merge(self, response):
+        if not isinstance(response, ListLogstoresResponse):
+            raise ValueError("passed response is not a ListLogstoresResponse: " + str(type(response)))
+
+        self.count += response.get_count()
+        self.total = response.get_total() # use the latest total count
+        self.logstores.extend(response.get_logstores())
+
+        # update body
+        self.body = {
+            'count': self.count,
+            'total': self.total,
+            'logstores': self.logstores
+        }
+
+        return self

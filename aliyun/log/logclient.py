@@ -24,7 +24,7 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .log_logs_pb2 import LogGroup
-from .logclient_operator import copy_project
+from .logclient_operator import copy_project, list_more
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -42,6 +42,7 @@ import six
 import zlib
 
 CONNECTION_TIME_OUT = 20
+MAX_LIST_PAGING_SIZE = 500
 
 """
 LogClient class is the main class in the SDK. It can be used to communicate with 
@@ -580,7 +581,7 @@ class LogClient(object):
         :param end_cursor: the end cursor position to get data
 
         :type compress: boolean
-        :param compress: if use lz4 compress for transfer data
+        :param compress: if use zip compress for transfer data
 
         :return: PullLogResponse
         
@@ -719,7 +720,7 @@ class LogClient(object):
         return UpdateLogStoreResponse(header, resp)
 
     def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
-        """ list the logstore in a project
+        """ list the logstore in a projectListLogStoreResponse
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
@@ -732,12 +733,18 @@ class LogClient(object):
         :param offset: the offset of all the matched names
 
         :type size: int
-        :param size: the max return names count
+        :param size: the max return names count, -1 means all
 
         :return: ListLogStoreResponse
 
         :raise: LogException
         """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logstore, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, logstore_name_pattern)
+
         headers = {}
         params = {}
         resource = "/logstores"
@@ -1038,12 +1045,16 @@ class LogClient(object):
         :param offset: the offset of all config names
 
         :type size: int
-        :param size: the max return names count
+        :param size: the max return names count, -1 means all
 
         :return: ListLogtailConfigResponse
         
         :raise: LogException
         """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logtail_config, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name)
+
         headers = {}
         params = {}
         resource = "/configs"
@@ -1153,12 +1164,16 @@ class LogClient(object):
         :param offset: the offset of all group name
 
         :type size: int
-        :param size: the max return names count
+        :param size: the max return names count, -1 means all
 
         :return: ListMachineGroupResponse
         
         :raise: LogException
         """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_machine_group, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name)
 
         headers = {}
         params = {}
@@ -1182,12 +1197,16 @@ class LogClient(object):
         :param offset: the offset of all group name
 
         :type size: int
-        :param size: the max return names count
+        :param size: the max return names count, -1 means all
 
         :return: ListMachinesResponse
         
         :raise: LogException
         """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_machines, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name, group_name)
 
         headers = {}
         params = {}
@@ -1551,15 +1570,20 @@ class LogClient(object):
         :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
 
         :type offset: int
-        :param offset: the begin task offset
+        :param offset: the begin task offset, -1 means all
 
         :type size: int
         :param size: the needed tasks count
 
-        :return: ListShipperResponse
+        :return: GetShipperTasksResponse
         
         :raise: LogException
         """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.get_shipper_tasks, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, logstore_name, shipper_name, start_time, end_time, status_type)
+
         headers = {}
         params = {"from": str(int(start_time)),
                   "to": str(int(end_time)),
@@ -1925,12 +1949,17 @@ class LogClient(object):
         :param offset: the offset of all the matched names
 
         :type size: int
-        :param size: the max return names count
+        :param size: the max return names count, -1 means return all data
 
         :return: ListProjectResponse
 
         :raise: LogException
         """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_project, int(offset), int(size), MAX_LIST_PAGING_SIZE)
+
         headers = {}
         params = {}
         resource = "/"

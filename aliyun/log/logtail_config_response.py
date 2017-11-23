@@ -103,9 +103,32 @@ class ListLogtailConfigResponse(LogResponse):
     def get_configs_total(self):
         return self.total_count
 
+    def get_count(self):
+        return self.count
+
+    def get_total(self):
+        return self.total_count
+
     def log_print(self):
         print('ListLogtailConfigResponse:')
         print('headers:', self.get_all_headers())
         print('configs_count:', str(self.count))
         print('configs_total:', str(self.total_count))
         print('configs:', str(self.logtail_configs))
+
+    def merge(self, response):
+        if not isinstance(response, ListLogtailConfigResponse):
+            raise ValueError("passed response is not a ListLogtailConfigResponse: " + str(type(response)))
+
+        self.count += response.get_configs_count()
+        self.total_count = response.get_configs_total() # use the latest total count
+        self.logtail_configs.extend(response.get_configs())
+
+        # update body
+        self.body = {
+            'count': self.count,
+            'total': self.total_count,
+            'configs': self.logtail_configs
+        }
+
+        return self
