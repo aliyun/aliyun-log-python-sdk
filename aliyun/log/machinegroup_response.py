@@ -130,6 +130,12 @@ class ListMachineGroupResponse(LogResponse):
         """
         return self.total
 
+    def get_count(self):
+        return self.count
+
+    def get_total(self):
+        return self.total
+
     def log_print(self):
         """
 
@@ -140,6 +146,23 @@ class ListMachineGroupResponse(LogResponse):
         print('count:', str(self.count))
         print('total:', str(self.total))
         print('machine_groups:', str(self.machine_groups))
+
+    def merge(self, response):
+        if not isinstance(response, ListMachineGroupResponse):
+            raise ValueError("passed response is not a ListMachineGroupResponse: " + str(type(response)))
+
+        self.count += response.get_count()
+        self.total = response.get_total()  # use the latest total count
+        self.machine_groups.extend(response.get_machine_group())
+
+        # update body
+        self.body = {
+            'count': self.count,
+            'total': self.total,
+            'machinegroups': self.machine_groups
+        }
+
+        return self
 
 
 class ListMachinesResponse(LogResponse):
@@ -183,12 +206,33 @@ class ListMachinesResponse(LogResponse):
         """
         return self.machines
 
+    def get_count(self):
+        return self.count
+
+    def get_total(self):
+        return self.total
+
     def log_print(self):
         print('GetMachineGroupResponse:')
         print('headers:', self.get_all_headers())
         print('machine_count', self.count)
         print('machine_total', self.total)
         print('machines:', self.machines)
+
+    def merge(self, response):
+        if not isinstance(response, ListMachinesResponse):
+            raise ValueError("passed response is not a ListMachineGroupResponse: " + str(type(response)))
+
+        self.count += response.get_count()
+        self.total = response.get_total()  # use the latest total count
+        self.machines.extend(response.get_machines())
+
+        # update body
+        self.body['count'] = self.count
+        self.body['total'] = self.total
+        self.body['machines'].extend(response.get_body()['machines'])
+
+        return self
 
 
 class ApplyConfigToMachineGroupResponse(LogResponse):

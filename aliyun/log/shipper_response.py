@@ -157,11 +157,17 @@ class GetShipperTasksResponse(LogResponse):
         """
         return self.count
 
+    def get_count(self):
+        return self.count
+
     def get_task_total(self):
         """
 
         :return:
         """
+        return self.total
+
+    def get_total(self):
         return self.total
 
     def get_running_task_count(self):
@@ -213,7 +219,7 @@ class GetShipperTasksResponse(LogResponse):
         """
         return self._get_task_ids("success")
 
-    def get_taks(self):
+    def get_tasks(self):
         """
 
         :return:
@@ -234,6 +240,32 @@ class GetShipperTasksResponse(LogResponse):
         print('ship taks : ')
         for task in self.tasks:
             print(str(task.to_json()))
+
+    def merge(self, response):
+        if not isinstance(response, GetShipperTasksResponse):
+            raise ValueError("passed response is not a GetShipperTasksResponse: " + str(type(response)))
+
+        self.count += response.get_count()
+        self.total = response.get_total()  # use the latest total count
+        self.running_count += response.get_running_task_ids()
+        self.success_count += response.get_success_task_count()
+        self.fail_count += response.get_fail_task_count()
+        self.tasks.extend(response.get_tasks())
+
+        for task_res in resp['tasks']:
+            task = ShipperTask(task_res['id'], task_res['taskStatus'], task_res['taskMessage'],
+                               task_res['taskCreateTime'],
+                               task_res['taskLastDataReceiveTime'], task_res['taskFinishTime'])
+            self.tasks.append(task)
+
+        # update body
+        self.body['count'] = self.count
+        self.body['total'] = self.total
+        self.body['statistics']['running'] = self.running_count
+        self.body['statistics']['success'] = self.success_count
+        self.body['statistics']['fail'] = self.fail_count
+
+        return self
 
 
 class RetryShipperTasksResponse(LogResponse):

@@ -1,14 +1,16 @@
 from .logexception import LogException
+from functools import wraps
+import six
 
 
 def copy_project(from_client, to_client, from_project, to_project):
     """
     copy project, logstore, machine group and logtail config to target project,
     expecting the target project doens't exist
-    :type from_client: logclient
-    :param from_project: logclient instance
+    :type from_client: LogClient
+    :param from_client: logclient instance
 
-    :type to_client: logclient
+    :type to_client: LogClient
     :param to_client: logclient instance
 
     :type from_project: string
@@ -79,6 +81,90 @@ def copy_project(from_client, to_client, from_project, to_project):
             for config_name in ret.get_configs():
                 to_client.apply_config_to_machine_group(to_project, config_name, group_name)
 
+        offset += count
+        if count < size or offset >= total:
+            break
+
+
+def list_more(fn, offset, size, batch_size, *args):
+    """list all data using the fn
+    """
+    if size < 0:
+        expected_total_size = six.MAXSIZE
+    else:
+        expected_total_size = size
+        batch_size = min(size, batch_size)
+
+    response = None
+    total_count_got = 0
+    while True:
+        ret = fn(*args, offset=offset, size=batch_size)
+        if response is None:
+            response = ret
+        else:
+            response.merge(ret)
+
+        count = ret.get_count()
+        total = ret.get_total()
+        offset += count
+        total_count_got += count
+        if count == 0 or offset >= total or total_count_got >= expected_total_size:
+            break
+
+    return response
+
+
+def list_logstore_all(client, project):
+    """
+    list all project
+    :type client: LogClient
+    :param client: logclient instance
+
+    :return:
+    """
+
+    default_fetch_size = 100
+
+    # list logstore and copy them
+    offset, size = 0, default_fetch_size
+    response = None
+    while True:
+        ret = client.list_logstores(project, offset=offset, size=size)
+        if response is None:
+            response = ret
+        else:
+            response.merge(ret)
+
+        count = ret.get_count()
+        total = ret.get_total()
+        offset += count
+        if count < size or offset >= total:
+            break
+
+
+def list_logtail_config_all(client, project):
+    """
+    list all project
+    :type client: LogClient
+    :param client: logclient instance
+
+    :return:
+    """
+
+    default_fetch_size = 100
+
+    # list logstore and copy them
+    offset, size = 0, default_fetch_size
+    response = None
+    while True:
+        ret = client.list_logtail_config(project, offset=offset, size=size)
+        if response is None:
+            response = ret
+        else:
+            response.merge(ret)
+
+        count = ret.get_count()
+        total = ret.get_total()
         offset += count
         if count < size or offset >= total:
             break

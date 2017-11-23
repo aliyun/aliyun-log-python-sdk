@@ -99,3 +99,19 @@ class ListProjectResponse(LogResponse):
         print('total:', self.total)
         print('projects:', self.get_projects())
 
+    def merge(self, response):
+        if not isinstance(response, ListProjectResponse):
+            raise ValueError("passed response is not a ListProjectResponse: " + str(type(response)))
+
+        self.count += response.get_count()
+        self.total = response.get_total() # use the latest total count
+        self.projects.extend(response.get_projects())
+
+        # update body
+        self.body = {
+            'count': self.count,
+            'total': self.total,
+            'projects': self.projects
+        }
+
+        return self

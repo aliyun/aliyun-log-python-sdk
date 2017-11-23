@@ -91,10 +91,23 @@ def sample_machine_group(client, project, logstore):
     res = client.create_machine_group(project, machine_group)
     res.log_print()
 
+    # list group
     res = client.list_machine_group(project)
     res.log_print()
 
+    # list all
+    res = client.list_machine_group(project, size=-1)
+    res.log_print()
+
     res = client.get_machine_group(project, group_name)
+    res.log_print()
+
+    # list achine
+    res = client.list_machines(project, group_name)
+    res.log_print()
+
+    # list all
+    res = client.list_machines(project, group_name, size=-1)
     res.log_print()
 
 
@@ -132,6 +145,14 @@ def sample_logtail_config(client, project, logstore):
                                               logSample="xxx 2017-11-11 11:11:11 hello alicloud.")
 
     res = client.create_logtail_config(project, logtail_config)
+    res.log_print()
+
+    # test list
+    res = client.list_logtail_config(project)
+    res.log_print()
+
+    # test list all
+    res = client.list_logtail_config(project, size=-1)
     res.log_print()
 
     res = client.get_logtail_config(project, logtail_config_name)
@@ -172,6 +193,10 @@ def sample_logstore(client, project, logstore):
     res.log_print()
 
     res = client.list_logstore(project, logstore)
+    res.log_print()
+
+    # list all
+    res = client.list_logstore(project, logstore, size=-1)
     res.log_print()
 
     client.delete_logstore(project, logstore)
@@ -239,6 +264,10 @@ def main():
 
     # test list project
     ret = client.list_project()
+    print("**project count:", ret.get_count())
+
+    # test list project all
+    ret = client.list_project(size=-1)
     print("**project count:", ret.get_count())
 
     client.create_project(project, "SDK test")
