@@ -7,7 +7,7 @@ Aliyun Log Python SDK
 =======================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    README.rst
    README_CN.rst
