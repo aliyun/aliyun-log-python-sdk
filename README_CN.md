@@ -44,9 +44,9 @@
 
 1. Log Service API 0.6
 
-### 版本改动
+### 版本历史
 
-[版本改动](https://github.com/aliyun/aliyun-log-python-sdk/releases)
+[版本历史](https://github.com/aliyun/aliyun-log-python-sdk/releases)
 
 ## 安装
 ```shell

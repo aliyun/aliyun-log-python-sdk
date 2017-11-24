@@ -40,9 +40,9 @@ Refer to the doc: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-l
 ### Supported Log Service API
 1. Log Service API 0.6
 
-### Change Log
+### Change Logs
 
-[Change Los](https://github.com/aliyun/aliyun-log-python-sdk/releases)
+[Change Logs](https://github.com/aliyun/aliyun-log-python-sdk/releases)
 
 
 ## Installation
