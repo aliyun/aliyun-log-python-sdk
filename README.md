@@ -15,6 +15,8 @@ This is the open source version of Python SDK for AliCloud Log Service. It's a P
 Log Service, providing encapsulations of Log Service Rest API. It helps Pythoner to connect to Alicloud Log Service more
 efficiently.
 
+Refer to the doc: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-log-python-sdk.readthedocs.io/).
+
 ### Features
 1. Wrap Rest API
 2. Implement the signature of API request
@@ -37,6 +39,11 @@ efficiently.
 
 ### Supported Log Service API
 1. Log Service API 0.6
+
+### Change Log
+
+[Change Los](https://github.com/aliyun/aliyun-log-python-sdk/releases)
+
 
 ## Installation
 ```shell

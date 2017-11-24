@@ -16,6 +16,8 @@
 （Log Service）API的Python编程接口，提供了对于Log Service Rest API所有接口的封装
 和支持，帮助Python开发人员更快编程使用阿里云Log Service服务。
 
+参考文档: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-log-python-sdk.readthedocs.io/)
+
 ### 具体功能
 
 1. 封装Rest API。
@@ -41,6 +43,10 @@
 ### 支持API版本
 
 1. Log Service API 0.6
+
+### 版本改动
+
+[版本改动](https://github.com/aliyun/aliyun-log-python-sdk/releases)
 
 ## 安装
 ```shell
