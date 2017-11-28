@@ -306,7 +306,7 @@ def main():
 
     # test copy project
     project_new = project + str(randint(1, 10000)) + "-copied"
-    client.copy_project(project, project_new)
+    client.copy_project(project, project_new, copy_machine_group=True)
 
     time.sleep(10)
     sample_cleanup(client, project, logstore, delete_project=True)

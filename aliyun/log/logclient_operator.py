@@ -3,7 +3,7 @@ from functools import wraps
 import six
 
 
-def copy_project(from_client, to_client, from_project, to_project):
+def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
     """
     copy project, logstore, machine group and logtail config to target project,
     expecting the target project doens't exist
@@ -18,6 +18,11 @@ def copy_project(from_client, to_client, from_project, to_project):
 
     :type to_project: string
     :param to_project: project name
+
+    :type copy_machine_group: bool
+    :param copy_machine_group: if copy machine group resources, False by default.
+
+
     :return:
     """
 
@@ -67,7 +72,7 @@ def copy_project(from_client, to_client, from_project, to_project):
 
     # list machine group and copy them
     offset, size = 0, default_fetch_size
-    while True:
+    while copy_machine_group:
         ret = from_client.list_machine_group(from_project, offset=offset, size=size)
         count = ret.get_machine_group_count()
         total = ret.get_machine_group_total()
