@@ -1921,7 +1921,7 @@ class LogClient(object):
         (resp, header) = self._send('POST', project, body_str, resource, params, headers)
         return ConsumerGroupHeartBeatResponse(resp, header)
 
-    def copy_project(self, from_project, to_project, to_client=None):
+    def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False):
         """
         copy project, logstore, machine group and logtail config to target project,
         expecting the target project doens't exist
@@ -1935,11 +1935,14 @@ class LogClient(object):
         :type to_client: LogClient
         :param to_client: logclient instance
 
+        :type copy_machine_group: bool
+        :param copy_machine_group: if copy machine group resources, False by default.
+
         :return: None
         """
         if to_client is None:
             to_client = self
-        return copy_project(self, to_client, from_project, to_project)
+        return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
     def list_project(self, offset=0, size=100):
         """ list the project
