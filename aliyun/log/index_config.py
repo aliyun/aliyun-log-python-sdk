@@ -99,9 +99,9 @@ class IndexLineConfig(object):
 
     def from_json(self, json_value):
         self.token_list = json_value["token"]
-        self.case_sensitive = bool(json_value["caseSensitive"])
-        self.include_keys = Util.get_json_value(json_value, "include_keys", None)
-        self.exclude_keys = Util.get_json_value(json_value, "exclude_keys", None)
+        self.case_sensitive = bool(json_value.get("caseSensitive", False))
+        self.include_keys = json_value.get("include_keys", None)
+        self.exclude_keys = json_value.get("exclude_keys", None)
 
 
 class IndexConfig(object):
@@ -158,4 +158,4 @@ class IndexConfig(object):
                 key_config.from_json(value)
                 self.key_config_list[key] = key_config
 
-        self.modify_time = Util.get_json_value(json_value, "lastModifyTime", int(time.time()))
+        self.modify_time = json_value.get("lastModifyTime", int(time.time()))

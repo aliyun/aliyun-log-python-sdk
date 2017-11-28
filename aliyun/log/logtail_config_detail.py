@@ -228,7 +228,7 @@ class LogtailConfigHelper(object):
         logSample = json_value.get('logSample', '')
         config_name = json_value['configName']
         logstore_name = output_detail['logstoreName']
-        endpoint = Util.get_json_value(output_detail, 'endpoint')
+        endpoint = output_detail.get('endpoint', None)
 
         log_path = input_detail['logPath']
         file_pattern = input_detail['filePattern']
@@ -259,7 +259,7 @@ class LogtailConfigHelper(object):
         logSample = json_value.get('logSample', '')
 
         logstore_name = output_detail['logstoreName']
-        endpoint = Util.get_json_value(output_detail, 'endpoint')
+        endpoint = output_detail.get('endpoint')
         log_path = input_detail['logPath']
         file_pattern = input_detail['filePattern']
 

@@ -147,12 +147,6 @@ class Util(object):
         return data
 
     @staticmethod
-    def get_json_value(json_map, key, default_value=None):
-        if key in json_map:
-            return json_map[key]
-        return default_value
-
-    @staticmethod
     def h_v_t(header, key):
         """
         get header value with title
