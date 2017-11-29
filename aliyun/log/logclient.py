@@ -204,7 +204,7 @@ class LogClient(object):
         return self._sendRequest(method, url, params, body, headers, respons_body_type)
 
     @staticmethod
-    def get_unicode(key):
+    def _get_unicode(key):
         if isinstance(key, six.binary_type):
             key = key.decode('utf-8')
         return key
@@ -248,8 +248,8 @@ class LogClient(object):
             contents = logItem.get_contents()
             for key, value in contents:
                 content = log.Contents.add()
-                content.Key = self.get_unicode(key)
-                content.Value = self.get_unicode(value)
+                content.Key = self._get_unicode(key)
+                content.Value = self._get_unicode(value)
         if request.get_log_tags() is not None:
             tags = request.get_log_tags()
             for key, value in tags:
