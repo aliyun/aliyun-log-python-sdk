@@ -28,20 +28,11 @@ class ConsumerClient(object):
             if e.get_error_code() == 'ConsumerGroupAlreadyExist':
 
                 try:
-                    consumer_group = self.get_consumer_group()
-                    # consumer group is not in server
-                    if consumer_group is None:
-                        raise ClientWorkerException('consumer group not exist')
-                    # the consuemr group's attribute(in_order or timeout) is different from the server's
-                    if consumer_group is not None \
-                            and (consumer_group.is_in_order() != in_order
-                                 or consumer_group.get_timeout() != timeout):
-                        raise ClientWorkerException(
-                            "consumer group is not agreed, AlreadyExistedConsumerGroup: {\"consumeInOrder\": " +
-                            str(consumer_group.is_in_order()) + ", \"timeoutInMillSecond\": " +
-                            str(consumer_group.get_timeout()) + "}")
+                    self.mclient.update_consumer_group(self.mproject, self.mlogstore, self.mconsumer_group,
+                                                       timeout, in_order)
+
                 except LogException as e1:
-                    raise ClientWorkerException("error occour when get consumer group, errorCode: " +
+                    raise ClientWorkerException("error occour when update consumer group, errorCode: " +
                                                 e1.get_error_code() + ", errorMessage: " + e1.get_error_message())
 
             else:
