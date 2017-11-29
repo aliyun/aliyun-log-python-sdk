@@ -68,10 +68,6 @@ def prepare_test():
     consumer_name1 = "consumer-group-1-A"
     token = ""
 
-    if not logstore:
-        logstore = 'consumer_group_test_' + str(time.time()).replace('.', '_')
-
-    print("** logstore: ", logstore)
     assert endpoint and accessKeyId and accessKey and project and logstore, ValueError("endpoint/access_id/key and "
                                                                           "project/logstore cannot be empty")
 
