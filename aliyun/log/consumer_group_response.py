@@ -129,8 +129,9 @@ class ConsumerGroupCheckPointResponse(LogResponse):
         for checkpoint in self.consumer_group_check_poins:
             cursor = checkpoint["checkpoint"]
             shard_id = checkpoint["shard"]
-            ret = client.get_previous_cursor_time(project_name, logstore_name, shard_id, cursor)
-            checkpoint["checkpoint_previous_cursor_time"] = ret.get_cursor_time()
+            if cursor:
+                ret = client.get_previous_cursor_time(project_name, logstore_name, shard_id, cursor)
+                checkpoint["checkpoint_previous_cursor_time"] = ret.get_cursor_time()
 
 
 class ConsumerGroupHeartBeatResponse(LogResponse):
