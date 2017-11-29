@@ -167,9 +167,11 @@ class ShardConsumerWorker(object):
                 # must deep copy cause some revision will happen
                 last_fetch_log_group = copy.deepcopy(self.last_fetch_log_group)
                 self.last_fetch_log_group = None
-                self.task_future = self.executor.submit(consumer_process_task, self.processor,
-                                                        last_fetch_log_group.fetched_log_group_list,
-                                                        self.checkpoint_tracker)
+
+                if self.last_fetch_count > 0:
+                    self.task_future = self.executor.submit(consumer_process_task, self.processor,
+                                                            last_fetch_log_group.fetched_log_group_list,
+                                                            self.checkpoint_tracker)
 
         elif self.consumer_status == ConsumerStatus.SHUTTING_DOWN:
             self.current_task_exist = True
