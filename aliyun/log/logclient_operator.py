@@ -1,6 +1,11 @@
 from .logexception import LogException
 from functools import wraps
 import six
+import time
+
+
+DEFAULT_QUERY_RETRY_COUNT = 10
+DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 
 
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
@@ -113,7 +118,49 @@ def list_more(fn, offset, size, batch_size, *args):
         total = ret.get_total()
         offset += count
         total_count_got += count
+        batch_size = min(batch_size, expected_total_size - total_count_got)
+
         if count == 0 or offset >= total or total_count_got >= expected_total_size:
+            break
+
+    return response
+
+
+def query_more(fn, offset, size, batch_size, *args):
+    """list all data using the fn
+    """
+    if size < 0:
+        expected_total_size = six.MAXSIZE
+    else:
+        expected_total_size = size
+        batch_size = min(size, batch_size)
+
+    response = None
+    total_count_got = 0
+    complete = False
+    while True:
+        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+            ret = fn(*args, offset=offset, size=batch_size)
+            if ret.is_completed():
+                complete = True
+                break
+
+            time.sleep(DEFAULT_QUERY_RETRY_INTERVAL)
+
+        if response is None:
+            response = ret
+        else:
+            response.merge(ret)
+
+        # if incompete, exit
+        if not complete:
+            break
+
+        count = ret.get_count()
+        offset += count
+        total_count_got += count
+        batch_size = min(batch_size, expected_total_size - total_count_got)
+        if count == 0 or total_count_got >= expected_total_size:
             break
 
     return response

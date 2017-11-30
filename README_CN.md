@@ -516,26 +516,24 @@ res.log_print()
 
 ### 获取(Get)日志库数据
 消费特定日志库, 根据索引获取数据, 需要传入时间范围, 也可以传入查询语句.
-下面的例子查询时间是过去一小时特定日志库的日志.
+下面的例子查询时间是过去一小时特定日志库的前100条日志.
 
 ```python
 from time import time
 from aliyun.log import GetLogsRequest
-request_json = {
-  "project": "project1",
-  "logstore": "logstore1",
-  "topic": "",
-  "toTime": str(int(time())),
-  "offset": "0",
-  "query": "*",
-  "line": "100",
-  "fromTime": str(int(time()-3600)),
-  "reverse": "false"
-}
-request = GetLogsRequest("project1", "logstore1", fromTime=int(time()-3600), toTime=int(time()), topic='', query="*", line=1000, offset=0, reverse=False)
+request = GetLogsRequest("project1", "logstore1", fromTime=int(time()-3600), toTime=int(time()), topic='', query="*", line=100, offset=0, reverse=False)
 res = client.get_logs(request)
 res.log_print()
 ```
+
+也可以通过接口`get_log`来获取
+```python
+from time import time
+res = client.get_log("project1", "logstore1", from_time=int(time()-3600), to_time=int(time()), size=-1)
+res.log_print()
+```
+
+这里传入`size=-1`可以获取所有.
 
 
 ### 获取数据分布图

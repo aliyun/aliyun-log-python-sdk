@@ -70,6 +70,9 @@ def sample_get_logs(client, project, logstore):
     response = client.get_logs(request)
     response.log_print()
 
+    res = client.get_log(project, logstore, From, To, topic)
+    res.log_print()
+
 
 # @log_enter_exit
 def sample_get_histograms(client, project, logstore):

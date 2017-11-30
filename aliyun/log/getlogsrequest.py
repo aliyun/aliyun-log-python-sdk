@@ -39,7 +39,7 @@ class GetLogsRequest(LogRequest):
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=None, offset=None, reverse=None):
+                 query=None, line=100, offset=0, reverse=False):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime

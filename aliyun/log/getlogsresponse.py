@@ -66,3 +66,15 @@ class GetLogsResponse(LogResponse):
         for log in self.logs:
             log.log_print()
             print('\n')
+
+    def merge(self, response):
+        if not isinstance(response, GetLogsResponse):
+            raise ValueError("passed response is not a GetLogsResponse: " + str(type(response)))
+
+        self.progress = response.progress
+        self.logs.extend(response.get_logs())
+
+        # update body
+        self.body.extend(response.body)
+
+        return self
