@@ -24,7 +24,7 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .log_logs_pb2 import LogGroup
-from .logclient_operator import copy_project, list_more
+from .logclient_operator import copy_project, list_more, query_more
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -43,6 +43,7 @@ import zlib
 
 CONNECTION_TIME_OUT = 20
 MAX_LIST_PAGING_SIZE = 500
+MAX_GET_LOG_PAGING_SIZE = 100
 
 """
 LogClient class is the main class in the SDK. It can be used to communicate with 
@@ -268,7 +269,7 @@ class LogClient(object):
         if is_compress:
             headers['x-log-compresstype'] = 'deflate'
             compress_data = zlib.compress(body)
-            #compress_data = logservice_lz4.compress(body)
+            # compress_data = logservice_lz4.compress(body)
 
         params = {}
         logstore = request.get_logstore()
@@ -357,6 +358,66 @@ class LogClient(object):
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetHistogramsResponse(resp, header)
 
+    def get_log(self, project, logstore, from_time, to_time, topic=None,
+                query=None, reverse=False, offset=0, size=100):
+        """ Get logs from log service. will retry when incomplete.
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int
+        :param from_time: the begin timestamp
+
+        :type to_time: int
+        :param to_time: the end timestamp
+
+        :type topic: string
+        :param topic: topic name of logs, could be None
+
+        :type query: string
+        :param query: user defined query, could be None
+
+        :type reverse: bool
+        :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :return: GetLogsResponse
+
+        :raise: LogException
+        """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_GET_LOG_PAGING_SIZE:
+            return query_more(self.get_log, int(offset), int(size), MAX_GET_LOG_PAGING_SIZE,
+                              project, logstore, from_time, to_time, topic,
+                              query, reverse)
+
+        headers = {}
+        params = {'from': from_time,
+                  'to': to_time,
+                  'type': 'log',
+                  'line': size,
+                  'offset': offset,
+                  'reverse': 'true' if reverse else 'false'}
+
+        if topic:
+            params['topic'] = topic
+        if query:
+            params['query'] = query
+
+        resource = "/logstores/" + logstore
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetLogsResponse(resp, header)
+
     def get_logs(self, request):
         """ Get logs from log service.
         Unsuccessful opertaion will cause an LogException.
@@ -368,28 +429,18 @@ class LogClient(object):
         
         :raise: LogException
         """
-        headers = {}
-        params = {}
-        if request.get_topic() is not None:
-            params['topic'] = request.get_topic()
-        if request.get_from() is not None:
-            params['from'] = request.get_from()
-        if request.get_to() is not None:
-            params['to'] = request.get_to()
-        if request.get_query() is not None:
-            params['query'] = request.get_query()
-        params['type'] = 'log'
-        if request.get_line() is not None:
-            params['line'] = request.get_line()
-        if request.get_offset() is not None:
-            params['offset'] = request.get_offset()
-        if request.get_reverse() is not None:
-            params['reverse'] = 'true' if request.get_reverse() else 'false'
-        logstore = request.get_logstore()
         project = request.get_project()
-        resource = "/logstores/" + logstore
-        (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return GetLogsResponse(resp, header)
+        logstore = request.get_logstore()
+        from_time = request.get_from()
+        to_time = request.get_to()
+        topic = request.get_topic()
+        query = request.get_query()
+        reverse = request.get_offset() == True
+        offset = request.get_offset()
+        size = request.get_line()
+
+        return self.get_log(project, logstore, from_time, to_time, topic,
+                            query, reverse, offset, size)
 
     def get_project_logs(self, request):
         """ Get logs from log service.
@@ -407,7 +458,7 @@ class LogClient(object):
         if request.get_query() is not None:
             params['query'] = request.get_query()
         project = request.get_project()
-        resource = "/logs" 
+        resource = "/logs"
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetLogsResponse(resp, header)
 
@@ -604,7 +655,7 @@ class LogClient(object):
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
 
-        compress_type = Util.h_v_td(header,'x-log-compresstype', '').lower()
+        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
         if compress_type == 'lz4':
             raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
             raw_data = logservice_lz4.uncompress(raw_size, resp)
@@ -1702,7 +1753,7 @@ class LogClient(object):
         :param timeout: time-out
 
         :type in_order: bool
-        :param in_order:
+        :param in_order: if consume in order, default is False
 
         :return: CreateConsumerGroupResponse
         """
@@ -1970,4 +2021,3 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
-
