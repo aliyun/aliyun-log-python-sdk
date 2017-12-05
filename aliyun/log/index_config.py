@@ -55,10 +55,10 @@ class IndexKeyConfig(object):
             self.index_type = json_value['type']
         if self.index_type == 'text':
             self.token_list = json_value["token"]
-            self.case_sensitive = bool(json_value["caseSensitive"])
+        self.case_sensitive = bool(json_value.get("caseSensitive", False))
         if 'doc_value' in json_value:
             self.doc_value = bool(json_value["doc_value"])
-        if 'alias'  in json_value:
+        if 'alias' in json_value:
             self.alias = json_value['alias']
 
 
