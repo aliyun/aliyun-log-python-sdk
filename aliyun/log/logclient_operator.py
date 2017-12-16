@@ -33,7 +33,12 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
     # copy project
     ret = from_client.get_project(from_project)
-    ret = to_client.create_project(to_project, ret.get_description())
+    try:
+        ret = to_client.create_project(to_project, ret.get_description())
+    except LogException as ex:
+        if ex.get_error_code() == 'ProjectAlreadyExist':
+            # don't create the project as it already exists
+            pass
 
     default_fetch_size = 100
 
