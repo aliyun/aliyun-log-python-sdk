@@ -1975,7 +1975,7 @@ class LogClient(object):
     def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False):
         """
         copy project, logstore, machine group and logtail config to target project,
-        expecting the target project doens't exist
+        expecting the target project doesn't contain same named logstores as source project
 
         :type from_project: string
         :param from_project: project name
