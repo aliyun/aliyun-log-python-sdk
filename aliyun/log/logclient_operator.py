@@ -6,7 +6,7 @@ import time
 
 DEFAULT_QUERY_RETRY_COUNT = 10
 DEFAULT_QUERY_RETRY_INTERVAL = 0.2
-
+MAX_INIT_SHARD_COUNT = 10
 
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
     """
@@ -51,7 +51,8 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
         for logstore_name in ret.get_logstores():
             # copy logstore
             ret = from_client.get_logstore(from_project, logstore_name)
-            ret = to_client.create_logstore(to_project, logstore_name, ret.get_ttl(), ret.get_shard_count())
+            ret = to_client.create_logstore(to_project, logstore_name, ret.get_ttl(),
+                                            min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT))
 
             # copy index
             try:
