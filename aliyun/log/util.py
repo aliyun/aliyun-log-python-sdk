@@ -99,9 +99,13 @@ class Util(object):
         if params:
             urlString = ''
             for key, value in sorted(six.iteritems(params)):
-                urlString += "{0}={1}&".format(
+                urlString += u"{0}={1}&".format(
                     key, value.decode('utf8') if isinstance(value, six.binary_type) else value)
             resource += '?' + urlString[:-1]
+            if six.PY3:
+                return resource
+            else:
+                return resource.encode('utf8')
 
         return resource
 
