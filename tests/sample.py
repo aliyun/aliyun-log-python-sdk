@@ -142,7 +142,7 @@ def sample_index(client, project, logstore):
 def sample_logtail_config(client, project, logstore):
     logtail_config_name = logstore + "-stt1-logtail"
     logtail_config = CommonRegLogConfigDetail(logtail_config_name, logstore,
-                                              "http://cn-hangzhou-devcommon-intranet.sls.aliyuncs.com", "/apsara/xxx",
+                                              "", "/apsara/xxx",
                                               "*.LOG",
                                               r"%Y-%m-%d %H:%M:%S", "xxx.*", "xxx ([\w\-]+\s[\d\:]+)\s+(.*)", ["time", "value"],
                                               logSample="xxx 2017-11-11 11:11:11 hello alicloud.")

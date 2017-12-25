@@ -4,6 +4,8 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
+import json
+
 
 class LogException(Exception):
     """The Exception of the log request & response.
@@ -27,13 +29,18 @@ class LogException(Exception):
         self.resp_body = resp_body
 
         if not self.resp_body:
-            self.resp_body = r'{"ErrorCode": "%s", "ErrorMessage": "%s"}, "RequestID": "%s"' % (errorCode,
-                                                                                                errorMessage,
-                                                                                                requestId)
+            self.resp_body = json.dumps({
+                "errorCode": self._errorCode,
+                "errorMessage": self._errorMessage,
+                "requestId": self._requestId
+            })
 
     def __str__(self):
-        return "LogException: \n{\n    ErrorCode: %s\n    ErrorMessage: %s\n    RequestId: %s\n}\n" \
-               % (self._errorCode, self._errorMessage, self._requestId)
+        return json.dumps({
+            "errorCode": self._errorCode,
+            "errorMessage": self._errorMessage,
+            "requestId": self._requestId
+        })
 
     def get_error_code(self):
         """ return error code of exception
