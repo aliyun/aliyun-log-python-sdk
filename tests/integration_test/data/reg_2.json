@@ -1,0 +1,39 @@
+{
+  "configName": "reg_2",
+  "logSample": "2017 i live in beijing",
+  "inputDetail": {
+    "logType": "common_reg_log",
+    "logPath": "/\u6b63\u52192",
+    "filePattern": "\u6b63\u5219.log",
+    "logBeginRegex": ".*",
+    "regex": "(\\d+) (\\w+) live in (\\w+)",
+    "key": [
+      "time",
+      "who",
+      "city"
+    ],
+    "timeFormat": "%Y",
+
+  
+    "localStorage": false,
+    "enableRawLog": true,
+    "topicFormat": "(file_reg_for_topic).*",
+    "fileEncoding": "gbk",
+    "maxDepth": 200,
+    "preserve": false,
+    "preserveDepth": 3,
+    "filterKey": [
+      "filter_reg1",
+      "filter_reg2"
+    ],
+    "filterRegex": [
+      "`12[];',./~!@#$%^&*(){}:\"<>?",
+      "`12[];',./~!@#$%^&*(){}:\"<>?"
+    ]
+
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

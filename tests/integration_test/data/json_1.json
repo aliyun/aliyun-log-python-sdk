@@ -1,0 +1,12 @@
+{
+  "configName": "json_1",
+  "inputDetail": {
+    "logType": "json_log",
+    "filePattern": "test.log",
+    "logPath": "/json_1"
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

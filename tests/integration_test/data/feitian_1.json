@@ -1,0 +1,13 @@
+{
+  "configName": "feitian_1",
+  "inputDetail": {
+    "logBeginRegex": "#\\d+.+",
+    "logPath": "/feitian",
+    "filePattern": "test.log",
+    "logType": "apsara_log"
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

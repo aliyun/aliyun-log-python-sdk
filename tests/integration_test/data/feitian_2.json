@@ -1,0 +1,33 @@
+{
+  "configName": "feitian_2",
+  "inputDetail": {
+    "logBeginRegex": "#\\d+.+",
+    "logPath": "/feitian",
+    "filePattern": "test.log",
+    "logType": "apsara_log",
+
+    "localStorage": false,
+    "enableRawLog": true,
+    "topicFormat": "(file_reg_for_topic).*",
+    "fileEncoding": "gbk",
+    "maxDepth": 200,
+    "preserve": false,
+    "preserveDepth": 3,
+    "filterKey": [
+      "filter_reg1",
+      "filter_reg2"
+    ],
+    "filterRegex": [
+      "`12[];',./~!@#$%^&*(){}:\"<>?",
+      "`12[];',./~!@#$%^&*(){}:\"<>?"
+    ]
+
+
+  },
+  "inputType": "file",
+  "logSample": "",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  },
+  "outputType": "LogService"
+}

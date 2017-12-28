@@ -141,11 +141,7 @@ def sample_index(client, project, logstore):
 # @log_enter_exit
 def sample_logtail_config(client, project, logstore):
     logtail_config_name = logstore + "-stt1-logtail"
-    logtail_config = CommonRegLogConfigDetail(logtail_config_name, logstore,
-                                              "", "/apsara/xxx",
-                                              "*.LOG",
-                                              r"%Y-%m-%d %H:%M:%S", "xxx.*", "xxx ([\w\-]+\s[\d\:]+)\s+(.*)", ["time", "value"],
-                                              logSample="xxx 2017-11-11 11:11:11 hello alicloud.")
+    logtail_config = SimpleFileConfigDetail(logstore, logtail_config_name, "/apsara/xxx", "*.LOG")
 
     res = client.create_logtail_config(project, logtail_config)
     res.log_print()
@@ -168,11 +164,7 @@ def sample_logtail_config(client, project, logstore):
 # @log_enter_exit
 def sample_apply_config(client, project, logstore):
     logtail_config_name = logstore + "-stt1-logtail"
-    logtail_config = CommonRegLogConfigDetail(logtail_config_name, logstore,
-                                              "http://cn-hangzhou-devcommon-intranet.sls.aliyuncs.com", "/apsara/xxx",
-                                              "*.LOG",
-                                              r"%Y-%m-%d %H:%M:%S", "xxx.*", "xxx ([\w\-]+\s[\d\:]+)\s+(.*)", ["time", "value"],
-                                              logSample="xxx 2017-11-11 11:11:11 hello alicloud.")
+    logtail_config = SimpleFileConfigDetail(logstore, logtail_config_name, "/apsara/xxx", "*.LOG")
 
     client.create_logtail_config(project, logtail_config)
 
@@ -276,44 +268,51 @@ def main():
     client.create_project(project, "SDK test")
     time.sleep(10)
 
-    sample_logstore(client, project, logstore)
-    time.sleep(40)
-
-    client.create_logstore(project, logstore, 1, 1)
-    time.sleep(40)
-
-    sample_list_logstores(client, project)
-    sample_logtail_config(client, project, logstore)
-    time.sleep(10)
-
-    sample_machine_group(client, project, logstore)
-    sample_apply_config(client, project, logstore)
-    sample_index(client, project, logstore)
-    time.sleep(40)
-
-    sample_list_topics(client, project, logstore)
-    time.sleep(40)
-    sample_put_logs(client, project, logstore)
-    sample_put_logs(client, project, logstore, compress=True)
-
-    sample_pull_logs(client, project, logstore)
-    sample_pull_logs(client, project, logstore, compress=True)
-
-    time.sleep(40)
-    sample_get_logs(client, project, logstore)
-    sample_get_project_log(client,project,logstore);
-
-    time.sleep(10)
-    sample_crud_consumer_group(client, project, logstore, consumer_group)
-    time.sleep(10)
-
-    # test copy project
+    #
     project_new = project + str(randint(1, 10000)) + "-copied"
-    client.copy_project(project, project_new, copy_machine_group=True)
 
-    time.sleep(10)
-    sample_cleanup(client, project, logstore, delete_project=True)
-    sample_cleanup(client, project_new, logstore, delete_project=True)
+    try:
+        sample_logstore(client, project, logstore)
+        time.sleep(40)
+
+        client.create_logstore(project, logstore, 1, 1)
+        time.sleep(40)
+
+        sample_list_logstores(client, project)
+        sample_logtail_config(client, project, logstore)
+        time.sleep(10)
+
+        sample_machine_group(client, project, logstore)
+        sample_apply_config(client, project, logstore)
+        sample_index(client, project, logstore)
+        time.sleep(40)
+
+        sample_list_topics(client, project, logstore)
+        time.sleep(40)
+        sample_put_logs(client, project, logstore)
+        sample_put_logs(client, project, logstore, compress=True)
+
+        sample_pull_logs(client, project, logstore)
+        sample_pull_logs(client, project, logstore, compress=True)
+
+        time.sleep(40)
+        sample_get_logs(client, project, logstore)
+        sample_get_project_log(client,project,logstore)
+
+        time.sleep(10)
+        sample_crud_consumer_group(client, project, logstore, consumer_group)
+        time.sleep(10)
+
+        # test copy project
+        try:
+            client.copy_project(project, project_new, copy_machine_group=True)
+        except Exception as ex:
+            print(ex)
+        finally:
+            time.sleep(60)
+            sample_cleanup(client, project_new, logstore, delete_project=True)
+    finally:
+        sample_cleanup(client, project, logstore, delete_project=True)
 
 
 if __name__ == '__main__':

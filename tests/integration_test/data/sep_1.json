@@ -1,0 +1,22 @@
+{
+  "configName": "sep_1",
+  "logSample": "\u8fd9\u662f||\u6d4b\u8bd5||\u7528\u4f8b||\u54c8\u54c8",
+  "inputDetail": {
+    "logType": "delimiter_log",
+    "logPath": "/user",
+    "filePattern": "test.log",
+
+    "separator": "||",
+    "key": [
+      "\u8fd9\u662f",
+      "\u6d4b\u8bd5",
+      "\u7528\u4f8b",
+      "\u54c8\u54c8"
+    ]
+
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

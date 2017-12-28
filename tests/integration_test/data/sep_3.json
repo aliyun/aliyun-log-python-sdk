@@ -1,0 +1,50 @@
+{
+  "configName": "sep_3",
+  "logSample": "\u8fd9\u662f||\u6d4b\u8bd5||\u7528\u4f8b||\u54c8\u54c8",
+  "inputDetail": {
+    "logType": "delimiter_log",
+    "logPath": "/user",
+    "filePattern": "test.log",
+
+    "separator": "||",
+    "key": [
+      "\u8fd9\u662f",
+      "\u6d4b\u8bd5",
+      "\u7528\u4f8b",
+      "\u54c8\u54c8"
+    ],
+    "timeFormat": "2017-1-1",
+    "timeKey": "\u8fd9\u662f",
+
+    "localStorage": false,
+    "enableRawLog": true,
+    "topicFormat": "(file_reg_for_topic).*",
+    "fileEncoding": "gbk",
+    "maxDepth": 200,
+    "preserve": false,
+    "preserveDepth": 3,
+    "filterKey": [
+      "filter_reg1",
+      "filter_reg2"
+    ],
+    "filterRegex": [
+      "`12[];',./~!@#$%^&*(){}:\"<>?",
+      "`12[];',./~!@#$%^&*(){}:\"<>?"
+    ],
+
+    "adjustTimezone": false,
+    "delayAlarmBytes": 0,
+    "discardNonUtf8": false,
+    "discardUnmatch": true,
+    "enableTag": false,
+    "maxSendRate": -1,
+    "mergeType": "topic",
+    "shardHashKey": [],
+    "tailExisted": false
+
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

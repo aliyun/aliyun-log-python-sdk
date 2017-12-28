@@ -1,0 +1,54 @@
+{
+  "configName": "ngnix_1",
+  "logSample": "log_format  porxy  '$http_x_forwarded_for - $remote_user  [$time_local]  '\n                             ' \"$request\"  $status $body_bytes_sent '\n                             ' \"$http_referer\"  \"$http_user_agent\" ';",
+  "inputDetail": {
+    "logType": "common_reg_log",
+    "logPath": "/\u6b63\u52192",
+    "filePattern": "\u6b63\u5219.log",
+    "logBeginRegex": ".*",
+    "regex": "([0-9a-zA-Z., -]*)\\s*-\\s*(\\S+)\\s*\\s*\\[(\\d+/\\S+/\\d+:\\d+:\\d+:\\d+)\\s+\\S+\\]\\s*\\s*\\s*\"(\\S+)\\s+(\\S+)\\s+\\S+\"\\s*\\s*(\\S+)\\s*(\\S+)\\s*\\s*\"(\\S+)\"\\s*\\s*\"([\\S ]*)\"\\s*.*",
+    "key": [
+      "http_x_forwarded_for",
+      "remote_user",
+      "time_local",
+      "request_method",
+      "request_uri",
+      "status",
+      "body_bytes_sent",
+      "http_referer",
+      "http_user_agent"
+    ],
+
+    "localStorage": false,
+    "enableRawLog": true,
+    "topicFormat": "(file_reg_for_topic).*",
+    "fileEncoding": "gbk",
+    "maxDepth": 200,
+    "preserve": false,
+    "preserveDepth": 3,
+    "filterKey": [
+      "filter_reg1",
+      "filter_reg2"
+    ],
+    "filterRegex": [
+      "`12[];',./~!@#$%^&*(){}:\"<>?",
+      "`12[];',./~!@#$%^&*(){}:\"<>?"
+    ],
+
+    "adjustTimezone": false,
+    "delayAlarmBytes": 0,
+    "discardNonUtf8": false,
+    "discardUnmatch": true,
+    "enableTag": false,
+    "maxSendRate": -1,
+    "mergeType": "topic",
+    "shardHashKey": [],
+    "tailExisted": false
+
+
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

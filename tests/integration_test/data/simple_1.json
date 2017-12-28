@@ -1,0 +1,12 @@
+{
+  "configName": "simple_1",
+  "inputDetail": {
+    "logType": "common_reg_log",
+    "logPath": "/user",
+    "filePattern": "test.log"
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

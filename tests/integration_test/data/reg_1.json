@@ -1,0 +1,13 @@
+{
+  "configName": "reg_1",
+  "logSample": "this is a simple test\nthat is 2 complex test",
+  "inputDetail": {
+    "logType": "common_reg_log",
+    "logPath": "/reg1",
+    "filePattern": "test.log"
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}
