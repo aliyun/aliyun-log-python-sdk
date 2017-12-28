@@ -1003,8 +1003,8 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: CommonRegLogConfigDetail or ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs ,the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: LogtailConfigGenerator or SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail or CommonRegLogConfigDetail
+        :param config_detail: the logtail config detail info, use `LogtailConfigGenerator.from_json` to generate config: SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail, Note: CommonRegLogConfigDetail is deprecated.
 
         :return: CreateLogtailConfigResponse
         
@@ -1027,8 +1027,8 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config_detail: CommonRegLogConfigDetail or ApsaraLogConfigDetail
-        :param config_detail: the logtail config detail info, the CommonRegLogConfigDetail is used to create common regex logs, the ApsaraLogConfigDetail is used to create apsara log
+        :type config_detail: LogtailConfigGenerator or SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail
+        :param config_detail: the logtail config detail info, use `LogtailConfigGenerator.from_json` to generate config: SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail
 
         :return: UpdateLogtailConfigResponse
         

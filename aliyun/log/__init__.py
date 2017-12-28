@@ -6,7 +6,7 @@ from .getlogsrequest import GetLogsRequest, GetProjectLogsRequest
 from .index_config import IndexConfig, IndexKeyConfig, IndexLineConfig
 from .listtopicsrequest import ListTopicsRequest
 from .listlogstoresrequest import ListLogstoresRequest
-from .logtail_config_detail import LogtailConfigHelper, CommonRegLogConfigDetail
+from .logtail_config_detail import *
 from .machine_group_detail import MachineGroupDetail
 from .putlogsrequest import PutLogsRequest
 from .shipper_config import ShipperTask, OssShipperConfig, OdpsShipperConfig

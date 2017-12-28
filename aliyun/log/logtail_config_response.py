@@ -6,7 +6,7 @@
 
 from .util import Util
 from .logresponse import LogResponse
-from .logtail_config_detail import LogtailConfigHelper
+from .logtail_config_detail import LogtailConfigGenerator
 
 __all__ = ['CreateLogtailConfigResponse', 'DeleteLogtailConfigResponse',
            'GetLogtailConfigResponse', 'UpdateLogtailConfigResponse',
@@ -55,7 +55,7 @@ class GetLogtailConfigResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.logtail_config = LogtailConfigHelper.generate_logtail_config(resp)
+        self.logtail_config = LogtailConfigGenerator.generate_config(resp)
 
     def log_print(self):
         print('GetLogtailConfigResponse:')
