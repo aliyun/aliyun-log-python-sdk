@@ -128,43 +128,44 @@ def sample_consumer_group():
     ret.log_print()
 
     time.sleep(60)
-
-    # prepare data
-    _prepare_data(client, project, logstore)
-
     SampleConsumer.log_results = []
 
-    # create two consumers in the consumer group
-    option1 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
-                           data_fetch_interval=1)
-    option2 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
-                           consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
-                           data_fetch_interval=1)
+    try:
+        # prepare data
+        _prepare_data(client, project, logstore)
 
-    print("*** start to consume data...")
-    client_worker1 = ConsumerWorker(SampleConsumer, consumer_option=option1)
-    client_worker1.start()
-    client_worker2 = ConsumerWorker(SampleConsumer, consumer_option=option2)
-    client_worker2.start()
+        # create two consumers in the consumer group
+        option1 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
+                               consumer_name1, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
+                               data_fetch_interval=1)
+        option2 = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
+                               consumer_name2, cursor_position=CursorPosition.BEGIN_CURSOR, heartbeat_interval=6,
+                               data_fetch_interval=1)
 
-    sleep_until(120, lambda: len(SampleConsumer.log_results) >= test_item_count)
+        print("*** start to consume data...")
+        client_worker1 = ConsumerWorker(SampleConsumer, consumer_option=option1)
+        client_worker1.start()
+        client_worker2 = ConsumerWorker(SampleConsumer, consumer_option=option2)
+        client_worker2.start()
 
-    print("*** consumer group status ***")
-    ret = client.list_consumer_group(project, logstore)
-    ret.log_print()
+        sleep_until(120, lambda: len(SampleConsumer.log_results) >= test_item_count)
 
-    for c in ret.get_consumer_groups():
-        ret = client.get_check_point_fixed(project, logstore, c.get_consumer_group_name())
+        print("*** consumer group status ***")
+        ret = client.list_consumer_group(project, logstore)
         ret.log_print()
 
-    print("*** stopping workers")
-    client_worker1.shutdown()
-    client_worker2.shutdown()
+        for c in ret.get_consumer_groups():
+            ret = client.get_check_point_fixed(project, logstore, c.get_consumer_group_name())
+            ret.log_print()
 
-    # clean-up
-    ret = client.delete_logstore(project, logstore)
-    ret.log_print()
+        print("*** stopping workers")
+        client_worker1.shutdown()
+        client_worker2.shutdown()
+
+    finally:
+        # clean-up
+        ret = client.delete_logstore(project, logstore)
+        ret.log_print()
 
     # validate
     ret = str(SampleConsumer.log_results)
