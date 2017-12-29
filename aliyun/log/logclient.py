@@ -435,7 +435,7 @@ class LogClient(object):
         to_time = request.get_to()
         topic = request.get_topic()
         query = request.get_query()
-        reverse = request.get_offset() == True
+        reverse = request.get_reverse()
         offset = request.get_offset()
         size = request.get_line()
 
