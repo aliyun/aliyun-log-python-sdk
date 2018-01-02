@@ -40,7 +40,7 @@ class LogException(Exception):
             "errorCode": self._errorCode,
             "errorMessage": self._errorMessage,
             "requestId": self._requestId
-        })
+        }, sort_keys=True)
 
     def get_error_code(self):
         """ return error code of exception
