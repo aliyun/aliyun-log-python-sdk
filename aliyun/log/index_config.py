@@ -45,7 +45,7 @@ class IndexKeyConfig(object):
             json_value["token"] = self.token_list
             json_value["caseSensitive"] = bool(self.case_sensitive)
         if self.alias is not None:
-            json_value['alias'] = self.alias;
+            json_value['alias'] = self.alias
         json_value["doc_value"] = bool(self.doc_value)
         return json_value
 
