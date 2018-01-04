@@ -28,6 +28,9 @@ class PullLogResponse(LogResponse):
         self.loggroup_list = LogGroupList()
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
+        self.body = {"next_cursor": self.next_cursor,
+                     "log_count": self.log_count,
+                     "log_group_list": self.get_loggroup_json_list()}
 
     def get_next_cursor(self):
         return self.next_cursor
