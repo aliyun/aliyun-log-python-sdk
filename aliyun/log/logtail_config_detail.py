@@ -11,10 +11,13 @@ import copy
 import warnings
 from enum import Enum
 from .logexception import LogException
+import logging
 
 __all__ = ['SeperatorFileConfigDetail', 'SimpleFileConfigDetail', 'FullRegFileConfigDetail',
            'JsonFileConfigDetail', 'ApsaraFileConfigDetail', 'SyslogConfigDetail',
            'LogtailConfigGenerator', 'CommonRegLogConfigDetail']
+
+logger = logging.getLogger(__name__)
 
 
 class LogtailInputType(Enum):
@@ -76,7 +79,7 @@ class LogtailConfigDetail(object):
 
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern, log_begin_regex, topic_format,
                  filter_keys, filter_keys_reg, logSample='', log_type='common_reg_log', **extended_items):
-        warnings.warn("aliyun.log.LogtailConfigDetail is deprecated and will be removed in future version.")
+        logger.warning("aliyun.log.LogtailConfigDetail is deprecated and will be removed in future version.")
 
         self.config_name = config_name
         self.logstore_name = logstore_name
@@ -102,7 +105,7 @@ class LogtailConfigDetail(object):
 
     @staticmethod
     def from_json(json_value):
-        warnings.warn("aliyun.log.LogtailConfigDetail is deprecated and will be removed in future version.")
+        logger.warning("aliyun.log.LogtailConfigDetail is deprecated and will be removed in future version.")
         return LogtailConfigHelper.generate_logtail_config(json_value)
 
 
@@ -161,7 +164,7 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
                  log_parse_regex, reg_keys,
                  topic_format="none", filter_keys=None, filter_keys_reg=None, logSample='',
                  log_type='common_reg_log', **extended_items):
-        warnings.warn("aliyun.log.CommonRegLogConfigDetail is deprecated and will be removed in future version."
+        logger.warning("aliyun.log.CommonRegLogConfigDetail is deprecated and will be removed in future version."
                       "Use ConfigDetailBase based class instead")
 
         if filter_keys is None:
@@ -237,7 +240,7 @@ class ApsaraLogConfigDetail(LogtailConfigDetail):
     def __init__(self, config_name, logstore_name, endpoint, log_path, file_pattern,
                  log_begin_regex=r'\[\d+-\d+-\d+ \d+:\d+:\d+\.\d+.*', topic_format="none", filter_keys=None,
                  filter_keys_reg=None, logSample='', **extended_items):
-        warnings.warn("aliyun.log.ApsaraLogConfigDetail is deprecated and will be removed in future version. "
+        logger.warning("aliyun.log.ApsaraLogConfigDetail is deprecated and will be removed in future version. "
                       "Use ConfigDetailBase based class instead")
 
         if filter_keys_reg is None:
@@ -343,7 +346,7 @@ class LogtailConfigHelper(object):
         :param json_value:
         :return:
         """
-        warnings.warn("aliyun.log.LogtailConfigHelper is deprecated and will be removed in future version."
+        logger.warning("aliyun.log.LogtailConfigHelper is deprecated and will be removed in future version."
                       "Use LogtailConfigGenerator instead")
 
         if json_value['inputDetail']['logType'] == 'apsara_log':
@@ -378,6 +381,10 @@ class ConfigDetailBase(object):
         for k, v in self.DEFAULT_DETAIL_FIELDS:
             if k not in self.value["inputDetail"]:
                 self.value["inputDetail"][k] = v
+
+    @property
+    def logstore_name(self):
+        return self.value["outputDetail"]["logstoreName"]
 
     def __clean_up_non_items(self):
         none_items = [k for k, v in self.value.items() if v is None]

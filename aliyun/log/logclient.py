@@ -739,7 +739,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogStoreResponse(resp, header)
 
-    def update_logstore(self, project_name, logstore_name, ttl, shard_count):
+    def update_logstore(self, project_name, logstore_name, ttl, shard_count=None):
         """ 
         update the logstore meta info
         Unsuccessful opertaion will cause an LogException.
@@ -754,7 +754,7 @@ class LogClient(object):
         :param ttl: the life cycle of log in the logstore in days
 
         :type shard_count: int
-        :param shard_count: the shard count of the logstore to create
+        :param shard_count: deprecated, the shard count could only be updated by split & merge
 
         :return: UpdateLogStoreResponse
         
@@ -765,7 +765,7 @@ class LogClient(object):
 
         params = {}
         resource = "/logstores/" + logstore_name
-        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count)}
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "enableWebTracking": True}
         body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogStoreResponse(header, resp)
@@ -1010,6 +1010,10 @@ class LogClient(object):
         
         :raise: LogException
         """
+
+        if config_detail.logstore_name:
+            # try to verify if the logstore exists or not.
+            self.get_logstore(project_name, config_detail.logstore_name)
 
         headers = {}
         params = {}
