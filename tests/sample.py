@@ -184,8 +184,8 @@ def sample_logstore(client, project, logstore):
     res = client.create_logstore(project, logstore, 1, 1)
     res.log_print()
 
-    res = client.update_logstore(project, logstore, 2, 1)
-    res.log_print()
+    # res = client.update_logstore(project, logstore, 2, 1)
+    # res.log_print()
 
     res = client.list_logstore(project, logstore)
     res.log_print()
@@ -202,9 +202,19 @@ def sample_cleanup(client, project, logstore, delete_project=False):
     group_name = logstore + "-sample-group"
 
     # delete all created items
-    client.delete_machine_group(project, group_name)
-    client.delete_logtail_config(project, logtail_config_name)
-    client.delete_logstore(project, logstore)
+    try:
+        client.delete_machine_group(project, group_name)
+    except Exception as ex:
+        print("ignore error when cleaning up: ", ex)
+    try:
+        client.delete_logtail_config(project, logtail_config_name)
+    except Exception as ex:
+        print("ignore error when cleaning up: ", ex)
+
+    try:
+        client.delete_logstore(project, logstore)
+    except Exception as ex:
+        print("ignore error when cleaning up: ", ex)
 
     if delete_project:
         time.sleep(30)
