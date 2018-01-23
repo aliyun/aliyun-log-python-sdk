@@ -9,6 +9,7 @@ import re
 import socket
 
 import six
+from datetime import datetime
 
 
 def base64_encodestring(s):
@@ -180,3 +181,14 @@ class Util(object):
             key = key.title()
 
         return header.get(key, default)
+
+
+def parse_timestamp(tm, fmt="%Y-%m-%d %H:%M:%S"):
+    if isinstance(tm, (int, float)):
+        return tm
+
+    if six.PY2:
+        return int((datetime.strptime(tm, fmt) - datetime(1970, 1, 1)).total_seconds())
+    else:
+        return int(datetime.strptime(tm, fmt).timestamp())
+

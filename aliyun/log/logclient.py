@@ -34,7 +34,7 @@ from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
 from .shipper_response import *
-from .util import Util
+from .util import Util, parse_timestamp
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 import json
@@ -369,11 +369,11 @@ class LogClient(object):
         :type logstore: string
         :param logstore: logstore name
 
-        :type from_time: int
-        :param from_time: the begin timestamp
+        :type from_time: int/string
+        :param from_time: the begin timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
 
-        :type to_time: int
-        :param to_time: the end timestamp
+        :type to_time: int/string
+        :param to_time: the end timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
 
         :type topic: string
         :param topic: topic name of logs, could be None
@@ -402,8 +402,8 @@ class LogClient(object):
                               query, reverse)
 
         headers = {}
-        params = {'from': from_time,
-                  'to': to_time,
+        params = {'from': parse_timestamp(from_time),
+                  'to': parse_timestamp(to_time),
                   'type': 'log',
                   'line': size,
                   'offset': offset,

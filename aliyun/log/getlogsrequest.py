@@ -16,11 +16,11 @@ class GetLogsRequest(LogRequest):
     :type logstore: string
     :param logstore: logstore name
     
-    :type fromTime: int
-    :param fromTime: the begin time
+    :type fromTime: int/string
+    :param fromTime: the begin time, or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
     
-    :type toTime: int
-    :param toTime: the end time
+    :type toTime: int/string
+    :param toTime: the end time, or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
 
     :type topic: string
     :param topic: topic name of logs

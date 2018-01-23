@@ -6,7 +6,7 @@ from aliyun.log.util import base64_encodestring
 from random import randint
 import time
 import os
-
+from datetime import datetime
 
 def sample_put_logs(client, project, logstore, compress=False):
     topic = 'TestTopic_2'
@@ -66,6 +66,13 @@ def sample_get_logs(client, project, logstore):
     topic = 'TestTopic_2'
     From = int(time.time()) - 3600
     To = int(time.time())
+    request = GetLogsRequest(project, logstore, From, To, topic)
+    response = client.get_logs(request)
+    response.log_print()
+
+    # test formatted time
+    From = datetime.fromtimestamp(From).strftime('%Y-%m-%d %H:%M:%S')
+    To = datetime.fromtimestamp(To).strftime('%Y-%m-%d %H:%M:%S')
     request = GetLogsRequest(project, logstore, From, To, topic)
     response = client.get_logs(request)
     response.log_print()
@@ -244,10 +251,12 @@ def sample_crud_consumer_group(client, project, logstore, consumer_group):
     ret = client.delete_consumer_group(project, logstore, consumer_group)
     ret.log_print()
 
+
 def sample_get_project_log(client,project,logstore):
     req = GetProjectLogsRequest(project,"select count(1) from %s where __date__ >'2017-11-10 00:00:00' and __date__ < '2017-11-13 00:00:00'" %(logstore));
     res = client.get_project_logs(req)
-    res.log_print();
+    res.log_print()
+
 
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
