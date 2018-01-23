@@ -38,6 +38,7 @@ def sample_put_logs(client, project, logstore, compress=False):
     res = client.get_previous_cursor_time(project, logstore, 0, end_cursor)
     res.log_print()
 
+
 # @log_enter_exit
 def sample_pull_logs(client, project, logstore, compress=False):
     res = client.get_cursor(project, logstore, 0, int(time.time() - 60))
@@ -46,6 +47,12 @@ def sample_pull_logs(client, project, logstore, compress=False):
 
     res = client.pull_logs(project, logstore, 0, cursor, 1, compress=compress)
     res.log_print()
+
+    # test readable start time
+    res = client.get_cursor(project, logstore, 0,
+                            datetime.fromtimestamp(int(time.time() - 60)).strftime('%Y-%m-%d %H:%M:%S'))
+    res.log_print()
+
 
 # @log_enter_exit
 def sample_list_logstores(client, project):

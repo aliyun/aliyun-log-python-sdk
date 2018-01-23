@@ -476,7 +476,7 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :type start_time: string/int
-        :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end"
+        :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end", or "%Y-%m-%d %H:%M:%S"
 
         :return: GetCursorResponse
         
@@ -484,7 +484,7 @@ class LogClient(object):
         """
 
         headers = {'Content-Type': 'application/json'}
-        params = {'type': 'cursor', 'from': str(start_time)}
+        params = {'type': 'cursor', 'from': str(start_time) if start_time in ("begin", "end") else parse_timestamp(start_time)}
 
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
