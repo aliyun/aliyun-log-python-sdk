@@ -207,6 +207,7 @@ Logs
 .. autosummary::
    put_logs
    pull_logs
+   pull_log
    get_log
    get_logs
    get_histograms
