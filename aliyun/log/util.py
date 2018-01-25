@@ -220,6 +220,8 @@ def parse_timestamp(tm, fmts=("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %Z")):
         dt = parser.parse(tm)
 
     if six.PY2:
+        if dt.tzinfo is None:
+            return int((dt - datetime(1970, 1, 1)).total_seconds())
         return int((dt - datetime(1970, 1, 1, tzinfo=utc)).total_seconds())
     else:
         return int(dt.timestamp())
