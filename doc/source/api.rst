@@ -210,6 +210,7 @@ Logs
    pull_log
    get_log
    get_logs
+   get_log_all
    get_histograms
    get_project_logs
 
