@@ -34,7 +34,7 @@ from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
 from .shipper_response import *
-from .util import Util, parse_timestamp
+from .util import Util, parse_timestamp, base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 import json
@@ -119,7 +119,7 @@ class LogClient(object):
             return json.loads(resp_body)
         except Exception as ex:
             raise LogException('BadResponse',
-                               'Bad json format:\n%s' % resp_body + '\n' + repr(ex),
+                               'Bad json format:\n"%s"' % b64e(resp_body) + '\n' + repr(ex),
                                requestId, resp_status, resp_header, resp_body)
 
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
