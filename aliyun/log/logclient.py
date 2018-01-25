@@ -712,7 +712,7 @@ class LogClient(object):
         else:
             return PullLogResponse(resp, header)
 
-    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time):
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=1000, compress=True):
         """ batch pull log data from log service using time-range
         Unsuccessful opertaion will cause an LogException. the time parameter means the time when server receives the logs
 
@@ -731,6 +731,12 @@ class LogClient(object):
         :type to_time: string/int
         :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
+        :type batch_size: int
+        :param batch_size: batch size to fetch the data in each iteration. by default it's 1000
+
+        :type compress: bool
+        :param compress: if use compression, by default it's True
+
         :return: PullLogResponse
 
         :raise: LogException
@@ -740,7 +746,7 @@ class LogClient(object):
 
         while True:
             res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
-                           count=1000, end_cursor=end_cursor, compress=True)
+                           count=batch_size, end_cursor=end_cursor, compress=compress)
 
             yield res
             if res.get_log_count() <= 0:
