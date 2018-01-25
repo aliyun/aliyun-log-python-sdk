@@ -475,9 +475,10 @@ print(res.get_cursor())
   可以特定日志库分区的特定接受时间最接近的一个游标.
 
 ```python
-res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=1510837205)
+res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time="2018-1-1 10:10:10")
 print(res.get_cursor())
 ```
+  - 这里的`start_time`指的是服务器接受日志的时间. 也可以是`begin`或者`end`
 
 - 获取游标时间
 
@@ -509,6 +510,10 @@ from time import time
 res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=int(time())-3600)
 res = client.pull_logs('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
 res.log_print()
+
+# 或者
+res = client.pull_log('project1', 'logstore1', shard_id=0, from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10")
+res.log_print()
 ```
 
 **注意：** 默认获取1000条, 可以通过参数`count`来调节. 也可以通过参数`end_cursor`来设定设定一个结束的游标.
@@ -522,6 +527,10 @@ res.log_print()
 from time import time
 from aliyun.log import GetLogsRequest
 request = GetLogsRequest("project1", "logstore1", fromTime=int(time()-3600), toTime=int(time()), topic='', query="*", line=100, offset=0, reverse=False)
+# 或者
+request = GetLogsRequest("project1", "logstore1", fromTime="2018-1-1 10:10:10", toTime="2018-1-1 10:20:10", topic='', query="*", line=100, offset=0, reverse=False)
+
+
 res = client.get_logs(request)
 res.log_print()
 ```
@@ -530,6 +539,9 @@ res.log_print()
 ```python
 from time import time
 res = client.get_log("project1", "logstore1", from_time=int(time()-3600), to_time=int(time()), size=-1)
+# 或者
+res = client.get_log("project1", "logstore1", from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", size=-1)
+
 res.log_print()
 ```
 

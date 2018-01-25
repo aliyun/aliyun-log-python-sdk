@@ -73,19 +73,12 @@ def main():
 
     # 获取满足query的日志条数
     total_log_count = res3.get_total_count()
-    log_line = 10
 
-    # 每次读取10条日志，将日志数据查询完，对于每一次查询，如果查询结果不是完全准确，则重试3次
-    for offset in range(0, total_log_count, log_line):
-        res4 = None
-        for retry_time in range(0, 3):
-            req4 = GetLogsRequest(project, logstore, From, To, topic, query, log_line, offset, False)
-            res4 = client.get_logs(req4)
-            if res4 is not None and res4.is_completed():
-                break
-            time.sleep(1)
-        if res4 is not None:
-            res4.log_print()
+    # 读取日志, line=-1表示读取所有符合条件的日志.
+    req4 = GetLogsRequest(project, logstore, From, To, topic, query, total_log_count, line=-1)
+    res4 = client.get_logs(req4)
+    res4.log_print()
+
     listShardRes = client.list_shards(project, logstore)
     shard = listShardRes.get_shards_info()[0]
 
