@@ -53,6 +53,12 @@ def sample_pull_logs(client, project, logstore, compress=False):
                             datetime.fromtimestamp(int(time.time() - 60)).strftime('%Y-%m-%d %H:%M:%S'))
     res.log_print()
 
+    # test pull_log
+    res = client.pull_log(project, logstore, 0,
+                            datetime.fromtimestamp(int(time.time() - 60)).strftime('%Y-%m-%d %H:%M:%S'),
+                            datetime.fromtimestamp(int(time.time())).strftime('%Y-%m-%d %H:%M:%S'))
+    for x in res:
+        x.log_print()
 
 # @log_enter_exit
 def sample_list_logstores(client, project):
@@ -87,6 +93,9 @@ def sample_get_logs(client, project, logstore):
     res = client.get_log(project, logstore, From, To, topic)
     res.log_print()
 
+    res = client.get_log_all(project, logstore, From, To, topic)
+    for x in res:
+        x.log_print()
 
 # @log_enter_exit
 def sample_get_histograms(client, project, logstore):
