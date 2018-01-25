@@ -9,7 +9,7 @@ import re
 import socket
 
 import six
-from datetime import datetime, timezone
+from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
 
 
@@ -184,6 +184,25 @@ class Util(object):
         return header.get(key, default)
 
 
+ZERO = timedelta(0)
+
+
+class UTC(tzinfo):
+    """UTC"""
+
+    def utcoffset(self, dt):
+        return ZERO
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return ZERO
+
+
+utc = UTC()
+
+
 def parse_timestamp(tm, fmts=("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %Z")):
     if isinstance(tm, (int, float)) or \
             (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
@@ -201,7 +220,7 @@ def parse_timestamp(tm, fmts=("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %Z")):
         dt = parser.parse(tm)
 
     if six.PY2:
-        return int((dt - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
+        return int((dt - datetime(1970, 1, 1, tzinfo=utc)).total_seconds())
     else:
         return int(dt.timestamp())
 
