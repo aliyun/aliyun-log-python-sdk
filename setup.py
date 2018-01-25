@@ -26,9 +26,9 @@ import sys
 import re
 
 if sys.version_info[0] == 2:
-    install_requires = ['requests', 'protobuf', 'six', 'enum34', 'futures']
+    install_requires = ['requests', 'protobuf', 'six', 'enum34', 'futures', 'python-dateutil']
 elif sys.version_info[0] == 3:
-    install_requires = ['requests', 'protobuf', 'six', 'enum34']
+    install_requires = ['requests', 'protobuf', 'six', 'enum34', 'python-dateutil']
 
 
 packages = [

@@ -9,7 +9,8 @@ import re
 import socket
 
 import six
-from datetime import datetime
+from datetime import datetime, timezone
+from dateutil import parser
 
 
 def base64_encodestring(s):
@@ -183,13 +184,24 @@ class Util(object):
         return header.get(key, default)
 
 
-def parse_timestamp(tm, fmt="%Y-%m-%d %H:%M:%S"):
+def parse_timestamp(tm, fmts=("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %Z")):
     if isinstance(tm, (int, float)) or \
             (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
         return int(tm)
 
+    dt = None
+
+    for fmt in fmts:
+        try:
+            dt = datetime.strptime(tm, fmt)
+        except ValueError as ex:
+            pass
+
+    if dt is None:
+        dt = parser.parse(tm)
+
     if six.PY2:
-        return int((datetime.strptime(tm, fmt) - datetime(1970, 1, 1)).total_seconds())
+        return int((dt - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
     else:
-        return int(datetime.strptime(tm, fmt).timestamp())
+        return int(dt.timestamp())
 

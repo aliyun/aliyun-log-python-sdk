@@ -365,10 +365,10 @@ class LogClient(object):
         :param logstore: logstore name
 
         :type from_time: int/string
-        :param from_time: the begin timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :type to_time: int/string
-        :param to_time: the end timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :type topic: string
         :param topic: topic name of logs, could be None
@@ -452,10 +452,10 @@ class LogClient(object):
         :param logstore: logstore name
 
         :type from_time: int/string
-        :param from_time: the begin timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :type to_time: int/string
-        :param to_time: the end timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :type topic: string
         :param topic: topic name of logs, could be None
@@ -521,7 +521,7 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :type start_time: string/int
-        :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end", or "%Y-%m-%d %H:%M:%S"
+        :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end", or readable time like "%Y-%m-%d %H:%M:%S GMT"
 
         :return: GetCursorResponse
         
@@ -726,10 +726,10 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :type from_time: string/int
-        :param from_time: curosr value, could be begin, timestamp or readable time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :type to_time: string/int
-        :param to_time: curosr value, could be begin, timestamp or readable time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S GMT" e.g. "2018-01-02 12:12:10"
 
         :return: PullLogResponse
 
