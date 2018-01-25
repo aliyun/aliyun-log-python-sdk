@@ -113,8 +113,9 @@ class LogClient(object):
         if not resp_body:
             return None
         try:
-            if six.PY3 and isinstance(resp_body, six.binary_type):
-                return json.loads(resp_body.decode('utf8'))
+            if isinstance(resp_body, six.binary_type):
+                return json.loads(resp_body.decode('utf8', errors="ignore"))
+
             return json.loads(resp_body)
         except Exception as ex:
             raise LogException('BadResponse',
