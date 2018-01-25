@@ -28,15 +28,20 @@ class PullLogResponse(LogResponse):
         self.loggroup_list = LogGroupList()
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
+        self.flatten_logs_json = None
+        # self.body = {"next_cursor": self.next_cursor,
+        #              "log_count": self.log_count,
+        #              "log_group_list": self.get_loggroup_json_list()}
         self.body = {"next_cursor": self.next_cursor,
-                     "log_count": self.log_count,
-                     "log_group_list": self.get_loggroup_json_list()}
+                     "count": len(self.get_flatten_logs_json()),
+                     "logs": self.get_flatten_logs_json()}
 
     def get_next_cursor(self):
         return self.next_cursor
 
     def get_log_count(self):
-        return self.log_count
+        return len(self.get_flatten_logs_json())
+        #return self.log_count
 
     def get_loggroup_count(self):
         return len(self.loggroup_list.LogGroups)
@@ -81,3 +86,16 @@ class PullLogResponse(LogResponse):
                 items.append(item)
             log_items = {'topic': logGroup.Topic, 'source': logGroup.Source, 'logs': items}
             self.loggroup_list_json.append(log_items)
+
+    def get_flatten_logs_json(self):
+        if self.flatten_logs_json is None:
+            self.flatten_logs_json = []
+            for logGroup in self.loggroup_list.LogGroups:
+                for log in logGroup.Logs:
+                    item = {'__time__': log.Time, '__topic__': logGroup.Topic, '__source__': logGroup.Source}
+                    for content in log.Contents:
+                        item[content.Key] = content.Value
+                    self.flatten_logs_json.append(item)
+
+        return self.flatten_logs_json
+

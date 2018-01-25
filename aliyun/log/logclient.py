@@ -1,9 +1,9 @@
-#!/usr/bin/env python
-# encoding: utf-8
+"""
+LogClient class is the main class in the SDK. It can be used to communicate with
+log service server to put/get data.
 
-# Copyright (C) Alibaba Cloud Computing
-# All rights reserved.
-
+:Author: Aliyun
+"""
 
 try:
     import logservice_lz4
@@ -41,16 +41,10 @@ import json
 import six
 import zlib
 
+
 CONNECTION_TIME_OUT = 20
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
-
-"""
-LogClient class is the main class in the SDK. It can be used to communicate with 
-log service server to put/get data.
-
-:Author: Aliyun
-"""
 
 
 class LogClient(object):
@@ -269,7 +263,6 @@ class LogClient(object):
         if is_compress:
             headers['x-log-compresstype'] = 'deflate'
             compress_data = zlib.compress(body)
-            # compress_data = logservice_lz4.compress(body)
 
         params = {}
         logstore = request.get_logstore()
@@ -362,6 +355,7 @@ class LogClient(object):
                 query=None, reverse=False, offset=0, size=100):
         """ Get logs from log service. will retry when incomplete.
         Unsuccessful opertaion will cause an LogException.
+        Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
 
         :type project: string
         :param project: project name
@@ -421,6 +415,7 @@ class LogClient(object):
     def get_logs(self, request):
         """ Get logs from log service.
         Unsuccessful opertaion will cause an LogException.
+        Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
         
         :type request: GetLogsRequest
         :param request: the GetLogs request parameters class.
@@ -441,6 +436,56 @@ class LogClient(object):
 
         return self.get_log(project, logstore, from_time, to_time, topic,
                             query, reverse, offset, size)
+
+    def get_log_all(self, project, logstore, from_time, to_time, topic=None,
+                query=None, reverse=False):
+        """ Get logs from log service. will retry when incomplete.
+        Unsuccessful opertaion will cause an LogException. different with `get_log` with size=-1,
+        It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
+        each batch and make it possible to fetch larger volume of data.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+
+        :type to_time: int/string
+        :param to_time: the end timestamp or format of time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+
+        :type topic: string
+        :param topic: topic name of logs, could be None
+
+        :type query: string
+        :param query: user defined query, could be None
+
+        :type reverse: bool
+        :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+        :return: GetLogsResponse iterator
+
+        :raise: LogException
+        """
+
+        # need to use extended method to get more
+        """list all data using the fn
+        """
+        offset = 0
+        while True:
+            response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                query=query, reverse=reverse, offset=offset, size=100)
+
+            yield response
+
+            count = response.get_count()
+            offset += count
+
+            if count == 0:
+                break
+
 
     def get_project_logs(self, request):
         """ Get logs from log service.
@@ -666,6 +711,42 @@ class LogClient(object):
             return PullLogResponse(raw_data, header)
         else:
             return PullLogResponse(resp, header)
+
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time):
+        """ batch pull log data from log service using time-range
+        Unsuccessful opertaion will cause an LogException. the time parameter means the time when server receives the logs
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type shard_id: int
+        :param shard_id: the shard id
+
+        :type from_time: string/int
+        :param from_time: curosr value, could be begin, timestamp or readable time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+
+        :type to_time: string/int
+        :param to_time: curosr value, could be begin, timestamp or readable time in format "%Y-%m-%d %H:%M:%S" e.g. "2018-01-02 12:12:10"
+
+        :return: PullLogResponse
+
+        :raise: LogException
+        """
+        begin_cursor = self.get_cursor(project_name, logstore_name, shard_id, from_time).get_cursor()
+        end_cursor = self.get_cursor(project_name, logstore_name, shard_id, to_time).get_cursor()
+
+        while True:
+            res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
+                           count=1000, end_cursor=end_cursor, compress=True)
+
+            yield res
+            if res.get_log_count() <= 0:
+                break
+
+            begin_cursor = res.get_next_cursor()
 
     def create_logstore(self, project_name, logstore_name, ttl, shard_count):
         """ create log store 
@@ -2025,3 +2106,4 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
+
