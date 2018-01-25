@@ -184,8 +184,8 @@ class Util(object):
 
 
 def parse_timestamp(tm, fmt="%Y-%m-%d %H:%M:%S"):
-    if isinstance(tm, (int, float) or
-            (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit())):
+    if isinstance(tm, (int, float)) or \
+            (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
         return int(tm)
 
     if six.PY2:
