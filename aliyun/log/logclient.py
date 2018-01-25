@@ -42,7 +42,7 @@ import six
 import zlib
 
 
-CONNECTION_TIME_OUT = 20
+CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
 
@@ -416,7 +416,7 @@ class LogClient(object):
         """ Get logs from log service.
         Unsuccessful opertaion will cause an LogException.
         Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
-        
+
         :type request: GetLogsRequest
         :param request: the GetLogs request parameters class.
         
@@ -485,7 +485,6 @@ class LogClient(object):
 
             if count == 0:
                 break
-
 
     def get_project_logs(self, request):
         """ Get logs from log service.
