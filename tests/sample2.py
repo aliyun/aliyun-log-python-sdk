@@ -65,17 +65,8 @@ def main():
     To = int(time.time())
     res3 = None
 
-    # 查询最近10分钟内，满足query条件的日志条数，如果执行结果不是完全正确，则进行重试
-    while (res3 is None) or (not res3.is_completed()):
-        req3 = GetHistogramsRequest(project, logstore, From, To, topic, query)
-        res3 = client.get_histograms(req3)
-    res3.log_print()
-
-    # 获取满足query的日志条数
-    total_log_count = res3.get_total_count()
-
     # 读取日志, line=-1表示读取所有符合条件的日志.
-    req4 = GetLogsRequest(project, logstore, From, To, topic, query, total_log_count, line=-1)
+    req4 = GetLogsRequest(project, logstore, From, To, topic, query, line=-1)
     res4 = client.get_logs(req4)
     res4.log_print()
 
