@@ -217,7 +217,7 @@ class LogClient(object):
         self._source = source
 
     def put_logs(self, request):
-        """ Put logs to log service.
+        """ Put logs to log service. up to 512000 logs up to 10MB size
         Unsuccessful opertaion will cause an LogException.
         
         :type request: PutLogsRequest
@@ -227,9 +227,10 @@ class LogClient(object):
         
         :raise: LogException
         """
-        if len(request.get_log_items()) > 4096:
+        if len(request.get_log_items()) > 512000:
             raise LogException('InvalidLogSize',
-                               "logItems' length exceeds maximum limitation: 4096 lines.")
+                               "logItems' length exceeds maximum limitation: 512000 lines. now: {0}".format(
+                                   len(request.get_log_items())))
         logGroup = LogGroup()
         logGroup.Topic = request.get_topic()
         if request.get_source():
@@ -253,9 +254,11 @@ class LogClient(object):
                 pb_tag.Key = key
                 pb_tag.Value = value
         body = logGroup.SerializeToString()
-        if len(body) > 3 * 1024 * 1024:  # 3 MB
+
+        if len(body) > 10 * 1024 * 1024:  # 10 MB
             raise LogException('InvalidLogSize',
-                               "logItems' size exceeds maximum limitation: 3 MB.")
+                               "logItems' size exceeds maximum limitation: 10 MB. now: {0} MB.".format(
+                                   len(body)/1024.0/1024))
 
         headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
         is_compress = request.get_compress()
