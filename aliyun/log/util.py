@@ -203,21 +203,21 @@ class UTC(tzinfo):
 utc = UTC()
 
 
-def parse_timestamp(tm, fmts=("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %Z")):
+def parse_timestamp(tm):
     if isinstance(tm, (int, float)) or \
             (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
         return int(tm)
 
-    dt = None
-
-    for fmt in fmts:
-        try:
-            dt = datetime.strptime(tm, fmt)
-        except ValueError as ex:
-            pass
-
-    if dt is None:
-        dt = parser.parse(tm)
+    # dt = None
+    #
+    # for fmt in fmts:
+    #     try:
+    #         dt = datetime.strptime(tm, fmt)
+    #     except ValueError as ex:
+    #         pass
+    #
+    # if dt is None:
+    dt = parser.parse(tm)
 
     if six.PY2:
         if dt.tzinfo is None:
