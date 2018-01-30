@@ -233,6 +233,8 @@ def is_stats_query(query):
     :param query:
     :return:
     """
+    if not query:
+        return False
 
     # remove all " enclosed strings
     nq = re.sub(r'"[^"]*"', '', query)
