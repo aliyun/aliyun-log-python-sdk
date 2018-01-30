@@ -11,7 +11,7 @@ import socket
 import six
 from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
-
+import re
 
 def base64_encodestring(s):
     if six.PY2:
@@ -225,4 +225,21 @@ def parse_timestamp(tm):
         return int((dt - datetime(1970, 1, 1, tzinfo=utc)).total_seconds())
     else:
         return int(dt.timestamp())
+
+
+def is_stats_query(query):
+    """
+    check if the query is a normal search or select query
+    :param query:
+    :return:
+    """
+
+    # remove all " enclosed strings
+    nq = re.sub(r'"[^"]*"', '', query)
+
+    # check if there's | .... select
+    if re.findall(r'\|.*\bselect\b', nq, re.I):
+        return True
+
+    return False
 

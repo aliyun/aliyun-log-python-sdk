@@ -1,12 +1,8 @@
 from .logexception import LogException
-from functools import wraps
 import six
-import time
 
-
-DEFAULT_QUERY_RETRY_COUNT = 10
-DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 MAX_INIT_SHARD_COUNT = 10
+
 
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
     """
@@ -145,13 +141,7 @@ def query_more(fn, offset, size, batch_size, *args):
     total_count_got = 0
     complete = False
     while True:
-        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
-            ret = fn(*args, offset=offset, size=batch_size)
-            if ret.is_completed():
-                complete = True
-                break
-
-            time.sleep(DEFAULT_QUERY_RETRY_INTERVAL)
+        ret = fn(*args, offset=offset, size=batch_size)
 
         if response is None:
             response = ret
@@ -159,7 +149,7 @@ def query_more(fn, offset, size, batch_size, *args):
             response.merge(ret)
 
         # if incompete, exit
-        if not complete:
+        if not ret.is_completed():
             break
 
         count = ret.get_count()

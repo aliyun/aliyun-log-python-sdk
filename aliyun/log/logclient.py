@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 from datetime import datetime
-import requests, json, six, zlib
+import requests, json, six, zlib, time
 
 from .consumer_group_request import *
 from .acl_response import *
@@ -34,7 +34,7 @@ from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
 from .shipper_response import *
-from .util import Util, parse_timestamp, base64_encodestring as b64e
+from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 from .logclient_core import make_lcrud_methods
@@ -43,6 +43,8 @@ CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
 
+DEFAULT_QUERY_RETRY_COUNT = 10
+DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 
 class LogClient(object):
     """ Construct the LogClient with endpoint, accessKeyId, accessKey.
@@ -390,28 +392,37 @@ class LogClient(object):
         :raise: LogException
         """
 
-        # need to use extended method to get more
-        if int(size) == -1 or int(size) > MAX_GET_LOG_PAGING_SIZE:
+        # need to use extended method to get more when: it's not select query, and size > default page size
+        if not is_stats_query(query) and (int(size) == -1 or int(size) > MAX_GET_LOG_PAGING_SIZE):
             return query_more(self.get_log, int(offset), int(size), MAX_GET_LOG_PAGING_SIZE,
                               project, logstore, from_time, to_time, topic,
                               query, reverse)
 
-        headers = {}
-        params = {'from': parse_timestamp(from_time),
-                  'to': parse_timestamp(to_time),
-                  'type': 'log',
-                  'line': size,
-                  'offset': offset,
-                  'reverse': 'true' if reverse else 'false'}
+        ret = None
+        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+            headers = {}
+            params = {'from': parse_timestamp(from_time),
+                      'to': parse_timestamp(to_time),
+                      'type': 'log',
+                      'line': size,
+                      'offset': offset,
+                      'reverse': 'true' if reverse else 'false'}
 
-        if topic:
-            params['topic'] = topic
-        if query:
-            params['query'] = query
+            if topic:
+                params['topic'] = topic
+            if query:
+                params['query'] = query
 
-        resource = "/logstores/" + logstore
-        (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return GetLogsResponse(resp, header)
+            resource = "/logstores/" + logstore
+            (resp, header) = self._send("GET", project, None, resource, params, headers)
+            ret = GetLogsResponse(resp, header)
+            if ret.is_completed():
+                break
+
+            time.sleep(DEFAULT_QUERY_RETRY_INTERVAL)
+
+        return ret
+
 
     def get_logs(self, request):
         """ Get logs from log service.
@@ -484,7 +495,7 @@ class LogClient(object):
             count = response.get_count()
             offset += count
 
-            if count == 0:
+            if count == 0 or is_stats_query(query):
                 break
 
     def get_project_logs(self, request):
