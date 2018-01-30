@@ -10,8 +10,8 @@ try:
 except ImportError:
     pass
 
-import requests
 from datetime import datetime
+import requests, json, six, zlib
 
 from .consumer_group_request import *
 from .acl_response import *
@@ -37,10 +37,7 @@ from .shipper_response import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
-import json
-import six
-import zlib
-
+from .logclient_core import make_lcrud_methods
 
 CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
@@ -2115,4 +2112,10 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
+
+
+make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
+make_lcrud_methods(LogClient, 'alert', name_field='alertName')
+make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
+
 

@@ -122,6 +122,13 @@ Response Class
    ListConsumerGroupResponse
    UpdateConsumerGroupResponse
 
+.. py:currentmodule:: aliyun.log
+.. autosummary::
+   CreateEntityResponse
+   UpdateEntityResponse
+   DeleteEntityResponse
+   GetEntityResponse
+   ListEntityResponse
 
 Project
 --------
@@ -223,6 +230,38 @@ Consumer group
    list_consumer_group
    update_check_point
    get_check_point
+
+
+Dashboard
+----------
+.. autosummary::
+   list_dashboard
+   create_dashboard
+   get_dashboard
+   update_dashboard
+   delete_dashboard
+
+
+
+Saved search
+----------------
+.. autosummary::
+   list_savedsearch
+   create_savedsearch
+   get_savedsearch
+   update_savedsearch
+   delete_savedsearch
+
+
+
+Alert
+-----------------
+.. autosummary::
+   list_alert
+   create_alert
+   get_alert
+   update_alert
+   delete_alert
 
 
 Shipper
@@ -375,3 +414,16 @@ Definitions
    :members:
 .. autoclass:: UpdateConsumerGroupResponse
    :members:
+
+.. autoclass:: CreateEntityResponse
+   :members:
+.. autoclass:: UpdateEntityResponse
+   :members:
+.. autoclass:: DeleteEntityResponse
+   :members:
+.. autoclass:: GetEntityResponse
+   :members:
+.. autoclass:: ListEntityResponse
+   :members:
+
+
