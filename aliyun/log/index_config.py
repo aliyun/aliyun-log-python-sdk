@@ -9,6 +9,70 @@ import time
 from .util import Util
 
 
+class IndexJosnKeyConfig(object) : 
+    """ The index config of a special json type key
+
+    :type index_all: bool
+    :param index_all: True if all string value in the json key should be indexed
+
+    :type max_depth: int
+    :param max_depth: if index_all is true, only if the json value depth <= max_depth will be index 
+
+    :type alias : string
+    :param alias : alias name for index key
+    """
+    def __init__(self, index_all = True,  max_depth = -1, alias = None) : 
+        self.index_all = index_all
+        self.max_depth = max_depth
+        self.alias = alias
+        self.json_keys = {}
+
+    """
+    Inner key config in json, if the json value is : 
+    json_key : {
+        "map_1" : {
+            "k_1" : "v_1",
+            "k_2" : 100
+        },
+        "k_3" : 200.0
+    }
+    
+    :type key_name : string
+    :param key_name : key name , e.g  "map_1.k_1",  "k_3"
+    
+    :type index_type: string
+    :param index_type: one of ['text', 'long', 'double']
+
+    :type doc_value : bool
+    :param doc_value : if save doc value
+      
+    :type alias : string
+    :param alias : alias name for index key
+    """
+    def add_key(self, key_name,  key_type,  doc_value = False ,  alias = None) :
+        if key_type != 'text' and key_type != 'long' and key_type != 'double' :  
+            return
+        self.json_keys[key_name] = {}
+        self.json_keys[key_name]["type"] = key_type
+        self.json_keys[key_name]["doc_value"] = doc_value
+        if alias != None : 
+            self.json_keys[key_name]["alias"] = alias
+    
+    def to_json(self, json_value):
+        json_value["index_all"] = self.index_all
+        json_value["max_depth"] = self.max_depth
+        json_value["json_keys"] = self.json_keys
+
+    def from_json(self, json_value) : 
+        self.index_all = json_value["index_all"]
+        self.max_depth = json_value["max_depth"]
+        self.alias = None
+        self.json_keys = {}
+        if json_value.has_key("alias") : 
+            self.alias = json_value["alias"]
+        if json_value.has_key("json_keys") : 
+            self.json_keys = json_value["json_keys"]
+
 class IndexKeyConfig(object):
     """ The index config of a special log key
 
@@ -19,16 +83,19 @@ class IndexKeyConfig(object):
     :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
 
     :type index_type: string
-    :param index_type: one of ['text', 'long', 'double']
+    :param index_type: one of ['text', 'long', 'double', 'json']
 
     :type doc_value: bool
     :param doc_value: True if enable doc_value, used for fast sql execution
 
     :type alias : string
     :param alias : alias name for index key
+
+    :type json_key_config : IndexJosnKeyConfig
+    :param json_key_config : configs for "json" type
     """
 
-    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False,alias=None):
+    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False,alias=None, json_key_config = None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
@@ -36,17 +103,28 @@ class IndexKeyConfig(object):
         self.index_type = index_type
         self.doc_value = doc_value
         self.alias = alias
+        self.json_key_config = json_key_config
+    
+    def set_json_key_config(self, json_key_config) : 
+        self.json_key_config = json_key_config
+
+    def get_json_key_config(self) : 
+        return self.json_key_config
 
     def to_json(self):
         json_value = {}
         if self.index_type != "" and self.index_type is not None:
             json_value['type'] = self.index_type
-        if self.index_type == 'text':
+        if self.index_type == 'text' or self.index_type == 'json':
             json_value["token"] = self.token_list
             json_value["caseSensitive"] = bool(self.case_sensitive)
         if self.alias is not None:
             json_value['alias'] = self.alias
         json_value["doc_value"] = bool(self.doc_value)
+
+        if self.index_type == "json" : 
+            self.json_key_config.to_json(json_value)
+            
         return json_value
 
     def from_json(self, json_value):
@@ -60,6 +138,9 @@ class IndexKeyConfig(object):
             self.doc_value = bool(json_value["doc_value"])
         if 'alias' in json_value:
             self.alias = json_value['alias']
+        if self.index_type == 'json' : 
+            self.json_key_config = IndexJosnKeyConfig() 
+            self.json_key_config.from_json(json_value)
 
 
 class IndexLineConfig(object):
