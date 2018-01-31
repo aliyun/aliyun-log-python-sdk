@@ -46,15 +46,16 @@ MAX_GET_LOG_PAGING_SIZE = 100
 DEFAULT_QUERY_RETRY_COUNT = 10
 DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 
+
 class LogClient(object):
     """ Construct the LogClient with endpoint, accessKeyId, accessKey.
-    
+
     :type endpoint: string
-    :param endpoint: log service host name, for example, http://ch-hangzhou.sls.aliyuncs.com
-    
+    :param endpoint: log service host name, for example, ch-hangzhou.log.aliyuncs.com or https://cn-beijing.log.aliyuncs.com
+
     :type accessKeyId: string
     :param accessKeyId: aliyun accessKeyId
-    
+
     :type accessKey: string
     :param accessKey: aliyun accessKey
     """
@@ -64,7 +65,6 @@ class LogClient(object):
 
     def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
         self._isRowIp = Util.is_row_ip(endpoint)
-        self._port = 80
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
         self._accessKey = accessKey
@@ -90,9 +90,18 @@ class LogClient(object):
         self._user_agent = user_agent
 
     def _setendpoint(self, endpoint):
+        self.http_type = 'http://'
+        self._port = 80
+
+        endpoint = endpoint.strip()
         pos = endpoint.find('://')
         if pos != -1:
-            endpoint = endpoint[pos + 3:]  # strip http://
+            self.http_type = endpoint[:pos+3]
+            endpoint = endpoint[pos + 3:]
+
+        if self.http_type.lower() == 'https://':
+            self._port = 443
+
         pos = endpoint.find('/')
         if pos != -1:
             endpoint = endpoint[:pos]
@@ -176,9 +185,9 @@ class LogClient(object):
         headers['x-log-apiversion'] = API_VERSION
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         if self._isRowIp or not project:
-            url = "http://" + self._endpoint
+            url = self.http_type + self._endpoint
         else:
-            url = "http://" + project + "." + self._endpoint
+            url = self.http_type + project + "." + self._endpoint
 
         if project:
             headers['Host'] = project + "." + self._logHost
