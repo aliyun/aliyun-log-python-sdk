@@ -204,11 +204,11 @@ def sample_apply_config(client, project, logstore):
 
 # @log_enter_exit
 def sample_logstore(client, project, logstore):
-    res = client.create_logstore(project, logstore, 1, 1)
+    res = client.create_logstore(project, logstore, 1, 1, True)
     res.log_print()
 
-    # res = client.update_logstore(project, logstore, 2, 1)
-    # res.log_print()
+    res = client.update_logstore(project, logstore, 2)
+    res.log_print()
 
     res = client.list_logstore(project, logstore)
     res.log_print()

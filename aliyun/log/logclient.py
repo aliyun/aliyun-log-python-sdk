@@ -774,7 +774,7 @@ class LogClient(object):
 
             begin_cursor = res.get_next_cursor()
 
-    def create_logstore(self, project_name, logstore_name, ttl, shard_count):
+    def create_logstore(self, project_name, logstore_name, ttl=30, shard_count=2, enable_tracking=False):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
 
@@ -785,10 +785,13 @@ class LogClient(object):
         :param logstore_name: the logstore name
 
         :type ttl: int
-        :param ttl: the life cycle of log in the logstore in days
+        :param ttl: the life cycle of log in the logstore in days, default 30
 
         :type shard_count: int
-        :param shard_count: the shard count of the logstore to create
+        :param shard_count: the shard count of the logstore to create, default 2
+
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking, default is False
 
 
         :return: CreateLogStoreResponse
@@ -798,7 +801,8 @@ class LogClient(object):
         params = {}
         resource = "/logstores"
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
-        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count)}
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count), 
+                "enable_tracking": enable_tracking}
 
         body_str = six.b(json.dumps(body))
 
@@ -846,7 +850,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogStoreResponse(resp, header)
 
-    def update_logstore(self, project_name, logstore_name, ttl, shard_count=None):
+    def update_logstore(self, project_name, logstore_name, ttl=None, enable_tracking=None, shard_count=None):
         """ 
         update the logstore meta info
         Unsuccessful opertaion will cause an LogException.
@@ -860,6 +864,9 @@ class LogClient(object):
         :type ttl: int
         :param ttl: the life cycle of log in the logstore in days
 
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking
+
         :type shard_count: int
         :param shard_count: deprecated, the shard count could only be updated by split & merge
 
@@ -868,11 +875,23 @@ class LogClient(object):
         :raise: LogException
         """
 
-        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        res = self.get_logstore(project_name, logstore_name)
+        shard_count = res.get_shard_count()
 
+        if enable_tracking is None:
+            enable_tracking = res.get_enable_tracking()
+        if ttl is None:
+            ttl = res.get_ttl()
+
+        # if unchanged, directly return, cause the backend may complain.
+        if enable_tracking == res.get_enable_tracking() and ttl == res.get_ttl():
+            return UpdateLogStoreResponse(res.get_all_headers(), '')
+
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
         resource = "/logstores/" + logstore_name
-        body = {"logstoreName": logstore_name, "ttl": int(ttl), "enableWebTracking": True}
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "enable_tracking": enable_tracking,
+                "shardCount": shard_count}
         body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogStoreResponse(header, resp)

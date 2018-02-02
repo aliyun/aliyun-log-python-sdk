@@ -56,6 +56,7 @@ class GetLogStoreResponse(LogResponse):
         self.logstore_name = Util.convert_unicode_to_str(resp["logstoreName"])
         self.ttl = int(resp["ttl"])
         self.shard_count = int(resp["shardCount"])
+        self.enable_tracking = bool(resp["enable_tracking"])
 
     def get_shard_count(self):
         """
@@ -70,6 +71,13 @@ class GetLogStoreResponse(LogResponse):
         :return:
         """
         return self.ttl
+
+    def get_enable_tracking(self):
+        """
+
+        :return:
+        """
+        return self.enable_tracking
 
     def log_print(self):
         """
