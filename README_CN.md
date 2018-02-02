@@ -65,7 +65,7 @@ pip install -U aliyun-log-python-sdk
 from aliyun.log import LogClient
 
 # “华东 1 (杭州)” Region 的日志服务入口。
-endpoint = 'cn-hangzhou.sls.aliyuncs.com'
+endpoint = 'cn-hangzhou.log.aliyuncs.com'
 # 用户访问秘钥对中的 AccessKeyId。
 accessKeyId = 'ABCDEFGHIJKLJMN'
 # 用户访问秘钥对中的 AccessKeySecret。
@@ -73,6 +73,13 @@ accessKey = 'OPQRSTUVWXYZ'
 
 client = LogClient(endpoint, accessKeyId, accessKey)
 # 使用client的方法来操作日志服务
+```
+
+### Https连接
+如果要使用https连接, 在配置`endpoint`时, 传入`https://`前缀. 例如:
+```python
+endpoint = 'https://cn-hangzhou.log.aliyuncs.com'
+
 ```
 
 ## 数据采集配置
