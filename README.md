@@ -17,6 +17,8 @@ efficiently.
 
 Refer to the doc: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-log-python-sdk.readthedocs.io/).
 
+Don't want to write code? Try the [CLI](http://aliyun-log-cli.readthedocs.io/en/latest/) which covers almost all features of this SDK.
+
 ### Features
 1. Wrap Rest API
 2. Implement the signature of API request

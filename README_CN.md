@@ -18,6 +18,8 @@
 
 参考文档: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-log-python-sdk.readthedocs.io/)
 
+不想写代码? 可以试一下[命令行控制台](http://aliyun-log-cli.readthedocs.io/en/latest/), 其覆盖了这个SDK的几乎所有功能.
+
 ### 具体功能
 
 1. 封装Rest API。
