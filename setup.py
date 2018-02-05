@@ -59,7 +59,7 @@ try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
 except(IOError, ImportError):
-    long_description = open('README.md').read()
+    long_description = open('README.md', 'rb').read().decode('utf8')
 
 setup(
       name='aliyun-log-python-sdk',
