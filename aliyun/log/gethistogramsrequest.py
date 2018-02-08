@@ -5,7 +5,7 @@
 # All rights reserved.
 
 from .logrequest import LogRequest
-
+from .util import parse_timestamp
 
 class GetHistogramsRequest(LogRequest):
     """ The request used to get histograms of a query from log.
@@ -16,11 +16,11 @@ class GetHistogramsRequest(LogRequest):
     :type logstore: string
     :param logstore: logstore name
     
-    :type fromTime: int
-    :param fromTime: the begin time
+    :type fromTime: int/string
+    :param fromTime: the begin time or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
     
-    :type toTime: int
-    :param toTime: the end time
+    :type toTime: int/string
+    :param toTime: the end time or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
 
     :type topic: string
     :param topic: topic name of logs
@@ -32,8 +32,8 @@ class GetHistogramsRequest(LogRequest):
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
-        self.fromTime = fromTime
-        self.toTime = toTime
+        self.fromTime = parse_timestamp(fromTime)
+        self.toTime = parse_timestamp(toTime)
         self.topic = topic
         self.query = query
 

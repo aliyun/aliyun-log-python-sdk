@@ -20,7 +20,7 @@ class GetHistogramsResponse(LogResponse):
     """
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header)
+        LogResponse.__init__(self, header, resp)
         self.progress = Util.h_v_t(header, 'x-log-progress')
         self.count = 0  # header['x-log-count']
         self.histograms = []
