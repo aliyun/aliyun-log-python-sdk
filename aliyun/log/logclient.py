@@ -24,7 +24,7 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .log_logs_pb2 import LogGroup
-from .logclient_operator import copy_project, list_more, query_more
+from .logclient_operator import copy_project, list_more, query_more, pull_log_dump
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -773,6 +773,41 @@ class LogClient(object):
                 break
 
             begin_cursor = res.get_next_cursor()
+
+    def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=500,
+                      compress=True):
+        """ dump all logs seperatedly line into file_path, file_path
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type from_time: string/int
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+
+        :type to_time: string/int
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+
+        :type file_path: string
+        :param file_path: file path with {} for shard id. e.g. "/data/dump_{}.data", {} will be replaced with each partition.
+
+        :type batch_size: int
+        :param batch_size: batch size to fetch the data in each iteration. by default it's 500
+
+        :type compress: bool
+        :param compress: if use compression, by default it's True
+
+        :return: None
+
+        :raise: LogException
+        """
+        if "{}" not in file_path:
+            file_path += "{}"
+
+        return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
+                             batch_size=batch_size, compress=compress)
 
     def create_logstore(self, project_name, logstore_name, ttl=30, shard_count=2, enable_tracking=False):
         """ create log store 

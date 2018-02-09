@@ -1,5 +1,10 @@
 from .logexception import LogException
 import six
+import json
+from aliyun.log import *
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
+from .logresponse import LogResponse
 
 MAX_INIT_SHARD_COUNT = 10
 
@@ -217,3 +222,41 @@ def list_logtail_config_all(client, project):
         if count < size or offset >= total:
             break
 
+
+def worker(client, project_name, logstore_name, from_time, to_time,
+           shard_id, file_path,
+           batch_size=1000, compress=True):
+    res = client.pull_log(project_name, logstore_name, shard_id, from_time, to_time, batch_size=batch_size,
+                          compress=compress)
+
+    count = 0
+    for data in res:
+        for log in data.get_flatten_logs_json():
+            with open(file_path, "a+") as f:
+                count += 1
+                f.write(json.dumps(log))
+                f.write("\n")
+
+    return file_path, count
+
+
+def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True):
+    cpu_count = multiprocessing.cpu_count() * 2
+    shards = client.list_shards(project_name, logstore_name).get_shards_info()
+    worker_size = min(cpu_count, len(shards))
+
+    result = dict()
+    total_count = 0
+    with ProcessPoolExecutor(max_workers=worker_size) as pool:
+        futures = [pool.submit(worker, client, project_name, logstore_name, from_time, to_time,
+                               shard_id=shard['shardID'], file_path=file_path.format(shard['shardID']),
+                               batch_size=batch_size, compress=compress)
+                   for shard in shards]
+
+        for future in as_completed(futures):
+            file_path, count = future.result()
+            total_count += count
+            if count:
+                result[file_path] = count
+
+    return LogResponse({}, {"total_count": total_count, "files": result})
