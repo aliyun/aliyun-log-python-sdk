@@ -6,8 +6,6 @@
 
 import time
 
-from .util import Util
-
 
 class IndexJosnKeyConfig(object) : 
     """ The index config of a special json type key
@@ -21,7 +19,7 @@ class IndexJosnKeyConfig(object) :
     :type alias : string
     :param alias : alias name for index key
     """
-    def __init__(self, index_all = True,  max_depth = -1, alias = None) : 
+    def __init__(self, index_all=True,  max_depth=-1, alias=None):
         self.index_all = index_all
         self.max_depth = max_depth
         self.alias = alias
@@ -55,7 +53,7 @@ class IndexJosnKeyConfig(object) :
         self.json_keys[key_name] = {}
         self.json_keys[key_name]["type"] = key_type
         self.json_keys[key_name]["doc_value"] = doc_value
-        if alias != None : 
+        if alias is not None :
             self.json_keys[key_name]["alias"] = alias
     
     def to_json(self, json_value):
@@ -68,10 +66,11 @@ class IndexJosnKeyConfig(object) :
         self.max_depth = json_value["max_depth"]
         self.alias = None
         self.json_keys = {}
-        if json_value.has_key("alias") : 
+        if "alias" in json_value:
             self.alias = json_value["alias"]
-        if json_value.has_key("json_keys") : 
+        if "json_keys" in json_value:
             self.json_keys = json_value["json_keys"]
+
 
 class IndexKeyConfig(object):
     """ The index config of a special log key
@@ -93,9 +92,14 @@ class IndexKeyConfig(object):
 
     :type json_key_config : IndexJosnKeyConfig
     :param json_key_config : configs for "json" type
+
+    :type chinese: bool
+    :param chinese: enable Chinese words segmentation
+
     """
 
-    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False,alias=None, json_key_config = None):
+    def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False, alias=None,
+                 json_key_config=None, chinese=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
@@ -104,6 +108,7 @@ class IndexKeyConfig(object):
         self.doc_value = doc_value
         self.alias = alias
         self.json_key_config = json_key_config
+        self.chn = chinese
     
     def set_json_key_config(self, json_key_config) : 
         self.json_key_config = json_key_config
@@ -122,17 +127,23 @@ class IndexKeyConfig(object):
             json_value['alias'] = self.alias
         json_value["doc_value"] = bool(self.doc_value)
 
-        if self.index_type == "json" : 
+        if self.chn is not None:
+            json_value['chn'] = self.chn
+
+        if self.index_type == "json" :
             self.json_key_config.to_json(json_value)
-            
+
         return json_value
 
     def from_json(self, json_value):
         self.index_type = 'text'
         if 'type' in json_value:
             self.index_type = json_value['type']
-        if self.index_type == 'text':
+        if self.index_type in ('text', 'json'):
             self.token_list = json_value["token"]
+            self.chn = None
+            if "chn" in json_value:
+                self.chn = bool(json_value["chn"])
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
         if 'doc_value' in json_value:
             self.doc_value = bool(json_value["doc_value"])
@@ -153,36 +164,34 @@ class IndexLineConfig(object):
     :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
 
     :type include_keys: string list
-    :param include_keys: only the keys in include_keys should to be indexed, only one of include_keys and exclude_keys
-     could exist at the same time,
-                if bothe include_keys and exclude_keys are empty, then the full line will be indexed
+    :param include_keys: deprecated, will be removed in future version.
 
     :type exclude_keys: string list
-    :param exclude_keys: the keys in the exclude_keys list will not be indexed, others keys will be indexed 
+    :param exclude_keys: deprecated, will be removed in future version.
+
+    :type chinese: bool
+    :param chinese: enable Chinese words segmentation
+
     """
 
-    def __init__(self, token_list=None, case_sensitive=False, include_keys=None, exclude_keys=None):
+    def __init__(self, token_list=None, case_sensitive=False, include_keys=None, exclude_keys=None, chinese=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
         self.case_sensitive = case_sensitive
-        self.include_keys = include_keys
-        self.exclude_keys = exclude_keys
+        self.chn = bool(chinese)
 
     def to_json(self):
         json_value = {"token": self.token_list, "caseSensitive": bool(self.case_sensitive)}
+        if self.chn is not None:
+            json_value["chn"] = bool(self.chn)
 
-        if self.include_keys is not None:
-            json_value["include_keys"] = self.include_keys
-        if self.exclude_keys is not None:
-            json_value["exclude_keys"] = self.exclude_keys
         return json_value
 
     def from_json(self, json_value):
         self.token_list = json_value["token"]
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
-        self.include_keys = json_value.get("include_keys", None)
-        self.exclude_keys = json_value.get("exclude_keys", None)
+        self.chn = bool(json_value["caseSensitive"]) if "caseSensitive" in json_value else None
 
 
 class IndexConfig(object):
@@ -211,16 +220,15 @@ class IndexConfig(object):
         self.modify_time = int(time.time())
 
     def to_json(self):
-        json_value = {"ttl": self.ttl}
+        json_value = {}
         if self.line_config is not None:
             json_value["line"] = self.line_config.to_json()
         if len(self.key_config_list) != 0:
             json_value["keys"] = dict((key, value.to_json()) for key, value in self.key_config_list.items())
-            # for key, value in self.key_config_list.items():
-            #     json_value["keys"][key] = value.to_json()
 
         if self.all_keys_config is not None:
             json_value["all_keys"] = self.all_keys_config.to_json()
+
         return json_value
 
     def from_json(self, json_value):

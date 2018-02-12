@@ -1,4 +1,4 @@
-__version__ = '0.6.22'
+__version__ = '0.6.23'
 USER_AGENT = 'log-python-sdk-v-' + __version__
 API_VERSION = '0.6.0'
 
