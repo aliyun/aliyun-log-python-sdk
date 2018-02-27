@@ -383,6 +383,10 @@ class ConfigDetailBase(object):
                 self.value["inputDetail"][k] = v
 
     @property
+    def config_name(self):
+        return self.value["configName"]
+
+    @property
     def logstore_name(self):
         return self.value["outputDetail"]["logstoreName"]
 
