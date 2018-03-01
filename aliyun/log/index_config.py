@@ -232,7 +232,7 @@ class IndexConfig(object):
         return json_value
 
     def from_json(self, json_value):
-        self.ttl = json_value["ttl"]
+        self.ttl = json_value.get("ttl", 0)
         if "all_keys" in json_value:
             self.all_keys_config = IndexKeyConfig()
             self.all_keys_config.from_json(json_value["all_keys"])
