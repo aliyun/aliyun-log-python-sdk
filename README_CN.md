@@ -58,6 +58,9 @@ pip install -U aliyun-log-python-sdk
 ## 代码示例
 - [代码示例](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests)
 
+## 完整API参考
+- [API参考](http://aliyun-log-python-sdk.readthedocs.io/api.html)
+
 
 ## 配置SDK
 参考[SDK配置](https://help.aliyun.com/document_detail/29064.html?spm=5176.doc29068.2.8.SWJhYZ)
