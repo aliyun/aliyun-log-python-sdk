@@ -1,0 +1,34 @@
+syntax = "proto2";
+
+message LogRaw
+{
+    required uint32 Time = 1;// UNIX Time Format
+    message Content
+    {
+        required string Key = 1;
+        required bytes Value = 2;
+    }
+    repeated Content Contents= 2;
+}
+
+message LogTagRaw
+{
+    required string Key = 1;
+    required string Value = 2;
+}
+
+message LogGroupRaw
+{
+    repeated LogRaw Logs= 1;
+    optional string Reserved =2; // 内部字段，不需要填写
+    optional string Topic = 3;
+    optional string Source = 4;
+    optional string MachineUUID = 5;
+    repeated LogTagRaw LogTags = 6;
+}
+
+message LogGroupListRaw
+{
+    repeated LogGroupRaw LogGroups = 1;
+}
+

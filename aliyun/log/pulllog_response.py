@@ -4,11 +4,12 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from .log_logs_pb2 import LogGroupList
 from .logexception import LogException
 from .logresponse import LogResponse
 from .util import Util
 from .util import base64_encodestring as b64e
+
+from .log_logs_pb2 import LogGroupList
 
 
 class PullLogResponse(LogResponse):
