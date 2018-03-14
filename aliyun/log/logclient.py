@@ -42,10 +42,7 @@ from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_q
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 
-if hasattr(six, 'ALIYUN_LOG_CLI') and six.ALIYUN_LOG_CLI:
-    from .log_logs_pb2 import LogGroup
-else:
-    from .log_pb_put import LogGroup
+from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
 
 CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
@@ -271,10 +268,7 @@ class LogClient(object):
             for key, value in contents:
                 content = log.Contents.add()
                 content.Key = self._get_unicode(key)
-                if hasattr(six, 'ALIYUN_LOG_CLI') and six.ALIYUN_LOG_CLI:
-                    content.Value = self._get_unicode(value)
-                else:
-                    content.Value = self._get_binary(value)
+                content.Value = self._get_binary(value)
         if request.get_log_tags() is not None:
             tags = request.get_log_tags()
             for key, value in tags:
