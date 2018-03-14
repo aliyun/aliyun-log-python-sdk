@@ -4,11 +4,17 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-from .log_logs_pb2 import LogGroupList
+import six
+
 from .logexception import LogException
 from .logresponse import LogResponse
 from .util import Util
 from .util import base64_encodestring as b64e
+
+if hasattr(six, 'ALIYUN_LOG_CLI') and six.ALIYUN_LOG_CLI:
+    from .log_logs_pb2 import LogGroupList
+else:
+    from .log_pb_put import LogGroupList
 
 
 class PullLogResponse(LogResponse):

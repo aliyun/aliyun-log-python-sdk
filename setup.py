@@ -34,7 +34,8 @@ elif sys.version_info[0] == 3:
 packages = [
             'aliyun',
             'aliyun.log',
-            'aliyun.log.consumer'
+            'aliyun.log.consumer',
+            'aliyun.log.log_pb_put'
             ]
 
 version = ''

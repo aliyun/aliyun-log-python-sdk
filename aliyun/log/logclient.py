@@ -10,11 +10,15 @@ try:
 except ImportError:
     pass
 
+import json
+import requests
+import six
+import time
+import zlib
 from datetime import datetime
-import requests, json, six, zlib, time
 
-from .consumer_group_request import *
 from .acl_response import *
+from .consumer_group_request import *
 from .consumer_group_response import *
 from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
@@ -23,7 +27,7 @@ from .getlogsresponse import GetLogsResponse
 from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
-from .log_logs_pb2 import LogGroup
+from .logclient_core import make_lcrud_methods
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump
 from .logexception import LogException
 from .logstore_config_response import *
@@ -37,7 +41,11 @@ from .shipper_response import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
-from .logclient_core import make_lcrud_methods
+
+if hasattr(six, 'ALIYUN_LOG_CLI') and six.ALIYUN_LOG_CLI:
+    from .log_logs_pb2 import LogGroup
+else:
+    from .log_pb_put import LogGroup
 
 CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
@@ -210,7 +218,16 @@ class LogClient(object):
     @staticmethod
     def _get_unicode(key):
         if isinstance(key, six.binary_type):
-            key = key.decode('utf-8')
+            try:
+                key = key.decode('utf-8')
+            except UnicodeDecodeError:
+                return key
+        return key
+
+    @staticmethod
+    def _get_binary(key):
+        if isinstance(key, six.text_type):
+            return key.encode('utf-8')
         return key
 
     def set_source(self, source):
@@ -254,7 +271,10 @@ class LogClient(object):
             for key, value in contents:
                 content = log.Contents.add()
                 content.Key = self._get_unicode(key)
-                content.Value = self._get_unicode(value)
+                if hasattr(six, 'ALIYUN_LOG_CLI') and six.ALIYUN_LOG_CLI:
+                    content.Value = self._get_unicode(value)
+                else:
+                    content.Value = self._get_binary(value)
         if request.get_log_tags() is not None:
             tags = request.get_log_tags()
             for key, value in tags:
