@@ -396,16 +396,16 @@ from aliyun.log import IndexConfig
 request_json = {
      "keys": {
        "f1": {
-         "caseSensitive": false,
+         "caseSensitive": False,
          "token": [
            ",", " ", "\"", "\"", ";", "=",  "(", ")", "[", "]",
            "{", "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
          ],
          "type": "text",
-         "doc_value": true
+         "doc_value": True
        },
        "f2": {
-         "doc_value": true,
+         "doc_value": True,
          "type": "long"
        }
      },
@@ -413,7 +413,7 @@ request_json = {
      "ttl": 2,
      "index_mode": "v2",
      "line": {
-       "caseSensitive": false,
+       "caseSensitive": False,
        "token": [
          ",", " ", "\"", "\"", ";", "=", "(", ")", "[", "]", "{",
          "}", "?", "@", "&", "<", ">", "/", ":", "\n", "\t"
