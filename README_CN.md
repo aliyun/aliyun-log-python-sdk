@@ -426,6 +426,8 @@ res = client.create_index('project1', 'logstore1', request)
 res.log_print()
 ```
 
+更多索引样例，可以参考[这里](https://github.com/aliyun/aliyun-log-cli/tree/master/tests/index)，注意，使用SDK时，需要将`true/false`改成Python对应的`True/False`。
+
 - 修改
 
   通过`update_index`修改日志库的索引
