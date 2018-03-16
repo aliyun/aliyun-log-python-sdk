@@ -221,38 +221,29 @@ res.log_print()
 创建一个Logtail配置, 并关联到日志库上:
 
 ```python
-from aliyun.log import LogtailConfigHelper as helper
-config_detail_json = {
-      "config_name": "config_name1",
-      "logstore_name": "logstore1",
-      "file_pattern": "file_pattern",
-      "time_format": "time_format",
-      "log_path": "/log_path",
-      "endpoint": "endpoint",
-      "log_parse_regex": "xxx ([\\w\\-]+\\s[\\d\\:]+)\\s+(.*)",
-      "log_begin_regex": "xxx.*",
-      "reg_keys": [
-        "time",
-        "value"
-      ],
-      "topic_format": "none",
-      "filter_keys": [
-        "time",
-        "value"
-      ],
-      "filter_keys_reg": [
-        "time",
-        "value"
-      ],
-      "logSample": "xxx 2017-11-11 11:11:11 hello alicloud."
-    }
-request = helper.generate_common_reg_log_config(config_detail)
+from aliyun.log import LogtailConfigGenerator as helper
+import json
+config_detail_json = """{
+  "configName": "json_1",
+  "inputDetail": {
+    "logType": "json_log",
+    "filePattern": "test.log",
+    "logPath": "/json_1"
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore3"
+  }
+}"""
+request = helper.generate_config(json.loads(config_detail))
 res = client.create_logtail_config('project1', request)
 res.log_print()
 ```
 
   **注意：**
-  - 创建的配置的名字`config_name`和关联的日志库名字`logstore_name`都是放在传入的`request`中.
+  - 创建的配置的名字`configName`和关联的日志库名字`logstoreName`都是放在传入的`request`中.
+  - 不同类型的Logtail配置参数不一样，可以参考[这篇文章](http://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_create_logtail_config.html)了解更多业务逻辑。
+  - 更多的JSON样例，请参考[这里](https://github.com/aliyun/aliyun-log-cli/tree/master/tests/logtail)。
   - 创建的Logtail的配置还没有应用到任何一个机器组, 需要调用后面的API`apply_config_to_machine_group`来进行配置.
 
 
