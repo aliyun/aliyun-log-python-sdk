@@ -1,0 +1,6 @@
+requests
+protobuf<=3.4.0
+six
+futures
+enum34
+python-dateutil
