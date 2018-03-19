@@ -13,7 +13,7 @@ from enum import Enum
 from .logexception import LogException
 import logging
 
-__all__ = ['SeperatorFileConfigDetail', 'SimpleFileConfigDetail', 'FullRegFileConfigDetail',
+__all__ = ['PluginConfigDetail', 'SeperatorFileConfigDetail', 'SimpleFileConfigDetail', 'FullRegFileConfigDetail',
            'JsonFileConfigDetail', 'ApsaraFileConfigDetail', 'SyslogConfigDetail',
            'LogtailConfigGenerator', 'CommonRegLogConfigDetail']
 
@@ -428,6 +428,70 @@ class ConfigDetailBase(object):
 
     def to_json(self):
         return self.value
+
+
+class PluginConfigDetail(ConfigDetailBase):
+    """The logtail config for simple mode
+
+    :type logstoreName: string
+    :param logstoreName: the logstore name
+
+    :type configName: string
+    :param configName: the config name
+
+    :type logPath: string
+    :param logPath: folder of log path /apsara/nuwa/
+
+    :type filePattern: string
+    :param filePattern: file path, e.g. *.log, it will be /apsara/nuwa/.../*.log
+
+    :type localStorage: bool
+    :param localStorage: if use local cache 1GB when logtail is offline. default is True.
+
+    :type enableRawLog: bool
+    :param enableRawLog: if upload raw data in content, default is False
+
+    :type topicFormat: string
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+
+    :type fileEncoding: string
+    :param fileEncoding: "utf8" or "gbk" so far
+
+    :type maxDepth: int
+    :param maxDepth: max depth of folder to scan, by default its 100, 0 means just scan the root folder
+
+    :type preserve: bool
+    :param preserve: if preserve time-out, by default is False, 30 min time-out if set it as True
+
+    :type preserveDepth: int
+    :param preserveDepth: time-out folder depth. 1-3
+
+    :type filterKey: string list
+    :param filterKey: only keep log which match the keys. e.g. ["city", "location"] will only scan files math the two fields
+
+    :type filterRegex: string list
+    :param filterRegex: matched value for filterKey, e.g. ["shanghai|beijing|nanjing", "east"] note, it's regex value list
+
+    :type createTime: int
+    :param createTime: timestamp of created, only useful when getting data from REST
+
+    :type modifyTime: int
+    :param modifyTime: timestamp of last modified time, only useful when getting data from REST
+
+    :type extended_items: dict
+    :param extended_items: extended items
+
+    """
+    MANDATORY_FIELDS_DETAIL = ConfigDetailBase.MANDATORY_FIELDS_DETAIL + ['plugin']
+    DEFAULT_DETAIL_FIELDS = ConfigDetailBase.DEFAULT_DETAIL_FIELDS
+
+    def __init__(self, logstoreName, configName, plugin, **extended_items):
+        input_detail = {
+            "plugin": plugin
+        }
+        input_detail.update(extended_items)
+
+        ConfigDetailBase.__init__(self, logstoreName, configName, "plugin", **input_detail)
 
 
 class SeperatorFileConfigDetail(ConfigDetailBase):
@@ -955,9 +1019,15 @@ class LogtailConfigGenerator(object):
         return ApsaraFileConfigDetail.from_json(json_value)
 
     @staticmethod
+    def generate_plugin_config(json_value):
+        return PluginConfigDetail.from_json(json_value)
+
+    @staticmethod
     def generate_config(json_value):
         input_type = json_value.get("inputType", "")
-        if input_type == LogtailInputType.SYSLOG.value:
+        if input_type == LogtailInputType.PLUGIN.value:
+            return LogtailConfigGenerator.generate_plugin_config(json_value)
+        elif input_type == LogtailInputType.SYSLOG.value:
             return LogtailConfigGenerator.generate_syslog_config(json_value)
         elif input_type == LogtailInputType.FILE.value:
             log_type = json_value["inputDetail"].get("logType", "")

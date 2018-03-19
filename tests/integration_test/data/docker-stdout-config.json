@@ -1,0 +1,20 @@
+{
+  "configName": "docker-stdout-config",
+  "inputDetail": {
+    "plugin": {
+      "inputs": [
+        {
+          "detail": {
+            "ExcludeLabel": {},
+            "IncludeLabel": {}
+          },
+          "type": "service_docker_stdout"
+        }
+      ]
+    }
+  },
+  "inputType": "plugin",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

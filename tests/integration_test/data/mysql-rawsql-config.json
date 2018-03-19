@@ -1,0 +1,31 @@
+{
+  "configName": "mysql-rawsql-config",
+  "inputDetail": {
+    "plugin": {
+      "inputs": [
+        {
+          "detail": {
+            "Address": "************.mysql.rds.aliyuncs.com",
+            "CheckPoint": true,
+            "CheckPointColumn": "time",
+            "CheckPointColumnType": "time",
+            "CheckPointSavePerPage": true,
+            "CheckPointStart": "2018-01-01 00:00:00",
+            "DataBase": "****",
+            "IntervalMs": 60000,
+            "Limit": true,
+            "PageSize": 100,
+            "Password": "*******",
+            "StateMent": "select * from db.VersionOs where time > ?",
+            "User": "****"
+          },
+          "type": "service_mysql"
+        }
+      ]
+    }
+  },
+  "inputType": "plugin",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

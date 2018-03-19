@@ -1,0 +1,29 @@
+{
+  "configName": "mysql-binlog-config",
+  "inputDetail": {
+    "plugin": {
+      "inputs": [
+        {
+          "detail": {
+            "ExcludeTables": [
+              "mysql\\..*"
+            ],
+            "Host": "************.mysql.rds.aliyuncs.com",
+            "IncludeTables": [
+              ".*\\..*"
+            ],
+            "Password": "*******",
+            "ServerID": 32355,
+            "TextToString": true,
+            "User": "********"
+          },
+          "type": "service_canal"
+        }
+      ]
+    }
+  },
+  "inputType": "plugin",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

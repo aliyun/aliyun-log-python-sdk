@@ -1,0 +1,45 @@
+{
+  "configName": "nginx-status-config",
+  "inputDetail": {
+    "plugin": {
+      "inputs": [
+        {
+          "detail": {
+            "Addresses": [
+              "http://**********/****"
+            ],
+            "IncludeBody": true,
+            "IntervalMs": 10000
+          },
+          "type": "metric_http"
+        }
+      ],
+      "processors": [
+        {
+          "detail": {
+            "FullMatch": true,
+            "KeepSource": false,
+            "Keys": [
+              "connection",
+              "accepts",
+              "handled",
+              "requests",
+              "reading",
+              "writing",
+              "waiting"
+            ],
+            "NoKeyError": true,
+            "NoMatchError": true,
+            "Regex": "Active connections: (\\d+)\\s+server accepts handled requests\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+Reading: (\\d+) Writing: (\\d+) Waiting: (\\d+)[\\s\\S]*",
+            "SourceKey": "content"
+          },
+          "type": "processor_regex"
+        }
+      ]
+    }
+  },
+  "inputType": "plugin",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

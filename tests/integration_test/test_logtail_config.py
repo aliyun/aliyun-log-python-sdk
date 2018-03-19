@@ -39,13 +39,15 @@ def clean_project(client, project):
 def test_logtail_config(client, project):
     dir_path = os.sep.join([os.path.dirname(__file__), "data"])
     file_names = [
-        'simple_1', 'simple_2', 'simple_3',
+        'simple_1', 'simple_2', 'simple_3', 'simple_4_docker',
         'feitian_1', 'feitian_2',
-        'json_1', 'json_2', 'json_3',
+        'json_1', 'json_2', 'json_3', 'json_4_docker',
         'ngnix_1',
-        'reg_1', 'reg_2', 'reg_3',
-        'sep_1', 'sep_2', 'sep_3',
-        'syslog_1'
+        'reg_1', 'reg_2', 'reg_3', 'reg_4_docker',
+        'sep_1', 'sep_2', 'sep_3','sep_4_docker',
+        'syslog_1',
+        'docker-stdout-config', 'mysql-binlog-config',
+        'mysql-rawsql-config', 'nginx-status-config'
     ]
 
     for file_name in file_names:
@@ -63,6 +65,14 @@ def test_logtail_config(client, project):
         res = client.get_logtail_config(project, config_name)
         res.log_print()
 
+    for file_name in file_names:
+        json_path = os.sep.join([dir_path, file_name + '.json'])
+        with open(json_path, "r") as f:
+            json_value = json.load(f)
+            detail = LogtailConfigGenerator.generate_config(json_value)
+            print("****update config", file_name)
+            res = client.update_logtail_config(project, detail)
+            res.log_print()
 
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', '')

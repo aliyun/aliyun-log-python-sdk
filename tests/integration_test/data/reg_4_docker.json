@@ -1,0 +1,49 @@
+{
+  "configName": "reg_4_docker",
+  "inputDetail": {
+    "dockerExcludeLabel": {
+      "k2": "v2"
+    },
+    "dockerFile": true,
+    "dockerIncludeLabel": {
+      "k1": "v1"
+    },
+
+    "logType": "json_log",
+    "filePattern": "test.log",
+    "logPath": "/json_1",
+    "timeFormat": "%Y-%M-%D",
+    "timeKey": "my_key_time",
+
+    "localStorage": false,
+    "enableRawLog": true,
+    "topicFormat": "(file_reg_for_topic).*",
+    "fileEncoding": "gbk",
+    "maxDepth": 200,
+    "preserve": false,
+    "preserveDepth": 3,
+    "filterKey": [
+      "filter_reg1",
+      "filter_reg2"
+    ],
+    "filterRegex": [
+      "`12[];',./~!@#$%^&*(){}:\"<>?",
+      "`12[];',./~!@#$%^&*(){}:\"<>?"
+    ],
+
+    "adjustTimezone": false,
+    "delayAlarmBytes": 0,
+    "discardNonUtf8": false,
+    "discardUnmatch": true,
+    "enableTag": false,
+    "maxSendRate": -1,
+    "mergeType": "topic",
+    "shardHashKey": [],
+    "tailExisted": false
+
+  },
+  "inputType": "file",
+  "outputDetail": {
+    "logstoreName": "logstore"
+  }
+}

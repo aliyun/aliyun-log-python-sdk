@@ -26,6 +26,7 @@ Request and Config Class
    ListLogstoresRequest
    PutLogsRequest
    LogtailConfigGenerator
+   PluginConfigDetail
    SeperatorFileConfigDetail
    SimpleFileConfigDetail
    FullRegFileConfigDetail
@@ -215,6 +216,7 @@ Logs
    put_logs
    pull_logs
    pull_log
+   pull_log_dump
    get_log
    get_logs
    get_log_all
@@ -291,6 +293,7 @@ Definitions
 .. autoclass:: ListLogstoresRequest
 .. autoclass:: LogtailConfigGenerator
    :members:
+.. autoclass:: PluginConfigDetail
 .. autoclass:: SeperatorFileConfigDetail
 .. autoclass:: SimpleFileConfigDetail
 .. autoclass:: FullRegFileConfigDetail
