@@ -127,7 +127,7 @@ class LogClient(object):
             return None
         try:
             if isinstance(resp_body, six.binary_type):
-                return json.loads(resp_body.decode('utf8', errors="ignore"))
+                return json.loads(resp_body.decode('utf8', "ignore"))
 
             return json.loads(resp_body)
         except Exception as ex:
@@ -975,7 +975,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores"
         if logstore_name_pattern is not None:
-            params['logstorename'] = logstore_name_pattern
+            params['logstoreName'] = logstore_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
