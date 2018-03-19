@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import sys
 import base64
 import collections
 import hashlib
 import hmac
 import re
 import socket
-
 import six
 from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
 import re
+
 
 def base64_encodestring(s):
     if six.PY2:
@@ -203,6 +204,10 @@ class UTC(tzinfo):
 utc = UTC()
 
 
+def _get_total_seconds(delta):
+    return ((delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds) / 10**6
+
+
 def parse_timestamp(tm):
     if isinstance(tm, (int, float)) or \
             (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
@@ -210,7 +215,11 @@ def parse_timestamp(tm):
 
     dt = parser.parse(tm)
 
-    if six.PY2:
+    if sys.version_info[:2] == (2, 6):
+        if dt.tzinfo is None:
+            return int(_get_total_seconds(dt - datetime(1970, 1, 1)))
+        return int(_get_total_seconds(dt - datetime(1970, 1, 1, tzinfo=utc)))
+    elif six.PY2:
         if dt.tzinfo is None:
             return int((dt - datetime(1970, 1, 1)).total_seconds())
         return int((dt - datetime(1970, 1, 1, tzinfo=utc)).total_seconds())

@@ -25,7 +25,9 @@ except ImportError:
 import sys
 import re
 
-if sys.version_info[0] == 2:
+if sys.version_info[:2] == (2, 6):
+    install_requires = ['requests', 'protobuf <= 3.4.0', 'six', 'enum34', 'futures', 'python-dateutil']
+elif sys.version_info[0] == 2:
     install_requires = ['requests', 'protobuf', 'six', 'enum34', 'futures', 'python-dateutil']
 elif sys.version_info[0] == 3:
     install_requires = ['requests', 'protobuf', 'six', 'enum34', 'python-dateutil']

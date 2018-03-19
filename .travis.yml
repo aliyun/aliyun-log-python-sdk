@@ -14,6 +14,7 @@ install:
   - pip install .
 
 script:
+  - python tests/ut/test_util.py
   - python tests/sample.py
   - python tests/integration_test/test_logtail_config.py
   - python tests/integration_test/test_entity.py
