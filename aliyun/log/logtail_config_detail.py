@@ -386,9 +386,17 @@ class ConfigDetailBase(object):
     def config_name(self):
         return self.value["configName"]
 
+    @config_name.setter
+    def config_name(self, value):
+        self.value["configName"] = value
+
     @property
     def logstore_name(self):
         return self.value["outputDetail"]["logstoreName"]
+
+    @logstore_name.setter
+    def logstore_name(self, value):
+        self.value["outputDetail"]["logstoreName"] = value
 
     def __clean_up_non_items(self):
         none_items = [k for k, v in self.value.items() if v is None]

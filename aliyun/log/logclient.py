@@ -28,7 +28,7 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
-from .logclient_operator import copy_project, list_more, query_more, pull_log_dump
+from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -2173,6 +2173,33 @@ class LogClient(object):
         if to_client is None:
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
+
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None):
+        """
+        copy logstore, index, logtail config to target logstore, machine group are not included yet.
+        the target logstore will be crated if not existing
+
+        :type from_project: string
+        :param from_project: project name
+
+        :type from_logstore: string
+        :param from_logstore: logstore name
+
+        :type to_logstore: string
+        :param to_logstore: logstore name
+
+        :type to_project: string
+        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+        :type to_client: LogClient
+        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+        :type apply_machine_group: bool
+        :param apply_machine_group: if apply config to same machine group resources, False by default.
+
+        :return:
+        """
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client)
 
     def list_project(self, offset=0, size=100):
         """ list the project

@@ -12,7 +12,8 @@ MAX_INIT_SHARD_COUNT = 10
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
     """
     copy project, logstore, machine group and logtail config to target project,
-    expecting the target project doens't exist
+    will create the target project if it doesn't exist
+
     :type from_client: LogClient
     :param from_client: logclient instance
 
@@ -28,7 +29,6 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
     :type copy_machine_group: bool
     :param copy_machine_group: if copy machine group resources, False by default.
 
-
     :return:
     """
 
@@ -40,6 +40,8 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
         if ex.get_error_code() == 'ProjectAlreadyExist':
             # don't create the project as it already exists
             pass
+        else:
+            raise
 
     default_fetch_size = 100
 
@@ -62,6 +64,8 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             except LogException as ex:
                 if ex.get_error_code() == 'IndexConfigNotExist':
                     pass
+                else:
+                    raise
 
         offset += count
         if count < size or offset >= total:
@@ -97,6 +101,113 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             ret = from_client.get_machine_group_applied_configs(from_project, group_name)
             for config_name in ret.get_configs():
                 to_client.apply_config_to_machine_group(to_project, config_name, group_name)
+
+        offset += count
+        if count < size or offset >= total:
+            break
+
+
+def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None):
+    """
+    copy logstore, index, logtail config to target logstore, machine group are not included yet.
+    the target logstore will be crated if not existing
+
+    :type from_client: LogClient
+    :param from_client: logclient instance
+
+    :type from_project: string
+    :param from_project: project name
+
+    :type from_logstore: string
+    :param from_logstore: logstore name
+
+    :type to_logstore: string
+    :param to_logstore: logstore name
+
+    :type to_project: string
+    :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+    :type to_client: LogClient
+    :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+    :type apply_machine_group: bool
+    :param apply_machine_group: if apply config to same machine group resources, False by default.
+
+    :return:
+    """
+
+    # check client
+    if to_project is not None:
+        # copy to a different project in different client
+        to_client = to_client or from_client
+
+        # check if target project exists or not
+        ret = from_client.get_project(from_project)
+        try:
+            ret = to_client.create_project(to_project, ret.get_description())
+        except LogException as ex:
+            if ex.get_error_code() == 'ProjectAlreadyExist':
+                # don't create the project as it already exists
+                pass
+            else:
+                raise
+
+    to_project = to_project or from_project
+    to_client = to_client or from_client
+
+    # return if logstore are the same one
+    if from_client is to_client and from_project == to_project and from_logstore == to_logstore:
+        return
+
+    # copy logstore
+    ret = from_client.get_logstore(from_project, from_logstore)
+    try:
+        ret = to_client.create_logstore(to_project, to_logstore,
+                                     ttl=ret.get_ttl(),
+                                     shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
+                                     enable_tracking=ret.get_enable_tracking())
+    except LogException as ex:
+        if ex.get_error_code() == 'LogStoreAlreadyExist':
+            # update logstore's settings
+            ret = to_client.update_logstore(to_project, to_logstore,
+                                            ttl=ret.get_ttl(),
+                                            shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
+                                            enable_tracking=ret.get_enable_tracking())
+        else:
+            raise
+
+    # copy index
+    try:
+        ret = from_client.get_index_config(from_project, from_logstore)
+        ret = to_client.create_index(to_project, to_logstore, ret.get_index_config())
+    except LogException as ex:
+        if ex.get_error_code() == 'IndexConfigNotExist':
+            # source has no index
+            pass
+        elif ex.get_error_code() == 'IndexAlreadyExist':
+            # target already has index, overwrite it
+            ret = to_client.update_index(to_project, to_logstore, ret.get_index_config())
+            pass
+        else:
+            raise
+
+    # list logtail config linked to the logstore and copy them
+    default_fetch_size = 100
+    offset, size = 0, default_fetch_size
+    while True:
+        ret = from_client.list_logtail_config(from_project, offset=offset, size=size)
+        count = ret.get_configs_count()
+        total = ret.get_configs_total()
+
+        for config_name in ret.get_configs():
+            ret = from_client.get_logtail_config(from_project, config_name)
+            config = ret.logtail_config
+            if config.logstore_name != from_logstore:
+                continue
+
+            config.config_name = to_logstore + '_' + config_name
+            config.logstore_name = to_logstore
+            ret = to_client.create_logtail_config(to_project, config)
 
         offset += count
         if count < size or offset >= total:
@@ -165,62 +276,6 @@ def query_more(fn, offset, size, batch_size, *args):
             break
 
     return response
-
-
-def list_logstore_all(client, project):
-    """
-    list all project
-    :type client: LogClient
-    :param client: logclient instance
-
-    :return:
-    """
-
-    default_fetch_size = 100
-
-    # list logstore and copy them
-    offset, size = 0, default_fetch_size
-    response = None
-    while True:
-        ret = client.list_logstores(project, offset=offset, size=size)
-        if response is None:
-            response = ret
-        else:
-            response.merge(ret)
-
-        count = ret.get_count()
-        total = ret.get_total()
-        offset += count
-        if count < size or offset >= total:
-            break
-
-
-def list_logtail_config_all(client, project):
-    """
-    list all project
-    :type client: LogClient
-    :param client: logclient instance
-
-    :return:
-    """
-
-    default_fetch_size = 100
-
-    # list logstore and copy them
-    offset, size = 0, default_fetch_size
-    response = None
-    while True:
-        ret = client.list_logtail_config(project, offset=offset, size=size)
-        if response is None:
-            response = ret
-        else:
-            response.merge(ret)
-
-        count = ret.get_count()
-        total = ret.get_total()
-        offset += count
-        if count < size or offset >= total:
-            break
 
 
 def worker(client, project_name, logstore_name, from_time, to_time,

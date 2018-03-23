@@ -341,6 +341,7 @@ def main():
         # test copy project
         try:
             client.copy_project(project, project_new, copy_machine_group=True)
+            client.copy_logstore(project, logstore, logstore+"_copied", to_project=project_new)
         except Exception as ex:
             print(ex)
         finally:
