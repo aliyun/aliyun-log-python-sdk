@@ -390,10 +390,10 @@ class LogClient(object):
         :param logstore: logstore name
 
         :type from_time: int/string
-        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type to_time: int/string
-        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type topic: string
         :param topic: topic name of logs, could be None
@@ -486,10 +486,10 @@ class LogClient(object):
         :param logstore: logstore name
 
         :type from_time: int/string
-        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type to_time: int/string
-        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type topic: string
         :param topic: topic name of logs, could be None
@@ -760,10 +760,10 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :type from_time: string/int
-        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type to_time: string/int
-        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type batch_size: int
         :param batch_size: batch size to fetch the data in each iteration. by default it's 1000
@@ -799,10 +799,10 @@ class LogClient(object):
         :param logstore_name: the logstore name
 
         :type from_time: string/int
-        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type to_time: string/int
-        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10"
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST"
 
         :type file_path: string
         :param file_path: file path with {} for shard id. e.g. "/data/dump_{}.data", {} will be replaced with each partition.
@@ -2186,16 +2186,13 @@ class LogClient(object):
         :param from_logstore: logstore name
 
         :type to_logstore: string
-        :param to_logstore: logstore name
+        :param to_logstore: target logstore name
 
         :type to_project: string
-        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+        :param to_project: target project name, copy to same project if not being specified, will try to create it if not being specified
 
         :type to_client: LogClient
-        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
-
-        :type apply_machine_group: bool
-        :param apply_machine_group: if apply config to same machine group resources, False by default.
+        :param to_client: logclient instance, use it to operate on the "to_project" if being specified for cross region purpose
 
         :return:
         """

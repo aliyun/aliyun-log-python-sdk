@@ -122,16 +122,13 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
     :param from_logstore: logstore name
 
     :type to_logstore: string
-    :param to_logstore: logstore name
+    :param to_logstore: target logstore name
 
     :type to_project: string
     :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
 
     :type to_client: LogClient
     :param to_client: logclient instance, use it to operate on the "to_project" if being specified
-
-    :type apply_machine_group: bool
-    :param apply_machine_group: if apply config to same machine group resources, False by default.
 
     :return:
     """
