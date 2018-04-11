@@ -27,6 +27,7 @@ Don't want to write code? Try the [CLI](http://aliyun-log-cli.readthedocs.io/en/
 5. Support API to do batch query and data consumption
 6. Use exception to uncover errors
 7. Support high level API for consumer group
+8. Python Logging handler util
 
 ### Supported Python：
 
