@@ -60,7 +60,8 @@ def main():
 
         # test using file to configure logger
         os.environ['ALIYUN_LOG_SAMPLE_TMP_PROJECT'] = project
-        logging.config.fileConfig('logging.conf')
+        config_path = os.sep.join([os.path.dirname(__file__), 'logging.conf'])
+        logging.config.fileConfig(config_path)
 
         # create logger
         logger = logging.getLogger('sls')
