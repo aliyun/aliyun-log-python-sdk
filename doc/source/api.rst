@@ -15,6 +15,14 @@ Main Class
    LogResponse
 
 
+Logging Handler Class
+--------------------------
+.. py:currentmodule:: aliyun.log
+.. autosummary::
+   QueuedLogHandler
+   LogFields
+
+
 Request and Config Class
 --------------------------
 .. py:currentmodule:: aliyun.log
@@ -429,5 +437,8 @@ Definitions
    :members:
 .. autoclass:: ListEntityResponse
    :members:
+
+.. autoclass:: QueuedLogHandler
+.. autoclass:: LogFields
 
 

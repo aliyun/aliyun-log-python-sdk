@@ -20,6 +20,9 @@
 import os
 import sys
 import six
+from pathlib import Path
+import pypandoc
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 
@@ -184,10 +187,30 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-import pypandoc
-if six.PY3:
-    open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst'))
-    open("README_CN.rst", "w").write(pypandoc.convert('../../README_CN.md', 'rst'))
-else:
-    open("README.rst", "w").write(pypandoc.convert('../../README.md', 'rst').encode('utf8'))
-    open("README_CN.rst", "w").write(pypandoc.convert('../../README_CN.md', 'rst').encode('utf8'))
+
+def convert_file(src_file, target_folder='.'):
+    file_name = os.path.basename(src_file)
+    new_file_name = os.path.splitext(file_name)[0] + '.rst'
+    new_file_path = os.path.sep.join([target_folder, new_file_name])
+
+    print("**** convert: " + src_file + " to " + new_file_path)
+    if six.PY3:
+        open(new_file_path, "w").write(pypandoc.convert(src_file, 'rst'))
+    else:
+        open(new_file_path, "w").write(pypandoc.convert(src_file, 'rst').encode('utf8'))
+
+
+convert_file('../../README.md')
+convert_file('../../README_CN.md')
+
+
+def convert_folder(folder_path, target_folder=None):
+    target_folder = target_folder or folder_path
+    pathlist = Path(folder_path).glob('**/*.md')
+    for path in pathlist:
+        path_in_str = str(path)
+        convert_file(path_in_str, target_folder)
+
+
+convert_folder('../tutorials', './tutorials')
+

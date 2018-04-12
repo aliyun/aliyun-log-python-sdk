@@ -11,6 +11,7 @@ Aliyun Log Python SDK
 
    README.rst
    README_CN.rst
+   tutorials/tutorial_cn.rst
    api.rst
 
 
