@@ -1,3 +1,4 @@
 sphinxcontrib-github_ribbon
 pypandoc
 six
+pathlib
