@@ -1,9 +1,10 @@
 #encoding: utf8
 
-from aliyun.log.logger_hanlder import SimpleLogHandler, LogFields, QueuedLogHandler
+from aliyun.log.logger_hanlder import LogFields, QueuedLogHandler
 from test_logtail_config import clean_project
 from aliyun.log import LogClient
 import logging
+import logging.config
 import os
 from time import time, sleep
 
@@ -56,9 +57,19 @@ def main():
             print(x.get_flatten_logs_json())
             assert len(x.get_flatten_logs_json()) == 10
             break
+
+        # test using file to configure logger
+        os.environ['ALIYUN_LOG_SAMPLE_TMP_PROJECT'] = project
+        logging.config.fileConfig('logging.conf')
+
+        # create logger
+        logger = logging.getLogger('sls')
+        logger.info("log hanlder test via config file")
+
+        sleep(20)
+
     finally:
         clean_project(client, project)
-
 
 if __name__ == '__main__':
     main()

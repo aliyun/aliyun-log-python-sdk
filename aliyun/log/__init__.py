@@ -31,3 +31,6 @@ from .pulllog_response import PullLogResponse
 from .shard_response import *
 from .shipper_response import *
 from .common_response import *
+
+# logging handler
+from .logger_hanlder import QueuedLogHandler, LogFields

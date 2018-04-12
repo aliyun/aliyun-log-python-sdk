@@ -14,6 +14,12 @@ else:
 
 
 class LogFields(Enum):
+    """fields used to upload automatically
+    Possible fields:
+    record_name, level, func_name, module,
+    file_path, line_no, process_id,
+    process_name, thread_id, thread_name
+    """
     record_name = 'name'
     level = 'levelname'
     func_name = 'funcName'
@@ -27,7 +33,27 @@ class LogFields(Enum):
 
 
 class SimpleLogHandler(logging.Handler, object):
-    def __init__(self, end_point, access_key_id, access_key, project, log_store, **kwargs):
+    """
+    SimpleLogHandler, blocked sending any logs, just for simple test purpose
+
+    :param end_point: log service endpoint
+
+    :param access_key_id: access key id
+
+    :param access_key: access key
+
+    :param project: project name
+
+    :param log_store: logstore name
+
+    :param topic: topic, by default is empty
+
+    :param fields: list of LogFields or list of names of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
+
+    :param kwargs: other parameters  passed to logging.Handler
+    """
+
+    def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None, **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
         self.access_key_id = access_key_id
@@ -35,12 +61,12 @@ class SimpleLogHandler(logging.Handler, object):
         self.project = project
         self.log_store = log_store
         self.client = None
-        self.topic = None
+        self.topic = topic
         self.fields = (LogFields.record_name, LogFields.level,
                        LogFields.func_name, LogFields.module,
                        LogFields.file_path, LogFields.line_no,
                        LogFields.process_id, LogFields.process_name,
-                       LogFields.thread_id, LogFields.thread_name)
+                       LogFields.thread_id, LogFields.thread_name) if fields is None else fields
 
     def set_topic(self, topic):
         self.topic = topic
@@ -59,6 +85,9 @@ class SimpleLogHandler(logging.Handler, object):
     def make_request(self, record):
         contents = [('message', self.format(record))]
         for x in self.fields:
+            if isinstance(x, (six.binary_type, six.text_type)):
+                x = LogFields[x]
+
             v = getattr(record, x.value)
             if not isinstance(v, (six.binary_type, six.text_type)):
                 v = str(v)
@@ -77,8 +106,37 @@ class SimpleLogHandler(logging.Handler, object):
 
 
 class QueuedLogHandler(SimpleLogHandler):
-    def __init__(self, end_point, access_key_id, access_key, project, log_store, queue_size=None, put_wait=None, close_wait=None, batch_size=None, **kwargs):
-        super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store, **kwargs)
+    """
+    Queued Log Handler, tuned async log handler.
+    :param end_point: log service endpoint
+
+    :param access_key_id: access key id
+
+    :param access_key: access key
+
+    :param project: project name
+
+    :param log_store: logstore name
+
+    :param topic: topic, default is empty
+
+    :param fields: list of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
+
+    :param queue_size: queue size, default is 4096 logs
+
+    :param put_wait: maximum delay to send the logs, by default 2 seconds
+
+    :param close_wait: when program exit, it will try to send all logs in queue in this timeperiod, by default 5 seconds
+
+    :param batch_size: merge this cound of logs and send them batch, by default min(1024, queue_size)
+
+    :param kwargs: other parameters  passed to logging.Handler
+    """
+
+    def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None,
+                 queue_size=None, put_wait=None, close_wait=None, batch_size=None, **kwargs):
+        super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store,
+                                               topic=topic, fields=fields, **kwargs)
         self.stop_flag = False
         self.stop_time = None
         self.put_wait = put_wait or 2                           # default is 2 seconds
@@ -150,3 +208,4 @@ class QueuedLogHandler(SimpleLogHandler):
                 self.send(req)
             except Exception as ex:
                 self.handleError(req.__record__)
+
