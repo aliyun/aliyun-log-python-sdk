@@ -45,11 +45,11 @@ def main():
     try:
         print("****create logstore", logstore)
         client.create_logstore(project, logstore, 1, 1)
-        sleep(40)
+        sleep(60)
 
         test_log_handler(endpoint, accessKeyId, accessKey, project, logstore)
 
-        sleep(20)
+        sleep(60)
 
         res = client.pull_log(project, logstore, 0, time() - 3600, time())
         for x in res:

@@ -26,7 +26,7 @@ class LogFields(Enum):
     thread_name = 'threadName'
 
 
-class SimpleLogHandler(logging.Handler):
+class SimpleLogHandler(logging.Handler, object):
     def __init__(self, end_point, access_key_id, access_key, project, log_store, **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
