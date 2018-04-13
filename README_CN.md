@@ -114,7 +114,7 @@ res.log_print()
 - 创建
 
 ```python
-res = client.create_project("new_project", "a simple project"")
+res = client.create_project("project1", "a simple project")
 res.log_print()
 ```
 
