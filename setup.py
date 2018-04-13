@@ -57,11 +57,11 @@ classifiers = [
             'Programming Language :: Python :: Implementation :: PyPy'
     ]
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-except(IOError, ImportError):
-    long_description = open('README.md', 'rb').read().decode('utf8')
+
+long_description = """
+Python SDK for Alicloud Log Service 
+http://aliyun-log-python-sdk.readthedocs.io
+"""
 
 setup(
       name='aliyun-log-python-sdk',
