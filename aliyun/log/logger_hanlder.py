@@ -6,6 +6,8 @@ from threading import Thread
 import atexit
 from time import time
 from enum import Enum
+from .version import LOGGING_HANDLER_USER_AGENT
+
 import six
 if six.PY2:
     from Queue import Empty, Full, Queue
@@ -73,6 +75,7 @@ class SimpleLogHandler(logging.Handler, object):
 
     def create_client(self):
         self.client = LogClient(self.end_point, self.access_key_id, self.access_key)
+        self.client.set_user_agent(LOGGING_HANDLER_USER_AGENT)
 
     def send(self, req):
         if self.client is None:

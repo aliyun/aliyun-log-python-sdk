@@ -6,6 +6,7 @@ from .exceptions import CheckPointException
 from .exceptions import ClientWorkerException
 from ..logexception import LogException
 from .. import LogClient
+from ..version import CONSUMER_LIB_USER_AGENT
 
 
 class ConsumerClient(object):
@@ -13,6 +14,7 @@ class ConsumerClient(object):
                  logstore, consumer_group, consumer, security_token=None):
 
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token)
+        self.mclient.set_user_agent(CONSUMER_LIB_USER_AGENT)
         self.mproject = project
         self.mlogstore = logstore
         self.mconsumer_group = consumer_group
