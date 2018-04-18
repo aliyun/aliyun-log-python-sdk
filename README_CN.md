@@ -680,6 +680,165 @@ res.log_print();
 
   消费者需要通过`update_check_point`来存储和更新消费检查点(Checkpoint)
 
+## 报表管理
+管理报表
+
+- 获取列表
+
+  通过`list_dashboard`获取报表的列表
+
+- 创建报表
+
+  通过`create_dashboard`创建一个报表. 传入的结构是一个字典对象，如下：
+  
+```python
+{
+  "charts": [
+    {
+      "display": {
+        "displayName": "",
+        "height": 5,
+        "width": 5,
+        "xAxis": [
+          "province"
+        ],
+        "xPos": 0,
+        "yAxis": [
+          "pv"
+        ],
+        "yPos": 0
+      },
+      "search": {
+        "end": "now",
+        "logstore": "access-log",
+        "query": "method:  GET  | select  ip_to_province(remote_addr) as province , count(1) as pv group by province order by pv desc ",
+        "start": "-86400s",
+        "topic": ""
+      },
+      "title": "map",
+      "type": "map"
+    },
+    {
+      "display": {
+        "displayName": "",
+        "height": 5,
+        "width": 5,
+        "xAxis": [
+          "province"
+        ],
+        "xPos": 5,
+        "yAxis": [
+          "pv"
+        ],
+        "yPos": 0
+      },
+      "search": {
+        "end": "now",
+        "logstore": "access-log",
+        "query": "method:  POST  | select  ip_to_province(remote_addr) as province , count(1) as pv group by province order by pv desc ",
+        "start": "-86400s",
+        "topic": ""
+      },
+      "title": "post_map",
+      "type": "map"
+    }
+  ],
+  "dashboardName": 'dashboard_1',
+  "description": ""
+}
+
+```
+
+- 获取报表
+
+  通过`get_dashboard`获取一个报表的具体信息.
+
+- 更新报表
+
+  通过`update_dashboard`更新一个报表，传入的结构与创建一样。
+
+- 删除报表
+
+  通过`delete_dashboard`删除一个报表.
+
+## 报警管理
+管理报警
+
+- 获取报警
+
+  通过`list_alert`获取报警的列表
+
+- 创建报警
+
+  通过`create_alert`创建一个报警. 传入的结构是一个字典对象，如下：
+  
+```python
+{
+  "actionDetail": {
+    "message": "xxxxxxx simple test"
+  },
+  "actionType": "notification",
+  "alertDetail": {
+    "alertKey": "f2",
+    "alertValue": "200",
+    "comparator": ">"
+  },
+  "checkInterval": 5,
+  "count": 10,
+  "from": "-300s",
+  "roleArn": "acs:ram::12345678:role/aliyunlogreadrole",
+  "savedsearchName": "quck-query-all",
+  "to": "now",
+  "alertName": 'alert_1'
+}
+```
+
+- 获取报警
+
+  通过`get_alert`获取一个报警的具体信息.
+
+- 更新报警
+
+  通过`update_alert`更新一个报警，传入的结构与创建一样。
+
+- 删除报警
+
+  通过`delete_alert`删除一个报警.
+
+## 快速查询管理
+管理快速查询
+
+- 获取快速查询
+
+  通过`list_savedsearch`获取快速查询的列表
+
+- 创建快速查询
+
+  通过`create_savedsearch`创建一个快速查询. 传入的结构是一个字典对象，如下：
+  
+```python
+{
+    "logstore": "test2",
+    "savedsearchName": 'search_1',
+    "searchQuery": "boy | select sex, count() as Count group by sex",
+    "topic": ""
+}
+```
+
+- 获取快速查询
+
+  通过`get_savedsearch`获取一个快速查询的具体信息.
+
+- 更新快速查询
+
+  通过`update_savedsearch`更新一个快速查询，传入的结构与创建一样。
+
+- 删除快速查询
+
+  通过`delete_savedsearch`删除一个快速查询.
+
+
+
 ## 投递管理
 投递的配置一般称为Job, 包含了投递的具体配置以及调度日程安排. 而某一个具体时间的运行实例称为Task.
 
@@ -713,7 +872,7 @@ res.log_print();
 
 
 ## 最佳实践
-- [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/en/latest/tutorials/tutorial_logging_handler.html)
+- [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
 
 
 ## 其他资源：
