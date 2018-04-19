@@ -13,6 +13,7 @@ from .shipper_config import ShipperTask, OssShipperConfig, OdpsShipperConfig
 from .version import __version__
 from .logitem import LogItem
 from .consumer_group_request import *
+from .external_store_config import * 
 
 # response class
 from .consumer_group_response import *
@@ -31,6 +32,7 @@ from .pulllog_response import PullLogResponse
 from .shard_response import *
 from .shipper_response import *
 from .common_response import *
+from .external_store_config_response import * 
 
 # logging handler
 from .logger_hanlder import QueuedLogHandler, LogFields

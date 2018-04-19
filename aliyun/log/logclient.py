@@ -981,6 +981,129 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
 
+    def create_external_store(self, project_name, externalStoreConfig):
+        """ create log store 
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :type externalStoreConfig : ExternalStoreConfig 
+        :param externalStoreConfig :external store config 
+
+
+        :return: CreateExternalStoreResponse
+        
+        :raise: LogException
+        """
+        params = {}
+        resource = "/externalstores"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+
+        body_str = six.b(json.dumps(externalStoreConfig.to_json()))
+
+        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+        return CreateExternalStoreResponse(header, resp)
+
+    def delete_external_store(self, project_name, external_store_name):
+        """ delete log store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :type external_store_name: string
+        :param external_store_name: the external store name
+
+        :return: DeleteExternalStoreResponse
+        
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/externalstores/" + external_store_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteExternalStoreResponse(header, resp)
+
+    def get_external_store(self, project_name, logstore_name):
+        """ get the logstore meta info
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetLogStoreResponse
+        
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/externalstores/" + logstore_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetExternalStoreResponse(resp, header)
+
+    def update_external_store(self, project_name, externalStoreConfig):
+        """ 
+        update the logstore meta info
+        Unsuccessful opertaion will cause an LogException.
+
+        :type externalStoreConfig: ExternalStoreConfig 
+        :param externalStoreConfig : external store config 
+
+        :return: UpdateExternalStoreResponse
+        
+        :raise: LogException
+        """
+
+
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        params = {}
+        resource = "/externalstores/" +externalStoreConfig.externalStoreName 
+        body_str = six.b(json.dumps(externalStoreConfig.to_json()))
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateExternalStoreResponse(header, resp)
+
+    def list_external_store(self, project_name, external_store_name_pattern=None, offset=0, size=100):
+        """ list the logstore in a projectListLogStoreResponse
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name_pattern: string
+        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names contain this sub name
+
+        :type offset: int
+        :param offset: the offset of all the matched names
+
+        :type size: int
+        :param size: the max return names count, -1 means all
+
+        :return: ListLogStoreResponse
+
+        :raise: LogException
+        """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_external_store, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, external_store_name_pattern)
+
+        headers = {}
+        params = {}
+        resource = "/externalstores"
+        if external_store_name_pattern is not None:
+            params['externalStoreName'] = external_store_name_pattern
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListExternalStoreResponse(resp, header)
+
+
     def list_shards(self, project_name, logstore_name):
         """ list the shard meta of a logstore
         Unsuccessful opertaion will cause an LogException.

@@ -273,6 +273,18 @@ def sample_get_project_log(client,project,logstore):
     res = client.get_project_logs(req)
     res.log_print()
 
+def sample_external_store(client,project):
+    res = client.create_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","47.104.78.128","3306","root","sfdsfldsfksflsdfs","meta","join_meta"));
+    res.log_print()
+    res = client.update_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","47.104.78.128","3306","root","sfdsfldsfksflsdfs","meta","join_meta"));
+    res.log_print()
+    res = client.get_external_store(project,"rds_store");
+    res.log_print()
+    res = client.list_external_store(project,"");
+    res.log_print();
+    res = client.delete_external_store(project,"rds_store")
+    res.log_print();
+
 
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
