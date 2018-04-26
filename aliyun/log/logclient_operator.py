@@ -277,22 +277,31 @@ def query_more(fn, offset, size, batch_size, *args):
 
 def worker(client, project_name, logstore_name, from_time, to_time,
            shard_id, file_path,
-           batch_size=1000, compress=True):
+           batch_size=1000, compress=True, encodings=None):
     res = client.pull_log(project_name, logstore_name, shard_id, from_time, to_time, batch_size=batch_size,
                           compress=compress)
+    encodings = encodings or ('utf8', 'latin1', 'gbk')
 
     count = 0
     for data in res:
         for log in data.get_flatten_logs_json():
             with open(file_path, "a+") as f:
                 count += 1
-                f.write(json.dumps(log))
-                f.write("\n")
+                last_ex = None
+                for encoding in encodings:
+                    try:
+                        f.write(json.dumps(log, encoding=encoding))
+                        f.write("\n")
+                        break
+                    except UnicodeDecodeError as ex:
+                        last_ex = ex
+                else:
+                    raise last_ex
 
     return file_path, count
 
 
-def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True):
+def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True, encodings=None):
     cpu_count = multiprocessing.cpu_count() * 2
     shards = client.list_shards(project_name, logstore_name).get_shards_info()
     worker_size = min(cpu_count, len(shards))
@@ -302,7 +311,7 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
         futures = [pool.submit(worker, client, project_name, logstore_name, from_time, to_time,
                                shard_id=shard['shardID'], file_path=file_path.format(shard['shardID']),
-                               batch_size=batch_size, compress=compress)
+                               batch_size=batch_size, compress=compress, encodings=encodings)
                    for shard in shards]
 
         for future in as_completed(futures):

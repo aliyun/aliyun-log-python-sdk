@@ -789,7 +789,7 @@ class LogClient(object):
             begin_cursor = res.get_next_cursor()
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=500,
-                      compress=True):
+                      compress=True, encodings=None):
         """ dump all logs seperatedly line into file_path, file_path
 
         :type project_name: string
@@ -813,6 +813,9 @@ class LogClient(object):
         :type compress: bool
         :param compress: if use compression, by default it's True
 
+        :type encodings: string list
+        :param compress: encoding like ["utf8", "latin1"] etc to dumps the logs in json format to file. default is ["utf8",]
+
         :return: None
 
         :raise: LogException
@@ -821,7 +824,7 @@ class LogClient(object):
             file_path += "{}"
 
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
-                             batch_size=batch_size, compress=compress)
+                             batch_size=batch_size, compress=compress, encodings=encodings)
 
     def create_logstore(self, project_name, logstore_name, ttl=30, shard_count=2, enable_tracking=False):
         """ create log store 
