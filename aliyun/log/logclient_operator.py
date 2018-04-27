@@ -5,6 +5,7 @@ from aliyun.log import *
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
+from json import JSONEncoder
 
 MAX_INIT_SHARD_COUNT = 10
 
@@ -275,6 +276,22 @@ def query_more(fn, offset, size, batch_size, *args):
     return response
 
 
+def get_encoder_cls(encodings):
+    class NonUtf8Encoder(JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, six.binary_type):
+                for encoding in encodings:
+                    try:
+                        return obj.decode(encoding)
+                    except UnicodeDecodeError as ex:
+                        pass
+                return obj.decode('utf8', "ignore")
+
+            return JSONEncoder.default(self, obj)
+
+    return NonUtf8Encoder
+
+
 def worker(client, project_name, logstore_name, from_time, to_time,
            shard_id, file_path,
            batch_size=1000, compress=True, encodings=None):
@@ -287,16 +304,22 @@ def worker(client, project_name, logstore_name, from_time, to_time,
         for log in data.get_flatten_logs_json():
             with open(file_path, "a+") as f:
                 count += 1
-                last_ex = None
-                for encoding in encodings:
-                    try:
-                        f.write(json.dumps(log, encoding=encoding))
-                        f.write("\n")
-                        break
-                    except UnicodeDecodeError as ex:
-                        last_ex = ex
+
+                if six.PY2:
+                    last_ex = None
+                    for encoding in encodings:
+                        try:
+                            f.write(json.dumps(log, encoding=encoding))
+                            f.write("\n")
+                            break
+                        except UnicodeDecodeError as ex:
+                            last_ex = ex
+                    else:
+                        raise last_ex
                 else:
-                    raise last_ex
+                    f.write(json.dumps(log, cls=get_encoder_cls(encodings)))
+                    f.write("\n")
+
 
     return file_path, count
 
