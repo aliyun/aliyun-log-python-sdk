@@ -814,7 +814,7 @@ class LogClient(object):
         :param compress: if use compression, by default it's True
 
         :type encodings: string list
-        :param compress: encoding like ["utf8", "latin1"] etc to dumps the logs in json format to file. default is ["utf8",]
+        :param encodings: encoding like ["utf8", "latin1"] etc to dumps the logs in json format to file. default is ["utf8",]
 
         :return: None
 
