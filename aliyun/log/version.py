@@ -1,4 +1,4 @@
-__version__ = '0.6.28'
+__version__ = '0.6.29'
 USER_AGENT = 'log-python-sdk-v-' + __version__
 LOGGING_HANDLER_USER_AGENT = 'logging-handler, ' + USER_AGENT
 CONSUMER_LIB_USER_AGENT = 'consumer-lib, ' + USER_AGENT

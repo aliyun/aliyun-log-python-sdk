@@ -269,21 +269,25 @@ def sample_crud_consumer_group(client, project, logstore, consumer_group):
 
 
 def sample_get_project_log(client,project,logstore):
-    req = GetProjectLogsRequest(project,"select count(1) from %s where __date__ >'2017-11-10 00:00:00' and __date__ < '2017-11-13 00:00:00'" %(logstore));
+    req = GetProjectLogsRequest(project,"select count(1) from %s where __date__ >'2017-11-10 00:00:00' and __date__ < '2017-11-13 00:00:00'" %(logstore))
     res = client.get_project_logs(req)
     res.log_print()
 
+
 def sample_external_store(client,project):
-    res = client.create_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","47.104.78.128","3306","root","sfdsfldsfksflsdfs","meta","join_meta"));
+    res = client.create_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","1.2.3.4","3306","root","123456","meta","join_meta"))
     res.log_print()
-    res = client.update_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","47.104.78.128","3306","root","sfdsfldsfksflsdfs","meta","join_meta"));
+    time.sleep(20)
+
+    res = client.list_external_store(project,"")
     res.log_print()
-    res = client.get_external_store(project,"rds_store");
+    res = client.update_external_store(project,ExternalStoreConfig("rds_store","cn-qingdao","rds-vpc","vpc-m5eq4irc1pucpk85frr5j","i-m5eeo2whsnfg4kzq54ah","1.2.3.4","3306","root","123456","meta","join_meta"))
     res.log_print()
-    res = client.list_external_store(project,"");
-    res.log_print();
+    res = client.get_external_store(project,"rds_store")
+    res.log_print()
+
     res = client.delete_external_store(project,"rds_store")
-    res.log_print();
+    res.log_print()
 
 
 def main():
@@ -348,6 +352,9 @@ def main():
 
         time.sleep(10)
         sample_crud_consumer_group(client, project, logstore, consumer_group)
+        time.sleep(10)
+
+        sample_external_store(client, project)
         time.sleep(10)
 
         # test copy project

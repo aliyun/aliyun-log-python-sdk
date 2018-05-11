@@ -837,6 +837,47 @@ res.log_print();
 
   通过`delete_savedsearch`删除一个快速查询.
 
+## 外部存储管理
+管理外部存储, 参考[文章](https://help.aliyun.com/document_detail/70479.html)
+
+- 获取外部存储列表
+
+  通过`list_external_store`获取快速查询的列表
+
+- 创建外部存储
+
+  通过`create_external_store`创建一个快速查询. 传入的结构是一个字典对象，如下：
+  
+```python
+{
+	"externalStoreName": "rds_store4",
+	"storeType": "rds-vpc",
+	"parameter": {
+		"vpc-id": "vpc-m5eq4irc1pucpk85frr5j",
+		"instance-id": "i-m5eeo2whsnfg4kzq54ah",
+		"host": "1.2.3.4",
+		"port": "3306",
+		"username": "root",
+		"password": "123",
+		"db": "meta",
+		"table": "join_meta",
+		"region": "cn-qingdao"
+	}
+}
+```
+
+- 获取外部存储
+
+  通过`get_external_store`获取一个快速查询的具体信息.
+
+- 更新外部存储
+
+  通过`update_external_store`更新一个快速查询，传入的结构与创建一样。
+
+- 删除外部存储
+
+  通过`delete_external_store`删除一个快速查询.
+
 
 
 ## 投递管理

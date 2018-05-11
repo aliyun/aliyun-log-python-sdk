@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 
 # Copyright (C) Alibaba Cloud Computing
@@ -54,15 +53,15 @@ class GetExternalStoreResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.externalStoreConfig = ExternalStoreConfig("","","","","","","","","","","")
-        self.externalStoreConfig.from_json(resp);
+        self.externalStoreConfig = ExternalStoreConfig("", "", "", "", "", "", "", "", "", "", "")
+        self.externalStoreConfig.from_json(resp)
 
     def get_external_store_config(self):
         """
 
         :return:
         """
-        return self.externalStoreConfig;
+        return self.externalStoreConfig
 
     def log_print(self):
         """
@@ -152,7 +151,7 @@ class ListExternalStoreResponse(LogResponse):
             raise ValueError("passed response is not a ListLogstoresResponse: " + str(type(response)))
 
         self.count += response.get_count()
-        self.total = response.get_total() # use the latest total count
+        self.total = response.get_total()  # use the latest total count
         self.logstores.extend(response.get_logstores())
 
         # update body

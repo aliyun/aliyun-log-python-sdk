@@ -43,6 +43,8 @@ from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .external_store_config import ExternalStoreConfig
+from .external_store_config_response import *
 
 CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
@@ -984,15 +986,15 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
 
-    def create_external_store(self, project_name, externalStoreConfig):
+    def create_external_store(self, project_name, config):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
 
-        :type externalStoreConfig : ExternalStoreConfig 
-        :param externalStoreConfig :external store config 
+        :type config : ExternalStoreConfig
+        :param config :external store config
 
 
         :return: CreateExternalStoreResponse
@@ -1003,20 +1005,20 @@ class LogClient(object):
         resource = "/externalstores"
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
 
-        body_str = six.b(json.dumps(externalStoreConfig.to_json()))
+        body_str = six.b(json.dumps(config.to_json()))
 
         (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
         return CreateExternalStoreResponse(header, resp)
 
-    def delete_external_store(self, project_name, external_store_name):
+    def delete_external_store(self, project_name, store_name):
         """ delete log store
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
 
-        :type external_store_name: string
-        :param external_store_name: the external store name
+        :type store_name: string
+        :param store_name: the external store name
 
         :return: DeleteExternalStoreResponse
         
@@ -1024,19 +1026,19 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        resource = "/externalstores/" + external_store_name
+        resource = "/externalstores/" + store_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteExternalStoreResponse(header, resp)
 
-    def get_external_store(self, project_name, logstore_name):
+    def get_external_store(self, project_name, store_name):
         """ get the logstore meta info
         Unsuccessful opertaion will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
 
-        :type logstore_name: string
-        :param logstore_name: the logstore name
+        :type store_name: string
+        :param store_name: the logstore name
 
         :return: GetLogStoreResponse
         
@@ -1045,17 +1047,22 @@ class LogClient(object):
 
         headers = {}
         params = {}
-        resource = "/externalstores/" + logstore_name
+        resource = "/externalstores/" + store_name
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+
+        # add storeName if not existing
+        if 'externalStoreName' not in resp:
+            resp['externalStoreName'] = store_name
+
         return GetExternalStoreResponse(resp, header)
 
-    def update_external_store(self, project_name, externalStoreConfig):
+    def update_external_store(self, project_name, config):
         """ 
         update the logstore meta info
         Unsuccessful opertaion will cause an LogException.
 
-        :type externalStoreConfig: ExternalStoreConfig 
-        :param externalStoreConfig : external store config 
+        :type config: ExternalStoreConfig
+        :param config : external store config
 
         :return: UpdateExternalStoreResponse
         
@@ -1065,8 +1072,8 @@ class LogClient(object):
 
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
-        resource = "/externalstores/" +externalStoreConfig.externalStoreName 
-        body_str = six.b(json.dumps(externalStoreConfig.to_json()))
+        resource = "/externalstores/" + config.externalStoreName
+        body_str = six.b(json.dumps(config.to_json()))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateExternalStoreResponse(header, resp)
 
