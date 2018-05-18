@@ -129,3 +129,46 @@ formatter=rawFormatter
 args=('cn-beijing.log.aliyuncs.com', 'ak_id', 'ak_key', 'project1', "logstore1", 'mytopic', ['level', 'func_name', 'module', 'line_no']  )
 
 ```
+
+## 使用JSON配置
+如果期望更加灵活的配置, 也可以使用代码配置, 如下
+
+```python
+
+#encoding: utf8
+import logging, logging.config, os
+
+# 配置
+conf = {'version': 1,
+        'formatters': {'rawformatter': {'class': 'logging.Formatter',
+                                        'format': '%(message)s'}
+                       },
+        'handlers': {'sls_handler': {'()':
+                                     'aliyun.log.QueuedLogHandler',
+                                     'level': 'INFO',
+                                     'formatter': 'rawformatter',
+
+                                     # custom args:
+                                     'end_point': os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', ''),
+                                     'access_key_id': os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', ''),
+                                     'access_key': os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', ''),
+                                     'project': 'dlq-test-sls-project1',
+                                     'log_store': "test1"
+                                     }
+                     },
+        'loggers': {'sls': {'handlers': ['sls_handler', ],
+                                   'level': 'INFO',
+                                   'propagate': False}
+                    }
+        }
+logging.config.dictConfig(conf)
+
+# 使用
+logger = logging.getLogger('sls')
+logger.info("Hello world")
+
+```
+
+需要注意里面`QueuedLogHandler`的初始化方式, 用的是传入命名参数的方式. 具体参数列表可以参考[这里](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.QueuedLogHandler).
+更多关于Python的`dictConfig`, 参考[这里](https://docs.python.org/2/library/logging.config.html#logging.config.dictConfig).
+
