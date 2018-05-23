@@ -58,7 +58,7 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
 
-    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is "message_"
+    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is ""
 
     :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
 
@@ -73,6 +73,8 @@ class SimpleLogHandler(logging.Handler, object):
                  extract_json=None, extract_json_drop_message=None,
                  extract_json_prefix=None, extract_json_suffix=None,
                  buildin_fields_prefix=None, buildin_fields_suffix=None,
+                 extract_kv=None, extract_kv_drop_message=None,
+                 extract_kv_prefix=None, extract_kv_suffix=None,
                  **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
@@ -89,11 +91,16 @@ class SimpleLogHandler(logging.Handler, object):
                        LogFields.thread_id, LogFields.thread_name) if fields is None else fields
 
         self.extract_json = False if extract_json is None else extract_json
-        self.extract_json_prefix = "message_" if extract_json_prefix is None else extract_json_prefix
+        self.extract_json_prefix = "" if extract_json_prefix is None else extract_json_prefix
         self.extract_json_suffix = "" if extract_json_suffix is None else extract_json_suffix
         self.extract_json_drop_message = False if extract_json_drop_message is None else extract_json_drop_message
         self.buildin_fields_prefix = "" if buildin_fields_prefix is None else buildin_fields_prefix
         self.buildin_fields_suffix = "" if buildin_fields_suffix is None else buildin_fields_suffix
+
+        self.extract_kv = False if extract_kv is None else extract_kv
+        self.extract_kv_prefix = "" if extract_kv_prefix is None else extract_kv_prefix
+        self.extract_kv_suffix = "" if extract_kv_suffix is None else extract_kv_suffix
+        self.extract_kv_drop_message = False if extract_kv_drop_message is None else extract_kv_drop_message
 
     def set_topic(self, topic):
         self.topic = topic
@@ -133,6 +140,15 @@ class SimpleLogHandler(logging.Handler, object):
                                              self.extract_json_suffix), self._n(k)))
         return data
 
+    def extract_kv_str(self, message):
+        data = []
+        if isinstance(message, dict):
+            for k, v in six.iteritems(message):
+
+                data.append(("{}{}{}".format(self.extract_json_prefix, self._n(k),
+                                             self.extract_json_suffix), self._n(k)))
+        return data
+
     def make_request(self, record):
         contents = []
         message_field_name = "{}message{}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
@@ -140,6 +156,11 @@ class SimpleLogHandler(logging.Handler, object):
             contents.extend(self.extract_dict(record.msg))
 
             if not self.extract_json_drop_message:
+                contents.append((message_field_name, self.format(record)))
+        elif isinstance(record.msg, (six.text_type, six.binary_type)) and self.extract_kv:
+            contents.extend(self.extract_kv_str(record.msg))
+
+            if not self.extract_kv_drop_message:
                 contents.append((message_field_name, self.format(record)))
         else:
             contents = [(message_field_name, self.format(record))]
@@ -195,7 +216,7 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
 
-    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is "message_"
+    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is ""
 
     :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
 

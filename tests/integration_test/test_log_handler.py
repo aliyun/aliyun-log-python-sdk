@@ -89,15 +89,16 @@ def main():
 
         sleep(60)
 
-        test_log_handler_json(endpoint, accessKeyId, accessKey, project, logstore)
-
-        sleep(60)
-
         res = client.pull_log(project, logstore, 0, time() - 3600, time())
         for x in res:
             print(x.get_flatten_logs_json())
             assert len(x.get_flatten_logs_json()) == 10
             break
+
+        # test extract json
+        test_log_handler_json(endpoint, accessKeyId, accessKey, project, logstore)
+
+        sleep(60)
 
         # test using file to configure logger
         os.environ['ALIYUN_LOG_SAMPLE_TMP_PROJECT'] = project
