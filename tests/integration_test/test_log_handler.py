@@ -7,7 +7,7 @@ import logging
 import logging.config
 import os
 from time import time, sleep
-
+import six
 
 def test_log_handler(end_point, access_key_id, access_key, project, logstore):
     logger = logging.getLogger(__name__)
@@ -23,6 +23,43 @@ def test_log_handler(end_point, access_key_id, access_key, project, logstore):
     for i in range(10):
         logger.info("data %d" % i)
         print(i)
+
+    print("...finish... %s seconds" % (time() - s))
+
+
+def test_log_handler_json(end_point, access_key_id, access_key, project, logstore):
+    logger = logging.getLogger('json')
+
+    aliyun_logger = QueuedLogHandler(end_point, access_key_id, access_key, project, logstore,
+                                     extract_json=True,
+                                     extract_json_drop_message=True,
+                                     extract_json_prefix="",
+                                     buildin_fields_prefix='__',
+                                     buildin_fields_suffix='__'
+    )
+    aliyun_logger.setLevel(logging.INFO)
+    aliyun_logger.set_fields([LogFields.level, LogFields.func_name, LogFields.file_path])
+    aliyun_logger.set_topic("sdk test")
+    logger.addHandler(aliyun_logger)
+    logger.setLevel(logging.DEBUG)
+
+    data1 = {u'a':1, u'b': 2, u'中国':u"你好", u'你好': "中国"}
+    data2 = {u'a':1, u'b': 2, u'ww':u"你好", u'bb': "中国"}
+    data3 = {u'ww': u"你好", u'bb': "中国"}
+    data4 = "hello1"
+    data5 = {'hello2': "good", "line_no": 100}
+    data6 = {"hello3": 1000, "hell3_2": (1,2,3)}
+    data7 = {'hello4': {"a": 1, "b": 2}, "hello4_2": ["abc", "ddd"]}
+
+    s = time()
+
+    data = [data1, data2, data3, data4, data5, data6, data7]
+    for d in data:
+        logger.info(d)
+
+    if six.PY3:
+        d = {b'a': 1, b'b': 2, '中国'.encode('utf8'): "你好".encode('utf8'), u'你好': "中国"}
+        logger.info(d)
 
     print("...finish... %s seconds" % (time() - s))
 
@@ -49,6 +86,10 @@ def main():
         sleep(60)
 
         test_log_handler(endpoint, accessKeyId, accessKey, project, logstore)
+
+        sleep(60)
+
+        test_log_handler_json(endpoint, accessKeyId, accessKey, project, logstore)
 
         sleep(60)
 

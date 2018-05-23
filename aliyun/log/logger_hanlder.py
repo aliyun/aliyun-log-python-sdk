@@ -9,11 +9,13 @@ from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
 
 import six
+
 if six.PY2:
     from Queue import Empty, Full, Queue
 else:
     from queue import Empty, Full, Queue
 
+import json
 
 class LogFields(Enum):
     """fields used to upload automatically
@@ -26,7 +28,7 @@ class LogFields(Enum):
     level = 'levelname'
     func_name = 'funcName'
     module = 'module'
-    file_path  = 'pathname'
+    file_path = 'pathname'
     line_no = 'lineno'
     process_id = 'process'
     process_name = 'processName'
@@ -52,10 +54,26 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param fields: list of LogFields or list of names of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
 
+    :param extract_json: if extract json automatically, default is False
+
+    :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
+
+    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is "message_"
+
+    :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
+
+    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
-    def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None, **kwargs):
+    def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None,
+                 extract_json=None, extract_json_drop_message=None,
+                 extract_json_prefix=None, extract_json_suffix=None,
+                 buildin_fields_prefix=None, buildin_fields_suffix=None,
+                 **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
         self.access_key_id = access_key_id
@@ -69,6 +87,13 @@ class SimpleLogHandler(logging.Handler, object):
                        LogFields.file_path, LogFields.line_no,
                        LogFields.process_id, LogFields.process_name,
                        LogFields.thread_id, LogFields.thread_name) if fields is None else fields
+
+        self.extract_json = False if extract_json is None else extract_json
+        self.extract_json_prefix = "message_" if extract_json_prefix is None else extract_json_prefix
+        self.extract_json_suffix = "" if extract_json_suffix is None else extract_json_suffix
+        self.extract_json_drop_message = False if extract_json_drop_message is None else extract_json_drop_message
+        self.buildin_fields_prefix = "" if buildin_fields_prefix is None else buildin_fields_prefix
+        self.buildin_fields_suffix = "" if buildin_fields_suffix is None else buildin_fields_suffix
 
     def set_topic(self, topic):
         self.topic = topic
@@ -85,8 +110,41 @@ class SimpleLogHandler(logging.Handler, object):
     def set_fields(self, fields):
         self.fields = fields
 
+    @staticmethod
+    def _n(v):
+        if isinstance(v, (dict, list)):
+            try:
+                v = json.dumps(v)
+            except Exception:
+                pass
+        elif six.PY2 and isinstance(v, six.text_type):
+            v = v.encode('utf8', "ignore")
+        elif six.PY3 and isinstance(v, six.binary_type):
+            v = v.decode('utf8', "ignore")
+
+        return str(v)
+
+    def extract_dict(self, message):
+        data = []
+        if isinstance(message, dict):
+            for k, v in six.iteritems(message):
+
+                data.append(("{}{}{}".format(self.extract_json_prefix, self._n(k),
+                                             self.extract_json_suffix), self._n(k)))
+        return data
+
     def make_request(self, record):
-        contents = [('message', self.format(record))]
+        contents = []
+        message_field_name = "{}message{}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
+        if isinstance(record.msg, dict) and self.extract_json:
+            contents.extend(self.extract_dict(record.msg))
+
+            if not self.extract_json_drop_message:
+                contents.append((message_field_name, self.format(record)))
+        else:
+            contents = [(message_field_name, self.format(record))]
+
+        # add builtin fields
         for x in self.fields:
             if isinstance(x, (six.binary_type, six.text_type)):
                 x = LogFields[x]
@@ -94,7 +152,7 @@ class SimpleLogHandler(logging.Handler, object):
             v = getattr(record, x.value)
             if not isinstance(v, (six.binary_type, six.text_type)):
                 v = str(v)
-            contents.append((x.name, v))
+            contents.append(("{}{}{}".format(self.buildin_fields_prefix, x.name, self.buildin_fields_suffix), v))
 
         item = LogItem(contents=contents, timestamp=record.created)
 
@@ -133,19 +191,41 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param batch_size: merge this cound of logs and send them batch, by default min(1024, queue_size)
 
+    :param extract_json: if extract json automatically, default is False
+
+    :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
+
+    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is "message_"
+
+    :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
+
+    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
     def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None,
-                 queue_size=None, put_wait=None, close_wait=None, batch_size=None, **kwargs):
+                 queue_size=None, put_wait=None, close_wait=None, batch_size=None,
+                 extract_json=None, extract_json_drop_message=None,
+                 extract_json_prefix=None, extract_json_suffix=None,
+                 buildin_fields_prefix=None, buildin_fields_suffix=None,
+                 **kwargs):
         super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store,
-                                               topic=topic, fields=fields, **kwargs)
+                                               topic=topic, fields=fields,
+                                               extract_json=extract_json,
+                                               extract_json_drop_message=extract_json_drop_message,
+                                               extract_json_prefix=extract_json_prefix,
+                                               extract_json_suffix=extract_json_suffix,
+                                               buildin_fields_prefix=buildin_fields_prefix,
+                                               buildin_fields_suffix=buildin_fields_suffix, **kwargs)
         self.stop_flag = False
         self.stop_time = None
-        self.put_wait = put_wait or 2                           # default is 2 seconds
-        self.close_wait = close_wait or 5                       # default is 5 seconds
-        self.queue_size = queue_size or 4096                    # default is 4096 items
-        self.batch_size = min(batch_size or 1024, self.queue_size)   # default is 1024 items
+        self.put_wait = put_wait or 2  # default is 2 seconds
+        self.close_wait = close_wait or 5  # default is 5 seconds
+        self.queue_size = queue_size or 4096  # default is 4096 items
+        self.batch_size = min(batch_size or 1024, self.queue_size)  # default is 1024 items
 
         self.worker = Thread(target=self._post)
         self.queue = Queue(self.queue_size)
@@ -211,4 +291,3 @@ class QueuedLogHandler(SimpleLogHandler):
                 self.send(req)
             except Exception as ex:
                 self.handleError(req.__record__)
-
