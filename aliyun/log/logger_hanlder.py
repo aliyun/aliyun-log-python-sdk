@@ -17,6 +17,7 @@ else:
 
 import json
 
+
 class LogFields(Enum):
     """fields used to upload automatically
     Possible fields:
@@ -135,23 +136,21 @@ class SimpleLogHandler(logging.Handler, object):
         data = []
         if isinstance(message, dict):
             for k, v in six.iteritems(message):
-
-                data.append(("{}{}{}".format(self.extract_json_prefix, self._n(k),
-                                             self.extract_json_suffix), self._n(k)))
+                data.append(("{0}{1}{2}".format(self.extract_json_prefix, self._n(k),
+                                                self.extract_json_suffix), self._n(k)))
         return data
 
     def extract_kv_str(self, message):
         data = []
         if isinstance(message, dict):
             for k, v in six.iteritems(message):
-
-                data.append(("{}{}{}".format(self.extract_json_prefix, self._n(k),
-                                             self.extract_json_suffix), self._n(k)))
+                data.append(("{0}{1}{2}".format(self.extract_json_prefix, self._n(k),
+                                                self.extract_json_suffix), self._n(k)))
         return data
 
     def make_request(self, record):
         contents = []
-        message_field_name = "{}message{}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
+        message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
         if isinstance(record.msg, dict) and self.extract_json:
             contents.extend(self.extract_dict(record.msg))
 
@@ -173,7 +172,7 @@ class SimpleLogHandler(logging.Handler, object):
             v = getattr(record, x.value)
             if not isinstance(v, (six.binary_type, six.text_type)):
                 v = str(v)
-            contents.append(("{}{}{}".format(self.buildin_fields_prefix, x.name, self.buildin_fields_suffix), v))
+            contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, x.name, self.buildin_fields_suffix), v))
 
         item = LogItem(contents=contents, timestamp=record.created)
 
