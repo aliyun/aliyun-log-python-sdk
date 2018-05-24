@@ -155,8 +155,8 @@ class SimpleLogHandler(logging.Handler, object):
 
     def _get_extract_kv_ptn(self):
         sep = self.extract_kv_sep
-        p1 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w]+)\\s*{0}\\s*([\u4e00-\u9fa5\u0800-\u4e00\\w]+)'
-        p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w]+)\\s*{0}\\s*"\s*([^"]+?)\s*"'
+        p1 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)'
+        p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*"\s*([^"]+?)\s*"'
         ps = '|'.join([p1, p2]).format(sep)
 
         return re.compile(ps)
