@@ -134,6 +134,9 @@ class SimpleLogHandler(logging.Handler, object):
 
     @staticmethod
     def _n(v):
+        if v is None:
+            return ""
+
         if isinstance(v, (dict, list)):
             try:
                 v = json.dumps(v)
@@ -376,7 +379,7 @@ class QueuedLogHandler(SimpleLogHandler):
 class UwsgiQueuedLogHandler(QueuedLogHandler):
     """
     Queued Log Handler for Uwsgi, depends on library `uwsgidecorators`, need to deploy it separatedly.
-    
+
     :param end_point: log service endpoint
 
     :param access_key_id: access key id
