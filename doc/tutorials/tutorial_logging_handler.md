@@ -7,6 +7,9 @@
 1. 实时性：主动直接发送，不落盘
 2. 吞吐量大，异步发送
 3. 配置简单：无需修改程序，无需知道机器位置，修改程序配置文件即可生效
+4. 智能解析: 自动解析日志中JSON和KV格式信息
+
+本篇主要介绍如何基本的配置方式, 关于如何自动解析JSON和KV格式的日志和相关配置, 参考[自动解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)和[JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)
 
 
 ## 配置
@@ -130,6 +133,9 @@ args=('cn-beijing.log.aliyuncs.com', 'ak_id', 'ak_key', 'project1', "logstore1",
 
 ```
 
+注意: 也可以通过参数`buildin_fields_prefix` / `buildin_fields_suffix`给这些内置域增加前缀和后缀, 例如`__level__`等.
+
+
 ## 使用JSON配置
 如果期望更加灵活的配置, 也可以使用代码配置, 如下
 
@@ -152,8 +158,8 @@ conf = {'version': 1,
                                      'end_point': os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', ''),
                                      'access_key_id': os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', ''),
                                      'access_key': os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', ''),
-                                     'project': 'dlq-test-sls-project1',
-                                     'log_store': "test1"
+                                     'project': 'project1',
+                                     'log_store': "logstore1"
                                      }
                      },
         'loggers': {'sls': {'handlers': ['sls_handler', ],
