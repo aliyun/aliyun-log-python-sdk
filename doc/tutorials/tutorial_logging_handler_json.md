@@ -95,19 +95,19 @@ c1 = 'student="xiao ming" level=3'
 ```
 
 这里的`level`和日志域的内建表示日志级别冲突了, 可以通过参数`buildin_fields_prefix` / `buildin_fields_suffix`给系统日志域添加前缀后缀;
-或者通过参数`extract_kv_prefix`和`extract_kv_suffix`给抽取的域添加前缀后缀来解决.
+或者通过参数`extract_json_prefix`和`extract_json_suffix`给抽取的域添加前缀后缀来解决.
 
 
 ## 其他定制参数
 
 自动抽取KV也支持更多其他相关参数如下:
 
-参数                      |            作用       | 默认值
------------------        |   ------------------       |------
-extract_json             | 是否自动解析json    | False
-extract_json_drop_message| 当打开自动解析json并且解析到时, 是否丢弃掉默认的`message`域, 某些情况下为了节省空间可以打开. | False
-extract_json_prefix      | 给解析的域添加前缀, 某些情况下为了避免冲突使用  | 空串
-extract_json_suffix      | 给解析的域添加后缀, 某些情况下为了避免冲突使用  | 空串
-buildin_fields_prefix    | 给系统域添加前缀, 某些情况下为了避免冲突使用 | 空串
-buildin_fields_suffix    | 给系统域添加后缀, 某些情况下为了避免冲突使用 | 空串
+| 参数 | 作用 | 默认值 |
+| -- | -- | -- |
+| extract_json | 是否自动解析KV | False |
+| extract_json_drop_message | 匹配KV后是否丢弃掉默认的message域 | False |
+| extract_json_prefix | 给解析的域添加前缀  | 空串 |
+| extract_json_suffix | 给解析的域添加后缀  | 空串 |
+| buildin_fields_prefix | 给系统域添加前缀 | 空串 |
+| buildin_fields_suffix | 给系统域添加后缀 | 空串 |
 

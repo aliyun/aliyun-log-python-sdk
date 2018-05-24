@@ -1069,7 +1069,6 @@ class LogClient(object):
         :raise: LogException
         """
 
-
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
         resource = "/externalstores/" + config.externalStoreName
