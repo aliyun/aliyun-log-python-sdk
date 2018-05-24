@@ -35,4 +35,4 @@ from .common_response import *
 from .external_store_config_response import * 
 
 # logging handler
-from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields
+from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler

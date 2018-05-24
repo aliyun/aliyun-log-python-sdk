@@ -178,3 +178,10 @@ logger.info("Hello world")
 需要注意里面`QueuedLogHandler`的初始化方式, 用的是传入命名参数的方式. 具体参数列表可以参考[这里](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.QueuedLogHandler).
 更多关于Python的`dictConfig`, 参考[这里](https://docs.python.org/2/library/logging.config.html#logging.config.dictConfig).
 
+## UWSGI下使用Python Logging Handler
+
+这里主要介绍了`QueuedLogHandler`, 但是在UWSGI下因为进程调度模型的原因, **这个类无法正常工作**. 因此提供了另外2个Handler, 如下: 
+
+- [UwsgiQueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.UwsgiQueuedLogHandler) - 建议使用这个类, 功能和配置完全一样. 但是需要额外安装一个第三方法库`uwsgidecorators`
+- [SimpleLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.SimpleLogHandler) - 即时发送的简单Logging Handler, 配置完全一样. 用于特殊场景下的测试更方便一些, 一般情况下不推荐.
+

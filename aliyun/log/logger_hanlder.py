@@ -18,6 +18,7 @@ else:
 import json
 import re
 
+
 class LogFields(Enum):
     """fields used to upload automatically
     Possible fields:
@@ -299,6 +300,9 @@ class QueuedLogHandler(SimpleLogHandler):
         self.queue_size = queue_size or 4096  # default is 4096 items
         self.batch_size = min(batch_size or 1024, self.queue_size)  # default is 1024 items
 
+        self.init_worker()
+
+    def init_worker(self):
         self.worker = Thread(target=self._post)
         self.queue = Queue(self.queue_size)
         self.worker.setDaemon(True)
@@ -306,10 +310,13 @@ class QueuedLogHandler(SimpleLogHandler):
         self.worker.start()
         atexit.register(self.stop)
 
+    def flush(self):
+        self.stop()
+
     def stop(self):
         self.stop_time = time()
         self.stop_flag = True
-        self.worker.join()
+        self.worker.join(timeout=self.close_wait + 1)
 
     def emit(self, record):
         req = self.make_request(record)
@@ -363,3 +370,67 @@ class QueuedLogHandler(SimpleLogHandler):
                 self.send(req)
             except Exception as ex:
                 self.handleError(req.__record__)
+
+
+class UwsgiQueuedLogHandler(QueuedLogHandler):
+    """
+    Queued Log Handler for Uwsgi, depends on library `uwsgidecorators`, need to deploy it separatedly.
+    :param end_point: log service endpoint
+
+    :param access_key_id: access key id
+
+    :param access_key: access key
+
+    :param project: project name
+
+    :param log_store: logstore name
+
+    :param topic: topic, default is empty
+
+    :param fields: list of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
+
+    :param queue_size: queue size, default is 4096 logs
+
+    :param put_wait: maximum delay to send the logs, by default 2 seconds
+
+    :param close_wait: when program exit, it will try to send all logs in queue in this timeperiod, by default 5 seconds
+
+    :param batch_size: merge this cound of logs and send them batch, by default min(1024, queue_size)
+
+    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param extract_json: if extract json automatically, default is False
+
+    :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
+
+    :param extract_json_prefix: prefix of fields extracted from json when extract_json is True. default is ""
+
+    :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
+
+    :param extract_kv: if extract kv like k1=v1 k2="v 2" automatically, default is False
+
+    :param extract_kv_drop_message: if drop message fields if it's kv and extract_kv is True, default is False
+
+    :param extract_kv_prefix: prefix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_suffix: suffix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
+
+    :param kwargs: other parameters  passed to logging.Handler
+    """
+    def __init__(self, *args, **kwargs):
+        super(UwsgiQueuedLogHandler, self).__init__(*args, **kwargs)
+
+    def init_worker(self):
+        self.queue = Queue(self.queue_size)
+
+        from uwsgidecorators import postfork, thread
+        self._post = postfork(thread(self._post))
+
+    def stop(self):
+        self.stop_time = time()
+        self.stop_flag = True
+

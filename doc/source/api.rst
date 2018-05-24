@@ -21,6 +21,7 @@ Logging Handler Class
 .. autosummary::
    SimpleLogHandler
    QueuedLogHandler
+   UwsgiQueuedLogHandler
    LogFields
 
 
@@ -441,6 +442,7 @@ Definitions
 
 .. autoclass:: SimpleLogHandler
 .. autoclass:: QueuedLogHandler
+.. autoclass:: UwsgiQueuedLogHandler
 .. autoclass:: LogFields
 
 

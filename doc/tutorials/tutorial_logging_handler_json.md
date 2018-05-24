@@ -105,7 +105,7 @@ c1 = 'student="xiao ming" level=3'
 | 参数 | 作用 | 默认值 |
 | -- | -- | -- |
 | extract_json | 是否自动解析KV | False |
-| extract_json_drop_message | 匹配KV后是否丢弃掉默认的message域 | False |
+| extract_json_drop_message | 匹配JSON后是否丢弃掉默认的message域 | False |
 | extract_json_prefix | 给解析的域添加前缀  | 空串 |
 | extract_json_suffix | 给解析的域添加后缀  | 空串 |
 | buildin_fields_prefix | 给系统域添加前缀 | 空串 |
