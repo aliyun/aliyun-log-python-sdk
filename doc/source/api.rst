@@ -19,6 +19,7 @@ Logging Handler Class
 --------------------------
 .. py:currentmodule:: aliyun.log
 .. autosummary::
+   SimpleLogHandler
    QueuedLogHandler
    LogFields
 
@@ -438,6 +439,7 @@ Definitions
 .. autoclass:: ListEntityResponse
    :members:
 
+.. autoclass:: SimpleLogHandler
 .. autoclass:: QueuedLogHandler
 .. autoclass:: LogFields
 
