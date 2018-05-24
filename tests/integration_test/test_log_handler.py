@@ -64,6 +64,46 @@ def test_log_handler_json(end_point, access_key_id, access_key, project, logstor
     print("...finish... %s seconds" % (time() - s))
 
 
+def test_log_handler_kv(end_point, access_key_id, access_key, project, logstore):
+    logger = logging.getLogger('kv')
+
+    aliyun_logger = QueuedLogHandler(end_point, access_key_id, access_key, project, logstore,
+                                    extract_kv=True,
+                                    extract_kv_drop_message=True,
+                                    extract_kv_sep='(?::|=)',
+                                     buildin_fields_prefix='__',
+                                     buildin_fields_suffix='__'
+    )
+    aliyun_logger.setLevel(logging.INFO)
+    aliyun_logger.set_fields([LogFields.level, LogFields.func_name, LogFields.file_path])
+    aliyun_logger.set_topic("sdk test")
+    logger.addHandler(aliyun_logger)
+    logger.setLevel(logging.DEBUG)
+
+    c1 = "i=c1, k1=v1,k2=v2 k3=v3"
+    c2 = 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'
+    c3 = u'i=c3, k1=你好 k2=他们'.encode('utf8')
+    c4 = u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')
+    c5 = u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')
+    c6 = u'i=c6, 姓名=中文 年龄=中文'
+    c7 = u'i=c7, 姓名="小明" 年龄=中文 '
+    c8 = """i=c8, k1="hello
+    world" k2="good
+    morning"
+    """
+    c9 = "i=c9 k1:v1, k2=v2"
+
+    data = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
+
+    s = time()
+
+    for d in data:
+        logger.info(d)
+
+    print("...finish... %s seconds" % (time() - s))
+
+
+
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', '')
     accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
@@ -97,6 +137,9 @@ def main():
 
         # test extract json
         test_log_handler_json(endpoint, accessKeyId, accessKey, project, logstore)
+
+        # test extracct kv
+        test_log_handler_kv(endpoint, accessKeyId, accessKey, project, logstore)
 
         sleep(60)
 

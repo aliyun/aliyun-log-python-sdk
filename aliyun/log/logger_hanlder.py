@@ -16,7 +16,7 @@ else:
     from queue import Empty, Full, Queue
 
 import json
-
+import re
 
 class LogFields(Enum):
     """fields used to upload automatically
@@ -55,6 +55,10 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param fields: list of LogFields or list of names of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
 
+    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
     :param extract_json: if extract json automatically, default is False
 
     :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
@@ -63,19 +67,26 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
 
-    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+    :param extract_kv: if extract kv like k1=v1 k2="v 2" automatically, default is False
 
-    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+    :param extract_kv_drop_message: if drop message fields if it's kv and extract_kv is True, default is False
+
+    :param extract_kv_prefix: prefix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_suffix: suffix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
 
     :param kwargs: other parameters  passed to logging.Handler
     """
 
     def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None,
+                 buildin_fields_prefix=None, buildin_fields_suffix=None,
                  extract_json=None, extract_json_drop_message=None,
                  extract_json_prefix=None, extract_json_suffix=None,
-                 buildin_fields_prefix=None, buildin_fields_suffix=None,
                  extract_kv=None, extract_kv_drop_message=None,
                  extract_kv_prefix=None, extract_kv_suffix=None,
+                 extract_kv_sep=None,
                  **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
@@ -102,6 +113,8 @@ class SimpleLogHandler(logging.Handler, object):
         self.extract_kv_prefix = "" if extract_kv_prefix is None else extract_kv_prefix
         self.extract_kv_suffix = "" if extract_kv_suffix is None else extract_kv_suffix
         self.extract_kv_drop_message = False if extract_kv_drop_message is None else extract_kv_drop_message
+        self.extract_kv_sep = "=" if extract_kv_sep is None else extract_kv_sep
+        self.extract_kv_ptn = self._get_extract_kv_ptn()
 
     def set_topic(self, topic):
         self.topic = topic
@@ -137,29 +150,49 @@ class SimpleLogHandler(logging.Handler, object):
         if isinstance(message, dict):
             for k, v in six.iteritems(message):
                 data.append(("{0}{1}{2}".format(self.extract_json_prefix, self._n(k),
-                                                self.extract_json_suffix), self._n(k)))
+                                                self.extract_json_suffix), self._n(v)))
         return data
 
+    def _get_extract_kv_ptn(self):
+        sep = self.extract_kv_sep
+        p1 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w]+)\\s*{0}\\s*([\u4e00-\u9fa5\u0800-\u4e00\\w]+)'
+        p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w]+)\\s*{0}\\s*"\s*([^"]+?)\s*"'
+        ps = '|'.join([p1, p2]).format(sep)
+
+        return re.compile(ps)
+
     def extract_kv_str(self, message):
+
+        if isinstance(message, six.binary_type):
+            message = message.decode('utf8', 'ignore')
+
+        r = self.extract_kv_ptn.findall(message)
+
         data = []
-        if isinstance(message, dict):
-            for k, v in six.iteritems(message):
-                data.append(("{0}{1}{2}".format(self.extract_json_prefix, self._n(k),
-                                                self.extract_json_suffix), self._n(k)))
+        for k1, v1, k2, v2 in r:
+            if k1:
+                data.append(("{0}{1}{2}".format(self.extract_kv_prefix, self._n(k1),
+                                                self.extract_kv_suffix), self._n(v1)))
+            elif k2:
+                data.append(("{0}{1}{2}".format(self.extract_kv_prefix, self._n(k2),
+                                                self.extract_kv_suffix), self._n(v2)))
+
         return data
 
     def make_request(self, record):
         contents = []
         message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
         if isinstance(record.msg, dict) and self.extract_json:
-            contents.extend(self.extract_dict(record.msg))
+            data = self.extract_dict(record.msg)
+            contents.extend(data)
 
-            if not self.extract_json_drop_message:
+            if not self.extract_json_drop_message or not data:
                 contents.append((message_field_name, self.format(record)))
         elif isinstance(record.msg, (six.text_type, six.binary_type)) and self.extract_kv:
-            contents.extend(self.extract_kv_str(record.msg))
+            data = self.extract_kv_str(record.msg)
+            contents.extend(data)
 
-            if not self.extract_kv_drop_message:
+            if not self.extract_kv_drop_message or not data:  # if it's not KV
                 contents.append((message_field_name, self.format(record)))
         else:
             contents = [(message_field_name, self.format(record))]
@@ -211,6 +244,10 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param batch_size: merge this cound of logs and send them batch, by default min(1024, queue_size)
 
+    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
+    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+
     :param extract_json: if extract json automatically, default is False
 
     :param extract_json_drop_message: if drop message fields if it's JSON and extract_json is True, default is False
@@ -219,18 +256,27 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param extract_json_suffix: suffix of fields extracted from json when extract_json is True. default is empty
 
-    :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+    :param extract_kv: if extract kv like k1=v1 k2="v 2" automatically, default is False
 
-    :param buildin_fields_suffix: suffix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
+    :param extract_kv_drop_message: if drop message fields if it's kv and extract_kv is True, default is False
+
+    :param extract_kv_prefix: prefix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_suffix: suffix of fields extracted from KV when extract_json is True. default is ""
+
+    :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
 
     :param kwargs: other parameters  passed to logging.Handler
     """
 
     def __init__(self, end_point, access_key_id, access_key, project, log_store, topic=None, fields=None,
                  queue_size=None, put_wait=None, close_wait=None, batch_size=None,
+                 buildin_fields_prefix=None, buildin_fields_suffix=None,
                  extract_json=None, extract_json_drop_message=None,
                  extract_json_prefix=None, extract_json_suffix=None,
-                 buildin_fields_prefix=None, buildin_fields_suffix=None,
+                 extract_kv=None, extract_kv_drop_message=None,
+                 extract_kv_prefix=None, extract_kv_suffix=None,
+                 extract_kv_sep=None,
                  **kwargs):
         super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store,
                                                topic=topic, fields=fields,
@@ -239,7 +285,13 @@ class QueuedLogHandler(SimpleLogHandler):
                                                extract_json_prefix=extract_json_prefix,
                                                extract_json_suffix=extract_json_suffix,
                                                buildin_fields_prefix=buildin_fields_prefix,
-                                               buildin_fields_suffix=buildin_fields_suffix, **kwargs)
+                                               buildin_fields_suffix=buildin_fields_suffix,
+                                               extract_kv=extract_kv,
+                                               extract_kv_drop_message=extract_kv_drop_message,
+                                               extract_kv_prefix=extract_kv_prefix,
+                                               extract_kv_suffix=extract_kv_suffix,
+                                               extract_kv_sep=extract_kv_sep,
+                                               **kwargs)
         self.stop_flag = False
         self.stop_time = None
         self.put_wait = put_wait or 2  # default is 2 seconds
