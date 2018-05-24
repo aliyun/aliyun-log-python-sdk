@@ -223,6 +223,7 @@ class SimpleLogHandler(logging.Handler, object):
 class QueuedLogHandler(SimpleLogHandler):
     """
     Queued Log Handler, tuned async log handler.
+
     :param end_point: log service endpoint
 
     :param access_key_id: access key id
@@ -375,6 +376,7 @@ class QueuedLogHandler(SimpleLogHandler):
 class UwsgiQueuedLogHandler(QueuedLogHandler):
     """
     Queued Log Handler for Uwsgi, depends on library `uwsgidecorators`, need to deploy it separatedly.
+    
     :param end_point: log service endpoint
 
     :param access_key_id: access key id
