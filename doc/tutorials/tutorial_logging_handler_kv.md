@@ -37,7 +37,7 @@ get some error when parsing data. name="xiao ming" score=100.0
 
 参考[Logging Handler的详细配置](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html#id2), 将其中参数列表修改为:
 
-args=(os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', ''), os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', ''), os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', ''), os.environ.get('ALIYUN_LOG_SAMPLE_TMP_PROJECT', ''), "logstore", None, None, None, None, None, None, None, None, True)
+args=(os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', ''), os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', ''), os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', ''), os.environ.get('ALIYUN_LOG_SAMPLE_TMP_PROJECT', ''), "logstore", None, None, None, None, None, None, None, None, None, None, None, None, True)
 
 最后一个参数对应了Logging Handler的[详细参数](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.QueuedLogHandler)的`extract_kv`参数.
 
