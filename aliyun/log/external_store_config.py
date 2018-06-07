@@ -49,7 +49,7 @@ class ExternalStoreConfig(object):
         host = json_value["parameter"]["host"]
         port = json_value["parameter"]["port"]
         username = json_value["parameter"]["username"]
-        password = "*"
+        password = json_value["parameter"].get("password", "")
         database = json_value["parameter"]["db"]
         table = json_value["parameter"]["table"]
         region = json_value["parameter"]["region"]
