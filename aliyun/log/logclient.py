@@ -210,6 +210,7 @@ class LogClient(object):
                                                    self._accessKey, params, headers)
 
         headers['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
+        headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
         url = url + resource
 
         return self._sendRequest(method, url, params, body, headers, respons_body_type)
@@ -248,7 +249,7 @@ class LogClient(object):
         :param request: the PutLogs request parameters class
         
         :return: PutLogsResponse
-        
+
         :raise: LogException
         """
         if len(request.get_log_items()) > 512000:
@@ -307,6 +308,7 @@ class LogClient(object):
             (resp, header) = self._send('POST', project, body, resource, params, headers)
 
         return PutLogsResponse(header, resp)
+
 
     def list_logstores(self, request):
         """ List all logstores of requested project.
@@ -1068,6 +1070,7 @@ class LogClient(object):
         
         :raise: LogException
         """
+
 
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
