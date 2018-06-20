@@ -6,7 +6,7 @@
 
 from .logresponse import LogResponse
 from .queriedlog import QueriedLog
-
+from .logexception import LogException
 import six
 from .util import Util
 
@@ -23,18 +23,26 @@ class GetLogsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.progress = Util.h_v_t(header, 'x-log-progress')
-        self.logs = []
-        for data in resp:
-            contents = {}
-            source = ""
-            if "__source__" in data:
-                source = data['__source__']
+        try:
+            self.progress = Util.h_v_t(header, 'x-log-progress')
+            self.logs = []
+            for data in resp:
+                contents = {}
+                source = ""
+                if "__source__" in data:
+                    source = data['__source__']
 
-            for key in six.iterkeys(data):
-                if key != '__time__' and key != '__source__':
-                    contents[key] = data[key]
-            self.logs.append(QueriedLog(data['__time__'], source, contents))
+                for key in six.iterkeys(data):
+                    if key != '__time__' and key != '__source__':
+                        contents[key] = data[key]
+                self.logs.append(QueriedLog(data['__time__'], source, contents))
+        except Exception as ex:
+            raise LogException("InvalidResponse",
+                               "Failed to parse GetLogResponse, \nheader: "
+                               + str(header) + " \nBody:"
+                               + str(resp) + " \nOther: " + str(ex),
+                               resp_header=header,
+                               resp_body=resp)
 
     def get_count(self):
         """ Get log number from the response
