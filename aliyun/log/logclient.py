@@ -54,6 +54,38 @@ DEFAULT_QUERY_RETRY_COUNT = 10
 DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 
 
+def _apply_cn_keys_patch():
+    """
+    apply this patch due to an issue in http.client.parse_headers
+    when there're multi-bytes in headers. it will truncate some headers.
+    https://github.com/aliyun/aliyun-log-python-sdk/issues/79
+    """
+    import sys
+    if sys.version_info[:2] == (3, 5):
+        import http.client as hc
+        old_parse = hc.parse_headers
+
+        def parse_header(*args, **kwargs):
+            fp = args[0]
+            old_readline = fp.readline
+
+            def new_readline(*args, **kwargs):
+                ret = old_readline(*args, **kwargs)
+                if ret.lower().startswith(b'x-log-query-info'):
+                    return b'x-log-query-info: \r\n'
+                return ret
+
+            fp.readline = new_readline
+
+            ret = old_parse(*args, **kwargs)
+            return ret
+
+        hc.parse_headers = parse_header
+
+
+_apply_cn_keys_patch()
+
+
 class LogClient(object):
     """ Construct the LogClient with endpoint, accessKeyId, accessKey.
 
