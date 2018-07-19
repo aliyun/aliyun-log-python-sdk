@@ -21,20 +21,25 @@ class LogstoreRegex(object):
 
 class LogstoreIndexMapper(object):
 
-    def __init__(self, logstore_index_mappings):
-        d = json.loads(logstore_index_mappings)
-        self._build_index_logstore_map(d)
-
-    def _build_index_logstore_map(self, d):
+    def __init__(self, logstore_index_mappings=None):
         self.index_logstore_map = {}
+        if not logstore_index_mappings:
+            return
+        d = json.loads(logstore_index_mappings)
+        self.index_logstore_map = self._build_index_logstore_map(d)
+
+    @classmethod
+    def _build_index_logstore_map(cls, d):
+        index_logstore_map = {}
         for k, v in d.iteritems():
             indexes = split_and_strip(v, ",")
             for index in indexes:
                 if string.find(index, "*") != -1:
                     regex = re.compile(string.replace(index, "*", ".*"))
-                    self.index_logstore_map[index] = LogstoreRegex(k, regex)
+                    index_logstore_map[index] = LogstoreRegex(k, regex)
                 else:
-                    self.index_logstore_map[index] = LogstoreRegex(k)
+                    index_logstore_map[index] = LogstoreRegex(k)
+        return index_logstore_map
 
     def get_logstore(self, index):
         if index in self.index_logstore_map:
