@@ -8,13 +8,9 @@
 class CollectionTaskConfig(object):
     DEFAULT_SCROLL = "5m"
 
-    DEFAULT_SOURCE = ""
-
-    DEFAULT_TOPIC = ""
-
     def __init__(self, task_id=None, slice_id=None, slice_max=None, hosts=None, indexes=None, query=None,
-                 scroll=DEFAULT_SCROLL, project_name=None, logstore_index_mappings=None, time_reference=None,
-                 source=DEFAULT_SOURCE, topic=DEFAULT_TOPIC):
+                 scroll=DEFAULT_SCROLL, endpoint=None, project=None, access_key_id=None, access_key=None,
+                 logstore_index_mapper=None, time_reference=None, source=None, topic=None):
         self.task_id = task_id
         self.slice_id = slice_id
         self.slice_max = slice_max
@@ -22,8 +18,11 @@ class CollectionTaskConfig(object):
         self.indexes = indexes
         self.query = query
         self.scroll = scroll
-        self.project_name = project_name
-        self.logstore_index_mappings = logstore_index_mappings
+        self.endpoint = endpoint
+        self.project = project
+        self.access_key_id = access_key_id
+        self.access_key = access_key
+        self.logstore_index_mapper = logstore_index_mapper
         self.time_reference = time_reference
         self.source = source
         self.topic = topic
