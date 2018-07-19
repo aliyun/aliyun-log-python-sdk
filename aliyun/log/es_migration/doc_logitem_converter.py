@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+# Copyright (C) Alibaba Cloud Computing
+# All rights reserved.
+
+
 import time
 
 from aliyun.log import LogItem
