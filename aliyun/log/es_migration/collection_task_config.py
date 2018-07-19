@@ -6,11 +6,10 @@
 
 
 class CollectionTaskConfig(object):
-    DEFAULT_SCROLL = "5m"
 
-    def __init__(self, task_id=None, slice_id=None, slice_max=None, hosts=None, indexes=None, query=None,
-                 scroll=DEFAULT_SCROLL, endpoint=None, project=None, access_key_id=None, access_key=None,
-                 logstore_index_mapper=None, time_reference=None, source=None, topic=None):
+    def __init__(self, task_id=None, slice_id=None, slice_max=None, hosts=None, indexes=None, query=None, scroll=None,
+                 endpoint=None, project=None, access_key_id=None, access_key=None, logstore_index_mapper=None,
+                 time_reference=None, source=None, topic=None):
         self.task_id = task_id
         self.slice_id = slice_id
         self.slice_max = slice_max
