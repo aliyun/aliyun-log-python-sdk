@@ -3,3 +3,5 @@ protobuf
 six
 enum34
 python-dateutil
+# Elasticsearch 6.x
+elasticsearch>=6.0.0,<7.0.0
