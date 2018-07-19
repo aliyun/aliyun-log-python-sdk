@@ -12,7 +12,7 @@ from aliyun.log.es_migration.migration_manager import MigrationManager
 
 def main():
     migration_manager = MigrationManager(hosts="localhost:9200",
-                                         indexes="movies",
+                                         indexes="_all",
                                          query=None,
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),

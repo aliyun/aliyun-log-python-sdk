@@ -12,8 +12,10 @@ from elasticsearch import Elasticsearch
 from aliyun.log import LogClient
 from aliyun.log.es_migration.collection_task import run_collection_task
 from aliyun.log.es_migration.collection_task_config import CollectionTaskConfig
-from aliyun.log.es_migration.index_logstore_mappings import IndexLogstoreMappings
+from aliyun.log.es_migration.index_logstore_mappings import \
+    IndexLogstoreMappings
 from aliyun.log.es_migration.util import split_and_strip
+from aliyun.log.logexception import LogException
 
 results = []
 
@@ -42,12 +44,13 @@ class MigrationManager(object):
         self.topic = topic
 
     def migrate(self):
-
         es = Elasticsearch(split_and_strip(self.hosts))
         log_client = LogClient(self.endpoint, self.access_key_id, self.access_key)
 
         index_lst = self.get_index_lst(es, self.indexes)
         index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
+
+        self.init_aliyun_log(self.project_name, log_client, index_logstore_mappings)
 
         shard_cnt = self.get_shard_count(es, self.indexes, self.query)
 
@@ -69,7 +72,7 @@ class MigrationManager(object):
                                           time_reference=self.time_reference,
                                           source=self.source,
                                           topic=self.topic)
-            p.apply_async(func=run_collection_task, args=(config,), callback=log_result)
+            # p.apply_async(func=run_collection_task, args=(config,), callback=log_result)
 
         p.close()
         p.join()
@@ -87,5 +90,17 @@ class MigrationManager(object):
         return resp["indices"].keys()
 
     @classmethod
-    def init_aliyun_log(cls, log_client, index_lst):
-        pass
+    def init_aliyun_log(cls, project_name, log_client, index_logstore_mappings):
+        cls._create_logstores(project_name, log_client, index_logstore_mappings)
+
+    @classmethod
+    def _create_logstores(cls, project_name, log_client, index_logstore_mappings):
+        logstores = index_logstore_mappings.get_all_logstores()
+        for logstore in logstores:
+            try:
+                log_client.create_logstore(project_name=project_name, logstore_name=logstore)
+            except LogException as e:
+                if e.get_error_code() == "LogStoreAlreadyExist":
+                    continue
+                else:
+                    raise

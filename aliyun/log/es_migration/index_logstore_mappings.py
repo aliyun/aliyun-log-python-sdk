@@ -52,3 +52,6 @@ class IndexLogstoreMappings(object):
         if index in self.index_logstore_dct:
             return self.index_logstore_dct[index]
         return None
+
+    def get_all_logstores(self):
+        return {logstore for logstore in self.index_logstore_dct.itervalues()}
