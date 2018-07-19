@@ -21,7 +21,7 @@ def run_collection_task(config):
     try:
         task = CollectionTask(config.task_id, config.slice_id, config.slice_max, config.hosts, config.indexes,
                               config.query, config.scroll, config.endpoint, config.project, config.access_key_id,
-                              config.access_key, config.logstore_index_mapper, config.time_reference, config.source,
+                              config.access_key, config.index_logstore_mappings, config.time_reference, config.source,
                               config.topic, start_time)
         return task.collect()
     except Exception as e:
@@ -71,7 +71,7 @@ class CollectionTask(object):
     DEFAULT_SIZE = 1000
 
     def __init__(self, task_id, slice_id, slice_max, hosts, indexes, query, scroll, endpoint, project, access_key_id,
-                 access_key, logstore_index_mapper, time_reference, source, topic, start_time):
+                 access_key, index_logstore_mappings, time_reference, source, topic, start_time):
         self.task_id = task_id
         self.slice_id = slice_id
         self.slice_max = slice_max
@@ -80,7 +80,7 @@ class CollectionTask(object):
         self.query = query
         self.scroll = scroll
         self.project = project
-        self.logstore_index_mapper = logstore_index_mapper
+        self.index_logstore_mappings = index_logstore_mappings
         self.time_reference = time_reference
         self.source = source
         self.topic = topic
@@ -142,7 +142,7 @@ class CollectionTask(object):
         for hit in hits["hits"]:
             index = DocLogItemConverter.get_index(hit)
             log_item = DocLogItemConverter.to_log_item(hit, self.time_reference)
-            logstore = self.logstore_index_mapper.get_logstore(index) or index
+            logstore = self.index_logstore_mappings.get_logstore(index) or index
             if logstore not in logstore_log_items_dct:
                 logstore_log_items_dct[logstore] = []
             logstore_log_items_dct[logstore].append(log_item)

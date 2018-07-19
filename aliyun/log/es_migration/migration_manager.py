@@ -9,9 +9,10 @@ from multiprocessing import Pool
 
 from elasticsearch import Elasticsearch
 
+from aliyun.log import LogClient
 from aliyun.log.es_migration.collection_task import run_collection_task
 from aliyun.log.es_migration.collection_task_config import CollectionTaskConfig
-from aliyun.log.es_migration.logstore_index_mapper import LogstoreIndexMapper
+from aliyun.log.es_migration.index_logstore_mappings import IndexLogstoreMappings
 from aliyun.log.es_migration.util import split_and_strip
 
 results = []
@@ -41,9 +42,13 @@ class MigrationManager(object):
         self.topic = topic
 
     def migrate(self):
-        logstore_index_mapper = LogstoreIndexMapper(self.logstore_index_mappings)
 
         es = Elasticsearch(split_and_strip(self.hosts))
+        log_client = LogClient(self.endpoint, self.access_key_id, self.access_key)
+
+        index_lst = self.get_index_lst(es, self.indexes)
+        index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
+
         shard_cnt = self.get_shard_count(es, self.indexes, self.query)
 
         p = Pool(min(shard_cnt, self.pool_size))
@@ -60,7 +65,7 @@ class MigrationManager(object):
                                           project=self.project_name,
                                           access_key_id=self.access_key_id,
                                           access_key=self.access_key,
-                                          logstore_index_mapper=logstore_index_mapper,
+                                          index_logstore_mappings=index_logstore_mappings,
                                           time_reference=self.time_reference,
                                           source=self.source,
                                           topic=self.topic)
@@ -72,6 +77,15 @@ class MigrationManager(object):
             print res
 
     @classmethod
-    def get_shard_count(cls, client, indexes, query=None):
-        resp = client.count(index=indexes, body=query)
+    def get_shard_count(cls, es, indexes, query=None):
+        resp = es.count(index=indexes, body=query)
         return resp["_shards"]["total"]
+
+    @classmethod
+    def get_index_lst(cls, es, indexes):
+        resp = es.indices.stats(index=indexes)
+        return resp["indices"].keys()
+
+    @classmethod
+    def init_aliyun_log(cls, log_client, index_lst):
+        pass
