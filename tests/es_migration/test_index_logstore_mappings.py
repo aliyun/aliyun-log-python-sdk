@@ -84,6 +84,17 @@ class TestIndexLogstoreMappings(unittest.TestCase):
                                                                           ["index", "index123", "inde"])
         self.assertListEqual(actual_match_index_lst, ["index", "index123"])
 
+    def test_invalid_logstore_index_mappings(self):
+        logstore_index_mappings = '''
+                            {
+                                "logstore1": "my_index*", 
+                                "logstore2": "my_index"
+                            }
+                            '''
+        index_lst = ["my_index", "my_index1", "my_index2"]
+        with self.assertRaises(RuntimeError):
+            IndexLogstoreMappings(index_lst=index_lst, logstore_index_mappings=logstore_index_mappings)
+
 
 if __name__ == '__main__':
     unittest.main()

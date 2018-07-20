@@ -37,6 +37,10 @@ class IndexLogstoreMappings(object):
                 match_index_lst = self._get_match_indexes(pattern, all_indexes)
                 index_lst.extend(match_index_lst)
                 for index in match_index_lst:
+                    if index in self.index_logstore_dct and \
+                            self.index_logstore_dct[index] in logstore_index_dct:
+                        raise RuntimeError(
+                            "index '%s' belongs to '%s' and '%s'" % (index, k, self.index_logstore_dct[index]))
                     self.index_logstore_dct[index] = k
             if index_lst:
                 self.logstore_indexes_dct[k] = index_lst
