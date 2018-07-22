@@ -39,7 +39,7 @@ class IndexLogstoreMappings(object):
                 for index in match_index_lst:
                     if index in self.index_logstore_dct and \
                             self.index_logstore_dct[index] in logstore_index_dct:
-                        raise RuntimeError(
+                        raise Exception(
                             "index '%s' belongs to '%s' and '%s'" % (index, k, self.index_logstore_dct[index]))
                     self.index_logstore_dct[index] = k
             if index_lst:

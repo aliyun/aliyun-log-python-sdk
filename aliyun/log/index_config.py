@@ -90,7 +90,7 @@ class IndexKeyConfig(object):
     :type alias : string
     :param alias : alias name for index key
 
-    :type json_key_config : IndexJosnKeyConfig
+    :type json_key_config : IndexJsonKeyConfig
     :param json_key_config : configs for "json" type
 
     :type chinese: bool

@@ -104,3 +104,11 @@ class MigrationManager(object):
                     continue
                 else:
                     raise
+
+    @classmethod
+    def _create_index_configs(cls, project_name, log_client, index_logstore_mappings):
+        logstores = index_logstore_mappings.get_all_logstores()
+        for logstore in logstores:
+            indexes = index_logstore_mappings.get_indexes()
+            for index in indexes:
+                es.indices.get(index=index)
