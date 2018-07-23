@@ -5,12 +5,11 @@
 # All rights reserved.
 
 
+import logging
 import os
+import sys
 
 from aliyun.log.es_migration.migration_manager import MigrationManager
-
-import logging
-import sys
 
 logging.StreamHandler(sys.stdout)
 root = logging.getLogger()
