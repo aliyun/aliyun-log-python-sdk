@@ -7,7 +7,8 @@
 
 import unittest
 
-from aliyun.log.es_migration.mapping_index_converter import MappingIndexConverter
+from aliyun.log.es_migration.mapping_index_converter import \
+    MappingIndexConverter
 
 
 class TestMappingIndexConverter(unittest.TestCase):

@@ -7,7 +7,8 @@
 
 import unittest
 
-from aliyun.log.es_migration.index_logstore_mappings import IndexLogstoreMappings
+from aliyun.log.es_migration.index_logstore_mappings import \
+    IndexLogstoreMappings
 
 
 class TestIndexLogstoreMappings(unittest.TestCase):
@@ -92,8 +93,18 @@ class TestIndexLogstoreMappings(unittest.TestCase):
                             }
                             '''
         index_lst = ["my_index", "my_index1", "my_index2"]
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(Exception):
             IndexLogstoreMappings(index_lst=index_lst, logstore_index_mappings=logstore_index_mappings)
+
+    def test_get_logstore_empty_logstore_index_mappings(self):
+        index_lst = ["index1", "index2"]
+        mappings = IndexLogstoreMappings(index_lst=index_lst, logstore_index_mappings=None)
+        self.assertSetEqual(set(mappings.get_all_indexes()), set(index_lst))
+        self.assertSetEqual(set(mappings.get_all_logstores()), set(index_lst))
+        self.assertListEqual(mappings.get_indexes("index1"), ["index1"])
+        self.assertListEqual(mappings.get_indexes("index2"), ["index2"])
+        self.assertEqual(mappings.get_logstore("index1"), "index1")
+        self.assertEqual(mappings.get_logstore("index2"), "index2")
 
 
 if __name__ == '__main__':

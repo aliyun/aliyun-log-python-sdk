@@ -22,9 +22,9 @@ class IndexLogstoreMappings(object):
             return
         self.index_logstore_dct = {index: index for index in index_lst}
 
-        if not logstore_index_mappings:
-            return
-        logstore_index_dct = json.loads(logstore_index_mappings)
+        logstore_index_dct = {}
+        if logstore_index_mappings:
+            logstore_index_dct = json.loads(logstore_index_mappings)
         self._update_dicts(logstore_index_dct)
 
     def _update_dicts(self, logstore_index_dct):

@@ -14,6 +14,8 @@ from aliyun.log.es_migration.collection_task import run_collection_task
 from aliyun.log.es_migration.collection_task_config import CollectionTaskConfig
 from aliyun.log.es_migration.index_logstore_mappings import \
     IndexLogstoreMappings
+from aliyun.log.es_migration.mapping_index_converter import \
+    MappingIndexConverter
 from aliyun.log.es_migration.util import split_and_strip
 from aliyun.log.logexception import LogException
 
@@ -50,10 +52,9 @@ class MigrationManager(object):
         index_lst = self.get_index_lst(es, self.indexes)
         index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
 
-        self.init_aliyun_log(self.project_name, log_client, index_logstore_mappings)
+        self.init_aliyun_log(es, log_client, self.project_name, index_logstore_mappings)
 
         shard_cnt = self.get_shard_count(es, self.indexes, self.query)
-
         p = Pool(min(shard_cnt, self.pool_size))
 
         for i in range(shard_cnt):
@@ -72,7 +73,7 @@ class MigrationManager(object):
                                           time_reference=self.time_reference,
                                           source=self.source,
                                           topic=self.topic)
-            # p.apply_async(func=run_collection_task, args=(config,), callback=log_result)
+            p.apply_async(func=run_collection_task, args=(config,), callback=log_result)
 
         p.close()
         p.join()
@@ -90,11 +91,12 @@ class MigrationManager(object):
         return resp["indices"].keys()
 
     @classmethod
-    def init_aliyun_log(cls, project_name, log_client, index_logstore_mappings):
-        cls._create_logstores(project_name, log_client, index_logstore_mappings)
+    def init_aliyun_log(cls, es, log_client, project_name, index_logstore_mappings):
+        cls._create_logstores(log_client, project_name, index_logstore_mappings)
+        cls._create_index_configs(es, log_client, project_name, index_logstore_mappings)
 
     @classmethod
-    def _create_logstores(cls, project_name, log_client, index_logstore_mappings):
+    def _create_logstores(cls, log_client, project_name, index_logstore_mappings):
         logstores = index_logstore_mappings.get_all_logstores()
         for logstore in logstores:
             try:
@@ -106,9 +108,23 @@ class MigrationManager(object):
                     raise
 
     @classmethod
-    def _create_index_configs(cls, project_name, log_client, index_logstore_mappings):
+    def _create_index_configs(cls, es, log_client, project_name, index_logstore_mappings):
         logstores = index_logstore_mappings.get_all_logstores()
         for logstore in logstores:
-            indexes = index_logstore_mappings.get_indexes()
+            indexes = index_logstore_mappings.get_indexes(logstore)
+            first_index = True
             for index in indexes:
-                es.indices.get(index=index)
+                resp = es.indices.get(index=index)
+                for mapping in resp[index]["mappings"].itervalues():
+                    index_config = MappingIndexConverter.to_index_config(mapping)
+                    if first_index:
+                        try:
+                            log_client.create_index(project_name, logstore, index_config)
+                            first_index = False
+                        except LogException as e:
+                            if e.get_error_code() == "IndexAlreadyExist":
+                                continue
+                            else:
+                                raise
+                    else:
+                        log_client.update_index(project_name, logstore, index_config)
