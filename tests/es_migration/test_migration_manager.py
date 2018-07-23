@@ -9,10 +9,20 @@ import os
 
 from aliyun.log.es_migration.migration_manager import MigrationManager
 
+import logging
+import sys
+
+logging.StreamHandler(sys.stdout)
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+
+ch = logging.StreamHandler(sys.stdout)
+root.addHandler(ch)
+
 
 def main():
     migration_manager = MigrationManager(hosts="localhost:9200",
-                                         indexes="all_data_types*",
+                                         indexes=None,
                                          query=None,
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
@@ -23,7 +33,8 @@ def main():
                                          pool_size=10,
                                          time_reference=None,
                                          source="my_source",
-                                         topic="my_topic")
+                                         topic="my_topic",
+                                         wait_time_in_secs=60)
     migration_manager.migrate()
 
 

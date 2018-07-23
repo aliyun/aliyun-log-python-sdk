@@ -5,6 +5,7 @@
 # All rights reserved.
 
 
+import logging
 import time
 from multiprocessing import Pool
 
@@ -80,7 +81,7 @@ class MigrationManager(object):
         p.close()
         p.join()
         for res in results:
-            print res
+            logging.info(res)
 
     @classmethod
     def get_shard_count(cls, es, indexes, query=None):
@@ -94,9 +95,13 @@ class MigrationManager(object):
 
     @classmethod
     def init_aliyun_log(cls, es, log_client, project_name, index_logstore_mappings, wait_time_in_secs):
+        logging.info("Start to init aliyun log")
         cls._create_logstores(log_client, project_name, index_logstore_mappings)
         cls._create_index_configs(es, log_client, project_name, index_logstore_mappings)
+        logging.info("Init aliyun log successfully")
+        logging.info("Enter wating time, wait_time_in_secs=%d", wait_time_in_secs)
         time.sleep(wait_time_in_secs)
+        logging.info("Exit wating time")
 
     @classmethod
     def _create_logstores(cls, log_client, project_name, index_logstore_mappings):

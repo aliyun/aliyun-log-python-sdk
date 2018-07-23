@@ -36,13 +36,13 @@ def build_collection_task_result(task_id, slice_id, slice_max, hosts, indexes, q
     cur_time = time.time()
     time_cost_in_seconds = cur_time - start_time
     return CollectionTaskResult(task_id, slice_id, slice_max, hosts, indexes, query, project, time_cost_in_seconds,
-                                status, message)
+                                status, 0, message)
 
 
 class CollectionTaskResult(object):
 
     def __init__(self, task_id, slice_id, slice_max, hosts, indexes, query, project, time_cost_in_seconds, status,
-                 message=None):
+                 count=0, message=None):
         self.task_id = task_id
         self.slice_id = slice_id
         self.slice_max = slice_max
@@ -52,13 +52,14 @@ class CollectionTaskResult(object):
         self.project = project
         self.time_cost_in_seconds = time_cost_in_seconds
         self.status = status
+        self.count = count
         self.message = message
 
     def __str__(self):
         return "task_id=%s, slice_id=%s, slice_max=%s, hosts=%s, indexes=%s, " \
-               "query=%s, project=%s, time_cost_in_seconds=%s, status=%s, message=%s" % \
+               "query=%s, project=%s, time_cost_in_seconds=%s, status=%s, count=%d, message=%s" % \
                (self.task_id, self.slice_id, self.slice_max, self.hosts, self.indexes, self.query, self.project,
-                self.time_cost_in_seconds, self.status, self.message)
+                self.time_cost_in_seconds, self.status, self.count, self.message)
 
 
 class CollectionTaskStatus(Enum):
@@ -86,6 +87,7 @@ class CollectionTask(object):
         self.topic = topic
         self.start_time = start_time
         self.log_client = LogClient(endpoint, access_key_id, access_key)
+        self.cur_count = 0
 
     def collect(self):
         hosts = split_and_strip(self.hosts, ",")
@@ -118,8 +120,8 @@ class CollectionTask(object):
                     msg = "Scroll request has only succeeded on %d shards out of %d." % \
                           (resp["_shards"]["successful"], resp["_shards"]["total"])
                     logging.warning(msg)
-                    return self._build_collection_task_result(CollectionTaskStatus.FAIL_NO_RETRY, msg)
-                scroll_id = resp.get("scroll_id")
+                    # return self._build_collection_task_result(CollectionTaskStatus.FAIL_NO_RETRY, msg)
+                scroll_id = resp.get("_scroll_id")
                 # end of scroll
                 if scroll_id is None or not resp["hits"]["hits"]:
                     break
@@ -133,7 +135,7 @@ class CollectionTask(object):
         cur_time = time.time()
         time_cost_in_seconds = cur_time - self.start_time
         return CollectionTaskResult(self.task_id, self.slice_id, self.slice_max, self.hosts, self.indexes, self.query,
-                                    self.project, time_cost_in_seconds, status, message)
+                                    self.project, time_cost_in_seconds, status, self.cur_count, message)
 
     def _write_docs_to_aliyun_log(self, hits):
         if not hits["hits"]:
@@ -152,3 +154,4 @@ class CollectionTask(object):
         for logstore, log_item_lst in logstore_log_items_dct.iteritems():
             request = PutLogsRequest(self.project, logstore, self.topic, source, log_item_lst)
             self.log_client.put_logs(request)
+            self.cur_count += len(log_item_lst)
