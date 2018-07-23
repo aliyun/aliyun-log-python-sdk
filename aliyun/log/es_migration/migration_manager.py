@@ -92,7 +92,7 @@ class MigrationManager(object):
 
     @classmethod
     def init_aliyun_log(cls, es, log_client, project_name, index_logstore_mappings):
-        cls._create_logstores(log_client, project_name, index_logstore_mappings)
+        # cls._create_logstores(log_client, project_name, index_logstore_mappings)
         cls._create_index_configs(es, log_client, project_name, index_logstore_mappings)
 
     @classmethod

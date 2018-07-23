@@ -5,6 +5,7 @@
 # All rights reserved.
 
 
+import json
 import time
 
 from aliyun.log import LogItem
@@ -57,4 +58,7 @@ class DocLogItemConverter(object):
         if cls.SOURCE_FIELD not in doc:
             return
         for k, v in doc[cls.SOURCE_FIELD].iteritems():
-            log_item.push_back(str(k), str(v))
+            if isinstance(v, dict):
+                log_item.push_back(k, json.dumps(v))
+            else:
+                log_item.push_back(k, str(v))
