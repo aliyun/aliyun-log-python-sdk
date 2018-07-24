@@ -6,7 +6,6 @@
 
 
 import json
-import time
 
 from aliyun.log import LogItem
 from aliyun.log.util import parse_timestamp
