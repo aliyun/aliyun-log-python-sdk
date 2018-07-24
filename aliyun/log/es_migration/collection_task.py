@@ -5,6 +5,7 @@
 # All rights reserved.
 
 
+import json
 import logging
 import time
 from enum import Enum
@@ -93,7 +94,7 @@ class CollectionTask(object):
         hosts = split_and_strip(self.hosts, ",")
         es = Elasticsearch(hosts)
 
-        query = self.query.copy() if self.query else {}
+        query = json.loads(self.query) if self.query else {}
         query["sort"] = "_doc"
         query["slice"] = {"id": self.slice_id, "max": self.slice_max}
 

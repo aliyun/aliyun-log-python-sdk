@@ -22,7 +22,7 @@ root.addHandler(ch)
 def main():
     migration_manager = MigrationManager(hosts="localhost:9200",
                                          indexes="all_data_types*",
-                                         query=None,
+                                         query='{"query":{"match":{"es_text":"text1"}}}',
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
                                          project_name=os.getenv("project_name"),
