@@ -9,6 +9,7 @@ import json
 import time
 
 from aliyun.log import LogItem
+from aliyun.log.util import parse_timestamp
 
 
 class DocLogItemConverter(object):
@@ -24,7 +25,7 @@ class DocLogItemConverter(object):
 
     @classmethod
     def to_log_item(cls, doc, time_reference):
-        log_item = LogItem(timestamp=int(time.time()))
+        log_item = LogItem()
         cls._add_index(doc, log_item)
         cls._add_type(doc, log_item)
         cls._add_id(doc, log_item)
@@ -58,6 +59,9 @@ class DocLogItemConverter(object):
         if cls.SOURCE_FIELD not in doc:
             return
         for k, v in doc[cls.SOURCE_FIELD].iteritems():
+            if k == time_reference:
+                log_item.set_time(parse_timestamp(v))
+                continue
             if isinstance(v, dict):
                 log_item.push_back(k, json.dumps(v))
             else:

@@ -21,7 +21,7 @@ root.addHandler(ch)
 
 def main():
     migration_manager = MigrationManager(hosts="localhost:9200",
-                                         indexes=None,
+                                         indexes="all_data_types*",
                                          query=None,
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
@@ -30,10 +30,10 @@ def main():
                                          access_key=os.getenv("access_key"),
                                          logstore_index_mappings=None,
                                          pool_size=10,
-                                         time_reference=None,
+                                         time_reference="es_date",
                                          source="my_source",
                                          topic="my_topic",
-                                         wait_time_in_secs=60)
+                                         wait_time_in_secs=10)
     migration_manager.migrate()
 
 
