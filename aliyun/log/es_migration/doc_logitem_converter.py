@@ -51,7 +51,7 @@ class DocLogItemConverter(object):
     def _add_id(cls, doc, log_item):
         if cls.ID_FIELD not in doc:
             return
-        log_item.push_back(cls.ID_FIELD, doc[cls.ID_FIELD])
+        log_item.push_back(cls.ID_FIELD, str(doc[cls.ID_FIELD]))
 
     @classmethod
     def _add_source(cls, doc, log_item, time_reference):
