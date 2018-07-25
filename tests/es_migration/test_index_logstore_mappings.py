@@ -47,15 +47,15 @@ class TestIndexLogstoreMappings(unittest.TestCase):
         self.assertEqual("xxxyyy", self.mappings.get_logstore("xxxyyy"))
 
     def test_get_indexes(self):
-        self.assertListEqual(["my_index123", "my_index"], self.mappings.get_indexes("logstore1"))
-        self.assertListEqual(["a_index", "b_index"], self.mappings.get_indexes("logstore2"))
-        self.assertListEqual(["index1"], self.mappings.get_indexes("logstore3"))
-        self.assertListEqual(["xxx_123_yyy", "xxx__yyy"], self.mappings.get_indexes("logstore4"))
-        self.assertListEqual([], self.mappings.get_indexes("logstore5"))
-        self.assertListEqual([], self.mappings.get_indexes("logstore6"))
-        self.assertListEqual(["d_index"], self.mappings.get_indexes("d_index"))
-        self.assertListEqual(["index2"], self.mappings.get_indexes("index2"))
-        self.assertListEqual(["xxxyyy"], self.mappings.get_indexes("xxxyyy"))
+        self.assertSetEqual({"my_index123", "my_index"}, set(self.mappings.get_indexes("logstore1")))
+        self.assertSetEqual({"a_index", "b_index"}, set(self.mappings.get_indexes("logstore2")))
+        self.assertSetEqual({"index1"}, set(self.mappings.get_indexes("logstore3")))
+        self.assertSetEqual({"xxx_123_yyy", "xxx__yyy"}, set(self.mappings.get_indexes("logstore4")))
+        self.assertSetEqual(set(), set(self.mappings.get_indexes("logstore5")))
+        self.assertSetEqual(set(), set(self.mappings.get_indexes("logstore6")))
+        self.assertSetEqual({"d_index"}, set(self.mappings.get_indexes("d_index")))
+        self.assertSetEqual({"index2"}, set(self.mappings.get_indexes("index2")))
+        self.assertSetEqual({"xxxyyy"}, set(self.mappings.get_indexes("xxxyyy")))
 
     def test_get_all_logstores(self):
         expected_logstores = ["logstore1", "logstore2", "logstore3", "logstore4", "d_index", "index2", "xxxyyy"]
@@ -66,24 +66,24 @@ class TestIndexLogstoreMappings(unittest.TestCase):
 
     def test_get_match_index_lst(self):
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes("index", ["my_index", "your_index"])
-        self.assertListEqual([], actual_match_index_lst)
+        self.assertSetEqual(set(), set(actual_match_index_lst))
 
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes(None, ["my_index", "your_index"])
-        self.assertListEqual([], actual_match_index_lst)
+        self.assertSetEqual(set(), set(actual_match_index_lst))
 
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes("index", None)
-        self.assertListEqual([], actual_match_index_lst)
+        self.assertSetEqual(set(), set(actual_match_index_lst))
 
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes(None, None)
-        self.assertListEqual([], actual_match_index_lst)
+        self.assertSetEqual(set(), set(actual_match_index_lst))
 
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes("index",
                                                                           ["my_index", "index", "your_index"])
-        self.assertListEqual(["index"], actual_match_index_lst)
+        self.assertSetEqual({"index"}, set(actual_match_index_lst))
 
         actual_match_index_lst = IndexLogstoreMappings._get_match_indexes("index*",
                                                                           ["index", "index123", "inde"])
-        self.assertListEqual(["index", "index123"], actual_match_index_lst)
+        self.assertSetEqual({"index", "index123"}, set(actual_match_index_lst))
 
     def test_invalid_logstore_index_mappings(self):
         logstore_index_mappings = '''
@@ -101,8 +101,8 @@ class TestIndexLogstoreMappings(unittest.TestCase):
         mappings = IndexLogstoreMappings(index_lst=index_lst, logstore_index_mappings=None)
         self.assertSetEqual(set(index_lst), set(mappings.get_all_indexes()))
         self.assertSetEqual(set(index_lst), set(mappings.get_all_logstores()))
-        self.assertListEqual(["index1"],mappings.get_indexes("index1"))
-        self.assertListEqual(["index2"], mappings.get_indexes("index2"))
+        self.assertSetEqual({"index1"}, set(mappings.get_indexes("index1")))
+        self.assertSetEqual({"index2"}, set(mappings.get_indexes("index2")))
         self.assertEqual("index1", mappings.get_logstore("index1"))
         self.assertEqual("index2", mappings.get_logstore("index2"))
 

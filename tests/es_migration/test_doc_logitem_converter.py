@@ -115,7 +115,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_index": "index1"
         }
         DocLogItemConverter._add_index(doc, log_item)
-        self.assertListEqual([("__tag__:_index", "index1")], log_item.contents)
+        self.assertSetEqual({("__tag__:_index", "index1")}, set(log_item.contents))
 
     def test_add_index_without_index_field(self):
         log_item = LogItem()
@@ -125,7 +125,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_type": "_doc"
         }
         DocLogItemConverter._add_index(doc, log_item)
-        self.assertListEqual([], log_item.contents)
+        self.assertSetEqual(set(), set(log_item.contents))
 
     def test_add_type(self):
         log_item = LogItem()
@@ -133,7 +133,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_type": "_doc"
         }
         DocLogItemConverter._add_type(doc, log_item)
-        self.assertListEqual([("__tag__:_type", "_doc")], log_item.contents)
+        self.assertSetEqual({("__tag__:_type", "_doc")}, set(log_item.contents))
 
     def test_add_type_without_index_field(self):
         log_item = LogItem()
@@ -143,7 +143,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_index": "all_data_types"
         }
         DocLogItemConverter._add_type(doc, log_item)
-        self.assertListEqual([], log_item.contents)
+        self.assertSetEqual(set(), set(log_item.contents))
 
     def test_add_id(self):
         log_item = LogItem()
@@ -154,7 +154,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_type": "_doc"
         }
         DocLogItemConverter._add_id(doc, log_item)
-        self.assertListEqual([("_id", "1")], log_item.contents)
+        self.assertSetEqual({("_id", "1")}, set(log_item.contents))
 
     def test_add_type_without_id(self):
         log_item = LogItem()
@@ -164,7 +164,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_type": "_doc"
         }
         DocLogItemConverter._add_id(doc, log_item)
-        self.assertListEqual([], log_item.contents)
+        self.assertSetEqual(set(), set(log_item.contents))
 
 
 if __name__ == '__main__':
