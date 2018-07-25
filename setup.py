@@ -36,7 +36,8 @@ elif sys.version_info[0] == 3:
 packages = [
             'aliyun',
             'aliyun.log',
-            'aliyun.log.consumer'
+            'aliyun.log.consumer',
+            'aliyun.log.es_migration'
             ]
 
 version = ''
