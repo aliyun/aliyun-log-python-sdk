@@ -122,7 +122,7 @@ class MigrationManager(object):
             first_index = True
             for index in indexes:
                 resp = es.indices.get(index=index)
-                for mapping in resp[index]["mappings"].itervalues():
+                for mapping in resp[index]["mappings"].values():
                     index_config = MappingIndexConverter.to_index_config(mapping)
                     if first_index:
                         try:

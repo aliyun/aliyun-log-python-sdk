@@ -44,7 +44,7 @@ class IndexLogstoreMappings(object):
             if index_lst:
                 self.logstore_indexes_dct[k] = index_lst
 
-        for v in self.index_logstore_dct.itervalues():
+        for v in self.index_logstore_dct.values():
             if v not in self.logstore_indexes_dct:
                 self.logstore_indexes_dct[v] = [v]
 
