@@ -30,7 +30,7 @@ class IndexLogstoreMappings(object):
     def _update_dicts(self, logstore_index_dct):
         all_indexes = self.index_logstore_dct.keys()
 
-        for k, v in logstore_index_dct.iteritems():
+        for k, v in logstore_index_dct.items():
             indexes = split_and_strip(v, ",")
             index_lst = []
             for pattern in indexes:

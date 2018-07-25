@@ -152,7 +152,7 @@ class CollectionTask(object):
             logstore_log_items_dct[logstore].append(log_item)
 
         source = self.source or self.hosts
-        for logstore, log_item_lst in logstore_log_items_dct.iteritems():
+        for logstore, log_item_lst in logstore_log_items_dct.items():
             request = PutLogsRequest(self.project, logstore, self.topic, source, log_item_lst)
             self.log_client.put_logs(request)
             self.cur_count += len(log_item_lst)

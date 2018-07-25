@@ -57,7 +57,7 @@ class DocLogItemConverter(object):
     def _add_source(cls, doc, log_item, time_reference):
         if cls.SOURCE_FIELD not in doc:
             return
-        for k, v in doc[cls.SOURCE_FIELD].iteritems():
+        for k, v in doc[cls.SOURCE_FIELD].items():
             if k == time_reference:
                 log_item.set_time(parse_timestamp(v))
                 continue

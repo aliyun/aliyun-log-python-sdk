@@ -41,7 +41,7 @@ class MappingIndexConverter(object):
         key_config_list = {"_id": cls.handle_id()}
         if not properties:
             return key_config_list
-        for field_name, field_desc in properties.iteritems():
+        for field_name, field_desc in properties.items():
             if "type" in field_desc:
                 field_type = field_desc["type"]
                 if field_type not in field_type_handlers:
@@ -244,7 +244,7 @@ class MappingIndexConverter(object):
     def handle_properties(cls, properties):
         json_key_config = IndexJsonKeyConfig()
         key_configs = cls.parse_properties(None, properties)
-        for key_name, key_config in key_configs.iteritems():
+        for key_name, key_config in key_configs.items():
             json_key_config.add_key(key_name=key_name, key_type=key_config.index_type, doc_value=key_config.doc_value)
         return IndexKeyConfig(
             index_type=AliyunLogFieldType.JSON,
@@ -254,7 +254,7 @@ class MappingIndexConverter(object):
     @classmethod
     def parse_properties(cls, prefix, properties):
         key_config_list = {}
-        for field_name, field_desc in properties.iteritems():
+        for field_name, field_desc in properties.items():
             if prefix:
                 field_name = prefix + "." + field_name
             if "type" in field_desc:
