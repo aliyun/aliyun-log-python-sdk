@@ -10,11 +10,10 @@ import logging
 import time
 from enum import Enum
 
-from elasticsearch import Elasticsearch
-
 from aliyun.log import LogClient, PutLogsRequest
 from aliyun.log.es_migration.doc_logitem_converter import DocLogItemConverter
 from aliyun.log.es_migration.util import split_and_strip
+from elasticsearch import Elasticsearch
 
 
 def run_collection_task(config):

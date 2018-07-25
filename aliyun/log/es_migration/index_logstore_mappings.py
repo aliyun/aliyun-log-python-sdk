@@ -7,7 +7,6 @@
 
 import json
 import re
-import string
 
 from aliyun.log.es_migration.util import split_and_strip
 
@@ -70,7 +69,7 @@ class IndexLogstoreMappings(object):
         if not pattern or not index_lst:
             return []
         if "*" in pattern:
-            regex = re.compile(string.replace(pattern, "*", ".*"))
+            regex = re.compile(pattern.replace("*", ".*"))
             match_index_lst = [index for index in index_lst if re.match(regex, index)]
         else:
             match_index_lst = [index for index in index_lst if pattern == index]
