@@ -110,8 +110,6 @@ class TestMappingIndexConverter(unittest.TestCase):
         line_config = index_config.line_config
         self.assertEqual(MappingIndexConverter.DEFAULT_TOKEN_LIST, line_config.token_list)
         self.assertTrue(line_config.chn)
-        for field_name, key_config in index_config.key_config_list.iteritems():
-            print field_name, key_config
 
     def test_to_index_config_with_none(self):
         index_config = MappingIndexConverter.to_index_config(None)

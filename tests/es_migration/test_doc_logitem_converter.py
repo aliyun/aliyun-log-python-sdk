@@ -165,3 +165,7 @@ class TestDocLogItemConverter(unittest.TestCase):
         }
         DocLogItemConverter._add_id(doc, log_item)
         self.assertListEqual([], log_item.contents)
+
+
+if __name__ == '__main__':
+    unittest.main()
