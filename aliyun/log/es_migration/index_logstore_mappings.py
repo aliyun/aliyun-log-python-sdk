@@ -69,7 +69,7 @@ class IndexLogstoreMappings(object):
     def _get_match_indexes(cls, pattern, index_lst):
         if not pattern or not index_lst:
             return []
-        if string.find(pattern, "*") != -1:
+        if "*" in pattern:
             regex = re.compile(string.replace(pattern, "*", ".*"))
             match_index_lst = [index for index in index_lst if re.match(regex, index)]
         else:
