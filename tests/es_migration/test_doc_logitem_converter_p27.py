@@ -69,6 +69,41 @@ class TestDocLogItemConverter(unittest.TestCase):
     def test_to_log_item(self):
         log_item = DocLogItemConverter.to_log_item(self.doc, "es_date")
         self.assertEqual(1532354400, log_item.get_time())
+        excepted_contents = [
+            ('es_short', '-2'),
+            ('es_boolean', 'true'),
+            ('__tag__:_index', 'all_data_types'),
+            ('__tag__:_type', '_doc'),
+            ('es_ip_range', '192.168.0.0/16'),
+            ('es_double_range', '{"gte": 1.23}'),
+            ('es_long', '1'),
+            ('es_integer_range', '{"gte": 10, "lte": 20}'),
+            ('_id', '1'),
+            ('es_binary', 'U29tZSBiaW5hcnkgYmxvYg=='),
+            ('es_geo_shape', '{"type": "point", "coordinates": [-77.03653, 38.897676]}'),
+            ('es_byte', '127'),
+            ('es_geo_point', '{"lat": 41.12, "lon": -71.34}'),
+            ('es_long_range', '{"lt": 20}'),
+            ('es_scaled_float', '12.3456789'),
+            ('es_half_float', '12.3456789'),
+            ('es_date_range', '{"gte": "2015-10-31 12:00:00", "lte": "2015-11-01"}'),
+            ('es_double', '12.3456789'),
+            ('es_array', "['x', 'y', 'z']"),
+            ('es_float', '-3.14'),
+            ('es_keyword', 'es_keyword'),
+            ('es_object',
+             '{"sub_double_range": {"lt": 4.56, "gt": 1.23}, '
+             '"sub_long": 123, '
+             '"sub_double": 12.345, '
+             '"sub_object": {"sub_sub_text": "sub_sub_text", "sub_sub_boolean": "true"}, '
+             '"sub_text": "sub_text", '
+             '"sub_date": 1420070400001, '
+             '"sub_boolean": "false", '
+             '"sub_byte": -128}'),
+            ('es_float_range', '{"lt": 4.56, "gt": 1.23}'),
+            ('es_text', 'es_text')
+        ]
+        self.assertSetEqual(set(excepted_contents), set(log_item.get_contents()))
 
     def test_get_index(self):
         index = DocLogItemConverter.get_index(self.doc)

@@ -23,3 +23,4 @@ script:
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_doc_logitem_converter.py; fi
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_index_logstore_mappings.py; fi
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_mapping_index_converter.py; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then python tests/es_migration/test_doc_logitem_converter_p27.py; fi
