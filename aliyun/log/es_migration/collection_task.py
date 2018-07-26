@@ -19,6 +19,7 @@ from elasticsearch import Elasticsearch
 def run_collection_task(config):
     start_time = time.time()
     try:
+        logging.info("Start to run task. task_id=%s", config.task_id)
         task = CollectionTask(config.task_id, config.slice_id, config.slice_max, config.hosts, config.indexes,
                               config.query, config.scroll, config.endpoint, config.project, config.access_key_id,
                               config.access_key, config.index_logstore_mappings, config.time_reference, config.source,
@@ -29,6 +30,8 @@ def run_collection_task(config):
         return build_collection_task_result(config.task_id, config.slice_id, config.slice_max, config.hosts,
                                             config.indexes, config.query, config.project, start_time,
                                             CollectionTaskStatus.FAIL_NO_RETRY, str(e))
+    finally:
+        logging.info("Task completion. task_id=%s", config.task_id)
 
 
 def build_collection_task_result(task_id, slice_id, slice_max, hosts, indexes, query, project, start_time, status,
@@ -155,3 +158,4 @@ class CollectionTask(object):
             request = PutLogsRequest(self.project, logstore, self.topic, source, log_item_lst)
             self.log_client.put_logs(request)
             self.cur_count += len(log_item_lst)
+            logging.info("task_id=%s, cur_count=%s" % (self.task_id, self.cur_count))
