@@ -14,12 +14,12 @@ install:
   - pip install .
 
 script:
-#  - python tests/ut/test_util.py
-#  - python tests/sample.py
-#  - python tests/integration_test/test_logtail_config.py
-#  - python tests/integration_test/test_entity.py
-#  - python tests/integration_test/test_log_handler.py
-#  - python tests/sample_consumer.py
+  - python tests/ut/test_util.py
+  - python tests/sample.py
+  - python tests/integration_test/test_logtail_config.py
+  - python tests/integration_test/test_entity.py
+  - python tests/integration_test/test_log_handler.py
+  - python tests/sample_consumer.py
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_doc_logitem_converter.py; fi
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_index_logstore_mappings.py; fi
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then python tests/es_migration/test_mapping_index_converter.py; fi
