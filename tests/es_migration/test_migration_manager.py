@@ -21,15 +21,15 @@ root.addHandler(ch)
 
 def main():
     migration_manager = MigrationManager(hosts="localhost:9200",
-                                         indexes="all_data_types*",
-                                         query='{"query":{"match":{"es_text":"text1"}}}',
+                                         indexes=None,
+                                         query=None,
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
                                          project_name=os.getenv("project_name"),
                                          access_key_id=os.getenv("access_key_id"),
                                          access_key=os.getenv("access_key"),
                                          logstore_index_mappings=None,
-                                         pool_size=10,
+                                         pool_size=24,
                                          time_reference="es_date",
                                          source="my_source",
                                          topic="my_topic",

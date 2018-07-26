@@ -89,6 +89,7 @@ class MigrationManager(object):
         success_task_cnt = 0
         fail_task_cnt = 0
         doc_cnt = 0
+        logging.info("========Tasks Info========")
         for res in results:
             logging.info(res)
             doc_cnt += res.count
@@ -96,6 +97,7 @@ class MigrationManager(object):
                 success_task_cnt += 1
             else:
                 fail_task_cnt += 1
+
         logging.info("========Summary========")
         logging.info("Total started task count: %d", total_started_task_cnt)
         logging.info("Successful task count: %d", success_task_cnt)
