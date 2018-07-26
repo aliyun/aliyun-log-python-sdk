@@ -7,7 +7,7 @@
 import time
 
 
-class IndexJosnKeyConfig(object) : 
+class IndexJsonKeyConfig(object) :
     """ The index config of a special json type key
 
     :type index_all: bool
@@ -90,7 +90,7 @@ class IndexKeyConfig(object):
     :type alias : string
     :param alias : alias name for index key
 
-    :type json_key_config : IndexJosnKeyConfig
+    :type json_key_config : IndexJsonKeyConfig
     :param json_key_config : configs for "json" type
 
     :type chinese: bool
@@ -150,7 +150,7 @@ class IndexKeyConfig(object):
         if 'alias' in json_value:
             self.alias = json_value['alias']
         if self.index_type == 'json' : 
-            self.json_key_config = IndexJosnKeyConfig() 
+            self.json_key_config = IndexJsonKeyConfig()
             self.json_key_config.from_json(json_value)
 
 
