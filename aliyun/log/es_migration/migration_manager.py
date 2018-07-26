@@ -10,7 +10,8 @@ import time
 from multiprocessing import Pool
 
 from aliyun.log import LogClient
-from aliyun.log.es_migration.collection_task import run_collection_task
+from aliyun.log.es_migration.collection_task import (CollectionTaskStatus,
+                                                     run_collection_task)
 from aliyun.log.es_migration.collection_task_config import CollectionTaskConfig
 from aliyun.log.es_migration.index_logstore_mappings import \
     IndexLogstoreMappings
@@ -79,8 +80,27 @@ class MigrationManager(object):
 
         p.close()
         p.join()
+
+        self.logging_summary_info(shard_cnt)
+
+    @classmethod
+    def logging_summary_info(cls, shard_cnt):
+        total_started_task_cnt = shard_cnt
+        success_task_cnt = 0
+        fail_task_cnt = 0
+        doc_cnt = 0
         for res in results:
             logging.info(res)
+            doc_cnt += res.count
+            if res.status == CollectionTaskStatus.SUCCESS:
+                success_task_cnt += 1
+            else:
+                fail_task_cnt += 1
+        logging.info("========Summary========")
+        logging.info("Total started task count: %d", total_started_task_cnt)
+        logging.info("Successful task count: %d", success_task_cnt)
+        logging.info("Failed task count: %d", fail_task_cnt)
+        logging.info("Total collected documentation count: %d", doc_cnt)
 
     @classmethod
     def get_shard_count(cls, es, indexes, query=None):
