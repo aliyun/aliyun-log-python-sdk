@@ -2392,6 +2392,41 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
+    def es_migrate(self, hosts=None, indexes=None, query=None, scroll="5m", project_name=None,
+                   logstore_index_mappings=None, pool_size=10, time_reference=None,
+                   source=None, topic=None, wait_time_in_secs=60):
+        """
+
+        :param hosts:
+
+        :param indexes:
+
+        :param query:
+
+        :param scroll:
+
+        :param project_name:
+
+        :param logstore_index_mappings:
+
+        :param pool_size:
+
+        :param time_reference:
+
+        :param source:
+
+        :param topic:
+
+        :param wait_time_in_secs:
+
+
+        :return:
+
+        """
+        from .es_migration.migration_manager import MigrationManager
+        tool = MigrationManager(access_key=self._accessKey, access_key_id=self._accessKeyId, endpoint=self._endpoint)
+        tool.migrate()
+
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='alertName')
