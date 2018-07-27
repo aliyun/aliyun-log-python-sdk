@@ -8,7 +8,7 @@
 import json
 import re
 
-from aliyun.log.es_migration.util import split_and_strip
+from .util import split_and_strip
 
 
 class IndexLogstoreMappings(object):

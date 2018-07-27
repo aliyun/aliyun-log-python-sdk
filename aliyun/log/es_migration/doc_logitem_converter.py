@@ -7,8 +7,8 @@
 
 import json
 
-from aliyun.log import LogItem
-from aliyun.log.util import parse_timestamp
+from .. import LogItem
+from ..util import parse_timestamp
 
 
 class DocLogItemConverter(object):
