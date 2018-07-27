@@ -3,7 +3,6 @@
 ## 概述
 使用 Python SDK 提供的 [MigrationManager](/aliyun/log/es_migration/migration_manager.py) 可以方便您快速将 Elasticsearch 中的数据导入日志服务。
 MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html) 从 Elasticsearch 中抓取数据。
-为了提高吞吐量，MigrationManager 会为每个 shard 创建一个数据迁移任务，并提交到内部进程池中执行。
 
 ## 配置
 | 参数 | 必选 | 说明 | 样例 |
@@ -24,11 +23,76 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 | wait_time_in_secs | no | 指定 logstore、索引创建好后，MigrationManager 执行数据迁移任务前需要等待的时间。<br>默认值为 60，表示等待 60s。 | 60 |
 
 ## 数据映射
+### logstore - index
+MigrationManager 默认会将 Elasticsearch index 中的数据迁移至同名的 logstore 中，当然您也可以通过参数 logstore_index_mappings 指定将多个 index 中的数据迁移至一个 logstore。
+
+logstore 不必事先创建，如果 MigrationManager 发现目标 logstore 未创建，会为您在指定的 project 下创建好。
+
+### 数据类型映射
+MigrationManager 会根据 Elasticsearch 的[数据类型](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html) 在index 对应的 logstore 中创建好索引。
+
+- Core datatypes
+
+| Elasticsearch | 日志服务 |
+| -------- | -------- |
+| text | text |
+| keyword | text，不分词 |
+| long | long |
+| integer | long |
+| short | long |
+| byte | long |
+| double | double |
+| float | double |
+| half_float | double |
+| scaled_float | double |
+| date | text |
+| boolean | text，不分词 |
+| binary | n/a |
+| integer_range | json |
+| float_range | json |
+| long_range | json |
+| double_range | json |
+| date_range | json |
+| ip_range | text，不分词 |
+
+- Complex datatypes
+
+| Elasticsearch | 日志服务 |
+| -------- | -------- |
+| Array datatype | n/a |
+| Object datatype | json |
+| Nested datatype | n/a |
+
+- Geo datatypes
+
+| Elasticsearch | 日志服务 |
+| -------- | -------- |
+| Geo-point datatype | text |
+| Geo-Shape datatype | text |
+
+- Specialised datatypes
+
+| Elasticsearch | 日志服务 |
+| -------- | -------- |
+| IP datatype | text，不分词 |
+| Completion datatype | n/a |
+| Token count datatype | n/a |
+| mapper-murmur3 | n/a |
+| Percolator type | n/a |
+| join datatype | n/a |
 
 ## 抓取模式
+- 为了提高吞吐量，MigrationManager 会为每个 shard 创建一个数据迁移任务，并提交到内部进程池中执行。
+- 当全部任务执行完成后，migrate 方法才会退出。
 
 ## 任务执行情况展示
-MigrationManager 会将任务的执行
+MigrationManager 使用 logging 记录任务的执行情况，您可以通过如下配置指定将结果输出至控制台。
+```
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler(sys.stdout)
+logger.addHandler(ch)
+```
 
 - 单个迁移任务执行结果展示。
 ```
