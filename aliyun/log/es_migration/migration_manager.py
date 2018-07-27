@@ -59,7 +59,7 @@ class MigrationManager(object):
             (default: None, which will be the value of hosts. example: "your_source")
         :param topic: optional, specify the value of log's topic field.
             (default: None, example: "your_topic")
-        :param wait_time_in_secs: optional,
+        :param wait_time_in_secs: optional, specify the waiting time before execute data migration task after init aliyun log.
             (default: 60, example: 120)
         """
         self.hosts = hosts
