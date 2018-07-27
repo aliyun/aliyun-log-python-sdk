@@ -912,7 +912,42 @@ res.log_print();
 - 重试运行实例
 
   通过`retry_shipper_tasks`重试某一个运行实例.
+  
+## Elasticsearch 数据迁移
+用于将 Elasticsearch 中的数据迁移至日志服务。
 
+- 将 hosts 为 `localhost:9200` 的 Elasticsearch 中的所有文档导入日志服务的项目 `project1` 中。
+```
+migration_manager = MigrationManager(hosts="localhost:9200",      
+                                     endpoint=endpoint,
+                                     project_name="project1",
+                                     access_key_id=access_key_id,
+                                     access_key=access_key)
+migration_manager.migrate()
+```
+
+- 指定将 Elasticsearch 中索引名以 myindex_ 开头的数据写入日志库 logstore1，将索引 index1，index2 中的数据写入日志库 logstore2 中。
+```
+migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",      
+                                     endpoint=endpoint,
+                                     project_name="project1",
+                                     access_key_id=access_key_id,
+                                     access_key=access_key,
+				     logstore_index_mappings='{"logstore1": "myindex_*", "logstore2": "index1,index2"}}')
+migration_manager.migrate()
+```
+
+- 使用参数 query 指定从 Elasticsearch 中抓取 title 字段等于 python 的文档，并使用文档中的字段 date1 作为日志的 time 字段。
+```
+migration_manager = MigrationManager(hosts="localhost:9200",      
+                                     endpoint=endpoint,
+                                     project_name="project1",
+                                     access_key_id=access_key_id,
+                                     access_key=access_key,
+				     query='{"query": {"match": {"title": "python"}}}'
+				     time_reference="date1")
+migration_manager.migrate()
+```
 
 ## 最佳实践
 - [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
