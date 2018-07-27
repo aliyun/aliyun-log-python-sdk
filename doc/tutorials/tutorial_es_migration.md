@@ -5,6 +5,7 @@
 MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html) 从 Elasticsearch 中抓取数据。
 
 ## 配置
+
 | 参数 | 必选 | 说明 | 样例 |
 | -------- | -------- | -------- | -------- |
 | hosts | yes |elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200" |
@@ -87,6 +88,7 @@ MigrationManager 会根据 Elasticsearch 的[数据类型](https://www.elastic.c
 
 ## 任务执行情况展示
 MigrationManager 使用 logging 记录任务的执行情况，您可以通过如下配置指定将结果输出至控制台。
+
 ```
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -95,6 +97,7 @@ logger.addHandler(ch)
 ```
 
 - 单个迁移任务执行结果展示。
+
 ```
 ========Tasks Info========
 ...
@@ -105,6 +108,7 @@ task_id=1, slice_id=1, slice_max=10, hosts=localhost:9200, indexes=None, query=N
 ```
 
 - 迁移任务执行结果汇总信息。
+
 ```
 ========Summary========
 Total started task count: 10
@@ -116,7 +120,9 @@ MigrationManager 总共启动了 10 个数据数据迁移任务，全部执行�
 ```
 
 ## 使用样例
+
 - 将 hosts 为 `localhost:9200` 的 Elasticsearch 中的所有文档导入日志服务的项目 `project1` 中。
+
 ```
 migration_manager = MigrationManager(hosts="localhost:9200",   
                                      endpoint=endpoint,
@@ -127,6 +133,7 @@ migration_manager.migrate()
 ```
 
 - 指定将 Elasticsearch 中索引名以 `myindex_` 开头的数据写入日志库 `logstore1`，将索引 `index1,index2` 中的数据写入日志库 `logstore2` 中。
+
 ```
 migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",
                                      endpoint=endpoint,
@@ -138,6 +145,7 @@ migration_manager.migrate()
 ```
 
 - 使用参数 query 指定从 Elasticsearch 中抓取 `title` 字段等于 `python` 的文档，并使用文档中的字段 `date1` 作为日志的 time 字段。
+
 ```
 migration_manager = MigrationManager(hosts="localhost:9200",
                                      endpoint=endpoint,
