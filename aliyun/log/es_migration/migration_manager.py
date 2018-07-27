@@ -33,6 +33,35 @@ class MigrationManager(object):
     def __init__(self, hosts=None, indexes=None, query=None, scroll="5m", endpoint=None, project_name=None,
                  access_key_id=None, access_key=None, logstore_index_mappings=None, pool_size=10, time_reference=None,
                  source=None, topic=None, wait_time_in_secs=60):
+        """
+        :param hosts: required, a comma-separated list of source ES nodes.
+            (example: "localhost:9200,other_host:9200")
+        :param indexes: optional, a comma-separated list of source index names.
+            (default: None, which will pull all indexes. example: "index1,index2")
+        :param query: optional, used to filter docs, so that you can specify the docs you want to migrate.
+            (default: None, example: '{"query":{"match":{"es_text":"text1"}}}')
+        :param scroll: optional, specify how long a consistent view of the index should be
+            maintained for scrolled search. (default: "5m", example: "10m")
+        :param endpoint: required, specify the endpoint of your log services.
+            (example: "cn-beijing.log.aliyuncs.com")
+        :param project_name: required, specify the project_name of your log services.
+        :param access_key_id: required, specify the access_key_id of your account.
+        :param access_key: required, specify the access_key of your account.
+        :param logstore_index_mappings: optional, specify the mappings of log service logstore and ES index.
+            (default is one-to-one mapping,
+             example: '{"logstore1": "my_index*","logstore2": "a_index,b_index"}')
+        :param pool_size: optional, specify the size of process pool.
+            The process pool will be used to run collection tasks.
+            (default: 10, example: 20)
+        :param time_reference: optional, specify what ES doc's field to use as log's time field.
+            (default: None, which will use current timestamp as log's time. example: "field1")
+        :param source: optional, specify the value of log's source field.
+            (default: None, which will be the value of hosts. example: "your_source")
+        :param topic: optional, specify the value of log's topic field.
+            (default: None, example: "your_topic")
+        :param wait_time_in_secs: optional,
+            (default: 60, example: 120)
+        """
         self.hosts = hosts
         self.indexes = indexes
         self.query = query

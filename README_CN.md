@@ -30,6 +30,7 @@
 6. 使用异常统一处理错误
 7. 提供消费组高级API
 8. Python日志模块的Handler
+9. Elasticsearch 数据迁移
 
 ### 支持Python版本
 
