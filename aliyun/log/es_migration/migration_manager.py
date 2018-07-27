@@ -9,17 +9,14 @@ import logging
 import time
 from multiprocessing import Pool
 
-from aliyun.log import LogClient
-from aliyun.log.es_migration.collection_task import (CollectionTaskStatus,
-                                                     run_collection_task)
-from aliyun.log.es_migration.collection_task_config import CollectionTaskConfig
-from aliyun.log.es_migration.index_logstore_mappings import \
-    IndexLogstoreMappings
-from aliyun.log.es_migration.mapping_index_converter import \
-    MappingIndexConverter
-from aliyun.log.es_migration.util import split_and_strip
-from aliyun.log.logexception import LogException
 from elasticsearch import Elasticsearch
+
+from .. import LogClient, LogException
+from .collection_task import CollectionTaskStatus, run_collection_task
+from .collection_task_config import CollectionTaskConfig
+from .index_logstore_mappings import IndexLogstoreMappings
+from .mapping_index_converter import MappingIndexConverter
+from .util import split_and_strip
 
 results = []
 
