@@ -11,12 +11,10 @@ import sys
 
 from aliyun.log.es_migration.migration_manager import MigrationManager
 
-logging.StreamHandler(sys.stdout)
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler(sys.stdout)
-root.addHandler(ch)
+logger.addHandler(ch)
 
 
 def main():
