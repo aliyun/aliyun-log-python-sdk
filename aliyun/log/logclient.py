@@ -2393,13 +2393,13 @@ class LogClient(object):
                      project_name,
                      indexes=None,
                      query=None,
-                     scroll=None,
+                     scroll="5m",
                      logstore_index_mappings=None,
-                     pool_size=None,
+                     pool_size=10,
                      time_reference=None,
                      source=None,
                      topic=None,
-                     wait_time_in_secs=None):
+                     wait_time_in_secs=60):
         """
         :type hosts: string
         :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
