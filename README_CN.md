@@ -954,7 +954,7 @@ migration_manager.migrate()
 - [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
 - [Log Handler自动解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)
 - [Log Handler自动解析JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)
-
+- [Elasticsearch 数据迁移](http://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_es_migration.html)
 
 ## 其他资源：
 
