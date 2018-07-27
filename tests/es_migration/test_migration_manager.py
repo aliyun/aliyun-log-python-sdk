@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 
-from aliyun.log.es_migration.migration_manager import MigrationManager
+from aliyun.log.es_migration import MigrationManager
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
