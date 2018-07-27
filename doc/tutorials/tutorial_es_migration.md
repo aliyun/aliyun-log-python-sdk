@@ -28,6 +28,8 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 ## 抓取模式
 
 ## 任务执行情况展示
+MigrationManager 会将任务的执行
+
 - 单个迁移任务执行结果展示。
 ```
 ========Tasks Info========
