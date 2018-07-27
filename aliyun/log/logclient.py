@@ -135,7 +135,7 @@ class LogClient(object):
         endpoint = endpoint.strip()
         pos = endpoint.find('://')
         if pos != -1:
-            self.http_type = endpoint[:pos+3]
+            self.http_type = endpoint[:pos + 3]
             endpoint = endpoint[pos + 3:]
 
         if self.http_type.lower() == 'https://':
@@ -315,7 +315,7 @@ class LogClient(object):
         if len(body) > 10 * 1024 * 1024:  # 10 MB
             raise LogException('InvalidLogSize',
                                "logItems' size exceeds maximum limitation: 10 MB. now: {0} MB.".format(
-                                   len(body)/1024.0/1024))
+                                   len(body) / 1024.0 / 1024))
 
         headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
         is_compress = request.get_compress()
@@ -340,7 +340,6 @@ class LogClient(object):
             (resp, header) = self._send('POST', project, body, resource, params, headers)
 
         return PutLogsResponse(header, resp)
-
 
     def list_logstores(self, request):
         """ List all logstores of requested project.
@@ -482,7 +481,6 @@ class LogClient(object):
 
         return ret
 
-
     def get_logs(self, request):
         """ Get logs from log service.
         Unsuccessful opertaion will cause an LogException.
@@ -509,7 +507,7 @@ class LogClient(object):
                             query, reverse, offset, size)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False):
+                    query=None, reverse=False):
         """ Get logs from log service. will retry when incomplete.
         Unsuccessful opertaion will cause an LogException. different with `get_log` with size=-1,
         It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
@@ -547,7 +545,7 @@ class LogClient(object):
         offset = 0
         while True:
             response = self.get_log(project, logstore, from_time, to_time, topic=topic,
-                query=query, reverse=reverse, offset=offset, size=100)
+                                    query=query, reverse=reverse, offset=offset, size=100)
 
             yield response
 
@@ -599,7 +597,8 @@ class LogClient(object):
         """
 
         headers = {'Content-Type': 'application/json'}
-        params = {'type': 'cursor', 'from': str(start_time) if start_time in ("begin", "end") else parse_timestamp(start_time)}
+        params = {'type': 'cursor',
+                  'from': str(start_time) if start_time in ("begin", "end") else parse_timestamp(start_time)}
 
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
@@ -816,7 +815,7 @@ class LogClient(object):
 
         while True:
             res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
-                           count=batch_size, end_cursor=end_cursor, compress=compress)
+                                 count=batch_size, end_cursor=end_cursor, compress=compress)
 
             yield res
             if res.get_log_count() <= 0:
@@ -889,7 +888,7 @@ class LogClient(object):
         params = {}
         resource = "/logstores"
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
-        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count), 
+        body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count),
                 "enable_tracking": enable_tracking}
 
         body_str = six.b(json.dumps(body))
@@ -1103,7 +1102,6 @@ class LogClient(object):
         :raise: LogException
         """
 
-
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
         resource = "/externalstores/" + config.externalStoreName
@@ -1146,7 +1144,6 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExternalStoreResponse(resp, header)
-
 
     def list_shards(self, project_name, logstore_name):
         """ list the shard meta of a logstore
@@ -2392,9 +2389,71 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
+    def es_migration(self, hosts,
+                     project_name,
+                     indexes=None,
+                     query=None,
+                     scroll=None,
+                     logstore_index_mappings=None,
+                     pool_size=None,
+                     time_reference=None,
+                     source=None,
+                     topic=None,
+                     wait_time_in_secs=None):
+        """
+        :type hosts: string
+        :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
+
+        :type project_name: string
+        :param project_name: specify the project_name of your log services. e.g. "your_project"
+
+        :type indexes: string
+        :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
+
+        :type query: string
+        :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
+
+        :type scroll: string
+        :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
+
+        :type logstore_index_mappings: string
+        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
+
+        :type pool_size: int
+        :param pool_size: specify the size of process pool. e.g. 10
+
+        :type time_reference: string
+        :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
+
+        :type source: string
+        :param source: specify the value of log's source field. e.g. "your_source"
+
+        :type topic: string
+        :param topic: specify the value of log's topic field. e.g. "your_topic"
+
+        :type wait_time_in_secs: int
+        :param wait_time_in_secs: specify the waiting time before execute data migration task after init aliyun log. e.g. 60
+
+        :return:
+        """
+        from .es_migration import MigrationManager
+        migration_manager = MigrationManager(hosts=hosts,
+                                             indexes=indexes,
+                                             query=query,
+                                             scroll=scroll,
+                                             endpoint=self._endpoint,
+                                             project_name=project_name,
+                                             access_key_id=self._accessKeyId,
+                                             access_key=self._accessKey,
+                                             logstore_index_mappings=logstore_index_mappings,
+                                             pool_size=pool_size,
+                                             time_reference=time_reference,
+                                             source=source,
+                                             topic=topic,
+                                             wait_time_in_secs=wait_time_in_secs)
+        migration_manager.migrate()
+
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='alertName')
 make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
-
-
