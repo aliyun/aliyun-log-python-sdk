@@ -945,7 +945,7 @@ migration_manager = MigrationManager(hosts="localhost:9200",
                                      project_name="project1",
                                      access_key_id=access_key_id,
                                      access_key=access_key,
-				     query='{"query": {"match": {"title": "python"}}}'
+				     query='{"query": {"match": {"title": "python"}}}',
 				     time_reference="date1")
 migration_manager.migrate()
 ```

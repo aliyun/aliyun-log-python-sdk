@@ -5,8 +5,8 @@
 # All rights reserved.
 
 
-from aliyun.log import IndexConfig, IndexKeyConfig, IndexLineConfig
-from aliyun.log.index_config import IndexJsonKeyConfig
+from .. import IndexConfig, IndexKeyConfig, IndexLineConfig
+from ..index_config import IndexJsonKeyConfig
 
 
 class AliyunLogFieldType(object):
