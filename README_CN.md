@@ -926,7 +926,7 @@ migration_manager = MigrationManager(hosts="localhost:9200",
 migration_manager.migrate()
 ```
 
-- 指定将 Elasticsearch 中索引名以 myindex_ 开头的数据写入日志库 logstore1，将索引 index1，index2 中的数据写入日志库 logstore2 中。
+- 指定将 Elasticsearch 中索引名以 `myindex_` 开头的数据写入日志库 `logstore1`，将索引 `index1,index2` 中的数据写入日志库 `logstore2` 中。
 ```
 migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",      
                                      endpoint=endpoint,
@@ -937,7 +937,7 @@ migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",
 migration_manager.migrate()
 ```
 
-- 使用参数 query 指定从 Elasticsearch 中抓取 title 字段等于 python 的文档，并使用文档中的字段 date1 作为日志的 time 字段。
+- 使用参数 query 指定从 Elasticsearch 中抓取 `title` 字段等于 `python` 的文档，并使用文档中的字段 `date1` 作为日志的 time 字段。
 ```
 migration_manager = MigrationManager(hosts="localhost:9200",      
                                      endpoint=endpoint,
