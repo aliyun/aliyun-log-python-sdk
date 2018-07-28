@@ -2437,11 +2437,13 @@ class LogClient(object):
         :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
 
 
-        :return: int
+        :return: MigrationResponse
 
         :raise: Exception
         """
         from .es_migration import MigrationManager
+        from .es_migration import MigrationResponse
+
         migration_manager = MigrationManager(hosts=hosts,
                                              indexes=indexes,
                                              query=query,
@@ -2457,7 +2459,8 @@ class LogClient(object):
                                              topic=topic,
                                              wait_time_in_secs=wait_time_in_secs)
         migration_manager.migrate()
-        return 0
+
+        return MigrationResponse()
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
