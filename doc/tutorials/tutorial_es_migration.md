@@ -23,6 +23,8 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 | topic | no | 指定日志的 topic 字段的值。<br>默认值为空。 | "your_topic" |
 | wait_time_in_secs | no | 指定 logstore、索引创建好后，MigrationManager 执行数据迁移任务前需要等待的时间。<br>默认值为 60，表示等待 60s。 | 60 |
 
+> aliyun-log-python-sdk.readthedocs.io 无法正常显示表格，请参阅[tutorial_es_migration.md](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/doc/tutorials/tutorial_es_migration.md)
+
 ## 数据映射
 ### logstore - index
 MigrationManager 默认会将 Elasticsearch index 中的数据迁移至同名的 logstore 中，当然您也可以通过参数 logstore_index_mappings 指定将多个 index 中的数据迁移至一个 logstore。
