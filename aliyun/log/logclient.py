@@ -2401,6 +2401,8 @@ class LogClient(object):
                      topic=None,
                      wait_time_in_secs=60):
         """
+        migrate data from elasticsearch to aliyun log service
+
         :type hosts: string
         :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
 
@@ -2434,7 +2436,9 @@ class LogClient(object):
         :type wait_time_in_secs: int
         :param wait_time_in_secs: specify the waiting time before execute data migration task after init aliyun log. e.g. 60
 
-        :return:
+        :return: int
+
+        :raise: Exception
         """
         from .es_migration import MigrationManager
         migration_manager = MigrationManager(hosts=hosts,
@@ -2452,6 +2456,7 @@ class LogClient(object):
                                              topic=topic,
                                              wait_time_in_secs=wait_time_in_secs)
         migration_manager.migrate()
+        return 0
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')

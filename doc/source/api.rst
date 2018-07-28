@@ -141,6 +141,14 @@ Response Class
    GetEntityResponse
    ListEntityResponse
 
+
+ES Migration Class
+--------------------------
+.. py:currentmodule:: aliyun.log.es_migration
+.. autosummary::
+   MigrationManager
+
+
 Project
 --------
 .. py:currentmodule:: aliyun.log.LogClient
@@ -445,4 +453,5 @@ Definitions
 .. autoclass:: UwsgiQueuedLogHandler
 .. autoclass:: LogFields
 
-
+.. py:currentmodule:: aliyun.log.es_migration
+.. autoclass:: MigrationManager
