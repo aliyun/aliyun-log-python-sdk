@@ -91,7 +91,7 @@ class MigrationManager(object):
         self.wait_time_in_secs = wait_time_in_secs
 
     def migrate(self):
-        es = Elasticsearch(split_and_strip(self.hosts))
+        es = Elasticsearch(split_and_strip(self.hosts, ","))
         log_client = LogClient(self.endpoint, self.access_key_id, self.access_key)
 
         index_lst = self.get_index_lst(es, self.indexes)
