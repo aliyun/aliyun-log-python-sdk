@@ -2434,7 +2434,8 @@ class LogClient(object):
         :param topic: specify the value of log's topic field. e.g. "your_topic"
 
         :type wait_time_in_secs: int
-        :param wait_time_in_secs: specify the waiting time before execute data migration task after init aliyun log. e.g. 60
+        :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
+
 
         :return: int
 
