@@ -26,53 +26,55 @@ def log_result(result):
 
 
 class MigrationManager(object):
+    """
+    MigrationManager, migrate data from elasticsearch to log service
+
+    :type hosts: string
+    :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
+
+    :type indexes: string
+    :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
+
+    :type query: string
+    :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
+
+    :type scroll: string
+    :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
+
+    :type endpoint: string
+    :param endpoint: specify the endpoint of your log services. e.g. "cn-beijing.log.aliyuncs.com"
+
+    :type project_name: string
+    :param project_name: specify the project_name of your log services. e.g. "your_project"
+
+    :type access_key_id: string
+    :param access_key_id: specify the access_key_id of your account.
+
+    :type access_key: string
+    :param access_key: specify the access_key of your account.
+
+    :type logstore_index_mappings: string
+    :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
+
+    :type pool_size: int
+    :param pool_size: specify the size of process pool. e.g. 10
+
+    :type time_reference: string
+    :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
+
+    :type source: string
+    :param source: specify the value of log's source field. e.g. "your_source"
+
+    :type topic: string
+    :param topic: specify the value of log's topic field. e.g. "your_topic"
+
+    :type wait_time_in_secs: int
+    :param wait_time_in_secs: specify the waiting time before execute data migration task after init aliyun log. e.g. 60
+    """
 
     def __init__(self, hosts=None, indexes=None, query=None, scroll="5m", endpoint=None, project_name=None,
                  access_key_id=None, access_key=None, logstore_index_mappings=None, pool_size=10, time_reference=None,
                  source=None, topic=None, wait_time_in_secs=60):
-        """
-        :type hosts: string
-        :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
-
-        :type indexes: string
-        :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
-
-        :type query: string
-        :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
-
-        :type scroll: string
-        :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
-
-        :type endpoint: string
-        :param endpoint: specify the endpoint of your log services. e.g. "cn-beijing.log.aliyuncs.com"
-
-        :type project_name: string
-        :param project_name: specify the project_name of your log services. e.g. "your_project"
-
-        :type access_key_id: string
-        :param access_key_id: specify the access_key_id of your account.
-
-        :type access_key: string
-        :param access_key: specify the access_key of your account.
-
-        :type logstore_index_mappings: string
-        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
-
-        :type pool_size: int
-        :param pool_size: specify the size of process pool. e.g. 10
-
-        :type time_reference: string
-        :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
-
-        :type source: string
-        :param source: specify the value of log's source field. e.g. "your_source"
-
-        :type topic: string
-        :param topic: specify the value of log's topic field. e.g. "your_topic"
-
-        :type wait_time_in_secs: int
-        :param wait_time_in_secs: specify the waiting time before execute data migration task after init aliyun log. e.g. 60
-        """
         self.hosts = hosts
         self.indexes = indexes
         self.query = query
