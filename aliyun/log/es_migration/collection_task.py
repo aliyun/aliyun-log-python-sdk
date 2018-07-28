@@ -13,6 +13,7 @@ from enum import Enum
 from elasticsearch import Elasticsearch
 
 from .. import LogClient, PutLogsRequest
+from ..version import ES_MIGRATION_USER_AGENT
 from .doc_logitem_converter import DocLogItemConverter
 from .util import split_and_strip
 
@@ -91,6 +92,7 @@ class CollectionTask(object):
         self.topic = topic
         self.start_time = start_time
         self.log_client = LogClient(endpoint, access_key_id, access_key)
+        self.log_client.set_user_agent(ES_MIGRATION_USER_AGENT)
         self.cur_count = 0
 
     def collect(self):

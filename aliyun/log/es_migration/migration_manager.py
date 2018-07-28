@@ -12,6 +12,7 @@ from multiprocessing import Pool
 from elasticsearch import Elasticsearch
 
 from .. import LogClient, LogException
+from ..version import ES_MIGRATION_USER_AGENT
 from .collection_task import CollectionTaskStatus, run_collection_task
 from .collection_task_config import CollectionTaskConfig
 from .index_logstore_mappings import IndexLogstoreMappings
@@ -93,6 +94,7 @@ class MigrationManager(object):
     def migrate(self):
         es = Elasticsearch(split_and_strip(self.hosts, ","))
         log_client = LogClient(self.endpoint, self.access_key_id, self.access_key)
+        log_client.set_user_agent(ES_MIGRATION_USER_AGENT)
 
         index_lst = self.get_index_lst(es, self.indexes)
         index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
