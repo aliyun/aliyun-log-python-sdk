@@ -3,3 +3,9 @@
 local.env
 .DS_Store
 build/
+doc/source/README.rst
+doc/source/README_CN.rst
+doc/source/tutorials/tutorial_es_migration.rst
+doc/source/tutorials/tutorial_logging_handler.rst
+doc/source/tutorials/tutorial_logging_handler_json.rst
+doc/source/tutorials/tutorial_logging_handler_kv.rst
