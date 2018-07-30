@@ -8,7 +8,7 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 
 | 参数 | 必选 | 说明 | 样例 |
 | -------- | -------- | -------- | -------- |
-| hosts | yes | elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200" |
+| hosts | yes | elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200"<br>"user:secret@localhost:9200" |
 | indexes | no | elasticsearch index 列表，多个 index 之间用逗号分隔，支持通配符(*)。<br>默认抓取目标 es 中所有 index 的数据。 | "index1"<br>"my_index*,other_index" |
 | query | no | 用于过滤文档，使用该参数您可以指定需要迁移的文档。<br>默认不会对文档进行过滤。 | '{"query": {"match": {"title": "python"}}}' |
 | scroll | no | 用于告诉 elasticsearch 需要将查询上下文信息保留多长时间。<br>默认值为 5m。 | "5m" |
@@ -156,6 +156,17 @@ migration_manager = MigrationManager(hosts="localhost:9200",
                                      access_key=access_key,
 				     query='{"query": {"match": {"title": "python"}}}',
 				     time_reference="date1")
+migration_manager.migrate()
+```
+
+- 使用 HTTP 基本认证`user:secret@localhost:9200`，从 Elasticserch 中迁移数据。
+
+```
+migration_manager = MigrationManager(hosts="user:secret@localhost:9200",   
+                                     endpoint=endpoint,
+                                     project_name="project1",
+                                     access_key_id=access_key_id,
+                                     access_key=access_key)
 migration_manager.migrate()
 ```
 
