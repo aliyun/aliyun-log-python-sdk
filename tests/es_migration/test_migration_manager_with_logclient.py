@@ -20,7 +20,8 @@ logger.addHandler(ch)
 def main():
     log_client = LogClient(endpoint=os.getenv("endpoint"), accessKeyId=os.getenv("access_key_id"),
                            accessKey=os.getenv("access_key"))
-    log_client.es_migration(hosts="localhost:9200",
+    log_client.es_migration(hosts="elastic:elastic@localhost:9200",
+                            indexes="all_data_types*",
                             project_name=os.getenv("project_name"),
                             scroll="2m",
                             pool_size=24,

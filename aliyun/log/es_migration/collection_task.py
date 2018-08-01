@@ -101,7 +101,8 @@ class CollectionTask(object):
 
         query = json.loads(self.query) if self.query else {}
         query["sort"] = "_doc"
-        query["slice"] = {"id": self.slice_id, "max": self.slice_max}
+        if self.slice_max > 1:
+            query["slice"] = {"id": self.slice_id, "max": self.slice_max}
 
         # initial search
         resp = es.search(index=self.indexes, body=query, scroll=self.scroll, size=self.DEFAULT_SIZE)
