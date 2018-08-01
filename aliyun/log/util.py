@@ -223,6 +223,8 @@ def parse_timestamp(tm):
             # try to use dateparser to parse the format.
             from dateparser import parse
             dt = parse(tm)
+            if dt is None:
+                raise ex
         except ImportError as ex2:
             raise ex
 
