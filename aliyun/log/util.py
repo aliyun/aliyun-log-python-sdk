@@ -216,7 +216,15 @@ def parse_timestamp(tm):
             (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
         return int(tm)
 
-    dt = parser.parse(tm)
+    try:
+        dt = parser.parse(tm)
+    except ValueError as ex:
+        try:
+            # try to use dateparser to parse the format.
+            from dateparser import parse
+            dt = parse(tm)
+        except ImportError as ex2:
+            raise ex
 
     if sys.version_info[:2] == (2, 6):
         if dt.tzinfo is None:
