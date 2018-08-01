@@ -2458,9 +2458,10 @@ class LogClient(object):
                                              source=source,
                                              topic=topic,
                                              wait_time_in_secs=wait_time_in_secs)
-        migration_manager.migrate()
-
-        return MigrationResponse()
+        res = migration_manager.migrate()
+        resp = MigrationResponse()
+        resp.body = res
+        return resp
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')

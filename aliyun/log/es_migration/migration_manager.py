@@ -125,7 +125,7 @@ class MigrationManager(object):
         p.close()
         p.join()
 
-        self.logging_summary_info(shard_cnt)
+        return self.logging_summary_info(shard_cnt)
 
     @classmethod
     def logging_summary_info(cls, shard_cnt):
@@ -133,9 +133,14 @@ class MigrationManager(object):
         success_task_cnt = 0
         fail_task_cnt = 0
         doc_cnt = 0
+        summary_info = ""
+
         logging.info("========Tasks Info========")
+        summary_info += "========Tasks Info========" + "\n"
+
         for res in results:
             logging.info(res)
+            summary_info += str(res) + "\n"
             doc_cnt += res.count
             if res.status == CollectionTaskStatus.SUCCESS:
                 success_task_cnt += 1
@@ -143,10 +148,25 @@ class MigrationManager(object):
                 fail_task_cnt += 1
 
         logging.info("========Summary========")
-        logging.info("Total started task count: %d", total_started_task_cnt)
-        logging.info("Successful task count: %d", success_task_cnt)
-        logging.info("Failed task count: %d", fail_task_cnt)
-        logging.info("Total collected documentation count: %d", doc_cnt)
+        summary_info += "========Summary========" + "\n"
+
+        total_started_task_cnt_info = "Total started task count: %d" % total_started_task_cnt
+        logging.info(total_started_task_cnt_info)
+        summary_info += total_started_task_cnt_info + "\n"
+
+        success_task_cnt_info = "Successful task count: %d" % success_task_cnt
+        logging.info(success_task_cnt_info)
+        summary_info += success_task_cnt_info + "\n"
+
+        fail_task_cnt_info = "Failed task count: %d" % fail_task_cnt
+        logging.info(fail_task_cnt_info)
+        summary_info += fail_task_cnt_info + "\n"
+
+        doc_cnt_info = "Total collected documentation count: %d" % doc_cnt
+        logging.info(doc_cnt_info)
+        summary_info += doc_cnt_info + "\n"
+
+        return summary_info
 
     @classmethod
     def get_shard_count(cls, es, indexes, query=None):

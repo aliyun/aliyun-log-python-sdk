@@ -18,7 +18,8 @@ logger.addHandler(ch)
 
 
 def main():
-    migration_manager = MigrationManager(hosts="localhost:9200",
+    migration_manager = MigrationManager(hosts="elastic:elastic@localhost:9200",
+                                         indexes="all_data_types*",
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
                                          project_name=os.getenv("project_name"),
@@ -29,7 +30,8 @@ def main():
                                          source="my_source",
                                          topic="my_topic",
                                          wait_time_in_secs=60)
-    migration_manager.migrate()
+    res = migration_manager.migrate()
+    print res
 
 
 if __name__ == "__main__":
