@@ -16,7 +16,7 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 | project_name | yes | 日志服务中用于存储迁移数据的 project。<br>需要您提前创建好。 | "your_project" |
 | access_key_id | yes | 用户访问秘钥对中的 access_key_id。 | |
 | access_key | yes | 用户访问秘钥对中的 access_key_secret。 | |
-| logstore_index_mappings | no | 用于配置日志服务中的 logstore 和 elasticsearch 中的 index 间的映射关系。支持使用通配符指定 index，多个 index 之间用逗号分隔。<br>可选参数，默认情况下 logstore 和 index 是一一映射，这里允许用户将多个index 上的数据发往一个 logstore。 | '{"logstore1": "my_index\*", "logstore2": "index1,index2"}, "logstore3": "index3"}'<br>'{"your_logstore": "\*"}'  |
+| logstore_index_mappings | no | 用于配置日志服务中的 logstore 和 elasticsearch 中的 index 间的映射关系。支持使用通配符指定 index，多个 index 之间用逗号分隔。<br>可选参数，默认情况下 logstore 和 index 是一一映射，这里允许用户将多个index 上的数据发往一个 logstore。 | '{"logstore1": "my_index\*", "logstore2": "index1,index2", "logstore3": "index3"}'<br>'{"your_logstore": "\*"}'  |
 | pool_size | no | 指定用于执行迁移任务的进程池大小。<br>MigrationManager 会针对每个 shard 创建一个数据迁移任务，任务会被提交到进程池中执行。<br>默认为 min(10, shard_count)。 | 10 |
 | time_reference | no | 将 elasticsearch 文档中指定的字段映射成日志的 time 字段。<br>默认使用当前时间戳作为日志 time 字段的值。 | "field1" |
 | source | no | 指定日志的 source 字段的值。<br>默认值为参数 hosts 的值。 | "your_source" |
