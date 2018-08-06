@@ -71,11 +71,14 @@ class MigrationManager(object):
 
     :type wait_time_in_secs: int
     :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
+
+    :type auto_creation: bool
+    :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
     """
 
     def __init__(self, hosts=None, indexes=None, query=None, scroll="5m", endpoint=None, project_name=None,
                  access_key_id=None, access_key=None, logstore_index_mappings=None, pool_size=10, time_reference=None,
-                 source=None, topic=None, wait_time_in_secs=60):
+                 source=None, topic=None, wait_time_in_secs=60, auto_creation=True):
         self.hosts = hosts
         self.indexes = indexes
         self.query = query
@@ -90,6 +93,7 @@ class MigrationManager(object):
         self.source = source
         self.topic = topic
         self.wait_time_in_secs = wait_time_in_secs
+        self.auto_creation = auto_creation
 
     def migrate(self):
         es = Elasticsearch(split_and_strip(self.hosts, ","))
@@ -99,7 +103,8 @@ class MigrationManager(object):
         index_lst = self.get_index_lst(es, self.indexes)
         index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
 
-        self.init_aliyun_log(es, log_client, self.project_name, index_logstore_mappings, self.wait_time_in_secs)
+        if self.auto_creation:
+            self.init_aliyun_log(es, log_client, self.project_name, index_logstore_mappings, self.wait_time_in_secs)
 
         shard_cnt = self.get_shard_count(es, self.indexes, self.query)
         p = Pool(min(shard_cnt, self.pool_size))
@@ -196,6 +201,7 @@ class MigrationManager(object):
                 log_client.create_logstore(project_name=project_name, logstore_name=logstore)
             except LogException as e:
                 if e.get_error_code() == "LogStoreAlreadyExist":
+                    logging.info("The logstore %s is already exist, skip the creation step.", logstore)
                     continue
                 else:
                     raise

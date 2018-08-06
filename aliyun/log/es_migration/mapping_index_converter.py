@@ -246,6 +246,8 @@ class MappingIndexConverter(object):
         key_configs = cls.parse_properties(None, properties)
         for key_name, key_config in key_configs.items():
             json_key_config.add_key(key_name=key_name, key_type=key_config.index_type, doc_value=key_config.doc_value)
+            if len(json_key_config.json_keys) >= 20:
+                break
         return IndexKeyConfig(
             index_type=AliyunLogFieldType.JSON,
             json_key_config=json_key_config

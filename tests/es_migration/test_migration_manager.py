@@ -18,18 +18,16 @@ logger.addHandler(ch)
 
 
 def main():
-    migration_manager = MigrationManager(hosts="elastic:elastic@localhost:9200",
-                                         indexes="all_data_types*",
+    migration_manager = MigrationManager(hosts="localhost:9200",
+                                         indexes="filebeat-*,bank,shakespeare",
                                          scroll="2m",
                                          endpoint=os.getenv("endpoint"),
                                          project_name=os.getenv("project_name"),
                                          access_key_id=os.getenv("access_key_id"),
                                          access_key=os.getenv("access_key"),
-                                         pool_size=24,
-                                         time_reference="es_date",
-                                         source="my_source",
-                                         topic="my_topic",
-                                         wait_time_in_secs=60)
+                                         logstore_index_mappings='{"nginx": "filebeat-*"}',
+                                         wait_time_in_secs=60,
+                                         auto_creation=True)
     res = migration_manager.migrate()
     print res
 

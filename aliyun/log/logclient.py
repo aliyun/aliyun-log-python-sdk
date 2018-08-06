@@ -2399,7 +2399,8 @@ class LogClient(object):
                      time_reference=None,
                      source=None,
                      topic=None,
-                     wait_time_in_secs=60):
+                     wait_time_in_secs=60,
+                     auto_creation=True):
         """
         migrate data from elasticsearch to aliyun log service
 
@@ -2436,6 +2437,8 @@ class LogClient(object):
         :type wait_time_in_secs: int
         :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
 
+        :type auto_creation: bool
+        :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
 
         :return: MigrationResponse
 
@@ -2457,7 +2460,8 @@ class LogClient(object):
                                              time_reference=time_reference,
                                              source=source,
                                              topic=topic,
-                                             wait_time_in_secs=wait_time_in_secs)
+                                             wait_time_in_secs=wait_time_in_secs,
+                                             auto_creation=auto_creation)
         res = migration_manager.migrate()
         resp = MigrationResponse()
         resp.body = res
