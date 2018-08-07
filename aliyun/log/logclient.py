@@ -116,6 +116,14 @@ class LogClient(object):
 
         self._user_agent = USER_AGENT
 
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self._timeout = value
+
     def set_user_agent(self, user_agent):
         """
         set user agent
