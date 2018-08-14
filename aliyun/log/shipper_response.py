@@ -252,7 +252,7 @@ class GetShipperTasksResponse(LogResponse):
         self.fail_count += response.get_fail_task_count()
         self.tasks.extend(response.get_tasks())
 
-        for task_res in resp['tasks']:
+        for task_res in response['tasks']:
             task = ShipperTask(task_res['id'], task_res['taskStatus'], task_res['taskMessage'],
                                task_res['taskCreateTime'],
                                task_res['taskLastDataReceiveTime'], task_res['taskFinishTime'])
