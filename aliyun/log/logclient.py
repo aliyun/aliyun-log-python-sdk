@@ -16,7 +16,7 @@ import six
 import time
 import zlib
 from datetime import datetime
-import locale
+import logging
 
 from .acl_response import *
 from .consumer_group_request import *
@@ -47,6 +47,9 @@ from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
 from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 
+logger = logging.getLogger(__name__)
+
+
 CONNECTION_TIME_OUT = 60
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
@@ -54,7 +57,12 @@ MAX_GET_LOG_PAGING_SIZE = 100
 DEFAULT_QUERY_RETRY_COUNT = 10
 DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 
-locale.setlocale(locale.LC_ALL, str('en_US.UTF-8'))
+
+try:
+    import locale
+    locale.setlocale(locale.LC_ALL, str('en_US.UTF-8'))
+except ValueError as ex:
+    logger.info("failed to set locale to en_US.UTF-8. skip it: {0}".format(ex))
 
 
 def _apply_cn_keys_patch():
