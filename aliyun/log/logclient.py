@@ -16,6 +16,7 @@ import six
 import time
 import zlib
 from datetime import datetime
+import locale
 
 from .acl_response import *
 from .consumer_group_request import *
@@ -52,6 +53,8 @@ MAX_GET_LOG_PAGING_SIZE = 100
 
 DEFAULT_QUERY_RETRY_COUNT = 10
 DEFAULT_QUERY_RETRY_INTERVAL = 0.2
+
+locale.setlocale(locale.LC_ALL, str('en_US.UTF-8'))
 
 
 def _apply_cn_keys_patch():

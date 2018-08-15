@@ -40,8 +40,9 @@
 4. Python 3.4
 5. Python 3.5
 6. Python 3.6
-7. Pypy2
-8. Pypy3
+7. Python 3.7
+8. Pypy2
+9. Pypy3
 
 
 ### 支持API版本
