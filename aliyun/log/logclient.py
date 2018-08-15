@@ -61,7 +61,7 @@ DEFAULT_QUERY_RETRY_INTERVAL = 0.2
 try:
     import locale
     locale.setlocale(locale.LC_ALL, str('en_US.UTF-8'))
-except ValueError as ex:
+except Exception as ex:
     logger.info("failed to set locale to en_US.UTF-8. skip it: {0}".format(ex))
 
 
