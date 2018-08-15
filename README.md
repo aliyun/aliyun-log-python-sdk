@@ -38,8 +38,9 @@ Don't want to write code? Try the [CLI](http://aliyun-log-cli.readthedocs.io/en/
 4. Python 3.4
 5. Python 3.5
 6. Python 3.6
-7. Pypy2
-8. Pypy3
+7. Python 3.7
+8. Pypy2
+9. Pypy3
 
 ### Supported Log Service API
 1. Log Service API 0.6
