@@ -37,7 +37,7 @@ class PutLogsRequest(LogRequest):
     """
 
     def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey=None,
-                 compress=False, logtags=None):
+                 compress=True, logtags=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.topic = topic
