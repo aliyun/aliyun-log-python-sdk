@@ -1,5 +1,5 @@
 requests
-protobuf
+protobuf>=3.4.0
 six
 futures
 enum34
