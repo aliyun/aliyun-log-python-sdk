@@ -30,7 +30,7 @@ class MachineGroupDetail(object):
             2. "groupTopic": group topic value
     """
 
-    def __init__(self, group_name, machine_type, machine_list, group_type="", group_attribute=None):
+    def __init__(self, group_name=None, machine_type=None, machine_list=None, group_type="", group_attribute=None):
         if group_attribute is None:
             group_attribute = {}
         self.group_name = group_name
