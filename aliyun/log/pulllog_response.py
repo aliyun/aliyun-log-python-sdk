@@ -18,7 +18,7 @@ class PullLogResponse(LogResponse):
     :type header: dict
     :param header: PullLogResponse HTTP response header
 
-    :type resp: dict
+    :type resp: string
     :param resp: the HTTP response body
     """
 
@@ -30,19 +30,28 @@ class PullLogResponse(LogResponse):
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
-        # self.body = {"next_cursor": self.next_cursor,
-        #              "log_count": self.log_count,
-        #              "log_group_list": self.get_loggroup_json_list()}
-        self.body = {"next_cursor": self.next_cursor,
-                     "count": len(self.get_flatten_logs_json()),
-                     "logs": self.get_flatten_logs_json()}
+        self._body = None
+
+    def get_body(self):
+        if self._body is None:
+            self._body = {"next_cursor": self.next_cursor,
+                          "count": len(self.get_flatten_logs_json()),
+                          "logs": self.get_flatten_logs_json()}
+        return self._body
+
+    @property
+    def body(self):
+        return self.get_body()
+
+    @body.setter
+    def body(self, value):
+        self._body = value
 
     def get_next_cursor(self):
         return self.next_cursor
 
     def get_log_count(self):
         return len(self.get_flatten_logs_json())
-        #return self.log_count
 
     def get_loggroup_count(self):
         return len(self.loggroup_list.LogGroups)
@@ -72,7 +81,7 @@ class PullLogResponse(LogResponse):
             self.loggroup_list.ParseFromString(data)
         except Exception as ex:
             err = 'failed to parse data to LogGroupList: \n' \
-                  + str(ex) + '\nb64 raw data:\n' + b64e(data)\
+                  + str(ex) + '\nb64 raw data:\n' + b64e(data) \
                   + '\nheader:' + str(self.headers)
             raise LogException('BadResponse', err)
 
@@ -100,3 +109,59 @@ class PullLogResponse(LogResponse):
 
         return self.flatten_logs_json
 
+
+class PullLogRawResponse(LogResponse):
+    """ The response of the pull_logs API from log.
+
+    :type header: dict
+    :param header: PullLogResponse HTTP response header
+
+    :type resp: string
+    :param resp: the HTTP response body
+    """
+
+    def __init__(self, resp, header):
+        LogResponse.__init__(self, header, resp)
+        self._next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
+        self._loggroup_count = int(Util.h_v_t(header, "x-log-count"))
+        self._compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
+        self._raw_body_size = int(Util.h_v_td(header, 'x-log-bodyrawsize', len(resp)))
+        self._loggroup_list = LogGroupList()
+        self._parse_loggroup_list(resp)
+
+    @property
+    def next_cursor(self):
+        return self._next_cursor
+
+    @property
+    def loggroup_count(self):
+        return self._loggroup_count
+
+    @property
+    def loggroup_list(self):
+        return self._loggroup_list
+
+    def _parse_loggroup_list(self, data):
+        try:
+            self.loggroup_list.ParseFromString(data)
+        except Exception as ex:
+            err = 'failed to parse data to LogGroupList: \n' \
+                  + str(ex) + '\nb64 raw data:\n' + b64e(data) \
+                  + '\nheader:' + str(self.headers)
+            raise LogException('BadResponse', err)
+
+    @property
+    def compress_type(self):
+        return self._compress_type
+
+    @property
+    def raw_body_size(self):
+        return self._raw_body_size
+
+    def log_print(self):
+        print('PullLogRawResponse')
+        print('next_cursor', self._next_cursor)
+        print('loggroup_count', self._loggroup_count)
+        print('compress_type', self._compress_type)
+        print('raw_body_size', self._raw_body_size)
+        print('body:', self.get_body())

@@ -30,7 +30,7 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
-from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore
+from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -289,6 +289,45 @@ class LogClient(object):
         :return: None
         """
         self._source = source
+
+    def put_log_raw(self, project, logstore, log_group, compress=None):
+        """ Put logs to log service. using raw data in protobuf
+
+        :type project: string
+        :param project: the Project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type log_group: LogGroup
+        :param log_group: log group structure
+
+        :type compress: boolean
+        :param compress: compress or not, by default is True
+
+        :return: PutLogsResponse
+
+        :raise: LogException
+        """
+        body = log_group.SerializeToString()
+        raw_body_size = len(body)
+        headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
+
+        if raw_body_size > 5 * 1024 * 1024:  # 10 MB
+            raise LogException('InvalidLogSize',
+                               "logItems' size exceeds maximum limitation: 5 MB. now: {0} MB.".format(
+                                   raw_body_size / 1024.0 / 1024))
+
+        if compress is None or compress:
+            headers['x-log-compresstype'] = 'deflate'
+            body = zlib.compress(body)
+
+        params = {}
+        resource = '/logstores/' + logstore + "/shards/lb"
+
+        (resp, header) = self._send('POST', project, body, resource, params, headers)
+
+        return PutLogsResponse(header, resp)
 
     def put_logs(self, request):
         """ Put logs to log service. up to 512000 logs up to 10MB size
@@ -767,6 +806,7 @@ class LogClient(object):
         
         :raise: LogException
         """
+
         headers = {}
         if compress:
             headers['Accept-Encoding'] = 'gzip'
@@ -840,7 +880,7 @@ class LogClient(object):
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=500,
                       compress=True, encodings=None):
-        """ dump all logs seperatedly line into file_path, file_path
+        """ dump all logs seperatedly line into file_path, file_path, the time parameters are log received time on server side.
 
         :type project_name: string
         :param project_name: the Project name
@@ -866,7 +906,7 @@ class LogClient(object):
         :type encodings: string list
         :param encodings: encoding like ["utf8", "latin1"] etc to dumps the logs in json format to file. default is ["utf8",]
 
-        :return: None
+        :return: LogResponse {"total_count": 30, "files": {'file_path_1': 10, "file_path_2": 20} })
 
         :raise: LogException
         """
@@ -2481,6 +2521,46 @@ class LogClient(object):
         resp = MigrationResponse()
         resp.body = res
         return resp
+
+    def copy_data(self, project, logstore, from_time, to_time,
+                  to_client=None, to_project=None, to_logstore=None,
+                  batch_size=500, compress=True):
+        """
+        copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: string/int
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_time: string/int
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_client: LogClient
+        :param to_client: logclient instance, if empty will use source client
+
+        :type to_project: string
+        :param to_project: project name, if empty will use source project
+
+        :type to_logstore: string
+        :param to_logstore: logstore name, if empty will use source logstore
+
+        :type batch_size: int
+        :param batch_size: batch size to fetch the data in each iteration. by default it's 500
+
+        :type compress: bool
+        :param compress: if use compression, by default it's True
+
+        :return: LogResponse {"total_count": 30, "shards": {0: 10, 1: 20} })
+
+        """
+        return copy_data(self, project, logstore, from_time, to_time,
+                  to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                  batch_size=batch_size, compress=compress)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')

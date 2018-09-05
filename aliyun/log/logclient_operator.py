@@ -161,9 +161,9 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
     ret = from_client.get_logstore(from_project, from_logstore)
     try:
         ret = to_client.create_logstore(to_project, to_logstore,
-                                     ttl=ret.get_ttl(),
-                                     shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
-                                     enable_tracking=ret.get_enable_tracking())
+                                        ttl=ret.get_ttl(),
+                                        shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
+                                        enable_tracking=ret.get_enable_tracking())
     except LogException as ex:
         if ex.get_error_code() == 'LogStoreAlreadyExist':
             # update logstore's settings
@@ -292,9 +292,9 @@ def get_encoder_cls(encodings):
     return NonUtf8Encoder
 
 
-def worker(client, project_name, logstore_name, from_time, to_time,
-           shard_id, file_path,
-           batch_size=1000, compress=True, encodings=None):
+def dump_worker(client, project_name, logstore_name, from_time, to_time,
+                shard_id, file_path,
+                batch_size=1000, compress=True, encodings=None):
     res = client.pull_log(project_name, logstore_name, shard_id, from_time, to_time, batch_size=batch_size,
                           compress=compress)
     encodings = encodings or ('utf8', 'latin1', 'gbk')
@@ -320,11 +320,11 @@ def worker(client, project_name, logstore_name, from_time, to_time,
                     f.write(json.dumps(log, cls=get_encoder_cls(encodings)))
                     f.write("\n")
 
-
     return file_path, count
 
 
-def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True, encodings=None):
+def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True,
+                  encodings=None):
     cpu_count = multiprocessing.cpu_count() * 2
     shards = client.list_shards(project_name, logstore_name).get_shards_info()
     worker_size = min(cpu_count, len(shards))
@@ -332,7 +332,7 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
     result = dict()
     total_count = 0
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
-        futures = [pool.submit(worker, client, project_name, logstore_name, from_time, to_time,
+        futures = [pool.submit(dump_worker, client, project_name, logstore_name, from_time, to_time,
                                shard_id=shard['shardID'], file_path=file_path.format(shard['shardID']),
                                batch_size=batch_size, compress=compress, encodings=encodings)
                    for shard in shards]
@@ -344,3 +344,49 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
                 result[file_path] = count
 
     return LogResponse({}, {"total_count": total_count, "files": result})
+
+
+def copy_worker(from_client, from_project, from_logstore, shard_id, from_time, to_time,
+                to_client, to_project, to_logstore, batch_size=500, compress=True):
+    iter_data = from_client.pull_log(from_project, from_logstore, shard_id, from_time, to_time, batch_size=batch_size,
+                                     compress=compress)
+
+    count = 0
+    for res in iter_data:
+        for loggroup in res.get_loggroup_list().LogGroups:
+             rtn = to_client.put_log_raw(to_project, to_logstore, loggroup, compress=compress)
+             count += len(loggroup.Logs)
+
+    return shard_id, count
+
+
+def copy_data(from_client, from_project, from_logstore,from_time, to_time,
+              to_client=None, to_project=None, to_logstore=None,
+              batch_size=500, compress=True):
+    """
+    copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
+
+    """
+    to_client = to_client or from_client
+    to_project = to_project or from_project
+    to_logstore = to_logstore or from_logstore
+    cpu_count = multiprocessing.cpu_count() * 2
+    shards = from_client.list_shards(from_project, from_logstore).get_shards_info()
+    worker_size = min(cpu_count, len(shards))
+
+    result = dict()
+    total_count = 0
+    with ProcessPoolExecutor(max_workers=worker_size) as pool:
+        futures = [pool.submit(copy_worker, from_client, from_project, from_logstore, shard['shardID'],
+                               from_time, to_time,
+                               to_client, to_project, to_logstore,
+                               batch_size=batch_size, compress=compress)
+                   for shard in shards]
+
+        for future in as_completed(futures):
+            partition, count = future.result()
+            total_count += count
+            if count:
+                result[partition] = count
+
+    return LogResponse({}, {"total_count": total_count, "shards": result})
