@@ -48,11 +48,11 @@ class MachineGroupDetail(object):
         return json_value
 
     def from_json(self, json_value):
-        self.group_name = json_value.get("groupName", None)
-        self.group_type = json_value.get("groupType", "")
-        self.group_attribute = json_value.get("groupAttribute", {})
-        self.machine_type = json_value.get("machineIdentifyType", None)
-        self.machine_list = json_value.get("machineList", None)
+        self.group_name = json_value.get("groupName", json_value["group_name"])
+        self.group_type = json_value.get("groupType", json_value.get("group_type", ""))
+        self.machine_type = json_value.get("machineIdentifyType", json_value.get("machine_type", "userdefined"))
+        self.group_attribute = json_value.get("groupAttribute", json_value.get("group_attribute", {}))
+        self.machine_list = json_value.get("machineList", json_value.get("machine_list", None))
         self.create_time = json_value.get("crateTime", None)
         self.last_modify_time = json_value.get("lastModifyTime", None)
 
