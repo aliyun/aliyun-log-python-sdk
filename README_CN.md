@@ -58,6 +58,12 @@
 pip install -U aliyun-log-python-sdk
 ```
 
+如果提示`time-out`之类的错误，表示网络不通，建议可以加上国内清华的索引试一试：
+
+```shell
+pip install -U aliyun-log-python-sdk -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
 ## 代码示例
 - [代码示例](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests)
 
