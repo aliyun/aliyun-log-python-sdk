@@ -313,11 +313,6 @@ class LogClient(object):
         raw_body_size = len(body)
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
-        if raw_body_size > 5 * 1024 * 1024:  # 10 MB
-            raise LogException('InvalidLogSize',
-                               "logItems' size exceeds maximum limitation: 5 MB. now: {0} MB.".format(
-                                   raw_body_size / 1024.0 / 1024))
-
         if compress is None or compress:
             headers['x-log-compresstype'] = 'deflate'
             body = zlib.compress(body)
