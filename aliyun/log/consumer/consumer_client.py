@@ -85,4 +85,4 @@ class ConsumerClient(object):
         return self.mclient.get_end_cursor(self.mproject, self.mlogstore, shard_id).get_cursor()
 
     def pull_logs(self, shard_id, cursor, count=1000):
-        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count)
+        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True)
