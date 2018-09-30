@@ -33,7 +33,7 @@ class ListEntityResponse(LogResponse):
     def __init__(self, header, resp, resource_name=None):
         LogResponse.__init__(self, header, resp)
         self.count = resp['count']
-        self.total = resp['total']
+        self._total = resp['total']
         backup_resource_name = ''
         if not resource_name:
             for x in resp:
@@ -71,13 +71,17 @@ class ListEntityResponse(LogResponse):
         Get total count
         :return:
         """
-        return self.total
+        return self._total
+
+    @property
+    def total(self):
+        return self._total
 
     def log_print(self):
         print('ListResponse for {0}:'.format(self.resource_name))
         print('headers:', self.get_all_headers())
         print('count:', self.count)
-        print('total:', self.total)
+        print('total:', self._total)
         print(self.resource_name, self.entities)
 
     def merge(self, response):
@@ -85,13 +89,13 @@ class ListEntityResponse(LogResponse):
             raise ValueError("passed response is not a ListEntityResponse: " + str(type(response)))
 
         self.count += response.get_count()
-        self.total = response.get_total()  # use the latest total count
+        self._total = response.get_total()  # use the latest total count
         self.entities.extend(response.get_entities())
 
         # update body
         self.body = {
             'count': self.count,
-            'total': self.total,
+            'total': self._total,
             self.resource_name: self.entities
         }
 

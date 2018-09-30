@@ -22,15 +22,23 @@ class ListShardResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.shards = Util.convert_unicode_to_str(resp)
+        self._shards = Util.convert_unicode_to_str(resp)
 
     def get_shards_info(self):
-        return self.shards
+        return self._shards
 
     def log_print(self):
         print('ListShardResponse:')
         print('headers:', self.get_all_headers())
-        print("res:", self.shards)
+        print("res:", self._shards)
+
+    @property
+    def shards(self):
+        return self._shards
+
+    @property
+    def count(self):
+        return len(self._shards)
 
 
 class DeleteShardResponse(LogResponse):

@@ -120,7 +120,7 @@ class ListLogStoreResponse(LogResponse):
         LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
         self.total_count = int(resp["total"])
-        self.logstores = Util.convert_unicode_to_str(resp.get("logstores", []))
+        self._logstores = Util.convert_unicode_to_str(resp.get("logstores", []))
 
     def get_logstores(self):
         """
@@ -162,7 +162,7 @@ class ListLogStoreResponse(LogResponse):
         print('headers:', self.get_all_headers())
         print('logstores_count:', str(self.count))
         print('logstores_total:', str(self.total_count))
-        print('logstores:', str(self.logstores))
+        print('logstores:', str(self._logstores))
 
     def merge(self, response):
         if not isinstance(response, ListLogStoreResponse):
@@ -180,3 +180,11 @@ class ListLogStoreResponse(LogResponse):
         }
 
         return self
+
+    @property
+    def total(self,):
+        return self.total_count
+
+    @property
+    def logstores(self):
+        return self._logstores

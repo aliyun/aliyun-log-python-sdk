@@ -177,7 +177,7 @@ class DeleteConsumerGroupResponse(LogResponse):
 class ListConsumerGroupResponse(LogResponse):
     def __init__(self, resp, headers):
         LogResponse.__init__(self, headers, resp)
-        self.count = len(resp)
+        self._count = len(resp)
         self.resp = resp
         self.consumer_groups = [ConsumerGroupEntity(group['name'], group['timeout'], group['order']) for group in
                                 self.resp]
@@ -187,7 +187,11 @@ class ListConsumerGroupResponse(LogResponse):
 
         :return:
         """
-        return self.count
+        return self._count
+
+    @property
+    def count(self):
+        return self._count
 
     def get_consumer_groups(self):
         """
@@ -203,7 +207,7 @@ class ListConsumerGroupResponse(LogResponse):
         """
         print('ListConsumerGroupResponse:')
         print('headers:', self.get_all_headers())
-        print('count:', self.count)
+        print('count:', self._count)
         print('consumer_groups:', self.resp)
 
 

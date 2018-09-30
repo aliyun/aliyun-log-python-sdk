@@ -128,13 +128,17 @@ class ListMachineGroupResponse(LogResponse):
 
         :return:
         """
-        return self.total
+        return self._total
 
     def get_count(self):
         return self.count
 
     def get_total(self):
-        return self.total
+        return self._total
+
+    @property
+    def _total(self):
+        return self._total
 
     def log_print(self):
         """
@@ -144,7 +148,7 @@ class ListMachineGroupResponse(LogResponse):
         print('ListMachineGroupResponse:')
         print('headers:', self.get_all_headers())
         print('count:', str(self.count))
-        print('total:', str(self.total))
+        print('total:', str(self._total))
         print('machine_groups:', str(self.machine_groups))
 
     def merge(self, response):
@@ -158,7 +162,7 @@ class ListMachineGroupResponse(LogResponse):
         # update body
         self.body = {
             'count': self.count,
-            'total': self.total,
+            'total': self._total,
             'machinegroups': self.machine_groups
         }
 

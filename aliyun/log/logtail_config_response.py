@@ -109,6 +109,10 @@ class ListLogtailConfigResponse(LogResponse):
     def get_total(self):
         return self.total_count
 
+    @property
+    def total(self):
+        return self.total_count
+
     def log_print(self):
         print('ListLogtailConfigResponse:')
         print('headers:', self.get_all_headers())
