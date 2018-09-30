@@ -6,8 +6,11 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
 from json import JSONEncoder
-
+import logging
+from time import sleep
 MAX_INIT_SHARD_COUNT = 10
+
+logger = logging.getLogger(__name__)
 
 
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
@@ -347,27 +350,36 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
 
 
 def copy_worker(from_client, from_project, from_logstore, shard_id, from_time, to_time,
-                to_client, to_project, to_logstore, batch_size=500, compress=True):
+                to_client, to_project, to_logstore, batch_size=500, compress=True,
+                new_topic=None, new_source=None):
     iter_data = from_client.pull_log(from_project, from_logstore, shard_id, from_time, to_time, batch_size=batch_size,
                                      compress=compress)
 
     count = 0
     for res in iter_data:
         for loggroup in res.get_loggroup_list().LogGroups:
-             rtn = to_client.put_log_raw(to_project, to_logstore, loggroup, compress=compress)
-             count += len(loggroup.Logs)
+            if new_topic is not None:
+                loggroup.Topic = new_topic
+            if new_source is not None:
+                loggroup.Source = new_source
+            rtn = to_client.put_log_raw(to_project, to_logstore, loggroup, compress=compress)
+            count += len(loggroup.Logs)
 
     return shard_id, count
 
 
-def copy_data(from_client, from_project, from_logstore,from_time, to_time,
+def copy_data(from_client, from_project, from_logstore, from_time, to_time,
               to_client=None, to_project=None, to_logstore=None,
-              batch_size=500, compress=True):
+              batch_size=500, compress=True, new_topic=None, new_source=None):
     """
     copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
 
     """
     to_client = to_client or from_client
+    # increase the timeout to 2 min at least
+    from_client.timeout = max(from_client.timeout, 120)
+    to_client.timeout = max(to_client.timeout, 120)
+
     to_project = to_project or from_project
     to_logstore = to_logstore or from_logstore
     cpu_count = multiprocessing.cpu_count() * 2
@@ -380,7 +392,8 @@ def copy_data(from_client, from_project, from_logstore,from_time, to_time,
         futures = [pool.submit(copy_worker, from_client, from_project, from_logstore, shard['shardID'],
                                from_time, to_time,
                                to_client, to_project, to_logstore,
-                               batch_size=batch_size, compress=compress)
+                               batch_size=batch_size, compress=compress,
+                               new_topic=new_topic, new_source=new_source)
                    for shard in shards]
 
         for future in as_completed(futures):
@@ -390,3 +403,138 @@ def copy_data(from_client, from_project, from_logstore,from_time, to_time,
                 result[partition] = count
 
     return LogResponse({}, {"total_count": total_count, "shards": result})
+
+
+TOTAL_SHARD_SIZE = int('0xffffffffffffffffffffffffffffffff', base=16)
+TOTAL_HASH_LENGTH = len('0xffffffffffffffffffffffffffffffff') - 2
+
+
+def _split_one_shard_to_multiple(client, project, logstore, shard_info, count, current_shard_count):
+    """return new_rw_shards_list, increased_shard_count """
+    distance = shard_info['length'] // count
+    if distance <= 0 or count <= 1:
+        return [shard_info['info']], 0
+
+    rw_shards, increased_shard_count = {shard_info['id']: shard_info['info']}, 0
+    for x in range(1, count):
+        new_hash = shard_info['start'] + distance * x
+        new_hash = hex(new_hash)[2:]
+        new_hash = '0' * (TOTAL_HASH_LENGTH - len(new_hash)) + new_hash
+        try:
+            if x == 1:
+                res = client.split_shard(project, logstore, shard_info['id'], new_hash)
+            else:
+                res = client.split_shard(project, logstore, current_shard_count-1, new_hash)
+
+            # new rw_shards
+            for shard in res.shards:
+                if shard['status'] == 'readonly':
+                    del rw_shards[shard['shardID']]
+                else:
+                    rw_shards[shard['shardID']] = shard
+
+            current_shard_count += res.count - 1
+            increased_shard_count += res.count - 1
+            logger.info("split shard: ", project, logstore, shard_info, count, current_shard_count)
+        except Exception as ex:
+            print(ex)
+            print(x, project, logstore, shard_info, count, current_shard_count)
+            raise
+
+    return rw_shards.values(), increased_shard_count
+
+
+def arrange_shard(client, project, logstore, count, stategy=None):
+    total_length = TOTAL_SHARD_SIZE
+    avg_len = total_length * 1.0 / count
+
+    res = client.list_shards(project, logstore)
+    current_shard_count = res.count
+    rw_shards = [shard for shard in res.shards if shard['status'] == 'readwrite']
+    split_left = count - len(rw_shards)
+
+    while split_left > 0:
+        current_rw_shards = [{'id': shard['shardID'],
+                              'start': int('0x' + shard['inclusiveBeginKey'], base=16),
+                              'end': int('0x' + shard['exclusiveEndKey'], base=16),
+                              'length': int('0x' + shard['exclusiveEndKey'], base=16)
+                                        - int('0x' + shard['inclusiveBeginKey'], base=16),
+                              'info': shard}
+                             for shard in rw_shards]
+        # need to split shard
+        updated_rw_shards = []
+        for i, shard in enumerate(sorted(current_rw_shards, key=lambda x: x['length'], reverse=True)):
+            if split_left <= 0:  # no need to split any more
+                break
+
+            sp_cnt = int(shard['length'] // avg_len)
+            if sp_cnt <= 1 and i == 0:  # cannot split, but be the first one, should split it
+                sp_cnt = 2
+            elif sp_cnt <= 0:
+                sp_cnt = 1
+
+            new_rw_shards, increased_shard_count = _split_one_shard_to_multiple(client, project, logstore, shard,
+                                                                                sp_cnt, current_shard_count)
+            updated_rw_shards.extend(new_rw_shards)
+            current_shard_count += increased_shard_count
+            split_left -= len(new_rw_shards) - 1
+
+        # update current rw shards
+        rw_shards = updated_rw_shards
+
+    return ''
+
+
+def _get_percentage(v, t, digit=2):
+    return str(round(v * 100.0 / t, digit)) + '%'
+
+
+class ResourceUsageResponse(LogResponse):
+    def __init__(self, usage):
+        LogResponse.__init__(self, {}, body=usage)
+
+
+def get_resource_usage(client, project):
+    result = {"logstore": {},
+              "shard": {"logstores": {}},
+              "logtail": {},
+              "consumer_group": {"logstores": {}},
+              }
+    res = client.list_logstore(project, size=-1)
+    result["logstore"] = {"count": {"status": res.total,
+                                    "limitation": 200,
+                                    "usage": _get_percentage(res.total, 200)}}
+    shard_count = 0
+    consumer_group_count = 0
+    for logstore in res.logstores:
+        res = client.list_shards(project, logstore)
+        shard_count += res.count
+        result["shard"]["logstores"][logstore] = {"status": res.count}
+
+        res = client.list_consumer_group(project, logstore)
+        if res.count:
+            result["consumer_group"]["logstores"][logstore] = {"status": res.count, "limitation": 10,
+                                                               "usage": _get_percentage(res.count, 10)}
+
+    result["shard"]["count"] = {"status": shard_count, "limitation": 200, "usage": _get_percentage(shard_count, 200)}
+    result["consumer_group"]["count"] = {"status": consumer_group_count}
+
+    res = client.list_logtail_config(project, offset=1000)  # pass 1000 to just get total count
+    result["logtail"] = {"count": {"status": res.total,
+                                   "limitation": 100,
+                                   "usage": _get_percentage(res.total, 100)}}
+    res = client.list_machine_group(project, offset=1000)  # pass 1000 to just get total count
+    result["machine_group"] = {"count": {"status": res.total,
+                                         "limitation": 100,
+                                         "usage": _get_percentage(res.total, 100)}}
+    res = client.list_savedsearch(project, offset=1000)  # pass 1000 to just get total count
+    result["saved_search"] = {"count": {"status": res.total,
+                                        "limitation": 100,
+                                        "usage": _get_percentage(res.total, 100)}}
+
+    res = client.list_dashboard(project, offset=1000)  # pass 1000 to just get total count
+    result["dashboard"] = {"count": {"status": res.total,
+                                     "limitation": 50,
+                                     "usage": _get_percentage(res.total, 50)}}
+
+    return ResourceUsageResponse(result)

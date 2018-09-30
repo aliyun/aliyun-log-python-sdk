@@ -30,7 +30,8 @@ from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
-from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data
+from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
+    get_resource_usage, arrange_shard
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -51,7 +52,7 @@ from .external_store_config_response import *
 logger = logging.getLogger(__name__)
 
 
-CONNECTION_TIME_OUT = 60
+CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
 
@@ -2524,7 +2525,7 @@ class LogClient(object):
 
     def copy_data(self, project, logstore, from_time, to_time,
                   to_client=None, to_project=None, to_logstore=None,
-                  batch_size=500, compress=True):
+                  batch_size=500, compress=True, new_topic=None, new_source=None):
         """
         copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
 
@@ -2555,12 +2556,49 @@ class LogClient(object):
         :type compress: bool
         :param compress: if use compression, by default it's True
 
+        :type new_topic: string
+        :param new_topic: overwrite the copied topic with the passed one
+
+        :type new_source: string
+        :param new_source: overwrite the copied source with the passed one
+
         :return: LogResponse {"total_count": 30, "shards": {0: 10, 1: 20} })
 
         """
         return copy_data(self, project, logstore, from_time, to_time,
                   to_client=to_client, to_project=to_project, to_logstore=to_logstore,
-                  batch_size=batch_size, compress=compress)
+                  batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
+
+    def get_resource_usage(self, project):
+        """ get resource usage ist the project
+        Unsuccessful opertaion will cause an LogException.
+
+        :type client: string
+        :param client: project name
+
+        :return: dict
+
+        :raise: LogException
+        """
+        return get_resource_usage(self, project)
+
+    def arrange_shard(self, project, logstore, count):
+        """ arrange shard to the expected read-write count to a larger one.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type count: int
+        :param count: expected read-write shard count. should be larger than the current one.
+
+        :return: ''
+
+        :raise: LogException
+        """
+        return arrange_shard(self, project, logstore, count)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
