@@ -106,7 +106,7 @@ class ListMachineGroupResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self.count = int(resp["count"])
-        self.total = int(resp["total"])
+        self._total = int(resp["total"])
         self.machine_groups = Util.convert_unicode_to_str(resp.get("machinegroups", []))
 
     def get_machine_group(self):
@@ -137,7 +137,7 @@ class ListMachineGroupResponse(LogResponse):
         return self._total
 
     @property
-    def _total(self):
+    def total(self):
         return self._total
 
     def log_print(self):
@@ -156,7 +156,7 @@ class ListMachineGroupResponse(LogResponse):
             raise ValueError("passed response is not a ListMachineGroupResponse: " + str(type(response)))
 
         self.count += response.get_count()
-        self.total = response.get_total()  # use the latest total count
+        self._total = response.get_total()  # use the latest total count
         self.machine_groups.extend(response.get_machine_group())
 
         # update body
