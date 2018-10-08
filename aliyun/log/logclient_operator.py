@@ -515,6 +515,7 @@ def get_resource_usage(client, project):
         if res.count:
             result["consumer_group"]["logstores"][logstore] = {"status": res.count, "limitation": 10,
                                                                "usage": _get_percentage(res.count, 10)}
+        consumer_group_count += res.count
 
     result["shard"]["count"] = {"status": shard_count, "limitation": 200, "usage": _get_percentage(shard_count, 200)}
     result["consumer_group"]["count"] = {"status": consumer_group_count}
