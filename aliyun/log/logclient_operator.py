@@ -418,7 +418,7 @@ def _split_one_shard_to_multiple(client, project, logstore, shard_info, count, c
     rw_shards, increased_shard_count = {shard_info['id']: shard_info['info']}, 0
     for x in range(1, count):
         new_hash = shard_info['start'] + distance * x
-        new_hash = hex(new_hash)[2:]
+        new_hash = hex(new_hash)[2:].strip('lL')
         new_hash = '0' * (TOTAL_HASH_LENGTH - len(new_hash)) + new_hash
         try:
             if x == 1:
