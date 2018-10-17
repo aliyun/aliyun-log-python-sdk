@@ -9,7 +9,8 @@ from .logresponse import LogResponse
 from .util import Util
 from .util import base64_encodestring as b64e
 
-from .log_logs_raw_pb2 import LogGroupListRaw as LogGroupList
+from .log_logs_pb2 import LogGroupList
+from .log_logs_raw_pb2 import LogGroupListRaw
 
 
 class PullLogResponse(LogResponse):
@@ -80,8 +81,16 @@ class PullLogResponse(LogResponse):
         try:
             self.loggroup_list.ParseFromString(data)
         except Exception as ex:
+            ex_second = None
+            try:
+                p = LogGroupListRaw()
+                p.ParseFromString(data)
+                self.loggroup_list = p
+            except Exception as ex2:
+                ex_second = ex2
+
             err = 'failed to parse data to LogGroupList: \n' \
-                  + str(ex) + '\nb64 raw data:\n' + b64e(data) \
+                  + str(ex) + '\n' + str(ex_second) + '\nb64 raw data:\n' + b64e(data) \
                   + '\nheader:' + str(self.headers)
             raise LogException('BadResponse', err)
 
