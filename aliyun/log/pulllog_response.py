@@ -86,6 +86,7 @@ class PullLogResponse(LogResponse):
                 p = LogGroupListRaw()
                 p.ParseFromString(data)
                 self.loggroup_list = p
+                return
             except Exception as ex2:
                 ex_second = ex2
 
