@@ -17,7 +17,7 @@ from .exceptions import ClientWorkerException
 
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
-                 max_workers=2):
+                 max_workers=2, max_fetch_log_group_size=1000):
         self.log_client = log_client
         self.shard_id = shard_id
         self.consumer_name = consumer_name
@@ -27,6 +27,8 @@ class ShardConsumerWorker(object):
         self.checkpoint_tracker = ConsumerCheckpointTracker(self.log_client, self.consumer_name,
                                                             self.shard_id)
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.max_fetch_log_group_size = max_fetch_log_group_size
+
         self.consumer_status = ConsumerStatus.INITIALIZING
         self.current_task_exist = False
         self.task_future = None
@@ -93,7 +95,8 @@ class ShardConsumerWorker(object):
                     self.last_fetch_time = time.time()
                     self.fetch_data_future = \
                         self.executor.submit(consumer_fetch_task,
-                                             self.log_client, self.shard_id, self.next_fetch_cursor)
+                                             self.log_client, self.shard_id, self.next_fetch_cursor,
+                                             max_fetch_log_group_size=self.max_fetch_log_group_size)
                 else:
                     self.fetch_data_future = None
             else:

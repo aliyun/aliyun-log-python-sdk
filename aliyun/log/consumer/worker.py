@@ -69,6 +69,7 @@ class ConsumerWorker(Thread):
 
         consumer = ShardConsumerWorker(self.consumer_client, shard_id, self.option.consumer_name,
                                        self.make_processor(),
-                                       self.option.cursor_position, self.option.cursor_start_time)
+                                       self.option.cursor_position, self.option.cursor_start_time,
+                                       max_workers=self.option.worker_pool_size)
         self.shard_consumers[shard_id] = consumer
         return consumer

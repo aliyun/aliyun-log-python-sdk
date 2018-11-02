@@ -21,7 +21,7 @@ class LogHubConfig(object):
     def __init__(self, endpoint, access_key_id, access_key, project, logstore,
                  consumer_group_name, consumer_name,
                  cursor_position, heartbeat_interval=20, data_fetch_interval=2, in_order=False,
-                 cursor_start_time=-1, security_token=None):
+                 cursor_start_time=-1, security_token=None, max_fetch_log_group_size=1000, worker_pool_size=2):
         self.endpoint = endpoint
         self.accessKeyId = access_key_id
         self.accessKey = access_key
@@ -35,3 +35,6 @@ class LogHubConfig(object):
         self.in_order = in_order
         self.cursor_start_time = cursor_start_time
         self.securityToken = security_token
+        self.max_fetch_log_group_size = max_fetch_log_group_size
+        self.worker_pool_size = worker_pool_size
+

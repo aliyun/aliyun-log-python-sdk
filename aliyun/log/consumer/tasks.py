@@ -114,8 +114,7 @@ def consumer_initialize_task(processor, consumer_client, shard_id, cursor_positi
         return TaskResult(e)
 
 
-def consumer_fetch_task(loghub_client_adapter, shard_id, cursor):
-    max_fetch_log_group_size = 1000
+def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000):
     exception = None
 
     for retry_times in range(3):
