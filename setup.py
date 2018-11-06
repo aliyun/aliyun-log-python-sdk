@@ -25,17 +25,26 @@ except ImportError:
 import sys
 import re
 
-if sys.version_info[:2] == (2, 6):
-    install_requires = ['requests', 'protobuf <= 3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
-                        'elasticsearch>=6.0.0,<7.0.0']
-elif sys.version_info[0] == 2:
-    install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
-                        'elasticsearch>=6.0.0,<7.0.0',
-                        'dateparser']
-elif sys.version_info[0] == 3:
-    install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0',
-                        'dateparser']
+# if sys.version_info[:2] == (2, 6):
+#     install_requires = ['requests', 'protobuf <= 3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
+#                         'elasticsearch>=6.0.0,<7.0.0']
+# elif sys.version_info[0] == 2:
+#     install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
+#                         'elasticsearch>=6.0.0,<7.0.0',
+#                         'dateparser']
+# elif sys.version_info[0] == 3:
+#     install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0',
+#                         'dateparser']
 
+install_requires = ['requests',
+                    'protobuf <= 3.4.0; python_version <= 2.6',
+                    'protobuf >= 3.4.0; python_version >= 2.7',
+                    'six',
+                    'enum34; python_version <= "3.3"',
+                    'futures; python_version < "3"',
+                    'python-dateutil',
+                    'elasticsearch>=6.0.0,<7.0.0',
+                    'dateparser; python_version >= "2.7"']
 
 packages = [
             'aliyun',
