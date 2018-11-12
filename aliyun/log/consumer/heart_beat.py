@@ -24,6 +24,7 @@ class ConsumerHeatBeat(Thread):
             try:
                 response_shards = []
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
+                logger.info('heart beat result: {} get: {}'.format(self.mheart_shards, response_shards))
                 self.mheld_shards = response_shards
                 self.mheart_shards = self.mheld_shards[:]
                 time.sleep(self.heartbeat_interval)
