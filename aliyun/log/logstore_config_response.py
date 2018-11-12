@@ -57,6 +57,10 @@ class GetLogStoreResponse(LogResponse):
         self.ttl = int(resp["ttl"])
         self.shard_count = int(resp["shardCount"])
         self.enable_tracking = bool(resp["enable_tracking"])
+        self.append_meta = bool(resp["appendMeta"])
+        self.auto_split = bool(resp["autoSplit"])
+        self.max_split_shard = int(resp["maxSplitShard"])
+        self.preserve_storage = self.ttl >= 3650
 
     def get_shard_count(self):
         """

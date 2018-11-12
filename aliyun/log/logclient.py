@@ -51,7 +51,6 @@ from .external_store_config_response import *
 
 logger = logging.getLogger(__name__)
 
-
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
 MAX_GET_LOG_PAGING_SIZE = 100
@@ -917,7 +916,15 @@ class LogClient(object):
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
                              batch_size=batch_size, compress=compress, encodings=encodings)
 
-    def create_logstore(self, project_name, logstore_name, ttl=30, shard_count=2, enable_tracking=False):
+    def create_logstore(self, project_name, logstore_name,
+                        ttl=30,
+                        shard_count=2,
+                        enable_tracking=False,
+                        append_meta=False,
+                        auto_split=True,
+                        max_split_shard=64,
+                        preserve_storage=False
+                        ):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
 
@@ -928,7 +935,7 @@ class LogClient(object):
         :param logstore_name: the logstore name
 
         :type ttl: int
-        :param ttl: the life cycle of log in the logstore in days, default 30
+        :param ttl: the life cycle of log in the logstore in days, default 30, up to 3650
 
         :type shard_count: int
         :param shard_count: the shard count of the logstore to create, default 2
@@ -936,16 +943,41 @@ class LogClient(object):
         :type enable_tracking: bool
         :param enable_tracking: enable web tracking, default is False
 
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
 
         :return: CreateLogStoreResponse
         
         :raise: LogException
         """
+        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
+            max_split_shard = 64
+        if preserve_storage:
+            ttl = 3650
+
         params = {}
         resource = "/logstores"
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count),
-                "enable_tracking": enable_tracking}
+                "enable_tracking": enable_tracking,
+                "autoSplit": auto_split,
+                "maxSplitShard": max_split_shard,
+                "appendMeta": append_meta,
+                "resourceQuota": {
+                    "strage": {
+                        "preserved": preserve_storage
+                    }
+                }
+                }
 
         body_str = six.b(json.dumps(body))
 
@@ -993,8 +1025,13 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogStoreResponse(resp, header)
 
-    def update_logstore(self, project_name, logstore_name, ttl=None, enable_tracking=None, shard_count=None):
-        """ 
+    def update_logstore(self, project_name, logstore_name, ttl=None, enable_tracking=None, shard_count=None,
+                        append_meta=None,
+                        auto_split=None,
+                        max_split_shard=None,
+                        preserve_storage=None
+                        ):
+        """
         update the logstore meta info
         Unsuccessful opertaion will cause an LogException.
 
@@ -1013,6 +1050,18 @@ class LogClient(object):
         :type shard_count: int
         :param shard_count: deprecated, the shard count could only be updated by split & merge
 
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
+
         :return: UpdateLogStoreResponse
         
         :raise: LogException
@@ -1023,18 +1072,37 @@ class LogClient(object):
 
         if enable_tracking is None:
             enable_tracking = res.get_enable_tracking()
+        if preserve_storage is None and ttl is None:
+            preserve_storage = res.preserve_storage
         if ttl is None:
             ttl = res.get_ttl()
+        if auto_split is None:
+            auto_split = res.auto_split
+        if append_meta is None:
+            append_meta = res.append_meta
+        if max_split_shard is None:
+            max_split_shard = res.max_split_shard
 
-        # if unchanged, directly return, cause the backend may complain.
-        if enable_tracking == res.get_enable_tracking() and ttl == res.get_ttl():
-            return UpdateLogStoreResponse(res.get_all_headers(), '')
+        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
+            max_split_shard = 64
+        if preserve_storage:
+            ttl = 3650
 
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
         params = {}
         resource = "/logstores/" + logstore_name
-        body = {"logstoreName": logstore_name, "ttl": int(ttl), "enable_tracking": enable_tracking,
-                "shardCount": shard_count}
+        body = {
+            "logstoreName": logstore_name, "ttl": int(ttl), "enable_tracking": enable_tracking,
+            "shardCount": shard_count,
+            "autoSplit": auto_split,
+            "maxSplitShard": max_split_shard,
+            "appendMeta": append_meta,
+            "resourceQuota": {
+                "strage": {
+                    "preserved": preserve_storage
+                }
+            }
+        }
         body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogStoreResponse(header, resp)
@@ -2566,8 +2634,8 @@ class LogClient(object):
 
         """
         return copy_data(self, project, logstore, from_time, to_time,
-                  to_client=to_client, to_project=to_project, to_logstore=to_logstore,
-                  batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
+                         to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                         batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
 
     def get_resource_usage(self, project):
         """ get resource usage ist the project
