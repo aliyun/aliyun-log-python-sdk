@@ -972,11 +972,11 @@ class LogClient(object):
                 "autoSplit": auto_split,
                 "maxSplitShard": max_split_shard,
                 "appendMeta": append_meta,
-                "resourceQuota": {
-                    "strage": {
-                        "preserved": preserve_storage
-                    }
-                }
+                # "resourceQuota": {
+                #     "strage": {
+                #         "preserved": preserve_storage
+                #     }
+                # }
                 }
 
         body_str = six.b(json.dumps(body))
@@ -1097,11 +1097,11 @@ class LogClient(object):
             "autoSplit": auto_split,
             "maxSplitShard": max_split_shard,
             "appendMeta": append_meta,
-            "resourceQuota": {
-                "strage": {
-                    "preserved": preserve_storage
-                }
-            }
+            # "resourceQuota": {
+            #     "strage": {
+            #         "preserved": preserve_storage
+            #     }
+            # }
         }
         body_str = six.b(json.dumps(body))
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
