@@ -29,7 +29,7 @@ def main():
                                          wait_time_in_secs=60,
                                          auto_creation=True)
     res = migration_manager.migrate()
-    print res
+    print(res)
 
 
 if __name__ == "__main__":
