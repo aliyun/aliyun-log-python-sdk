@@ -111,67 +111,15 @@ class PullLogResponse(LogResponse):
         if self.flatten_logs_json is None:
             self.flatten_logs_json = []
             for logGroup in self.loggroup_list.LogGroups:
+                tags = {}
+                for tag in logGroup.LogTags:
+                    tags["__tag__:{0}".format(tag.Key)] = tag.Value
+
                 for log in logGroup.Logs:
                     item = {'__time__': log.Time, '__topic__': logGroup.Topic, '__source__': logGroup.Source}
+                    item.update(tags)
                     for content in log.Contents:
                         item[content.Key] = content.Value
                     self.flatten_logs_json.append(item)
 
         return self.flatten_logs_json
-
-
-class PullLogRawResponse(LogResponse):
-    """ The response of the pull_logs API from log.
-
-    :type header: dict
-    :param header: PullLogResponse HTTP response header
-
-    :type resp: string
-    :param resp: the HTTP response body
-    """
-
-    def __init__(self, resp, header):
-        LogResponse.__init__(self, header, resp)
-        self._next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
-        self._loggroup_count = int(Util.h_v_t(header, "x-log-count"))
-        self._compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
-        self._raw_body_size = int(Util.h_v_td(header, 'x-log-bodyrawsize', len(resp)))
-        self._loggroup_list = LogGroupList()
-        self._parse_loggroup_list(resp)
-
-    @property
-    def next_cursor(self):
-        return self._next_cursor
-
-    @property
-    def loggroup_count(self):
-        return self._loggroup_count
-
-    @property
-    def loggroup_list(self):
-        return self._loggroup_list
-
-    def _parse_loggroup_list(self, data):
-        try:
-            self.loggroup_list.ParseFromString(data)
-        except Exception as ex:
-            err = 'failed to parse data to LogGroupList: \n' \
-                  + str(ex) + '\nb64 raw data:\n' + b64e(data) \
-                  + '\nheader:' + str(self.headers)
-            raise LogException('BadResponse', err)
-
-    @property
-    def compress_type(self):
-        return self._compress_type
-
-    @property
-    def raw_body_size(self):
-        return self._raw_body_size
-
-    def log_print(self):
-        print('PullLogRawResponse')
-        print('next_cursor', self._next_cursor)
-        print('loggroup_count', self._loggroup_count)
-        print('compress_type', self._compress_type)
-        print('raw_body_size', self._raw_body_size)
-        print('body:', self.get_body())
