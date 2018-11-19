@@ -1,13 +1,17 @@
 from .logexception import LogException
 import six
 import json
-from aliyun.log import *
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
 from json import JSONEncoder
 import logging
-from time import sleep
+from collections import defaultdict
+import time
+from .etl_core import Runner
+from .putlogsrequest import PutLogsRequest
+from .logitem import LogItem
+
 MAX_INIT_SHARD_COUNT = 10
 
 logger = logging.getLogger(__name__)
@@ -58,8 +62,20 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
         for logstore_name in ret.get_logstores():
             # copy logstore
             ret = from_client.get_logstore(from_project, logstore_name)
+            res_shard = from_client.list_shards(from_project, logstore_name)
+            expected_rwshard_count = len([shard for shard in res_shard.shards if shard['status'].lower() == 'readwrite'])
             ret = to_client.create_logstore(to_project, logstore_name, ret.get_ttl(),
-                                            min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT))
+                                            min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
+                                            enable_tracking=ret.get_enable_tracking(),
+                                            append_meta=ret.append_meta,
+                                            auto_split=ret.auto_split,
+                                            max_split_shard=ret.max_split_shard,
+                                            preserve_storage=ret.preserve_storage
+                                            )
+
+            # arrange shard to expected count
+            if expected_rwshard_count > MAX_INIT_SHARD_COUNT:
+                res = arrange_shard(to_client, to_project, logstore_name, expected_rwshard_count)
 
             # copy index
             try:
@@ -162,20 +178,35 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
 
     # copy logstore
     ret = from_client.get_logstore(from_project, from_logstore)
+    res_shard = from_client.list_shards(from_project, from_logstore)
+    expected_rwshard_count = len([shard for shard in res_shard.shards if shard['status'].lower() == 'readwrite'])
     try:
         ret = to_client.create_logstore(to_project, to_logstore,
                                         ttl=ret.get_ttl(),
-                                        shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
-                                        enable_tracking=ret.get_enable_tracking())
+                                        shard_count=min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
+                                        enable_tracking=ret.get_enable_tracking(),
+                                        append_meta=ret.append_meta,
+                                        auto_split=ret.auto_split,
+                                        max_split_shard=ret.max_split_shard,
+                                        preserve_storage=ret.preserve_storage)
     except LogException as ex:
         if ex.get_error_code() == 'LogStoreAlreadyExist':
             # update logstore's settings
             ret = to_client.update_logstore(to_project, to_logstore,
                                             ttl=ret.get_ttl(),
-                                            shard_count=min(ret.get_shard_count(), MAX_INIT_SHARD_COUNT),
-                                            enable_tracking=ret.get_enable_tracking())
+                                            shard_count=min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
+                                            enable_tracking=ret.get_enable_tracking(),
+                                            append_meta=ret.append_meta,
+                                            auto_split=ret.auto_split,
+                                            max_split_shard=ret.max_split_shard,
+                                            preserve_storage=ret.preserve_storage
+                                            )
         else:
             raise
+
+    # arrange shard to expected count
+    if expected_rwshard_count > MAX_INIT_SHARD_COUNT:
+        res = arrange_shard(to_client, to_project, to_logstore, expected_rwshard_count)
 
     # copy index
     try:
@@ -424,7 +455,7 @@ def _split_one_shard_to_multiple(client, project, logstore, shard_info, count, c
             if x == 1:
                 res = client.split_shard(project, logstore, shard_info['id'], new_hash)
             else:
-                res = client.split_shard(project, logstore, current_shard_count-1, new_hash)
+                res = client.split_shard(project, logstore, current_shard_count - 1, new_hash)
 
             # new rw_shards
             for shard in res.shards:
@@ -450,7 +481,7 @@ def arrange_shard(client, project, logstore, count, stategy=None):
 
     res = client.list_shards(project, logstore)
     current_shard_count = res.count
-    rw_shards = [shard for shard in res.shards if shard['status'] == 'readwrite']
+    rw_shards = [shard for shard in res.shards if shard['status'].lower() == 'readwrite']
     split_left = count - len(rw_shards)
 
     while split_left > 0:
@@ -539,3 +570,133 @@ def get_resource_usage(client, project):
                                      "usage": _get_percentage(res.total, 50)}}
 
     return ResourceUsageResponse(result)
+
+
+def put_logs_auto_div(client, req, div=1):
+    try:
+        count = len(req.logitems)
+        p1 = count // 2
+
+        if div > 1 and p1 > 0:
+            # divide req into multiple ones
+            req1 = PutLogsRequest(project=req.project, logstore=req.logstore, topic=req.topic, source=req.source,
+                                  logitems=req.logitems[:p1],
+                                  hashKey=req.hashkey, compress=req.compress, logtags=req.logtags)
+            req2 = PutLogsRequest(project=req.project, logstore=req.logstore, topic=req.topic, source=req.source,
+                                  logitems=req.logitems[p1:],
+                                  hashKey=req.hashkey, compress=req.compress, logtags=req.logtags)
+            res = put_logs_auto_div(client, req1)
+            return put_logs_auto_div(client, req2)
+        else:
+            return client.put_logs(req)
+    except LogException as ex:
+        if ex.get_error_code() == 'InvalidLogSize':
+            return put_logs_auto_div(client, req, div=2)
+        raise ex
+
+
+def transform_worker(from_client, from_project, from_logstore, shard_id, from_time, to_time,
+                     config,
+                     to_client, to_project, to_logstore, batch_size=500, compress=True,
+                     ):
+
+
+    runner = Runner(config)
+    iter_data = from_client.pull_log(from_project, from_logstore, shard_id, from_time, to_time, batch_size=batch_size,
+                                     compress=compress)
+
+    count = 0
+    removed = 0
+    for s in iter_data:
+        events = s.get_flatten_logs_json()
+        new_events = defaultdict(list)
+        count += s.get_log_count()
+
+        default_time = time.time()
+        for src_event in events:
+            new_event = runner(src_event)
+
+            if new_events is None:
+                removed += 1
+                continue
+
+            dt = int(new_event.get('__time__', default_time)) // 60  # group logs in same minute
+            topic = ''
+            source = ''
+            if "__topic__" in new_event:
+                topic = new_event['__topic__']
+                del new_event["__topic__"]
+            if "__source__" in new_event:
+                source = new_event['__source__']
+                del new_event["__source__"]
+
+            new_events[(dt, topic, source)].append(new_event)
+
+        # print(len(new_events))
+        # for k, v in new_events.items():
+        #     print(k, len(v))
+
+        for (dt, topic, source), contents in six.iteritems(new_events):
+
+            items = []
+
+            for content in contents:
+                st = content.get("__time__", default_time)
+                if "__time__" in content:
+                    del content['__time__']
+
+                ct = list(six.iteritems(content))
+                item = LogItem(st, ct)
+                items.append(item)
+
+            req = PutLogsRequest(project=to_project, logstore=to_logstore, topic=topic, source=source, logitems=items)
+            res = put_logs_auto_div(to_client, req)
+            # res.log_print()
+
+    return shard_id, count, removed
+
+
+def transform_data(from_client, from_project, from_logstore, from_time, to_time,
+                   to_client=None, to_project=None, to_logstore=None,
+                   config=None,
+                   batch_size=500, compress=True):
+    """
+    transform data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
+
+    """
+    if not config:
+        logger.info("transform_data: config is not configured, use copy data by default.")
+        return copy_data(from_client, from_project, from_logstore, from_time, to_time,
+                         to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                         batch_size=batch_size, compress=compress)
+
+    to_client = to_client or from_client
+    # increase the timeout to 2 min at least
+    from_client.timeout = max(from_client.timeout, 120)
+    to_client.timeout = max(to_client.timeout, 120)
+
+    to_project = to_project or from_project
+    to_logstore = to_logstore or from_logstore
+    cpu_count = multiprocessing.cpu_count() * 2
+    shards = from_client.list_shards(from_project, from_logstore).get_shards_info()
+    worker_size = min(cpu_count, len(shards))
+
+    result = dict()
+    total_count = 0
+    total_removed = 0
+    with ProcessPoolExecutor(max_workers=worker_size) as pool:
+        futures = [pool.submit(transform_worker, from_client, from_project, from_logstore, shard['shardID'],
+                               from_time, to_time, config,
+                               to_client, to_project, to_logstore,
+                               batch_size=batch_size, compress=compress)
+                   for shard in shards]
+
+        for future in as_completed(futures):
+            partition, count, removed = future.result()
+            total_count += count
+            total_removed += removed
+            if count:
+                result[partition] = {"count": count, "removed": removed}
+
+    return LogResponse({}, {"total_count": total_count, "shards": result})
+

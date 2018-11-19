@@ -31,7 +31,7 @@ from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
-    get_resource_usage, arrange_shard
+    get_resource_usage, arrange_shard, transform_data
 from .logexception import LogException
 from .logstore_config_response import *
 from .logtail_config_response import *
@@ -2636,6 +2636,56 @@ class LogClient(object):
         return copy_data(self, project, logstore, from_time, to_time,
                          to_client=to_client, to_project=to_project, to_logstore=to_logstore,
                          batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
+
+    def transform_data(self, project, logstore, from_time, to_time, config=None,
+                       to_client=None, to_project=None, to_logstore=None,
+                       batch_size=500, compress=True):
+        """
+        transform data from one logstore to another one (could be the same or in different region), the time passed is log received time on server side.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: string/int
+        :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_time: string/int
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type config: string
+        :param config: transform config imported or path of config (in python)
+
+        :type to_client: LogClient
+        :param to_client: logclient instance, if empty will use source client
+
+        :type to_project: string
+        :param to_project: project name, if empty will use source project
+
+        :type to_logstore: string
+        :param to_logstore: logstore name, if empty will use source logstore
+
+        :type batch_size: int
+        :param batch_size: batch size to fetch the data in each iteration. by default it's 500
+
+        :type compress: bool
+        :param compress: if use compression, by default it's True
+
+        :type new_topic: string
+        :param new_topic: overwrite the copied topic with the passed one
+
+        :type new_source: string
+        :param new_source: overwrite the copied source with the passed one
+
+        :return: LogResponse {"total_count": 30, "shards": {0: 10, 1: 20} })
+
+        """
+        return transform_data(self, project, logstore, from_time, to_time,
+                              config=config,
+                              to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                              batch_size=batch_size, compress=compress)
 
     def get_resource_usage(self, project):
         """ get resource usage ist the project

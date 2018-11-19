@@ -1,0 +1,5 @@
+{"__topic__": "download", "firmware_version": "J18V154.00_R2.67"}
+{"__topic__": "reboot_event", "reboot_code": "8"}
+{"__topic__": "machine_status", "cpu_usage_usr": "1.14", "cpu_usage_sys": "0.00", "memory_free": "51644", "memory_free_unit": "K"}
+{"__topic__": "let_info", "RSPR": "80", "SINR": "-71", "global_cell_id": "21"}
+{"data": "NB Cell MEAS: NBS RSRP:", "__topic__": "default"}
