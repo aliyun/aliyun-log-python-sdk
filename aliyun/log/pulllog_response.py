@@ -99,12 +99,18 @@ class PullLogResponse(LogResponse):
         self.loggroup_list_json = []
         for logGroup in self.loggroup_list.LogGroups:
             items = []
+            tags = {}
+            for tag in logGroup.LogTags:
+                tags[tag.Key] = tag.Value
+
             for log in logGroup.Logs:
                 item = {'@lh_time': log.Time}
                 for content in log.Contents:
                     item[content.Key] = content.Value
                 items.append(item)
-            log_items = {'topic': logGroup.Topic, 'source': logGroup.Source, 'logs': items}
+            log_items = {'topic': logGroup.Topic, 'source': logGroup.Source,
+                         'logs': items,
+                         'tags': tags}
             self.loggroup_list_json.append(log_items)
 
     def get_flatten_logs_json(self):
