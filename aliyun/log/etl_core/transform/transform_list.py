@@ -84,8 +84,7 @@ Transform list:
 """
 
 import logging
-import typing
-from collections import OrderedDict
+from collections import OrderedDict, Callable
 
 import six
 from ..trans_comp import REGEX
@@ -105,13 +104,13 @@ class transform(transform_base):
 
         self.transform_list = []
         for tr in self.trans:
-            if isinstance(tr, typing.Callable):
+            if isinstance(tr, Callable):
                 self.transform_list.append(tr)
             elif isinstance(tr, (dict, OrderedDict)):
                 def real_transform(event):
                     result = {}
                     for k, v in six.iteritems(tr):
-                        if isinstance(v, typing.Callable):
+                        if isinstance(v, Callable):
                             v = v(event)
 
                         if isinstance(v, (six.text_type, six.binary_type)):
@@ -133,7 +132,7 @@ class transform(transform_base):
                 inpt, config = tr[0], tr[1]
                 if isinstance(config, (six.text_type, six.binary_type)):
                     self.transform_list.append(lambda e: REGEX(*tr[1:])(e, inpt))
-                elif isinstance(config, typing.Callable):
+                elif isinstance(config, Callable):
                     self.transform_list.append(lambda e: config(e, inpt))
                 else:
                     logger.warning("unknown transform config setting: {0}".format(config))

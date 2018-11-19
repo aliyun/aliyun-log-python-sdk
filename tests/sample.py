@@ -240,8 +240,11 @@ def sample_cleanup(client, project, logstore, delete_project=False):
         print("ignore error when cleaning up: ", ex)
 
     if delete_project:
-        time.sleep(30)
-        client.delete_project(project)
+        time.sleep(60)
+        try:
+            client.delete_project(project)
+        except Exception as ex:
+            print("fail to delete project, error: {0}".format(ex))
 
 
 def sample_crud_consumer_group(client, project, logstore, consumer_group):

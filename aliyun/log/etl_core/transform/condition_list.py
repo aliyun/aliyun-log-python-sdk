@@ -17,8 +17,7 @@ import functools
 import logging
 import re
 import six
-from collections import OrderedDict
-import typing
+from collections import OrderedDict, Callable
 from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
@@ -29,14 +28,14 @@ __all__ = ['condition']
 def get_check(c):
     if isinstance(c, bool):
         return lambda e: c
-    elif isinstance(c, typing.Callable):
+    elif isinstance(c, Callable):
         return c
     elif isinstance(c, (dict, OrderedDict)):
         def check(event):
             for k, v in six.iteritems(c):
                 if k in event:
                     if (isinstance(v, bool) and v) \
-                            or (isinstance(v, typing.Callable) and v(event[k])) \
+                            or (isinstance(v, Callable) and v(event[k])) \
                             or (isinstance(v, (six.text_type, six.binary_type))
                                 and re.match(v, event[k])):
                         continue
@@ -106,7 +105,7 @@ class condition(object):
     def __call__(self, entity):
         if isinstance(entity, (dict, OrderedDict)):
             return any(c(entity) for c in self.check_list)
-        elif isinstance(entity, typing.Callable):
+        elif isinstance(entity, Callable):
             fn = entity
 
             @functools.wraps(fn)
