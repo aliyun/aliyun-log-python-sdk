@@ -84,7 +84,7 @@ Transform list:
 """
 
 import logging
-from collections import OrderedDict, Callable
+from collections import Callable
 
 import six
 from ..trans_comp import REGEX
@@ -106,7 +106,7 @@ class transform(transform_base):
         for tr in self.trans:
             if isinstance(tr, Callable):
                 self.transform_list.append(tr)
-            elif isinstance(tr, (dict, OrderedDict)):
+            elif isinstance(tr, (dict, )):
                 def real_transform(event):
                     result = {}
                     for k, v in six.iteritems(tr):

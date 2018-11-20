@@ -1,6 +1,5 @@
 import re
 import six
-from collections import OrderedDict
 
 from .transform_base import transform_base
 from ..exceptions import SettingError
@@ -49,7 +48,7 @@ class keep_fields(transform_base):
 
 class rename_fields(transform_base):
     def __init__(self, config):
-        if isinstance(config, (dict, OrderedDict)):
+        if isinstance(config, (dict, )):
             self.new_name = lambda k: k if k not in config else config[k]
         elif config is None or config == "":
             self.new_name = lambda k: k

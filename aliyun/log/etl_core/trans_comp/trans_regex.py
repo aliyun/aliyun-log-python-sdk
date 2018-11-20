@@ -75,7 +75,6 @@ Transform list:
 import logging
 import re
 import six
-from collections import OrderedDict
 
 from .trans_base import trans_comp_base
 from ..exceptions import SettingError
@@ -111,7 +110,7 @@ class trans_comp_regex(trans_comp_base):
             raise SettingError(ex, pattern)
 
         self.fields_info = None
-        if isinstance(fields_info, (six.text_type, six.binary_type, list, dict, OrderedDict)):
+        if isinstance(fields_info, (six.text_type, six.binary_type, list, dict)):
             self.fields_info = fields_info
         elif fields_info is not None:
             logger.warning('transform_regex: unknown fields info type: "{0}"'.format(fields_info))
@@ -147,7 +146,7 @@ class trans_comp_regex(trans_comp_base):
                     if isinstance(self.fields_info, (six.binary_type, six.text_type)):
                         # only find first one
                         event[self.fields_info] = m.group()
-                    elif isinstance(self.fields_info, (dict, OrderedDict)):
+                    elif isinstance(self.fields_info, (dict, )):
                         ms = [m] + list(find_iter)
 
                         for i, m in enumerate(ms):

@@ -17,7 +17,7 @@ import functools
 import logging
 import re
 import six
-from collections import OrderedDict, Callable
+from collections import Callable
 from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def get_check(c):
         return lambda e: c
     elif isinstance(c, Callable):
         return c
-    elif isinstance(c, (dict, OrderedDict)):
+    elif isinstance(c, (dict, )):
         def check(event):
             for k, v in six.iteritems(c):
                 if k in event:
@@ -103,7 +103,7 @@ class condition(object):
             return ret
 
     def __call__(self, entity):
-        if isinstance(entity, (dict, OrderedDict)):
+        if isinstance(entity, (dict, )):
             return any(c(entity) for c in self.check_list)
         elif isinstance(entity, Callable):
             fn = entity
