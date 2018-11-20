@@ -1,5 +1,5 @@
-{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"a49442a41b3c5cb53e08b8038d016cdc","data":"Provision Firmware Download start [J18V154.00_R2.67]"}
-{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"a49442a41b3c5cb53e08b8038d016cdc","data":"System Reboot [8]"}
-{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"0dec0a4206baffe82631a1fb30035b40","data":"Status,1.14% usr 0.00% sys,51644K,1,1,1,73 days 4 hours 32 minutes,7,7,7,7"}
-{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"a49442a41b3c5cb53e08b8038d016cdc","data":"LTE_Information 80,-71,21,440201017126DE5B,3750,-7"}
-{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"363a7edb1ec26d7b853c2553b31ae5c9","data":"NB Cell MEAS: NBS RSRP:"}
+{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"aXXXYYYZZZcdc","data":"Provision Firmware Download start [J18V154.00_R2.67]"}
+{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"aXXXYYYZZZcdc","data":"System Reboot [8]"}
+{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"0XXXYYYZZZb40","data":"Status,1.14% usr 0.00% sys,51644K,1,1,1,73 days 4 hours 32 minutes,7,7,7,7"}
+{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"aXXXYYYZZZcdc","data":"LTE_Information 80,-71,21,440201017126DE5B,3750,-7"}
+{"time":"2018 Jun 16 11:53:55","__time__":"1529117635","imei":"36XXXYYYZZZ5c9","data":"NB Cell MEAS: NBS RSRP:"}
