@@ -5,13 +5,14 @@ import logging
 from .exceptions import CheckPointException
 from .exceptions import ClientWorkerException
 from ..logexception import LogException
-from .. import LogClient
 from ..version import USER_AGENT
 
 
 class ConsumerClient(object):
     def __init__(self, endpoint, access_key_id, access_key, project,
                  logstore, consumer_group, consumer, security_token=None):
+
+        from .. import LogClient
 
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token)
         self.mclient.set_user_agent('%s-consumergroup-%s' % (USER_AGENT, consumer_group))

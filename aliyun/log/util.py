@@ -6,12 +6,14 @@ import base64
 import collections
 import hashlib
 import hmac
-import re
 import socket
 import six
 from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def base64_encodestring(s):
@@ -222,9 +224,14 @@ def parse_timestamp(tm):
         try:
             # try to use dateparser to parse the format.
             from dateparser import parse
-            dt = parse(tm)
-            if dt is None:
-                raise ex
+            try:
+                dt = parse(tm)
+                if dt is None:
+                    raise ex
+            except Exception as e:
+                logger.error("fail to parse date: {0}, detail: {1}".format(tm, e))
+                raise e
+
         except ImportError as ex2:
             raise ex
 

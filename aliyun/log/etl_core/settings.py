@@ -1,10 +1,5 @@
-
 from .transform import *
-# from .transform.transform_base import transform_base
-# from .trans_comp.trans_base import trans_comp_base
-# from collections import Callable
 from enum import Enum
-# import re
 
 builtin_macros = {
     'KEEP_EVENT_.*': keep_event,
@@ -17,8 +12,17 @@ builtin_macros = {
     'TRANSFORM_EVENT_.*': transform_event
 }
 
+__all__ = ['KEEP_EVENT_',
+           'DROP_EVENT_',
+           'KEEP_FIELDS_',
+           'DROP_FIELDS_',
+           'RENAME_FIELDS_',
+           'ALIAS_',
+           'DISPATCH_EVENT_',
+           'TRANSFORM_EVENT_']
 
-
+for key in builtin_macros.keys():
+    globals()[key[:-2]] = "Use this prefix to auto call the function: {}".format(builtin_macros[key])
 
 
 class TransFnType(Enum):
@@ -41,4 +45,3 @@ def check_fn_type_by_name(name):
         return TransFnType.EVENT_UPDATE
 
     return TransFnType.UNKNOWN
-

@@ -1,7 +1,7 @@
 from .logexception import LogException
 import six
 import json
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor as ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
 from json import JSONEncoder
@@ -11,6 +11,8 @@ import time
 from .etl_core import Runner
 from .putlogsrequest import PutLogsRequest
 from .logitem import LogItem
+from aliyun.log.pulllog_response import PullLogResponse
+from .consumer import *
 
 MAX_INIT_SHARD_COUNT = 10
 
@@ -399,8 +401,41 @@ def copy_worker(from_client, from_project, from_logstore, shard_id, from_time, t
     return shard_id, count
 
 
-def copy_data(from_client, from_project, from_logstore, from_time, to_time,
+def _parse_shard_list(shard_list, current_shard_list):
+    """
+    parse shard list
+    :param shard_list: format like: 1,5-10,20
+    :param current_shard_list: current shard list
+    :return:
+    """
+    if not shard_list:
+        return current_shard_list
+    target_shards = []
+    for n in shard_list.split(","):
+        n = n.strip()
+        if n.isdigit() and n in current_shard_list:
+            target_shards.append(n)
+        elif n:
+            rng = n.split("-")
+            if len(rng) == 2:
+                s = rng[0].strip()
+                e = rng[1].strip()
+                if s.isdigit() and e.isdigit():
+                    for x in range(int(s), int(e)+1):
+                        if str(x) in current_shard_list:
+                            target_shards.append(str(x))
+
+    logger.info("parse_shard, shard_list: '{0}' current shard '{1}' result: '{2}'".format(shard_list,
+                                                                                          current_shard_list, target_shards))
+    if not target_shards:
+        raise LogException("InvalidParameter", "There's no available shard with settings {0}".format(shard_list))
+
+    return target_shards
+
+
+def copy_data(from_client, from_project, from_logstore, from_time, to_time=None,
               to_client=None, to_project=None, to_logstore=None,
+              shard_list=None,
               batch_size=500, compress=True, new_topic=None, new_source=None):
     """
     copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
@@ -413,19 +448,23 @@ def copy_data(from_client, from_project, from_logstore, from_time, to_time,
 
     to_project = to_project or from_project
     to_logstore = to_logstore or from_logstore
+    to_time = to_time or "end"
+
     cpu_count = multiprocessing.cpu_count() * 2
     shards = from_client.list_shards(from_project, from_logstore).get_shards_info()
-    worker_size = min(cpu_count, len(shards))
+    current_shards = [str(shard['shardID']) for shard in shards]
+    target_shards = _parse_shard_list(shard_list, current_shards)
+    worker_size = min(cpu_count, len(target_shards))
 
     result = dict()
     total_count = 0
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
-        futures = [pool.submit(copy_worker, from_client, from_project, from_logstore, shard['shardID'],
+        futures = [pool.submit(copy_worker, from_client, from_project, from_logstore, shard,
                                from_time, to_time,
                                to_client, to_project, to_logstore,
                                batch_size=batch_size, compress=compress,
                                new_topic=new_topic, new_source=new_source)
-                   for shard in shards]
+                   for shard in target_shards]
 
         for future in as_completed(futures):
             partition, count = future.result()
@@ -595,12 +634,54 @@ def put_logs_auto_div(client, req, div=1):
         raise ex
 
 
+def _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore):
+    count = removed = 0
+    new_events = defaultdict(list)
+
+    default_time = time.time()
+    for src_event in events:
+        count += 1
+        new_event = runner(src_event)
+
+        if new_event is None:
+            removed += 1
+            continue
+
+        dt = int(new_event.get('__time__', default_time)) // 60  # group logs in same minute
+        topic = ''
+        source = ''
+        if "__topic__" in new_event:
+            topic = new_event['__topic__']
+            del new_event["__topic__"]
+        if "__source__" in new_event:
+            source = new_event['__source__']
+            del new_event["__source__"]
+
+        new_events[(dt, topic, source)].append(new_event)
+
+    for (dt, topic, source), contents in six.iteritems(new_events):
+
+        items = []
+
+        for content in contents:
+            st = content.get("__time__", default_time)
+            if "__time__" in content:
+                del content['__time__']
+
+            ct = list(six.iteritems(content))
+            item = LogItem(st, ct)
+            items.append(item)
+
+        req = PutLogsRequest(project=to_project, logstore=to_logstore, topic=topic, source=source, logitems=items)
+        res = put_logs_auto_div(to_client, req)
+
+    return count, removed
+
+
 def transform_worker(from_client, from_project, from_logstore, shard_id, from_time, to_time,
                      config,
                      to_client, to_project, to_logstore, batch_size=500, compress=True,
                      ):
-
-
     runner = Runner(config)
     iter_data = from_client.pull_log(from_project, from_logstore, shard_id, from_time, to_time, batch_size=batch_size,
                                      compress=compress)
@@ -609,94 +690,155 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
     removed = 0
     for s in iter_data:
         events = s.get_flatten_logs_json()
-        new_events = defaultdict(list)
-        count += s.get_log_count()
 
-        default_time = time.time()
-        for src_event in events:
-            new_event = runner(src_event)
-
-            if new_events is None:
-                removed += 1
-                continue
-
-            dt = int(new_event.get('__time__', default_time)) // 60  # group logs in same minute
-            topic = ''
-            source = ''
-            if "__topic__" in new_event:
-                topic = new_event['__topic__']
-                del new_event["__topic__"]
-            if "__source__" in new_event:
-                source = new_event['__source__']
-                del new_event["__source__"]
-
-            new_events[(dt, topic, source)].append(new_event)
-
-        # print(len(new_events))
-        # for k, v in new_events.items():
-        #     print(k, len(v))
-
-        for (dt, topic, source), contents in six.iteritems(new_events):
-
-            items = []
-
-            for content in contents:
-                st = content.get("__time__", default_time)
-                if "__time__" in content:
-                    del content['__time__']
-
-                ct = list(six.iteritems(content))
-                item = LogItem(st, ct)
-                items.append(item)
-
-            req = PutLogsRequest(project=to_project, logstore=to_logstore, topic=topic, source=source, logitems=items)
-            res = put_logs_auto_div(to_client, req)
-            # res.log_print()
+        c, r = _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore)
+        count += c
+        removed += r
 
     return shard_id, count, removed
 
 
-def transform_data(from_client, from_project, from_logstore, from_time, to_time,
+class TransformDataConsumer(ConsumerProcessorBase):
+    shard_id = -1
+    last_check_time = 0
+
+    runner = None
+    to_client = None
+    to_project = None
+    to_logstore = None
+
+    @staticmethod
+    def set_transform_options(config, to_client, to_project, to_logstore):
+        TransformDataConsumer.runner = Runner(config)
+        TransformDataConsumer.to_client = to_client
+        TransformDataConsumer.to_project = to_project
+        TransformDataConsumer.to_logstore = to_logstore
+
+    def initialize(self, shard):
+        logger.info("TransformDataConsumer::initialize: get shard init: {0}".format(shard))
+        self.shard_id = shard
+
+    def process(self, log_groups, check_point_tracker):
+        logger.info("TransformDataConsumer::process: get log groups")
+
+        logs = PullLogResponse.loggroups_to_flattern_list(log_groups)
+        _transform_events_to_logstore(self.runner, logs, self.to_client, self.to_project, self.to_logstore)
+
+        # save check point
+        current_time = time.time()
+        if current_time - self.last_check_time > 3:
+            try:
+                self.last_check_time = current_time
+                check_point_tracker.save_check_point(True)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+        else:
+            try:
+                check_point_tracker.save_check_point(False)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+
+        return None
+
+    def shutdown(self, check_point_tracker):
+        try:
+            check_point_tracker.save_check_point(True)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+
+
+def transform_data(from_client, from_project, from_logstore, from_time,
+                   to_time=None,
                    to_client=None, to_project=None, to_logstore=None,
+                   shard_list=None,
                    config=None,
-                   batch_size=500, compress=True):
+                   batch_size=500, compress=True,
+                   cg_name=None, c_name=None,
+                   cg_heartbeat_interval=None, cg_data_fetch_interval=None, cg_in_order=None,
+                   cg_worker_pool_size=None
+                   ):
     """
     transform data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
 
     """
     if not config:
         logger.info("transform_data: config is not configured, use copy data by default.")
-        return copy_data(from_client, from_project, from_logstore, from_time, to_time,
+        return copy_data(from_client, from_project, from_logstore, from_time, to_time=to_time,
                          to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                         shard_list=shard_list,
                          batch_size=batch_size, compress=compress)
 
     to_client = to_client or from_client
+
     # increase the timeout to 2 min at least
     from_client.timeout = max(from_client.timeout, 120)
     to_client.timeout = max(to_client.timeout, 120)
-
     to_project = to_project or from_project
     to_logstore = to_logstore or from_logstore
-    cpu_count = multiprocessing.cpu_count() * 2
-    shards = from_client.list_shards(from_project, from_logstore).get_shards_info()
-    worker_size = min(cpu_count, len(shards))
 
-    result = dict()
-    total_count = 0
-    total_removed = 0
-    with ProcessPoolExecutor(max_workers=worker_size) as pool:
-        futures = [pool.submit(transform_worker, from_client, from_project, from_logstore, shard['shardID'],
-                               from_time, to_time, config,
-                               to_client, to_project, to_logstore,
-                               batch_size=batch_size, compress=compress)
-                   for shard in shards]
+    if not cg_name:
+        # batch mode
+        to_time = to_time or "end"
+        cpu_count = multiprocessing.cpu_count() * 2
+        shards = from_client.list_shards(from_project, from_logstore).get_shards_info()
+        current_shards = [str(shard['shardID']) for shard in shards]
+        target_shards = _parse_shard_list(shard_list, current_shards)
 
-        for future in as_completed(futures):
-            partition, count, removed = future.result()
-            total_count += count
-            total_removed += removed
-            if count:
-                result[partition] = {"count": count, "removed": removed}
+        worker_size = min(cpu_count, len(target_shards))
 
-    return LogResponse({}, {"total_count": total_count, "shards": result})
+        result = dict()
+        total_count = 0
+        total_removed = 0
+        with ProcessPoolExecutor(max_workers=worker_size) as pool:
+            futures = [pool.submit(transform_worker, from_client, from_project, from_logstore, shard,
+                                   from_time, to_time, config,
+                                   to_client, to_project, to_logstore,
+                                   batch_size=batch_size, compress=compress)
+                       for shard in target_shards]
+
+            for future in as_completed(futures):
+                partition, count, removed = future.result()
+                total_count += count
+                total_removed += removed
+                if count:
+                    result[partition] = {"total_count": count, "transformed":
+                        count-removed, "removed": removed}
+
+        return LogResponse({}, {"total_count": total_count, "shards": result})
+
+    else:
+        # consumer group mode
+        c_name = c_name or "transform_data_{0}".format(multiprocessing.current_process().pid)
+        cg_heartbeat_interval = cg_heartbeat_interval or 20
+        cg_data_fetch_interval = cg_data_fetch_interval or 2
+        cg_in_order = False if cg_in_order is None else cg_in_order
+        cg_worker_pool_size = cg_worker_pool_size or 3
+        cursor_position = CursorPosition.SPECIAL_TIMER_CURSOR
+        if from_time.lower() == "begin":
+            cursor_position = CursorPosition.BEGIN_CURSOR
+        elif from_time.lower() == "end":
+            cursor_position = CursorPosition.END_CURSOR
+        cursor_start_time = from_time
+
+        option = LogHubConfig(from_client._endpoint, from_client._accessKeyId, from_client._accessKey,
+                              from_project, from_logstore, cg_name,
+                              c_name, cursor_position=cursor_position, cursor_start_time=cursor_start_time,
+                              heartbeat_interval=cg_heartbeat_interval, data_fetch_interval=cg_data_fetch_interval,
+                              in_order=cg_in_order,
+                              worker_pool_size=cg_worker_pool_size)
+
+        TransformDataConsumer.set_transform_options(config, to_client, to_project, to_logstore)
+        client_worker1 = ConsumerWorker(TransformDataConsumer, consumer_option=option)
+        client_worker1.start()
+
+        try:
+            while True:
+                time.sleep(100)
+        except KeyboardInterrupt:
+            logger.info("shutdown transform data.")
+            client_worker1.shutdown()
+            time.sleep(20)
 

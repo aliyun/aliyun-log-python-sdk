@@ -2591,7 +2591,7 @@ class LogClient(object):
         resp.body = res
         return resp
 
-    def copy_data(self, project, logstore, from_time, to_time,
+    def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,
                   batch_size=500, compress=True, new_topic=None, new_source=None):
         """
@@ -2607,7 +2607,7 @@ class LogClient(object):
         :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_time: string/int
-        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+        :param to_time: curosr value, default is "end", could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_client: LogClient
         :param to_client: logclient instance, if empty will use source client
@@ -2633,15 +2633,20 @@ class LogClient(object):
         :return: LogResponse {"total_count": 30, "shards": {0: 10, 1: 20} })
 
         """
-        return copy_data(self, project, logstore, from_time, to_time,
+        return copy_data(self, project, logstore, from_time, to_time=to_time,
                          to_client=to_client, to_project=to_project, to_logstore=to_logstore,
                          batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
 
-    def transform_data(self, project, logstore, from_time, to_time, config=None,
+    def transform_data(self, project, logstore, from_time, to_time=None, config=None,
                        to_client=None, to_project=None, to_logstore=None,
-                       batch_size=500, compress=True):
+                       shard_list=None,
+                       batch_size=500, compress=True,
+                       cg_name=None, c_name=None,
+                       cg_heartbeat_interval=None, cg_data_fetch_interval=None, cg_in_order=None,
+                       cg_worker_pool_size=None
+                       ):
         """
-        transform data from one logstore to another one (could be the same or in different region), the time passed is log received time on server side.
+        transform data from one logstore to another one (could be the same or in different region), the time passed is log received time on server side. There're two mode, batch mode / consumer group mode. For Batch mode, just leave the cg_name and later options as None.
 
         :type project: string
         :param project: project name
@@ -2653,7 +2658,7 @@ class LogClient(object):
         :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_time: string/int
-        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+        :param to_time: curosr value, leave it as None if consumer group is configured. could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type config: string
         :param config: transform config imported or path of config (in python)
@@ -2667,25 +2672,47 @@ class LogClient(object):
         :type to_logstore: string
         :param to_logstore: logstore name, if empty will use source logstore
 
+        :type shard_list: string
+        :param shard_list: shard number list. could be comma seperated list or range: 1,20,31-40
+
         :type batch_size: int
         :param batch_size: batch size to fetch the data in each iteration. by default it's 500
 
         :type compress: bool
         :param compress: if use compression, by default it's True
 
-        :type new_topic: string
-        :param new_topic: overwrite the copied topic with the passed one
+        :type cg_name: string
+        :param cg_name: consumer group name. must configure if it's consumer group mode.
 
-        :type new_source: string
-        :param new_source: overwrite the copied source with the passed one
+        :type c_name: string
+        :param c_name: consumer group name for consumer group mode,  default:  CLI-transform-data-${process_id}
 
-        :return: LogResponse {"total_count": 30, "shards": {0: 10, 1: 20} })
+        :type cg_heartbeat_interval: int
+        :param cg_heartbeat_interval: cg_heartbeat_interval, default 20
+
+        :type cg_data_fetch_interval: int
+        :param cg_data_fetch_interval: cg_data_fetch_interval, default 2
+
+        :type cg_in_order: bool
+        :param cg_in_order: cg_in_order, default False
+
+        :type cg_worker_pool_size: int
+        :param cg_worker_pool_size: cg_worker_pool_size, default 2
+
+        :return: LogResponse {"total_count": 30, "shards": {0: {"count": 10, "removed": 1},  2: {"count": 20, "removed": 1}} })
 
         """
-        return transform_data(self, project, logstore, from_time, to_time,
+        return transform_data(self, project, logstore, from_time, to_time=to_time,
                               config=config,
                               to_client=to_client, to_project=to_project, to_logstore=to_logstore,
-                              batch_size=batch_size, compress=compress)
+                              shard_list=shard_list,
+                              batch_size=batch_size, compress=compress,
+                              cg_name=cg_name, c_name=c_name,
+                              cg_heartbeat_interval=cg_heartbeat_interval,
+                              cg_data_fetch_interval=cg_data_fetch_interval,
+                              cg_in_order=cg_in_order,
+                              cg_worker_pool_size=cg_worker_pool_size
+                              )
 
     def get_resource_usage(self, project):
         """ get resource usage ist the project
