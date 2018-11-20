@@ -4,8 +4,8 @@ import sys
 import copy
 import inspect
 import logging
-logger = logging.getLogger(__name__)
 from .exceptions import SettingError
+logger = logging.getLogger(__name__)
 
 
 class Runner(object):

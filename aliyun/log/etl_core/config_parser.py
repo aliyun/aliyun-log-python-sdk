@@ -1,5 +1,4 @@
 import ast
-import inspect
 import logging
 import re
 import six
@@ -7,7 +6,6 @@ from collections import Callable
 from .settings import TransFnType, check_fn_type_by_name, builtin_macros
 from functools import wraps
 import inspect
-import os
 
 logger = logging.getLogger(__name__)
 

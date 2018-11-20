@@ -22,7 +22,7 @@ __all__ = ['KEEP_EVENT_',
            'TRANSFORM_EVENT_']
 
 for key in builtin_macros.keys():
-    globals()[key[:-2]] = "Use this prefix to auto call the function: {}".format(builtin_macros[key])
+    globals()[key[:-2]] = "Use this prefix to auto call the function: {0}".format(builtin_macros[key])
 
 
 class TransFnType(Enum):
