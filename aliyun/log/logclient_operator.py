@@ -1,7 +1,7 @@
 from .logexception import LogException
 import six
 import json
-from concurrent.futures import ThreadPoolExecutor as ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
 from json import JSONEncoder
