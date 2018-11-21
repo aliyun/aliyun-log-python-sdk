@@ -2593,6 +2593,7 @@ class LogClient(object):
 
     def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,
+                  shard_list=None,
                   batch_size=500, compress=True, new_topic=None, new_source=None):
         """
         copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
@@ -2618,6 +2619,9 @@ class LogClient(object):
         :type to_logstore: string
         :param to_logstore: logstore name, if empty will use source logstore
 
+        :type shard_list: string
+        :param shard_list: shard number list. could be comma seperated list or range: 1,20,31-40
+
         :type batch_size: int
         :param batch_size: batch size to fetch the data in each iteration. by default it's 500
 
@@ -2635,6 +2639,7 @@ class LogClient(object):
         """
         return copy_data(self, project, logstore, from_time, to_time=to_time,
                          to_client=to_client, to_project=to_project, to_logstore=to_logstore,
+                         shard_list=shard_list,
                          batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
 
     def transform_data(self, project, logstore, from_time, to_time=None, config=None,
