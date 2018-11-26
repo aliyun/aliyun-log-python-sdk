@@ -148,7 +148,7 @@ def sample_consumer_group():
         client_worker2 = ConsumerWorker(SampleConsumer, consumer_option=option2)
         client_worker2.start()
 
-        sleep_until(120, lambda: len(SampleConsumer.log_results) >= test_item_count)
+        sleep_until(240, lambda: len(SampleConsumer.log_results) >= test_item_count)
 
         print("*** consumer group status ***")
         ret = client.list_consumer_group(project, logstore)
