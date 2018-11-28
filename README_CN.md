@@ -22,15 +22,12 @@
 
 ### 具体功能
 
-1. 封装Rest API。
-2. 实现API请求的数字签名
-3. 实现API的Protocol Buffer格式发送日志
-4. 支持API定义的数据压缩方式
-5. 实现API查询数据和批量消费数据
-6. 使用异常统一处理错误
-7. 提供消费组高级API
-8. Python日志模块的Handler
-9. Elasticsearch 数据迁移
+1. 封装所有Rest API (管理, 数据操作, 消费组等)
+2. 消费组高阶类支持
+3. Python日志模块的Handler
+4. 高阶操作支持: 自动分页, 自动未完成重试, 复制Project/Logstore配置, 调整更大的Shard读写数, 查看资源使用等.
+5. Elasticsearch 数据迁移
+6. 数据ETL功能: 按照shard/时间高速跨logstore复制数据, 根据灵活的配置规则, 对数据进行批量或持续可并发的数据ETL转换.
 
 ### 支持Python版本
 

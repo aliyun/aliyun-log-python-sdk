@@ -20,15 +20,13 @@ Refer to the doc: [http://aliyun-log-python-sdk.readthedocs.io/](http://aliyun-l
 Don't want to write code? Try the [CLI](http://aliyun-log-cli.readthedocs.io/en/latest/) which covers almost all features of this SDK.
 
 ### Features
-1. Wrap Rest API
-2. Implement the signature of API request
-3. Use format of Protocol Buffer to transfer data
-4. Support API defined compression style
-5. Support API to do batch query and data consumption
-6. Use exception to uncover errors
-7. Support high level API for consumer group
-8. Python Logging handler util
-9. Elasticsearch data migration
+1. Wrap all SLS Rest API (Management, data manipulation, consumer group etc)
+2. Consumer Group high level Class Support.
+3. Python Logging handler util
+4. High level operations: auto paging, auto retry till complete, copy project/logstore settings, arrange_shard, resource usage etc.
+5. Elasticsearch data migration
+6. ETL feature: copy data cross logstore, transform data cross logstore with powerful ETL config.
+
 
 ### Supported Python：
 
