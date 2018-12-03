@@ -96,6 +96,7 @@ def test_regex():
     # regex 3-tuple dict
     assert transform(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456'}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
 
+
 def test_dispatch_transform():
     DISPATCH_LIST_data = [
         ({"data": "^LTE_Information "}, {"__topic__": "etl_info"}),
@@ -266,6 +267,32 @@ def test_module():
     verify_case(data3_test1, './data3.txt', './data3_test1_result.txt')
 
 
+def test_csv():
+    # sep
+    assert transform( ("data", CSV(r"city,pop,province") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert transform(("data", CSV(r"city, pop, province", sep='#')))({'data': 'nj#800#js'}) == {'province': 'js', 'city': 'nj', 'data': 'nj#800#js', 'pop': '800'}
+
+    # config
+    assert transform( ("data", CSV(['city', 'pop', 'province']) ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+
+    # lstrip
+    assert transform( ("data", CSV(r"city, pop, province") ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+    assert transform( ("data", CSV(r"city, pop, province", lstrip=False) ))({'data': 'nj, 800, js'})  == {'province': ' js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': ' 800'}
+
+    # quote
+    assert transform( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
+    assert transform( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
+    assert transform( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
+
+    # restrict
+    assert transform(("data", CSV(r"city, pop, province")))({'data': 'nj,800,js,gudu'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js,gudu', 'pop': '800'}
+    assert transform(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800,js,gudu'})  == {'data': 'nj,800,js,gudu'}
+    assert transform(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800'})  == {'data': 'nj,800'}
+
+    # TSV
+    assert transform( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
+
+
 test_condition()
 test_regex()
 test_dispatch_transform()
@@ -273,4 +300,6 @@ test_meta()
 test_parse()
 test_runner()
 test_module()
+test_csv()
+
 

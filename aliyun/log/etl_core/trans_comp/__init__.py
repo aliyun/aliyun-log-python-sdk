@@ -1,6 +1,7 @@
 from .trans_base import V
 from .trans_regex import *
 from .trans_lookup import *
+from .trans_csv import *
 
 __all__ = ['REGEX', 'CSV', 'TSV', 'JSON', 'KV', 'V']
 
