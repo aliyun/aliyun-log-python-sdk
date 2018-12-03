@@ -2642,7 +2642,7 @@ class LogClient(object):
                          shard_list=shard_list,
                          batch_size=batch_size, compress=compress, new_topic=new_topic, new_source=new_source)
 
-    def transform_data(self, project, logstore, from_time, to_time=None, config=None,
+    def transform_data(self, project, logstore, config, from_time, to_time=None,
                        to_client=None, to_project=None, to_logstore=None,
                        shard_list=None,
                        batch_size=500, compress=True,
@@ -2659,14 +2659,14 @@ class LogClient(object):
         :type logstore: string
         :param logstore: logstore name
 
+        :type config: string
+        :param config: transform config imported or path of config (in python)
+
         :type from_time: string/int
         :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_time: string/int
         :param to_time: curosr value, leave it as None if consumer group is configured. could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10 CST", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
-
-        :type config: string
-        :param config: transform config imported or path of config (in python)
 
         :type to_client: LogClient
         :param to_client: logclient instance, if empty will use source client
