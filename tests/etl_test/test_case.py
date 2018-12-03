@@ -5,6 +5,8 @@ from aliyun.log.etl_core.runner import Runner
 import json
 import os
 
+t = transform
+
 
 def test_condition():
     event = {'k1': '123', 'k2': 'abc', 'k3': "abc123"}
@@ -54,47 +56,47 @@ def test_regex():
     """
 
     # dict - append
-    assert transform({'k3': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k1': '123', 'k2': 'abc', 'k3': "abc123"}
+    assert t({'k3': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k1': '123', 'k2': 'abc', 'k3': "abc123"}
 
     # dict - overwrite
-    assert transform({'k1': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k1': 'abc123', 'k2': 'abc'}
+    assert t({'k1': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k1': 'abc123', 'k2': 'abc'}
 
     # lambda overwrite all
-    assert transform(lambda x: {'k3': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k3': 'abc123'}
+    assert t(lambda x: {'k3': 'abc123'})({'k1': '123', 'k2': 'abc'}) == {'k3': 'abc123'}
 
     ###
     # regex
     ###
 
     # simple
-    assert transform( ("k1", r"hello (?P<name>\w+)") )({'k1': 'hello ding'}) == {'k1': 'hello ding', 'name': 'ding'}
+    assert t( ("k1", r"hello (?P<name>\w+)") )({'k1': 'hello ding'}) == {'k1': 'hello ding', 'name': 'ding'}
     # multiple
-    assert transform( ("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': '1234'}
+    assert t( ("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': '1234'}
     # not match
-    assert transform( ("k1", r"(?P<abc>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
+    assert t( ("k1", r"(?P<abc>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
 
     # full match
-    assert transform( ("k1", r".*?(?P<abc>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
+    assert t( ("k1", r".*?(?P<abc>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
 
     # regex multiple inputs
-    assert transform((["k1", 'k2'], r"(?P<abc>\d+)"))({'k1': 'abc123'}) == {'k1': 'abc123', 'abc': '123'}
-    assert transform((["k1", 'k2'], r"(?P<abc>\d+)"))({'k2': 'xyz334'}) == {'k2': 'xyz334', 'abc': '334'}
+    assert t((["k1", 'k2'], r"(?P<abc>\d+)"))({'k1': 'abc123'}) == {'k1': 'abc123', 'abc': '123'}
+    assert t((["k1", 'k2'], r"(?P<abc>\d+)"))({'k2': 'xyz334'}) == {'k2': 'xyz334', 'abc': '334'}
 
     # REGEX
-    assert transform( ("k1", REGEX(r"^(?P<abc>\d+)$") ))({'k1': 'aBc1234'}) == {'k1': 'aBc1234'}
-    assert transform( ("k1", REGEX(r"(?P<abc>\d+)") ))({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
+    assert t( ("k1", REGEX(r"^(?P<abc>\d+)$") ))({'k1': 'aBc1234'}) == {'k1': 'aBc1234'}
+    assert t( ("k1", REGEX(r"(?P<abc>\d+)") ))({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
 
     # regex 3-tuple filed-string
-    assert transform(("k1", REGEX(r"\d+", "f1")))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123"}
-    assert transform(("k1", REGEX(r"\d+", ["f1", "f2"])))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123", "f2": "456"}
-    assert transform(("k1", r"\d+", ["f1", "f2"]))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123", "f2": "456"}
-    assert transform(("k1", r"(\w+) (\d+)", ["f1", "f2"]))({'k1': 'abc 123'}) == {'k1': 'abc 123', 'f1': "abc", "f2": "123"}
+    assert t(("k1", REGEX(r"\d+", "f1")))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123"}
+    assert t(("k1", REGEX(r"\d+", ["f1", "f2"])))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123", "f2": "456"}
+    assert t(("k1", r"\d+", ["f1", "f2"]))({'k1': '123 456'}) == {'k1': '123 456', 'f1': "123", "f2": "456"}
+    assert t(("k1", r"(\w+) (\d+)", ["f1", "f2"]))({'k1': 'abc 123'}) == {'k1': 'abc 123', 'f1': "abc", "f2": "123"}
 
     # regex group - first match
-    assert transform(("k1", r"(\d+) (\d+)", ["f1", "f2"]))({'k1': '12 34 56 78'}) == {'k1': '12 34 56 78', 'f1': "12", "f2": "34"}
+    assert t(("k1", r"(\d+) (\d+)", ["f1", "f2"]))({'k1': '12 34 56 78'}) == {'k1': '12 34 56 78', 'f1': "12", "f2": "34"}
 
     # regex 3-tuple dict
-    assert transform(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456'}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
+    assert t(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456'}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
 
 
 def test_dispatch_transform():
@@ -269,37 +271,109 @@ def test_module():
 
 def test_csv():
     # sep
-    assert transform( ("data", CSV(r"city,pop,province") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
-    assert transform(("data", CSV(r"city, pop, province", sep='#')))({'data': 'nj#800#js'}) == {'province': 'js', 'city': 'nj', 'data': 'nj#800#js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t(("data", CSV(r"city, pop, province", sep='#')))({'data': 'nj#800#js'}) == {'province': 'js', 'city': 'nj', 'data': 'nj#800#js', 'pop': '800'}
 
     # config
-    assert transform( ("data", CSV(['city', 'pop', 'province']) ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+    assert t( ("data", CSV(['city', 'pop', 'province']) ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
 
     # lstrip
-    assert transform( ("data", CSV(r"city, pop, province") ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
-    assert transform( ("data", CSV(r"city, pop, province", lstrip=False) ))({'data': 'nj, 800, js'})  == {'province': ' js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': ' 800'}
+    assert t( ("data", CSV(r"city, pop, province") ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+    assert t( ("data", CSV(r"city, pop, province", lstrip=False) ))({'data': 'nj, 800, js'})  == {'province': ' js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': ' 800'}
 
     # quote
-    assert transform( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
-    assert transform( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
-    assert transform( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
+    assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
+    assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
+    assert t( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
 
     # restrict
-    assert transform(("data", CSV(r"city, pop, province")))({'data': 'nj,800,js,gudu'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js,gudu', 'pop': '800'}
-    assert transform(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800,js,gudu'})  == {'data': 'nj,800,js,gudu'}
-    assert transform(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800'})  == {'data': 'nj,800'}
+    assert t(("data", CSV(r"city, pop, province")))({'data': 'nj,800,js,gudu'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js,gudu', 'pop': '800'}
+    assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800,js,gudu'})  == {'data': 'nj,800,js,gudu'}
+    assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800'})  == {'data': 'nj,800'}
 
     # TSV
-    assert transform( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
+    assert t( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
 
+
+def test_lookup_dict():
+    # no field
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP", "*": "Unknown"}, "protocol") ) )({'data': '123'})  == {'data': '123'}
+
+    # match
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP", "*": "Unknown"}, "protocol") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP", "*": "Unknown"}, "protocol") ) )({'data': '123', "pro": "3"})  == {'data': '123', "pro": "3", "protocol": "HTTP"}
+
+    # match - default
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP", "*": "Unknown"}, "protocol") ) )({'data': '123', "pro": "4"})  == {'data': '123', "pro": "4", "protocol": "Unknown"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol") ) )({'data': '123', "pro": "4"})  == {'data': '123', "pro": "4"}
+
+    # case insensitive
+    assert t( ("pro", LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type") ) )({'data': '123', "pro": "http"})  == {'data': '123', "pro": "http", "type": "tcp"}
+    assert t( ("pro", LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type") ) )({'data': '123', "pro": "Http"})  == {'data': '123', "pro": "Http", "type": "tcp"}
+
+    # case sensitive
+    assert t(("pro", LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp", "*": "Unknown"}, "type", case_insensitive=False)))({'data': '123', "pro": "Http"}) == {'data': '123', "pro": "Http", "type": "Unknown"}
+    assert t(("pro", LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp", "*": "Unknown"}, "type", case_insensitive=False)))({'data': '123', "pro": "dns"}) == {'data': '123', "pro": "dns", "type": "udp"}
+
+    # multiple inputs
+    assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "http"}) == {'data': '123', "pro": "http", "type": "tcp"}
+    assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "protocol": "http"}) == {'data': '123', "protocol": "http", "type": "tcp"}
+    assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "dns", "protocol": "http"}) == {'data': '123', "pro": "dns", "protocol": "http", "type": "tcp"}
+
+
+def _pre_csv(content):
+    file_path = './tmp_test_lookup_csv'
+    with open(file_path, "w") as f:
+        f.write(content)
+    return file_path
+
+
+def test_lookup_csv():
+    # default
+    csv = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+    assert t( ("city", LOOKUP(csv, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+
+    # file type
+    csv = 'file://' + _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+    assert t( ("city", LOOKUP(csv, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+
+    #
+    # assert t(("data", CSV(r"city, pop, province", sep='#')))({'data': 'nj#800#js'}) == {'province': 'js', 'city': 'nj', 'data': 'nj#800#js', 'pop': '800'}
+    #
+    # # config
+    # assert t( ("data", CSV(['city', 'pop', 'province']) ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+    #
+    # # lstrip
+    # assert t( ("data", CSV(r"city, pop, province") ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
+    # assert t( ("data", CSV(r"city, pop, province", lstrip=False) ))({'data': 'nj, 800, js'})  == {'province': ' js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': ' 800'}
+    #
+    # # quote
+    # assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
+    # assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
+    # assert t( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
+    #
+    # # restrict
+    # assert t(("data", CSV(r"city, pop, province")))({'data': 'nj,800,js,gudu'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js,gudu', 'pop': '800'}
+    # assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800,js,gudu'})  == {'data': 'nj,800,js,gudu'}
+    # assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800'})  == {'data': 'nj,800'}
+    #
+    # # TSV
+    # assert t( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
+    #
+
+
+test_lookup_csv()
+exit(1)
 
 test_condition()
 test_regex()
+test_csv()
+test_lookup_dict()
 test_dispatch_transform()
 test_meta()
 test_parse()
 test_runner()
 test_module()
-test_csv()
+
 
 
