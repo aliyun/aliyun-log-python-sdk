@@ -114,7 +114,7 @@ class PullLogResponse(LogResponse):
             self.loggroup_list_json.append(log_items)
 
     @staticmethod
-    def loggroups_to_flattern_list(loggroup_list):
+    def loggroups_to_flattern_list(loggroup_list, time_as_str=None):
         flatten_logs_json = []
         for logGroup in loggroup_list.LogGroups:
             tags = {}
@@ -122,15 +122,15 @@ class PullLogResponse(LogResponse):
                 tags["__tag__:{0}".format(tag.Key)] = tag.Value
 
             for log in logGroup.Logs:
-                item = {'__time__': log.Time, '__topic__': logGroup.Topic, '__source__': logGroup.Source}
+                item = {'__time__': str(log.Time) if time_as_str else log.Time, '__topic__': logGroup.Topic, '__source__': logGroup.Source}
                 item.update(tags)
                 for content in log.Contents:
                     item[content.Key] = content.Value
                 flatten_logs_json.append(item)
         return flatten_logs_json
 
-    def get_flatten_logs_json(self):
+    def get_flatten_logs_json(self, time_as_str=None):
         if self.flatten_logs_json is None:
-            self.flatten_logs_json = self.loggroups_to_flattern_list(self.loggroup_list)
+            self.flatten_logs_json = self.loggroups_to_flattern_list(self.loggroup_list, time_as_str=time_as_str)
 
         return self.flatten_logs_json
