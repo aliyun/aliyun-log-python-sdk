@@ -3,9 +3,10 @@ from .trans_regex import *
 from .trans_lookup import *
 from .trans_csv import *
 
-__all__ = ['REGEX', 'CSV', 'TSV', 'JSON', 'KV', 'V']
+__all__ = ['LOOKUP', 'REGEX', 'CSV', 'TSV', 'JSON', 'KV', 'V']
 
 # field based
+LOOKUP = trans_comp_lookup
 REGEX = trans_comp_regex
 CSV = trans_comp_csv
 TSV = trans_comp_tsv
