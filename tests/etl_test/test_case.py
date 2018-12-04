@@ -336,7 +336,7 @@ def _del_csv():
 
 
 def _pre_csv(content, suffix=None):
-    suffix = suffix or "{}_{}".format(time(), randint(1, 1000000))
+    suffix = suffix or "{0}_{1}".format(time(), randint(1, 1000000))
     file_path = './tmp_test_lookup_csv_{0}.csv'.format(suffix)
 
     with open(file_path, "w") as f:
