@@ -179,9 +179,9 @@ class trans_comp_lookup(trans_comp_base):
                     logger.info('trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(inpt_map, event))
                     return event
 
-                for f in self.output_fields:
+                for f, f_new in six.iteritems(self.output_fields):
                     if f in row:
-                        event[f] = row[f]
+                        event[f_new] = row[f]
                     else:
                         logger.info("trans_comp_lookup: field {0} doesn't exit in lookup row {1}".format(f, row))
 

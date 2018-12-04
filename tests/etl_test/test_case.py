@@ -4,6 +4,8 @@ from aliyun.log.etl_core.config_parser import ConfigParser
 from aliyun.log.etl_core.runner import Runner
 import json
 import os
+from time import time
+from random import randint
 
 t = transform
 
@@ -321,59 +323,115 @@ def test_lookup_dict():
     assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "dns", "protocol": "http"}) == {'data': '123', "pro": "dns", "protocol": "http", "type": "tcp"}
 
 
-def _pre_csv(content):
-    file_path = './tmp_test_lookup_csv'
+def _pre_csv(content, suffix=None):
+    suffix = suffix or "{}_{}".format(time(), randint(1, 1000000))
+    file_path = './tmp_test_lookup_csv_{0}.csv'.format(suffix)
     with open(file_path, "w") as f:
         f.write(content)
     return file_path
 
 
-def test_lookup_csv():
-    # default
-    csv = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+def test_lookup_load_csv():
+    #########
+    # CSV standard reading/mapping
+
+    # prepare
+    csv_path = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh", 1)
 
     # output 1 fields
-    assert t( ("city", LOOKUP(csv, "province") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
 
     # output 2 fields
-    assert t( ("city", LOOKUP(csv, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+
+    # cache
+    csv_path = _pre_csv("nothing just empty to re-use cached version", 1)
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
 
     # file type
-    csv = 'file://' + _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
-    assert t( ("city", LOOKUP(csv, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+    csv_path = 'file://' + _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
 
-    #
-    # assert t(("data", CSV(r"city, pop, province", sep='#')))({'data': 'nj#800#js'}) == {'province': 'js', 'city': 'nj', 'data': 'nj#800#js', 'pop': '800'}
-    #
-    # # config
-    # assert t( ("data", CSV(['city', 'pop', 'province']) ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
-    #
-    # # lstrip
-    # assert t( ("data", CSV(r"city, pop, province") ))({'data': 'nj, 800, js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': '800'}
-    # assert t( ("data", CSV(r"city, pop, province", lstrip=False) ))({'data': 'nj, 800, js'})  == {'province': ' js', 'city': 'nj', 'data': 'nj, 800, js', 'pop': ' 800'}
-    #
-    # # quote
-    # assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
-    # assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
-    # assert t( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
-    #
-    # # restrict
-    # assert t(("data", CSV(r"city, pop, province")))({'data': 'nj,800,js,gudu'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js,gudu', 'pop': '800'}
-    # assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800,js,gudu'})  == {'data': 'nj,800,js,gudu'}
-    # assert t(("data", CSV(r"city, pop, province", restrict=True)))({'data': 'nj,800'})  == {'data': 'nj,800'}
-    #
-    # # TSV
-    # assert t( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
-    #
+    # sep
+    csv_path = _pre_csv("city#pop#province\nnj#800#js\nsh#2000#sh")
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"], sep='#') ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+
+    # lstrip
+    csv_path = _pre_csv("city,pop,province\nnj, 800, js\nsh, 2000, sh")
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"], lstrip=False) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': ' js', 'pop': ' 800'}
+
+    # quote
+    csv_path = _pre_csv('city,pop,province\n  "nj",  "800",  "js"\n"shang hai",2000,  "SHANG,HAI"')
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"]) ))({'data': '123', 'city': 'shang hai'})  == {'data': '123', 'city': 'shang hai', 'province': 'SHANG,HAI', 'pop': '2000'}
+
+    # quote in header
+    csv_path = _pre_csv('city,"city,pop","city,province"\n"nj","800","js"\n"shang hai",2000,"SHANG,HAI"')
+    assert t( ("city", LOOKUP(csv_path, ["city,province", "city,pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'city,province': 'js', 'city,pop': '800'}
+    assert t( ("city", LOOKUP(csv_path, ["city,province", "city,pop"]) ))({'data': '123', 'city': 'shang hai'})  == {'data': '123', 'city': 'shang hai', 'city,province': 'SHANG,HAI', 'city,pop': '2000'}
+
+    # quote - custom
+    csv_path = _pre_csv('city,pop,province\n|nj|,|800|,|js|\n|shang hai|,2000,|SHANG,HAI|')
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"], quote='|') ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
+    assert t( ("city", LOOKUP(csv_path, ["province", "pop"], quote='|') ))({'data': '123', 'city': 'shang hai'})  == {'data': '123', 'city': 'shang hai', 'province': 'SHANG,HAI', 'pop': '2000'}
 
 
-test_lookup_csv()
-exit(1)
+def test_lookup_mapping():
+
+    #########
+    # lookup mapping
+    csv_path = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+
+    # no field
+    assert t( ("city", LOOKUP(csv_path, "province") ) )({'data': '123'})  == {'data': '123'}
+    assert t( (["city", "province"], LOOKUP(csv_path, "pop") ) )({'data': '123', 'city': 'sh'})  == {'data': '123', 'city': 'sh'}
+
+    # match - no match
+    assert t( ("city", LOOKUP(csv_path, "province") ) )({'data': '123', "city": "bj"})  == {'data': '123', "city": "bj"}
+
+    csv_path = _pre_csv("pro,type\nhttp, tcp\ndns, udp\nhttps, tcp")
+
+    # case insensitive
+    assert t( ("pro", LOOKUP(csv_path, "type") ) )({'data': '123', "pro": "http"})  == {'data': '123', "pro": "http", "type": "tcp"}
+    assert t( ("pro", LOOKUP(csv_path, "type") ) )({'data': '123', "pro": "Http"})  == {'data': '123', "pro": "Http", "type": "tcp"}
+
+    csv_path = _pre_csv("pro,type\nhttp, tcp\ndns, udp\nhttps, tcp\n*, Unknown")
+
+    # case sensitive
+    assert t(("pro", LOOKUP(csv_path, "type", case_insensitive=False)))({'data': '123', "pro": "Http"}) == {'data': '123', "pro": "Http", "type": "Unknown"}
+    assert t(("pro", LOOKUP(csv_path, "type", case_insensitive=False)))({'data': '123', "pro": "dns"}) == {'data': '123', "pro": "dns", "type": "udp"}
+
+
+    csv_path = _pre_csv("city,province,pop,type\nnj,js,800,abc\nnj,sd,900,xyz\nsh,sh,2000,zzz")
+
+    # multiple inputs/outputs
+    assert t( (["city", "province"], LOOKUP(csv_path, "pop") ) )({'data': '123', 'city': 'sh', 'province': 'sh'})  == {'data': '123', 'city': 'sh', 'province': 'sh', 'pop': '2000'}
+    assert t( (["city", "province"], LOOKUP(csv_path, ["pop", "type"]) ) )({'data': '123', 'city': 'nj', 'province': 'sd'})  == {'data': '123', 'city': 'nj', 'province': 'sd', 'pop': '900', 'type': 'xyz'}
+
+    # alias - input
+    assert t( ([("ct", "city"), "province"], LOOKUP(csv_path, "pop") ) )({'data': '123', 'ct': 'sh', 'province': 'sh'})  == {'data': '123', 'ct': 'sh', 'province': 'sh', 'pop': '2000'}
+    assert t( ([("ct", "city"), ("prv", "province")], LOOKUP(csv_path, "pop") ) )({'data': '123', 'ct': 'sh', 'prv': 'sh'})  == {'data': '123', 'ct': 'sh', 'prv': 'sh', 'pop': '2000'}
+
+    # alias - output
+    assert t( (["city", "province"], LOOKUP(csv_path, [("pop", "population"), ("type", "city_type") ]) ) )({'data': '123', 'city': 'sh', 'province': 'sh'})  == {'data': '123', 'city': 'sh', 'province': 'sh', 'population': '2000', 'city_type': 'zzz'}
+    assert t( ([("ct", "city"), ("prv", "province")], LOOKUP(csv_path, [("pop", "population")] ) ))({'data': '123', 'ct': 'sh', 'prv': 'sh'})  == {'data': '123', 'ct': 'sh', 'prv': 'sh', 'population': '2000'}
+
+    # star match
+    csv_path = _pre_csv("c1,c2,d1,d2\na,b,1,2\na,c,2,3\na,e,4,6\na,*,10,11\nb,*,20,21\n*,*,0,0")
+    assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'a', 'c2': 'x'})  == {'data': '123', 'c1': 'a', 'c2': 'x', 'd1': '10', 'd2': '11'}
+    assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'b', 'c2': 'x'})  == {'data': '123', 'c1': 'b', 'c2': 'x', 'd1': '20', 'd2': '21'}
+    assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'c', 'c2': 'v'})  == {'data': '123', 'c1': 'c', 'c2': 'v', 'd1': '0', 'd2': '0'}
+
+
+
 
 test_condition()
 test_regex()
 test_csv()
 test_lookup_dict()
+test_lookup_load_csv()
+test_lookup_mapping()
+
 test_dispatch_transform()
 test_meta()
 test_parse()
