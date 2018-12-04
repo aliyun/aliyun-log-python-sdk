@@ -331,6 +331,11 @@ def _pre_csv(content):
 def test_lookup_csv():
     # default
     csv = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+
+    # output 1 fields
+    assert t( ("city", LOOKUP(csv, "province") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+
+    # output 2 fields
     assert t( ("city", LOOKUP(csv, ["province", "pop"]) ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
 
     # file type

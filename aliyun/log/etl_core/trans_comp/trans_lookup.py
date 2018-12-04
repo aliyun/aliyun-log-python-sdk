@@ -174,12 +174,17 @@ class trans_comp_lookup(trans_comp_base):
 
                     inpt_map[i[1]] = event[i[0]]
 
-                ret = self.data.get_row(inpt_map)
-                if ret is None:
+                row = self.data.get_row(inpt_map)
+                if row is None:
                     logger.info('trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(inpt_map, event))
                     return event
 
-                event.update(ret)
+                for f in self.output_fields:
+                    if f in row:
+                        event[f] = row[f]
+                    else:
+                        logger.info("trans_comp_lookup: field {0} doesn't exit in lookup row {1}".format(f, row))
+
             else:
                 logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
 
