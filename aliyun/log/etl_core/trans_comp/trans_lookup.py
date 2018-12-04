@@ -5,6 +5,7 @@ from ..exceptions import SettingError
 import csv
 from collections import Iterable
 import logging
+import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +88,14 @@ class trans_comp_lookup(trans_comp_base):
                 type_path = data.split("://")
                 file_type = type_path[0] if len(type_path) == 2 else 'file'
                 file_path = type_path[1] if len(type_path) == 2 else data
-                if file_type != 'file' or not os.path.isfile(file_path):
-                    raise SettingError(msg="trans_comp_lookup: cannot parse file path", settings=data)
+                if file_type != 'file':
+                    raise SettingError(msg="trans_comp_lookup: unsupported file type", settings=data)
+                if not os.path.isfile(file_path):
+                    caller_frame_record = inspect.stack()[1]
+                    module = inspect.getmodule(caller_frame_record[0])
+                    file_path = os.path.sep.join([os.path.dirname(module.__file__), file_path])
+                    if not os.path.isfile(file_path):
+                        raise SettingError(msg="trans_comp_lookup: cannot locate the file path", settings=data)
 
                 with open(file_path) as file:
                     reader = csv.DictReader(file, skipinitialspace=lstrip, delimiter=sep, quotechar=quote)
