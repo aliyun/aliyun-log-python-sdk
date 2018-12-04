@@ -270,6 +270,9 @@ def test_module():
     import data3_test1
     verify_case(data3_test1, './data3.txt', './data3_test1_result.txt')
 
+    import data4_test1
+    verify_case(data4_test1, './data4.txt', './data4_test1_result.txt')
+
 
 def test_csv():
     # sep
@@ -323,12 +326,27 @@ def test_lookup_dict():
     assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "dns", "protocol": "http"}) == {'data': '123', "pro": "dns", "protocol": "http", "type": "tcp"}
 
 
+import atexit
+_tmp_files = set()
+
+
+def _del_csv():
+    for x in _tmp_files:
+        os.unlink(x)
+
+
 def _pre_csv(content, suffix=None):
     suffix = suffix or "{}_{}".format(time(), randint(1, 1000000))
     file_path = './tmp_test_lookup_csv_{0}.csv'.format(suffix)
+
     with open(file_path, "w") as f:
         f.write(content)
+
+    _tmp_files.add(file_path)
     return file_path
+
+
+atexit.register(_del_csv)
 
 
 def test_lookup_load_csv():
@@ -421,8 +439,6 @@ def test_lookup_mapping():
     assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'a', 'c2': 'x'})  == {'data': '123', 'c1': 'a', 'c2': 'x', 'd1': '10', 'd2': '11'}
     assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'b', 'c2': 'x'})  == {'data': '123', 'c1': 'b', 'c2': 'x', 'd1': '20', 'd2': '21'}
     assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'c', 'c2': 'v'})  == {'data': '123', 'c1': 'c', 'c2': 'v', 'd1': '0', 'd2': '0'}
-
-
 
 
 test_condition()

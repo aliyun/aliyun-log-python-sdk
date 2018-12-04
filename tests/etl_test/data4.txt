@@ -1,0 +1,5 @@
+{"csv_field": "v1,v2,v3", "dsv_field": "d1#d2#d3"}
+{"csv_field": "v1, v2, \"v3,v3\"", "dsv_field": "|d1#d1|#d2#d3"}
+{"data": "123", "f1":"a", "f2":"b"}
+{"data": "123", "f1":"A", "f2":"C"}
+{"data": "123", "f1":"x", "f2":"y"}
