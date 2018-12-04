@@ -1,3 +1,4 @@
+#encoding: utf8
 
 from aliyun.log.etl_core import *
 from aliyun.log.etl_core.config_parser import ConfigParser
@@ -245,7 +246,7 @@ def verify_case(config, data, result):
             if ret is None:  # removed line
                 removed_lines += 1
             if ret:
-                #print(json.dumps(ret))
+                # print(json.dumps(ret))
                 r = json.loads(results[i - removed_lines])
                 assert ret == r, Exception(i, line, ret, (i-removed_lines), r)
 
@@ -441,13 +442,73 @@ def test_lookup_mapping():
     assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'c', 'c2': 'v'})  == {'data': '123', 'c1': 'c', 'c2': 'v', 'd1': '0', 'd2': '0'}
 
 
+def test_kv():
+    # verify the KV extract pattern match
+    d1 = {"data": "i=c1, k1=v1,k2=v2 k3=v3"}
+    assert t( ("data", KV) )(d1) == {'i': 'c1', 'k2': 'v2', 'k1': 'v1', 'k3': 'v3', 'data': 'i=c1, k1=v1,k2=v2 k3=v3'}
+
+    d2 = {"data": 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
+    assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
+
+    # multi-bytes check
+    d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们'.encode('utf8'), 'k1': u'你好'.encode('utf8'), "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+
+    d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    assert t(("data", KV))(d4) == {'i': 'c4', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+
+    d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    assert t(("data", KV))(d5) == {'i': 'c5', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+
+    d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
+    assert t(("data", KV))(d6) == {'i': 'c6', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c6, 姓名=小明 年龄=中文'}
+
+    d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    assert t(("data", KV))(d7) == {'i': 'c7', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c7, 姓名="小明" 年龄=中文 '}
+
+    # new line in value
+    d8 = {"data": """i=c8, k1="hello
+    world" k2="good
+    morning"
+    """}
+    assert t(("data", KV))(d8) == {'i': 'c8', 'k2': 'good\n    morning', 'k1': 'hello\n    world', 'data': 'i=c8, k1="hello\n    world" k2="good\n    morning"\n    '}
+
+    ################
+    ## Options
+
+    # sep-regex
+    d9 = {"data": "i=c9 k1:v1, k2=v2"}
+    assert t(("data", KV(sep='(?::|=)')))(d9) == {'k2': 'v2', 'k1': 'v1', 'i': 'c9', 'data': 'i=c9 k1:v1, k2=v2'}
+
+    # quote
+    d10 = {"data": "i=c10 a='k1=k2;k2=k3'"}
+    assert t(("data", KV(quote="'")))(d10) == {'i': 'c10', 'a': 'k1=k2;k2=k3', 'data': "i=c10 a='k1=k2;k2=k3'"}
+
+    # prefix/suffix
+    d11 = {"data": "i=c11, k1=v1,k2=v2 k3=v3"}
+    assert t( ("data", KV(prefix="d_", suffix="_e")) )(d11) == {'d_i_e': 'c11', 'd_k3_e': 'v3', 'd_k2_e': 'v2', 'data': 'i=c11, k1=v1,k2=v2 k3=v3', 'd_k1_e': 'v1'}
+
+    # multiple inputs
+    d12 = {"data1": "i=c12, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    assert t( (["data1", "data2"], KV) )(d12) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c12', 'data1': 'i=c12, k1=v1', 'data2': 'k2=v2 k3=v3', "data3": "k4=v4"}
+
+    #############
+    # KV_F
+
+    d13 = {"data1": "i=c13, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    assert KV_F(["data1", "data2"])(d13) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c13', 'data1': 'i=c13, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+
+    d14 = {"data1": "i=c14, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+
+
 test_condition()
 test_regex()
 test_csv()
 test_lookup_dict()
 test_lookup_load_csv()
 test_lookup_mapping()
-
+test_kv()
 test_dispatch_transform()
 test_meta()
 test_parse()

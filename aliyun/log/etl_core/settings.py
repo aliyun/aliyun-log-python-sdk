@@ -9,7 +9,8 @@ builtin_macros = {
     'RENAME_FIELDS_.*': rename_fields,
     'ALIAS_.*': rename_fields,
     'DISPATCH_EVENT_.*': dispatch_event,
-    'TRANSFORM_EVENT_.*': transform_event
+    'TRANSFORM_EVENT_.*': transform_event,
+    'KV_FIELDS_.*': extract_kv_fields
 }
 
 __all__ = ['KEEP_EVENT_',
@@ -17,6 +18,7 @@ __all__ = ['KEEP_EVENT_',
            'KEEP_FIELDS_',
            'DROP_FIELDS_',
            'RENAME_FIELDS_',
+           'KV_FIELDS_',
            'ALIAS_',
            'DISPATCH_EVENT_',
            'TRANSFORM_EVENT_']

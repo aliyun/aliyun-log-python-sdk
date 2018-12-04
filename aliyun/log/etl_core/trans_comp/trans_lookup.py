@@ -9,7 +9,7 @@ import inspect
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['trans_comp_lookup', 'trans_comp_json', 'trans_comp_kv']
+__all__ = ['trans_comp_lookup', 'trans_comp_json']
 
 
 class LookupError(SettingError):
@@ -205,9 +205,3 @@ class trans_comp_json(trans_comp_base):
         return event
 
 
-class trans_comp_kv(trans_comp_base):
-    def __init__(self, config):
-        self.config = config
-
-    def __call__(self, event, inpt):
-        return event

@@ -8,4 +8,6 @@ TRANSFORM_EVENT_lookup = [
     ( ANY, ("f1",LOOKUP({'a': "a_new", '*': "unknown"}, "f1_new")) )
 ]
 
-DROP_FIELDS_origin = ["csv_field", 'dsv_field', 'data', 'f1', 'f2']
+KV_FIELDS_data = r'kv_data\d+'
+
+DROP_FIELDS_origin = ["csv_field", 'dsv_field', 'data', 'f1', 'f2', r'kv_data\d+']
