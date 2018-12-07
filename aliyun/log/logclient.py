@@ -2752,5 +2752,5 @@ class LogClient(object):
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
-make_lcrud_methods(LogClient, 'alert', name_field='alertName')
+make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
 make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')

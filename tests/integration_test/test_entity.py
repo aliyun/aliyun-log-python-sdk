@@ -61,22 +61,53 @@ dashboard_detail = {
 }
 
 alert_detail = {
-  "actionDetail": {
-    "message": "xxxxxxx simple test"
-  },
-  "actionType": "notification",
-  "alertDetail": {
-    "alertKey": "f2",
-    "alertValue": "200",
-    "comparator": ">"
-  },
-  "checkInterval": 5,
-  "count": 10,
-  "from": "-300s",
-  "roleArn": "acs:ram::1654218965343050:role/aliyunlogreadrole",
-  "savedsearchName": "quck-query-all",
-  "to": "now",
-  "alertName": 'alert_' + str(time.time()).replace('.', '-')
+    "name": 'alert_' + str(time.time()).replace('.', '-'),
+    "displayName": "Alert for testing",
+    "description": "",
+    "type": "Alert",
+    "state": "Enabled",
+    "schedule": {
+        "type": "FixedRate",
+        "interval": "5m",
+    },
+    "configuration": {
+        "condition": "total >= 100",
+        "dashboard": "dashboardtest",
+        "queryList": [
+            {
+                "logStore": "test-logstore",
+                "start": "-120s",
+                "end": "now",
+                "timeSpanType": "Custom",
+                "chartTitle": "chart-test",
+                "query": "* | select count(1) as total",
+            }
+        ],
+        "notificationList": [
+            {
+                "type": "DingTalk",
+                "serviceUri": "http://xxxx",
+                "content": "Message",
+            },
+            {
+                "type": "MessageCenter",
+                "content": "Message",
+            },
+            {
+                "type": "Email",
+                "emailList": ["abc@test.com"],
+                "content": "Email Message",
+            },
+            {
+                "type": "SMS",
+                "mobileList": ["132373830xx"],
+                "content": "Cellphone message"
+            }
+        ],
+        "muteUntil": int(time.time()) + 300,
+        "notifyThreshold": 1,
+        "throttling": "5m",
+    }
 }
 
 savedsearch_detail = {
@@ -112,15 +143,14 @@ def main():
     res = client.delete_dashboard(project, dashboard)
     res.log_print()
 
-
-    alert = alert_detail.get('alertName')
+    alert = alert_detail.get('name')
 
     res = client.create_alert(project, alert_detail)
     res.log_print()
 
     res = client.list_alert(project)
     res.log_print()
-    print(res.get_alerts())
+    print(res.get_entities())
 
     res = client.get_alert(project, alert)
     res.log_print()
