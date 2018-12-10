@@ -24,7 +24,7 @@ def create_entity(entity_name, root_resource=None):
         """
 
         params = {}
-        resource_path = (root_resource and root_resource.lstrip('/')) or "/" + pluralize(entity_name)
+        resource_path = (root_resource and root_resource.rstrip('/')) or "/" + pluralize(entity_name)
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
 
         if hasattr(detail, 'to_json'):
@@ -64,7 +64,7 @@ def get_entity(entity_name, root_resource=None):
         headers = dict()
         params = dict()
 
-        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name) + '/')) + entity
+        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name))) + '/' + entity
 
         (resp, header) = self._send("GET", project, None, resource_path, params, headers)
         return GetEntityResponse(header, resp)
@@ -93,7 +93,7 @@ def delete_entity(entity_name, root_resource=None):
 
         headers = {}
         params = {}
-        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name) + '/')) + entity
+        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name))) + '/' + entity
         (resp, header) = self._send("DELETE", project, None, resource_path, params, headers)
         return DeleteEntityResponse(header, resp)
 
@@ -103,7 +103,7 @@ def delete_entity(entity_name, root_resource=None):
     return fn
 
 
-def list_entity(entity_name, root_resource=None, max_batch_size=DEFAULT_MAX_LIST_PAGING_SIZE):
+def list_entity(entity_name, root_resource=None, max_batch_size=DEFAULT_MAX_LIST_PAGING_SIZE, entities_key=None):
     def fn(self, project, offset=0, size=100):
         """ list the {entity_title}, get first 100 items by default
         Unsuccessful opertaion will cause an LogException.
@@ -126,14 +126,14 @@ def list_entity(entity_name, root_resource=None, max_batch_size=DEFAULT_MAX_LIST
         if int(size) == -1 or int(size) > max_batch_size:
             return list_more(fn, int(offset), int(size), max_batch_size, project)
 
-
         headers = {}
         params = {}
-        resource_path = (root_resource and root_resource.lstrip('/')) or "/" + pluralize(entity_name)
+        resource_name = pluralize(entity_name)
+        resource_path = (root_resource and root_resource.rstrip('/')) or "/" + resource_name
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", project, None, resource_path, params, headers)
-        return ListEntityResponse(header, resp, resource_name=resource_path.strip('/'))
+        return ListEntityResponse(header, resp, resource_name=resource_name, entities_key=entities_key)
 
     fn.__name__ = 'list_' + entity_name
     fn.__doc__ = fn.__doc__.format(entity_title=entity_name.title())
@@ -178,7 +178,7 @@ def update_entity(entity_name, name_field=None, root_resource=None):
 
         assert entity, LogException('InvalidParameter', 'unknown entity name "{0}" in "{1}"'.format(name_field, detail))
 
-        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name) + '/')) + entity
+        resource_path = ((root_resource and root_resource.rstrip('/')) or ('/' + pluralize(entity_name))) + '/' + entity
 
         headers['Content-Type'] = 'application/json'
         headers['x-log-bodyrawsize'] = str(len(body_str))
@@ -191,8 +191,8 @@ def update_entity(entity_name, name_field=None, root_resource=None):
     return fn
 
 
-def make_lcrud_methods(obj, entity_name, name_field=None, root_resource=None):
-    setattr(obj, 'list_' + entity_name, list_entity(entity_name, root_resource=root_resource))
+def make_lcrud_methods(obj, entity_name, name_field=None, root_resource=None, entities_key=None):
+    setattr(obj, 'list_' + entity_name, list_entity(entity_name, root_resource=root_resource, entities_key=entities_key))
     setattr(obj, 'get_' + entity_name, get_entity(entity_name, root_resource=root_resource))
     setattr(obj, 'delete_' + entity_name, delete_entity(entity_name, root_resource=root_resource))
     setattr(obj, 'update_' + entity_name, update_entity(entity_name, root_resource=root_resource, name_field=name_field))

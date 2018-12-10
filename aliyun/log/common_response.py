@@ -30,7 +30,7 @@ class GetEntityResponse(LogResponse):
 
 
 class ListEntityResponse(LogResponse):
-    def __init__(self, header, resp, resource_name=None):
+    def __init__(self, header, resp, resource_name=None, entities_key=None):
         LogResponse.__init__(self, header, resp)
         self.count = resp['count']
         self._total = resp['total']
@@ -47,7 +47,9 @@ class ListEntityResponse(LogResponse):
                 resource_name = backup_resource_name
 
         self.resource_name = resource_name
-        self.entities = resp.get(resource_name, [])
+        if entities_key is None:
+            entities_key = resource_name
+        self.entities = resp.get(entities_key, [])
 
         if self.resource_name:
             setattr(self, 'get_' + resource_name, self.get_entities)
