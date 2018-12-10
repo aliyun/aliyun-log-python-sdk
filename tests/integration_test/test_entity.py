@@ -60,6 +60,8 @@ dashboard_detail = {
   "description": ""
 }
 
+dashboard_for_alert = 'dashboard_' + str(time.time()).replace('.', '-')
+
 alert_detail = {
     "name": 'alert_' + str(time.time()).replace('.', '-'),
     "displayName": "Alert for testing",
@@ -72,7 +74,7 @@ alert_detail = {
     },
     "configuration": {
         "condition": "total >= 100",
-        "dashboard": "dashboardtest",
+        "dashboard": dashboard_for_alert,
         "queryList": [
             {
                 "logStore": "test-logstore",
@@ -143,6 +145,10 @@ def main():
     res = client.delete_dashboard(project, dashboard)
     res.log_print()
 
+    dashboard_detail['dashboardName'] = dashboard_for_alert
+    res = client.create_dashboard(project, dashboard_detail)
+    res.log_print()
+
     alert = alert_detail.get('name')
 
     res = client.create_alert(project, alert_detail)
@@ -159,6 +165,8 @@ def main():
     res.log_print()
 
     res = client.delete_alert(project, alert)
+    res.log_print()
+    res = client.delete_dashboard(project, dashboard_for_alert)
     res.log_print()
 
     savedsearch = savedsearch_detail.get('savedsearchName')
