@@ -126,14 +126,14 @@ def list_entity(entity_name, root_resource=None, max_batch_size=DEFAULT_MAX_LIST
         if int(size) == -1 or int(size) > max_batch_size:
             return list_more(fn, int(offset), int(size), max_batch_size, project)
 
-
         headers = {}
         params = {}
-        resource_path = (root_resource and root_resource.rstrip('/')) or "/" + pluralize(entity_name)
+        resource_name = pluralize(entity_name)
+        resource_path = (root_resource and root_resource.rstrip('/')) or "/" + resource_name
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", project, None, resource_path, params, headers)
-        return ListEntityResponse(header, resp, resource_name=resource_path.strip('/'), entities_key=entities_key)
+        return ListEntityResponse(header, resp, resource_name=resource_name, entities_key=entities_key)
 
     fn.__name__ = 'list_' + entity_name
     fn.__doc__ = fn.__doc__.format(entity_title=entity_name.title())

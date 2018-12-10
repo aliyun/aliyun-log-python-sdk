@@ -150,7 +150,7 @@ def main():
 
     res = client.list_alert(project)
     res.log_print()
-    print(res.get_entities())
+    print(res.get_alerts())
 
     res = client.get_alert(project, alert)
     res.log_print()
