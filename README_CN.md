@@ -782,25 +782,56 @@ res.log_print();
 - 创建报警
 
   通过`create_alert`创建一个报警. 传入的结构是一个字典对象，如下：
-  
+
 ```python
 {
-  "actionDetail": {
-    "message": "xxxxxxx simple test"
-  },
-  "actionType": "notification",
-  "alertDetail": {
-    "alertKey": "f2",
-    "alertValue": "200",
-    "comparator": ">"
-  },
-  "checkInterval": 5,
-  "count": 10,
-  "from": "-300s",
-  "roleArn": "acs:ram::12345678:role/aliyunlogreadrole",
-  "savedsearchName": "quck-query-all",
-  "to": "now",
-  "alertName": 'alert_1'
+    "name": 'alert_1',
+    "displayName": "Alert for testing",
+    "description": "",
+    "type": "Alert",
+    "state": "Enabled",
+    "schedule": {
+        "type": "FixedRate",
+        "interval": "5m",
+    },
+    "configuration": {
+        "condition": "total >= 100",
+        "dashboard": "dashboard-test",
+        "queryList": [
+            {
+                "logStore": "test-logstore",
+                "start": "-120s",
+                "end": "now",
+                "timeSpanType": "Custom",
+                "chartTitle": "chart-test",
+                "query": "* | select count(1) as total",
+            }
+        ],
+        "notificationList": [
+            {
+                "type": "DingTalk",
+                "serviceUri": "http://xxxx",
+                "content": "Message",
+            },
+            {
+                "type": "MessageCenter",
+                "content": "Message",
+            },
+            {
+                "type": "Email",
+                "emailList": ["abc@test.com"],
+                "content": "Email Message",
+            },
+            {
+                "type": "SMS",
+                "mobileList": ["132373830xx"],
+                "content": "Cellphone message"
+            }
+        ],
+        "muteUntil": 1544582517,
+        "notifyThreshold": 1,
+        "throttling": "5m",
+    }
 }
 ```
 
