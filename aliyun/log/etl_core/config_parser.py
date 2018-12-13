@@ -6,6 +6,7 @@ from collections import Callable
 from .settings import TransFnType, check_fn_type_by_name, builtin_macros
 from functools import wraps
 import inspect
+from .etl_util import re_full_match
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class ConfigParser(ast.NodeVisitor):
     @staticmethod
     def macro_check(name):
         for k, v in six.iteritems(builtin_macros):
-            if re.match(k, name):
+            if re_full_match(k, name):
                 return v
 
     def __init__(self, md):

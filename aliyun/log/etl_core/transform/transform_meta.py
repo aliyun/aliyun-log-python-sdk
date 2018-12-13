@@ -4,6 +4,7 @@ import six
 from .transform_base import transform_base
 from ..exceptions import SettingError
 from ..trans_comp import KV
+from ..etl_util import get_re_full_match
 
 __all__ = ["simple_drop", "simple_keep", 'drop_fields', "keep_fields", "rename_fields", 'extract_kv_fields',
            'DROP', 'KEEP', 'ALIAS', 'RENAME', 'DROP_F', 'KEEP_F', 'KV_F']
@@ -22,9 +23,9 @@ class simple_keep(transform_base):
 class drop_fields(transform_base):
     def __init__(self, config):
         if isinstance(config, (six.text_type, six.binary_type)):
-            self.check = re.compile(config).match
+            self.check = get_re_full_match(config)
         elif isinstance(config, list):  # string list
-            checks = [re.compile(c).match for c in config]
+            checks = [get_re_full_match(c) for c in config]
             self.check = lambda k: any(ck(k) for ck in checks)
         else:
             raise SettingError(None, "keep_fields setting {0} is not supported".format(config))
@@ -36,9 +37,9 @@ class drop_fields(transform_base):
 class keep_fields(transform_base):
     def __init__(self, config):
         if isinstance(config, (six.text_type, six.binary_type)):
-            self.check = re.compile(config).match
+            self.check = get_re_full_match(config)
         elif isinstance(config, list):  # string list
-            checks = [re.compile(c).match for c in config]
+            checks = [get_re_full_match(c) for c in config]
             self.check = lambda k: any(ck(k) for ck in checks)
         else:
             raise SettingError(None, "keep_fields setting {0} is not supported".format(config))
@@ -63,9 +64,9 @@ class rename_fields(transform_base):
 class extract_kv_fields(transform_base):
     def __init__(self, config):
         if isinstance(config, (six.text_type, six.binary_type)):
-            self.check = re.compile(config).match
+            self.check = get_re_full_match(config)
         elif isinstance(config, list):  # string list
-            checks = [re.compile(c).match for c in config]
+            checks = [get_re_full_match(c) for c in config]
             self.check = lambda k: any(ck(k) for ck in checks)
         else:
             raise SettingError(None, "extract_kv setting {0} is not supported".format(config))

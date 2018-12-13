@@ -19,6 +19,7 @@ import re
 import six
 from collections import Callable
 from ..exceptions import SettingError
+from ..etl_util import re_full_match, get_re_full_match
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ def get_check(c):
                     if (isinstance(v, bool) and v) \
                             or (isinstance(v, Callable) and v(event[k])) \
                             or (isinstance(v, (six.text_type, six.binary_type))
-                                and re.match(v, event[k])):
+                                and re_full_match(v, event[k])):
                         continue
 
                     return False
@@ -81,7 +82,7 @@ class condition(object):
                 self.check_list.append(ck)
 
     DEFAULT_META_KEYS = set( ("__time__", "__topic__", "__source__") )
-    tag_meta_check = re.compile(r"__tag__:.+").match
+    tag_meta_check = get_re_full_match(r"__tag__:.+")
 
     def is_meta_key(self, k):
         return k in self.DEFAULT_META_KEYS or self.tag_meta_check(k)

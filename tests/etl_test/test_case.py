@@ -105,10 +105,10 @@ def test_regex():
 
 def test_dispatch_transform():
     DISPATCH_LIST_data = [
-        ({"data": "^LTE_Information "}, {"__topic__": "etl_info"}),
-        ({"data": "^Status,"}, {"__topic__": "machine_status"}),
-        ({"data": "^System Reboot "}, {"__topic__": "reboot_event"}),
-        ({"data": "^Provision Firmware Download start"}, {"__topic__": "download"}),
+        ({"data": "LTE_Information .+"}, {"__topic__": "etl_info"}),
+        ({"data": "Status,.+"}, {"__topic__": "machine_status"}),
+        ({"data": "System Reboot .+"}, {"__topic__": "reboot_event"}),
+        ({"data": "Provision Firmware Download start.+"}, {"__topic__": "download"}),
         (True, {"__topic__": "unknown"})]
 
     e1 = {'data': 'LTE_Information 80,-82,17,4402010820E2DC5D,3750,-8'}
