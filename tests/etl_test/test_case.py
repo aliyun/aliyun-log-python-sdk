@@ -301,7 +301,7 @@ def test_csv():
     # TSV
     assert t( ("data", TSV(r"city,pop,province") ))({'data': 'nj\t800\tjs'})  == {'province': 'js', 'city': 'nj', 'data': 'nj\t800\tjs', 'pop': '800'}
 
-    # TSV
+    # PSV
     assert t( ("data", PSV(r"city,pop,province") ))({'data': 'nj|800|js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj|800|js', 'pop': '800'}
 
 
