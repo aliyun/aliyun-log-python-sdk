@@ -6,7 +6,7 @@ from collections import Iterable
 from ..exceptions import SettingError
 import logging
 
-__all__ = ['trans_comp_csv', 'trans_comp_tsv']
+__all__ = ['trans_comp_csv', 'trans_comp_tsv', 'trans_comp_psv']
 
 logger = logging.getLogger(__name__)
 
@@ -47,4 +47,8 @@ class trans_comp_csv(trans_comp_base):
 
 class trans_comp_tsv(trans_comp_csv):
     DEFAULT_SEP = '\t'
+
+
+class trans_comp_psv(trans_comp_csv):
+    DEFAULT_SEP = '|'
 
