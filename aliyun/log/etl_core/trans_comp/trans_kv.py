@@ -34,23 +34,6 @@ class kv_transformer(trans_comp_base):
         logger.info(u"trans_comp_kv: get ptn: {0}".format(ps))
         return re.compile(ps)
 
-    @staticmethod
-    def _n(v):
-        if v is None:
-            return ""
-
-        if isinstance(v, (dict, list)):
-            try:
-                v = json.dumps(v)
-            except Exception:
-                pass
-        elif six.PY2 and isinstance(v, six.text_type):
-            v = v.encode('utf8', "ignore")
-        elif six.PY3 and isinstance(v, six.binary_type):
-            v = v.decode('utf8', "ignore")
-
-        return str(v)
-
     def __init__(self, prefix=None, suffix=None, sep=None, quote=None):
         self.prefix = "" if prefix is None else prefix
         self.suffix = "" if suffix is None else suffix
