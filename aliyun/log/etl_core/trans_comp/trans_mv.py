@@ -4,6 +4,9 @@ import six
 import logging
 import copy
 import json
+import jmespath
+from jmespath.exceptions import ParseError
+from ..exceptions import SettingError
 
 __all__ = ['trans_comp_split_event']
 
@@ -23,11 +26,19 @@ class split_event_transformer(trans_comp_base):
     DEFAULT_SEP = ','
     DEFAULT_QUOTE = '"'
 
-    def __init__(self, sep=None, quote=None, lstrip=None, output_field=None):
+    def __init__(self, sep=None, quote=None, lstrip=None, output=None, jmes=None):
         self.sep = sep or self.DEFAULT_SEP
         self.lstrip = True if lstrip is None else lstrip
         self.quote = quote or self.DEFAULT_QUOTE
-        self.output_field = output_field
+        self.output_field = output
+
+        self.jmes = jmes or ""
+        self.jmes_filter = None
+        if jmes:
+            try:
+                self.jmes_filter = jmespath.compile(jmes)
+            except jmespath.exceptions.ParseError as ex:
+                raise SettingError(ex=ex, msg="Invalid JMES filter setting", settings=jmes)
 
     def _process_list(self, event, field, lst):
         if not lst:
@@ -41,29 +52,62 @@ class split_event_transformer(trans_comp_base):
                 result.append(e)
             return result
         else:
-            event[field] = self._n(lst)
+            event[field] = self._n(lst[0])
             return event
 
-    def _parse_list(self, v):
+    def _parse_list(self, v, filter=None):
+        # process json first (via filter or directly list)
         try:
             ret = json.loads(v)
-            if isinstance(ret, (list)):
-                return ret
-        except Exception as ex:
-            logger.debug("split_event_transformer: value {0} is not json, try to use csv".format(v))
 
-        result = list(csv.reader([v], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
-        return result
+            # list and not jmes filter
+            if isinstance(ret, (list,)) and not self.jmes:
+                return ret
+
+            # json object and jmes is configured
+            if filter:
+                ret = filter.search(ret)
+
+                if isinstance(ret, (list,)):
+                    # result is list as expected
+                    return ret
+                elif isinstance(ret, (six.text_type, six.binary_type) ):
+                    # result is just a string. then re-do the process and no jmes is passed this time
+                    return self._parse_list(ret)
+                else:
+                    logger.info('split_event_transformer: get unknown type of result with value "{0}" and jmes filter "{1}", skip it'.
+                                format(v, self.jmes))
+                    return None
+
+            # else: go to next step: parse it as CSV
+
+        except Exception as ex:
+            # failed at json load or jmes filter. if jmes is configured, then it's an invalid event
+            if filter:
+                logger.info("split_event_transformer: value {0} is json or not invaid jmes settings {1}, skip it".
+                            format(v, self.jmes))
+                return None
+            else:
+                logger.debug("split_event_transformer: value {0} is not json, try to use csv".format(v))
+
+        # continue to parse it as csv
+        if isinstance(v, (six.text_type, six.binary_type) ):
+            result = list(csv.reader([v], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
+            return result
+        else:
+            logger.info("split_event_transformer: cannot extract list from value: {0}".format(v))
+            return None
+
 
     def __call__(self, event, inpt):
         # overwrite input field
         if not self.output_field:
             self.output_field = inpt
 
-        # csv mode
-        if isinstance(inpt, (six.binary_type, six.text_type)):
-            ret = self._parse_list(event[inpt])
-            return self._process_list(event, inpt, ret)
+        if inpt in event:
+            # json/csv mode
+            ret = self._parse_list(event[inpt], self.jmes_filter)
+            return self._process_list(event, self.output_field, ret)
         else:
             logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
 

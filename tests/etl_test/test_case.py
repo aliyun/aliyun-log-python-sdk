@@ -300,6 +300,7 @@ def test_csv():
     # quote
     assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "js"'})  == {'province': 'js', 'city': 'nj', 'data': '"nj", "800", "js"', 'pop': '800'}
     assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang, su"'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '"nj", "800", "jiang, su"', 'pop': '800'}
+    assert t( ("data", CSV(r"city, pop, province") ))({'data': '"nj", "800", "jiang"" su"'})  == {'province': 'jiang" su', 'city': 'nj', 'data': '"nj", "800", "jiang"" su"', 'pop': '800'}
     assert t( ("data", CSV(r"city, pop, province", quote='|') ))({'data': '|nj|, |800|, |jiang, su|'})  == {'province': 'jiang, su', 'city': 'nj', 'data': '|nj|, |800|, |jiang, su|', 'pop': '800'}
 
     # restrict
@@ -537,13 +538,62 @@ def test_split():
     d1 = {"i": "t1", "data": "1,2,3"}
     assert t( ("data", SPLIT) )(d1) == [{"i": "t1", "data": "1"}, {"i": "t1", "data": "2"}, {"i": "t1", "data": "3"}]
 
+    # json list
     d2 = {"i": "t1", "data": "[1,2,3]"}
     assert t( ("data", SPLIT) )(d2) == [{"i": "t1", "data": "1"}, {"i": "t1", "data": "2"}, {"i": "t1", "data": "3"}]
 
+    # json list
     d3 = {"i": "t1", "data": '["a", "b", "c"]'}
     assert t( ("data", SPLIT) )(d3) == [{"i": "t1", "data": 'a'}, {"i": "t1", "data": "b"}, {"i": "t1", "data": "c"}]
 
-    #
+    # sep
+    assert t(("data", SPLIT(sep='#')))({"i": "t1", 'data': 'nj#800#js'}) == [{"i": "t1", 'data': 'nj'},{"i": "t1", 'data': '800'},{"i": "t1", 'data': 'js'}]
+
+    # lstrip
+    assert t( ("data", SPLIT ))({"i": "t1", 'data': 'nj, 800, js'})  == [{"i": "t1", 'data': 'nj'},{"i": "t1", 'data': '800'},{"i": "t1", 'data': 'js'}]
+    assert t( ("data", SPLIT(lstrip=False) ))({"i": "t1", 'data': 'nj, 800, js'})  == [{"i": "t1", 'data': 'nj'},{"i": "t1", 'data': ' 800'},{"i": "t1", 'data': ' js'}]
+
+    # quote
+    assert t( ("data", SPLIT ))({"i": "t1", 'data': '"nj", "800", "js"'})  == [{"i": "t1", 'data': 'nj'}, {"i": "t1",'data': '800'}, {"i": "t1",'data': 'js'} ]
+    assert t( ("data", SPLIT ))({"i": "t1", 'data': '"nj", "800", "jiang, su"'})  == [{"i": "t1", 'data': 'nj'}, {"i": "t1",'data': '800'}, {"i": "t1",'data': 'jiang, su'} ]
+    assert t( ("data", SPLIT ))({"i": "t1", 'data': '"nj", "800", "jiang"" su"'})  == [{"i": "t1", 'data': 'nj'}, {"i": "t1",'data': '800'}, {"i": "t1",'data': 'jiang" su'} ]
+    assert t( ("data", SPLIT(quote='|') ))({"i": "t1", 'data': '|nj|, |800|, |jiang, su|'})  == [{"i": "t1", 'data': 'nj'}, {"i": "t1",'data': '800'}, {"i": "t1",'data': 'jiang, su'} ]
+
+    # output fields
+    assert t( ("data", SPLIT(output="v")) )({"data": "[1,2,3]"}) == [{"v": "1", "data": "[1,2,3]"}, {"v": "2", "data": "[1,2,3]"}, {"v": "3", "data": "[1,2,3]"}]
+
+
+def _get_file_content(path):
+
+    basedir = os.path.dirname(os.path.abspath(__file__))
+
+    with open(os.sep.join([basedir, path])) as f:
+        return f.read()
+
+
+def test_split_filter():
+    d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    # jmes filter output as list
+    jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[]'
+    #print( t( ("data", SPLIT(jmes=jmes, output='data')) )(d1))
+    assert t( ("data", SPLIT(jmes=jmes, output='data')) )(d1) == [{"i": "1", 'data':  "openssl"}, {"i": "1", 'data':  "openjdk"}, {"i": "1", 'data':  "polarssl"}]
+
+    d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    # jmes filter output as string with dot
+    jmes = 'cve.affects.vendor.vendor_data[1].product.product_data[0].version.version_data[1].version_value'
+    # print(t( ("data", SPLIT(jmes=jmes, sep='.', output='data')) )(d1))
+    assert t( ("data", SPLIT(jmes=jmes, sep='.', output='data')) )(d1) == [{"i": "1", 'data':  "1"}, {"i": "1", 'data':  "6"}, {"i": "1", 'data':  "0"}]
+
+    d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    # jmes filter output a simple string
+    jmes = 'cve.CVE_data_meta.ID'
+    assert t(("data", SPLIT(jmes=jmes, output='data')))(d1) == {"i": "1", 'data': "CVE-2013-0169"}
+
+    d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[]'
+    # print(t(("data", SPLIT(jmes=jmes, output='data')))(d1))
+    assert t(("data", SPLIT(jmes=jmes, output='data')))(d1) == [{'i': '1', 'data': '{"product_name": "openssl", "version": {"version_data": [{"version_value": "*"}, {"version_value": "0.9.8"}, {"version_value": "0.9.8a"}, {"version_value": "0.9.8b"}, {"version_value": "0.9.8c"}, {"version_value": "0.9.8d"}, {"version_value": "0.9.8f"}, {"version_value": "0.9.8g"}]}}'}, {'i': '1', 'data': '{"product_name": "openjdk", "version": {"version_data": [{"version_value": "-"}, {"version_value": "1.6.0"}, {"version_value": "1.7.0"}]}}'}, {'i': '1', 'data': '{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}'}]
+
 
 def test_json():
     # verify the KV extract pattern match
@@ -555,6 +605,9 @@ def test_json():
 
     d3 = {"data": """[1,2,3]"""}
     assert t( ("data", JSON) )(d3) == {"data": """[1,2,3]"""}
+
+
+
 
     # d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
     # print(t( ("data", JSON) )(d2))
@@ -632,9 +685,9 @@ def test_json():
     # assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
 
 
-# test_split()
+# test_split_filter()
 # exit(0)
-#
+
 test_condition()
 test_regex()
 test_csv()
@@ -643,6 +696,7 @@ test_lookup_load_csv()
 test_lookup_mapping()
 test_kv()
 test_split()
+test_split_filter()
 test_json()
 test_dispatch_transform()
 test_meta()
