@@ -4,3 +4,9 @@
 {"d2": "6", "d1": "5", "f1_new": "a_new"}
 {"d2": "8", "d1": "7", "f1_new": "unknown"}
 {"k2": "v2, v2", "k1": "v1", "k5": "v5", "k4": "v4"}
+{"split": "a"}
+{"split": "b"}
+{"split": "c"}
+{"split2": "a"}
+{"split2": "b"}
+{"split2": "c"}

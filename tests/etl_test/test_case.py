@@ -239,6 +239,7 @@ def verify_case(config, data, result):
     lines = open(os.sep.join([basedir, data])).read().split('\n')
     results = open(os.sep.join([basedir, result])).read().split('\n')
     removed_lines = 0
+    added_lines = 0
     run = Runner(config)
     for i, line in enumerate(lines):
         if line:
@@ -246,12 +247,20 @@ def verify_case(config, data, result):
             ret = run(e)
             if ret is None:  # removed line
                 removed_lines += 1
-            if ret:
-                # print(json.dumps(ret))
-                r = json.loads(results[i - removed_lines])
-                assert ret == r, Exception(i, line, ret, (i-removed_lines), r)
 
-    assert len(results) == len(lines)-removed_lines, Exception(len(results), len(lines), removed_lines)
+            next_result_line = i - removed_lines + added_lines
+            if isinstance(ret, (tuple, list)):
+                for e in ret:
+                    r = json.loads(results[next_result_line])
+                    assert e == r, Exception(i, line, ret, next_result_line, r)
+                    next_result_line += 1
+                added_lines += len(ret) - 1
+            elif ret:
+                # print(json.dumps(ret))
+                r = json.loads(results[next_result_line])
+                assert ret == r, Exception(i, line, ret, (next_result_line), r)
+
+    assert len(results) == len(lines)-removed_lines+added_lines, Exception(len(results), len(lines), removed_lines, added_lines)
 
 
 def test_module():
@@ -523,6 +532,109 @@ def test_kv():
     assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
 
 
+def test_split():
+    # verify basic SPLIT w/o parameters
+    d1 = {"i": "t1", "data": "1,2,3"}
+    assert t( ("data", SPLIT) )(d1) == [{"i": "t1", "data": "1"}, {"i": "t1", "data": "2"}, {"i": "t1", "data": "3"}]
+
+    d2 = {"i": "t1", "data": "[1,2,3]"}
+    assert t( ("data", SPLIT) )(d2) == [{"i": "t1", "data": "1"}, {"i": "t1", "data": "2"}, {"i": "t1", "data": "3"}]
+
+    d3 = {"i": "t1", "data": '["a", "b", "c"]'}
+    assert t( ("data", SPLIT) )(d3) == [{"i": "t1", "data": 'a'}, {"i": "t1", "data": "b"}, {"i": "t1", "data": "c"}]
+
+    #
+
+def test_json():
+    # verify the KV extract pattern match
+    d1 = {"data": """{"k1": 100, "k2": 200}"""}
+    assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
+
+    d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
+    assert t( ("data", JSON) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
+
+    d3 = {"data": """[1,2,3]"""}
+    assert t( ("data", JSON) )(d3) == {"data": """[1,2,3]"""}
+
+    # d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
+    # print(t( ("data", JSON) )(d2))
+    # assert t( ("data", JSON(level=2)) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
+
+    # d2 = {"data": 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
+    # assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
+    #
+    # # multi-bytes check
+    # if six.PY2:
+    #     d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    #     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们'.encode('utf8'), 'k1': u'你好'.encode('utf8'), "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    #
+    #     d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    #     assert t(("data", KV))(d4) == {'i': 'c4', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    #
+    #     d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    #     assert t(("data", KV))(d5) == {'i': 'c5', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    #
+    #     d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
+    #     assert t(("data", KV))(d6) == {'i': 'c6', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c6, 姓名=小明 年龄=中文'}
+    #
+    #     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    #     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    # else:
+    #     d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    #     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    #
+    #     d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    #     assert t(("data", KV))(d4) == {'i': 'c4', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    #
+    #     d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    #     assert t(("data", KV))(d5) == {'i': 'c5', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    #
+    #     d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
+    #     assert t(("data", KV))(d6) == {'i': 'c6', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c6, 姓名=小明 年龄=中文'}
+    #
+    #     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    #     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    #
+    #
+    # # new line in value
+    # d8 = {"data": """i=c8, k1="hello
+    # world" k2="good
+    # morning"
+    # """}
+    # assert t(("data", KV))(d8) == {'i': 'c8', 'k2': 'good\n    morning', 'k1': 'hello\n    world', 'data': 'i=c8, k1="hello\n    world" k2="good\n    morning"\n    '}
+    #
+    # ################
+    # ## Options
+    #
+    # # sep-regex
+    # d9 = {"data": "i=c9 k1:v1, k2=v2"}
+    # assert t(("data", KV(sep='(?::|=)')))(d9) == {'k2': 'v2', 'k1': 'v1', 'i': 'c9', 'data': 'i=c9 k1:v1, k2=v2'}
+    #
+    # # quote
+    # d10 = {"data": "i=c10 a='k1=k2;k2=k3'"}
+    # assert t(("data", KV(quote="'")))(d10) == {'i': 'c10', 'a': 'k1=k2;k2=k3', 'data': "i=c10 a='k1=k2;k2=k3'"}
+    #
+    # # prefix/suffix
+    # d11 = {"data": "i=c11, k1=v1,k2=v2 k3=v3"}
+    # assert t( ("data", KV(prefix="d_", suffix="_e")) )(d11) == {'d_i_e': 'c11', 'd_k3_e': 'v3', 'd_k2_e': 'v2', 'data': 'i=c11, k1=v1,k2=v2 k3=v3', 'd_k1_e': 'v1'}
+    #
+    # # multiple inputs
+    # d12 = {"data1": "i=c12, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    # assert t( (["data1", "data2"], KV) )(d12) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c12', 'data1': 'i=c12, k1=v1', 'data2': 'k2=v2 k3=v3', "data3": "k4=v4"}
+    #
+    # #############
+    # # KV_F
+    #
+    # d13 = {"data1": "i=c13, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    # assert KV_F(["data1", "data2"])(d13) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c13', 'data1': 'i=c13, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+    #
+    # d14 = {"data1": "i=c14, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
+    # assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+
+
+# test_split()
+# exit(0)
+#
 test_condition()
 test_regex()
 test_csv()
@@ -530,6 +642,8 @@ test_lookup_dict()
 test_lookup_load_csv()
 test_lookup_mapping()
 test_kv()
+test_split()
+test_json()
 test_dispatch_transform()
 test_meta()
 test_parse()

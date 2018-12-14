@@ -639,7 +639,7 @@ def put_logs_auto_div(client, req, div=1):
 
 
 def _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore):
-    count = removed = 0
+    count = removed = processed = failed = 0
     new_events = defaultdict(list)
 
     default_time = time.time()
@@ -651,17 +651,25 @@ def _transform_events_to_logstore(runner, events, to_client, to_project, to_logs
             removed += 1
             continue
 
-        dt = int(new_event.get('__time__', default_time)) // 60  # group logs in same minute
-        topic = ''
-        source = ''
-        if "__topic__" in new_event:
-            topic = new_event['__topic__']
-            del new_event["__topic__"]
-        if "__source__" in new_event:
-            source = new_event['__source__']
-            del new_event["__source__"]
+        if not isinstance(new_event, (tuple, list)):
+            new_event = (new_event, )
 
-        new_events[(dt, topic, source)].append(new_event)
+        for event in new_event:
+            if not isinstance(event, dict):
+                logger.error("transform_data: get unknown type of processed event: {0}".format(event))
+                continue
+
+            dt = int(event.get('__time__', default_time)) // 60  # group logs in same minute
+            topic = ''
+            source = ''
+            if "__topic__" in event:
+                topic = event['__topic__']
+                del event["__topic__"]
+            if "__source__" in event:
+                source = event['__source__']
+                del event["__source__"]
+
+            new_events[(dt, topic, source)].append(new_event)
 
     for (dt, topic, source), contents in six.iteritems(new_events):
 
@@ -678,8 +686,9 @@ def _transform_events_to_logstore(runner, events, to_client, to_project, to_logs
 
         req = PutLogsRequest(project=to_project, logstore=to_logstore, topic=topic, source=source, logitems=items)
         res = put_logs_auto_div(to_client, req)
+        processed += len(items)
 
-    return count, removed
+    return count, removed, processed, failed
 
 
 def transform_worker(from_client, from_project, from_logstore, shard_id, from_time, to_time,
@@ -691,16 +700,17 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
         iter_data = from_client.pull_log(from_project, from_logstore, shard_id, from_time, to_time, batch_size=batch_size,
                                          compress=compress)
 
-        count = 0
-        removed = 0
+        count = removed = processed = failed = 0
         for s in iter_data:
             events = s.get_flatten_logs_json(time_as_str=True)
 
-            c, r = _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore)
+            c, r, p, f = _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore)
             count += c
             removed += r
+            processed += p
+            failed += f
 
-        return shard_id, count, removed
+        return shard_id, count, removed, processed, failed
     except Exception as ex:
         logger.error(ex)
         raise
@@ -808,12 +818,12 @@ def transform_data(from_client, from_project, from_logstore, from_time,
                        for shard in target_shards]
 
             for future in as_completed(futures):
-                partition, count, removed = future.result()
+                partition, count, removed, processed, failed = future.result()
                 total_count += count
                 total_removed += removed
                 if count:
                     result[partition] = {"total_count": count, "transformed":
-                        count-removed, "removed": removed}
+                        processed, "removed": removed, "failed": failed}
 
         return LogResponse({}, {"total_count": total_count, "shards": result})
 

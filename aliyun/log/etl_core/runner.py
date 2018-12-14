@@ -5,6 +5,7 @@ import copy
 import inspect
 import logging
 from .exceptions import SettingError
+from collections import Iterable
 logger = logging.getLogger(__name__)
 
 
@@ -30,11 +31,35 @@ class Runner(object):
 
         self.fn_list = [fn for no, fn in parsed_fn]
 
-    def __call__(self, event):
-        ret = copy.copy(event)
-        for fn in self.fn_list:
-            ret = fn(ret)
-            if ret is None:
+    def _process_event(self, event, fn_list):
+        if not len(fn_list):
+            return event
+
+        new_event = copy.copy(event)
+        for i, fn in enumerate(fn_list):
+            new_event = fn(new_event)
+            if new_event is None:
                 return None
 
-        return ret
+            if isinstance(new_event, (tuple, list)):
+                result = []
+                for e in new_event:
+                    ret = self._process_event(e, fn_list[i+1:])
+                    if ret is None:
+                        continue
+
+                    if isinstance(ret, (tuple, list) ):
+                        result.extend(ret)
+                    else:
+                        result.append(ret)
+
+                if result:
+                    if len(result) == 1:
+                        return result[0]
+                    return result
+                return None  # return None for empty list
+
+        return new_event
+
+    def __call__(self, event):
+        return self._process_event(event, self.fn_list)
