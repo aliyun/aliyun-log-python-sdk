@@ -575,7 +575,6 @@ def test_split_filter():
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
     # jmes filter output as list
     jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[]'
-    #print( t( ("data", SPLIT(jmes=jmes, output='data')) )(d1))
     assert t( ("data", SPLIT(jmes=jmes, output='data')) )(d1) == [{"i": "1", 'data':  "openssl"}, {"i": "1", 'data':  "openjdk"}, {"i": "1", 'data':  "polarssl"}]
 
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
@@ -596,120 +595,77 @@ def test_split_filter():
 
 
 def test_json():
-    # extract
-    d1 = {"data": """{"k1": 100, "k2": 200}"""}
-    assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
-
-    # extract - deep
-    d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
-    assert t( ("data", JSON) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
-
-    # extract - array
-    d3 = {"data": """[1,2,3]"""}
-    assert t( ("data", JSON) )(d3) == {"data": """[1,2,3]"""}
-
     # jmes filter
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'join(`,`,cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[])'
     assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {"i": "1", 'data':  "openssl,openjdk,polarssl"}
-
-    # jmes filter - null
-    d1 = {'i': '1', 'data': '{"f1": [1,2,3]}'}
-    jmes = 'f1[4]'
-    #print(t( ("data", JSON(jmes=jmes, output='data')) )(d1))
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": [1,2,3]}'}
-    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
-
-    # jmes filter - null
-    d1 = {'i': '1', 'data': '{"f1": "123"}'}
-    jmes = 'f2'
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": "123"}'}
-    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
 
     # jmes filter - real match, empty result
     d1 = {'i': '1', 'data': '{"f1": ""}'}
     jmes = 'f1'
     assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': ''}
 
+    # jmes filter 1 option: jmes_ignore_none
+    d1 = {'i': '1', 'data': '{"f1": [1,2,3]}'}
+    jmes = 'f1[4]'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": [1,2,3]}'}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
 
-    # d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
-    # print(t( ("data", JSON) )(d2))
-    # assert t( ("data", JSON(level=2)) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
+    # jmes filter 2 option: jmes_ignore_none
+    d1 = {'i': '1', 'data': '{"f1": "123"}'}
+    jmes = 'f2'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": "123"}'}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
 
-    # d2 = {"data": 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
-    # assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
-    #
-    # # multi-bytes check
-    # if six.PY2:
-    #     d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-    #     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们'.encode('utf8'), 'k1': u'你好'.encode('utf8'), "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-    #
-    #     d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-    #     assert t(("data", KV))(d4) == {'i': 'c4', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-    #
-    #     d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-    #     assert t(("data", KV))(d5) == {'i': 'c5', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-    #
-    #     d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
-    #     assert t(("data", KV))(d6) == {'i': 'c6', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c6, 姓名=小明 年龄=中文'}
-    #
-    #     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
-    #     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c7, 姓名="小明" 年龄=中文 '}
-    # else:
-    #     d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-    #     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-    #
-    #     d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-    #     assert t(("data", KV))(d4) == {'i': 'c4', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-    #
-    #     d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-    #     assert t(("data", KV))(d5) == {'i': 'c5', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-    #
-    #     d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
-    #     assert t(("data", KV))(d6) == {'i': 'c6', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c6, 姓名=小明 年龄=中文'}
-    #
-    #     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
-    #     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
-    #
-    #
-    # # new line in value
-    # d8 = {"data": """i=c8, k1="hello
-    # world" k2="good
-    # morning"
-    # """}
-    # assert t(("data", KV))(d8) == {'i': 'c8', 'k2': 'good\n    morning', 'k1': 'hello\n    world', 'data': 'i=c8, k1="hello\n    world" k2="good\n    morning"\n    '}
-    #
-    # ################
-    # ## Options
-    #
-    # # sep-regex
-    # d9 = {"data": "i=c9 k1:v1, k2=v2"}
-    # assert t(("data", KV(sep='(?::|=)')))(d9) == {'k2': 'v2', 'k1': 'v1', 'i': 'c9', 'data': 'i=c9 k1:v1, k2=v2'}
-    #
-    # # quote
-    # d10 = {"data": "i=c10 a='k1=k2;k2=k3'"}
-    # assert t(("data", KV(quote="'")))(d10) == {'i': 'c10', 'a': 'k1=k2;k2=k3', 'data': "i=c10 a='k1=k2;k2=k3'"}
-    #
-    # # prefix/suffix
-    # d11 = {"data": "i=c11, k1=v1,k2=v2 k3=v3"}
-    # assert t( ("data", KV(prefix="d_", suffix="_e")) )(d11) == {'d_i_e': 'c11', 'd_k3_e': 'v3', 'd_k2_e': 'v2', 'data': 'i=c11, k1=v1,k2=v2 k3=v3', 'd_k1_e': 'v1'}
-    #
-    # # multiple inputs
-    # d12 = {"data1": "i=c12, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
-    # assert t( (["data1", "data2"], KV) )(d12) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c12', 'data1': 'i=c12, k1=v1', 'data2': 'k2=v2 k3=v3', "data3": "k4=v4"}
-    #
-    # #############
-    # # KV_F
-    #
-    # d13 = {"data1": "i=c13, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
-    # assert KV_F(["data1", "data2"])(d13) == {'k3': 'v3', 'k2': 'v2', 'k1': 'v1', 'i': 'c13', 'data1': 'i=c13, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
-    #
-    # d14 = {"data1": "i=c14, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
-    # assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+    # jmes filter - output
+    d1 = {"data": """{"k1": 100, "k2": 200}"""}
+    assert t( ("data", JSON(jmes='k2', output='k3')) )(d1) == {"data": """{"k1": 100, "k2": 200}""", 'k3': '200'}
+
+    # extract
+    d1 = {"data": """{"k1": 100, "k2": 200}"""}
+    assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
+
+    # extract - deep - all depth
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k5': '300'}
+
+    # extract - deep - level-1
+    d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
+    assert t( ("data", JSON(depth=1)) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
+
+    # extract - deep - level-2
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(depth=2)))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k4': '{"k5": 300}'}
+
+    # extract - deep - format - full
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='full')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k2.k3': '200', 'data.k2.k4.k5': '300'}
 
 
-test_json()
-exit(0)
+    # # extract - deep - format - parent
+    # d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    # print(t(("data", JSON(fmt='parent')))(d2))
+    # assert t(("data", JSON(fmt='parent')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k2.k3': '200', 'data.k2.k4.k5': '300'}
+
+
+    # extract - array
+    d3 = {"data": """[1,2,3]"""}
+    assert t( ("data", JSON(expand_array=False)) )(d3) == {"data": """[1, 2, 3]"""}
+
+    # # extract - array - expand
+    # d3 = {"data": """[1,2,3]"""}
+    # print( t( ("data", JSON) )(d3)  )
+    # assert t( ("data", JSON) )(d3) == {"data": """[1, 2, 3]"""}
+
+    # jmes - expand
+    d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
+    jmes = 'cve.CVE_data_meta'
+    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': '{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}', 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
+
+    # expand prefix/suffix
+    d1 = {"data": """{"k1": 100, "k2": 200}"""}
+    assert t( ("data", JSON(prefix="data_", suffix="_end")) )(d1) == {'data': '{"k1": 100, "k2": 200}', 'data_k1_end': '100', 'data_k2_end': '200'}
+
 
 test_condition()
 test_regex()
