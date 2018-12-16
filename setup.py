@@ -25,19 +25,19 @@ except ImportError:
 import sys
 import re
 
+install_requires_common = ['requests', 'six', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0', 'jmespath']
+install_requires = []
+
 if sys.version_info[:2] == (2, 6):
-    install_requires = ['requests', 'protobuf <= 3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
-                        'elasticsearch>=6.0.0,<7.0.0']
+    install_requires = [ 'protobuf <= 3.4.0', 'enum34', 'futures' ]
 elif sys.version_info[0] == 2:
-    install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'futures', 'python-dateutil',
-                        'elasticsearch>=6.0.0,<7.0.0',
-                        'dateparser']
+    install_requires = ['protobuf>=3.4.0', 'enum34', 'futures', 'dateparser']
 elif sys.version_info[:2] == (3, 3):
-    install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'enum34', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0',
-                        'dateparser']
+    install_requires = ['protobuf>=3.4.0', 'enum34',  'dateparser']
 elif sys.version_info[0] == 3:
-    install_requires = ['requests', 'protobuf>=3.4.0', 'six', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0',
-                        'dateparser']
+    install_requires = ['protobuf>=3.4.0',  'dateparser']
+
+install_requires.extend(install_requires_common)
 
 packages = [
             'aliyun',
