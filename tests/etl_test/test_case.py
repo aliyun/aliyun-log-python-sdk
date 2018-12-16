@@ -596,17 +596,40 @@ def test_split_filter():
 
 
 def test_json():
-    # verify the KV extract pattern match
+    # extract
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
 
+    # extract - deep
     d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
     assert t( ("data", JSON) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
 
+    # extract - array
     d3 = {"data": """[1,2,3]"""}
     assert t( ("data", JSON) )(d3) == {"data": """[1,2,3]"""}
 
+    # jmes filter
+    d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    jmes = 'join(`,`,cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[])'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {"i": "1", 'data':  "openssl,openjdk,polarssl"}
 
+    # jmes filter - null
+    d1 = {'i': '1', 'data': '{"f1": [1,2,3]}'}
+    jmes = 'f1[4]'
+    #print(t( ("data", JSON(jmes=jmes, output='data')) )(d1))
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": [1,2,3]}'}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
+
+    # jmes filter - null
+    d1 = {'i': '1', 'data': '{"f1": "123"}'}
+    jmes = 'f2'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": "123"}'}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
+
+    # jmes filter - real match, empty result
+    d1 = {'i': '1', 'data': '{"f1": ""}'}
+    jmes = 'f1'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': ''}
 
 
     # d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
@@ -685,8 +708,8 @@ def test_json():
     # assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
 
 
-# test_split_filter()
-# exit(0)
+test_json()
+exit(0)
 
 test_condition()
 test_regex()
