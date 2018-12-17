@@ -625,42 +625,88 @@ def test_json():
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
 
-    # extract - deep - all depth
+    # extract - depth - all
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k5': '300'}
 
-    # extract - deep - level-1
+    # extract - depth - level-1
     d2 = {"data": """{"k1": 100, "k2": {"k21": 200} }"""}
     assert t( ("data", JSON(depth=1)) )(d2) == {"data": """{"k1": 100, "k2": {"k21": 200} }""", "k1": "100", "k2": '{"k21": 200}'}
 
-    # extract - deep - level-2
+    # extract - depth - level-2
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(depth=2)))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k4': '{"k5": 300}'}
 
-    # extract - deep - format - full
+    # extract - format - full
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(fmt='full')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k2.k3': '200', 'data.k2.k4.k5': '300'}
 
-    # extract - deep - format - parent
+    # extract - format - parent
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(fmt='parent')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'k2.k3': '200', 'k4.k5': '300'}
 
-    # extract - deep - format - root
+    # extract - format - root
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(fmt='root')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k3': '200', 'data.k5': '300'}
 
-    # extract - deep - format - custom
+    # expand option: full-sep
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
-    assert t(("data", JSON(fmt='root')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k3': '200', 'data.k5': '300'}
+    assert t(("data", JSON(fmt='full', sep="_")))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }',
+                                                          'data_k1': '100', 'data_k2_k3': '200', 'data_k2_k4_k5': '300'}
+
+    # expand option: parent-sep
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='parent', sep="_")))(d2) == {
+        'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data_k1': '100', 'k2_k3': '200', 'k4_k5': '300'}
+
+    # expand option: full, sep, prefix, suffix
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='full', sep="#", prefix="^", suffix="$")))(d2) == {
+        'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data#^k1$': '100', 'data#k2#^k3$': '200',
+        'data#k2#k4#^k5$': '300'}
+
+    # expand option: parent, sep, prefix, suffix
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='parent', sep="@", prefix="__", suffix="__")))(d2) == {
+        'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data@__k1__': '100', 'k2@__k3__': '200',
+        'k4@__k5__': '300'}
+
+    # expand option: custom fmt - parent_rlist and current
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='{parent_rlist[1]}-{parent_rlist[0]}#{current}')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data-k2#k3': '200', 'k2-k4#k5': '300'}
+
+    # expand option: custom fmt - parent_list, prefix, current, suffix, sep
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='{parent_list[1]}{sep}{prefix}{current}{suffix}')))(d2) == {
+        'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k2.k3': '200', 'k2.k5': '300'}
+
+    # expand option: custom fmt - lambda
+    fmt = lambda parent_list, current, value: (
+    "{parent}-{current}".format(parent=parent_list[-1].upper(), current=current), 'X' + value.upper())
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt=fmt)))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }',
+                                              'DATA-k1': 'X100', 'K2-k3': 'X200', 'K4-k5': 'X300'}
 
     # extract - array
     d3 = {"data": """[1,2,3]"""}
     assert t( ("data", JSON(expand_array=False)) )(d3) == {"data": """[1, 2, 3]"""}
 
-    # # extract - array - expand
-    # d3 = {"data": """[1,2,3]"""}
-    # print( t( ("data", JSON) )(d3)  )
-    # assert t( ("data", JSON) )(d3) == {"data": """[1, 2, 3]"""}
+    # extract - array - expand
+    d3 = {"data": """[1,2,3]"""}
+    assert t( ("data", JSON) )(d3) == {'data': '[1,2,3]', 'data_0': '1', 'data_1': '2', 'data_2': '3'}
+
+    # extract - array - expand
+    d3 = {"people": """[{"name": "xm", "sex": "boy"}, {"name": "xz", "sex": "boy"}, {"name": "xt", "sex": "girl"}]"""}
+    assert t(("people", JSON(fmt='parent')))(d3) == {
+        'people': '[{"name": "xm", "sex": "boy"}, {"name": "xz", "sex": "boy"}, {"name": "xt", "sex": "girl"}]',
+        'people_0.name': 'xm', 'people_0.sex': 'boy', 'people_1.name': 'xz', 'people_1.sex': 'boy',
+        'people_2.name': 'xt', 'people_2.sex': 'girl'}
+
+    d3 = {"people": """[{"name": "xm", "sex": "boy"}, {"name": "xz", "sex": "boy"}, {"name": "xt", "sex": "girl"}]"""}
+    assert t(("people", JSON(fmt='parent', fmt_array="{parent_rlist[0]}-{index}")))(d3) == {
+        'people': '[{"name": "xm", "sex": "boy"}, {"name": "xz", "sex": "boy"}, {"name": "xt", "sex": "girl"}]',
+        'people-0.name': 'xm', 'people-0.sex': 'boy', 'people-1.name': 'xz', 'people-1.sex': 'boy',
+        'people-2.name': 'xt', 'people-2.sex': 'girl'}
 
     # jmes - expand
     d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
@@ -672,11 +718,60 @@ def test_json():
     assert t( ("data", JSON(prefix="data_", suffix="_end")) )(d1) == {'data': '{"k1": 100, "k2": 200}', 'data_k1_end': '100', 'data_k2_end': '200'}
 
 
+def test_json_match():
+    # expand - include node, final node
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(include_node='k5')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }',
+                                                        'k5': '300'}
 
+    # expand - include node, middle node - no effect
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(include_node='k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }'}
 
+    # expand - include node, regex
+    d2 = {"data": """{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }"""}
+    assert t(("data", JSON(include_node=r'k\d{2,}')))(d2) == {
+        'data': '{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }', 'k33': '200', 'k55': '300'}
 
-# test_json()
-# exit(1)
+    # expand - exclude node, final node
+    d2 = {"data": """{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }"""}
+    assert t(("data", JSON(exclude_node=r'k55')))(d2) == {
+        'data': '{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }', 'k1': '100', 'k33': '200'}
+
+    # expand - exclude node, middle node - no effect
+    d2 = {"data": """{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }"""}
+    assert t(("data", JSON(exclude_node=r'k2')))(d2) == {
+        'data': '{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }', 'k1': '100', 'k33': '200', 'k55': '300'}
+
+    # expand - exclude node, regex
+    d2 = {"data": """{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }"""}
+    assert t(("data", JSON(exclude_node=r'k\d{2,}')))(d2) == {
+        'data': '{"k1": 100, "k2": {"k33": 200, "k4": {"k55": 300} } }', 'k1': '100'}
+
+    # expand - include path
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(include_path='data.k1')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100'}
+
+    # expand - include middle path
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(include_path='data.k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k3': '200', 'k5': '300'}
+
+    # expand - include path, no match (must be path from beginning)
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(include_path='k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }'}
+
+    # expand - exclude path
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(exclude_path='data.k1')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k3': '200', 'k5': '300'}
+
+    # expand - include middle path
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(exclude_path='data.k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100'}
+
+    # expand - include path, no match (must be path from beginning)
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(exclude_path='k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k5': '300'}
+
 
 test_condition()
 test_regex()
@@ -688,6 +783,7 @@ test_kv()
 test_split()
 test_split_filter()
 test_json()
+test_json_match()
 test_dispatch_transform()
 test_meta()
 test_parse()
