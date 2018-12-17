@@ -621,7 +621,7 @@ def test_json():
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON(jmes='k2', output='k3')) )(d1) == {"data": """{"k1": 100, "k2": 200}""", 'k3': '200'}
 
-    # extract
+    # auto expand
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
 
@@ -641,12 +641,17 @@ def test_json():
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(fmt='full')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k2.k3': '200', 'data.k2.k4.k5': '300'}
 
+    # extract - deep - format - parent
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='parent')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'k2.k3': '200', 'k4.k5': '300'}
 
-    # # extract - deep - format - parent
-    # d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
-    # print(t(("data", JSON(fmt='parent')))(d2))
-    # assert t(("data", JSON(fmt='parent')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k2.k3': '200', 'data.k2.k4.k5': '300'}
+    # extract - deep - format - root
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='root')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k3': '200', 'data.k5': '300'}
 
+    # extract - deep - format - custom
+    d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
+    assert t(("data", JSON(fmt='root')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'data.k1': '100', 'data.k3': '200', 'data.k5': '300'}
 
     # extract - array
     d3 = {"data": """[1,2,3]"""}
@@ -666,6 +671,12 @@ def test_json():
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON(prefix="data_", suffix="_end")) )(d1) == {'data': '{"k1": 100, "k2": 200}', 'data_k1_end': '100', 'data_k2_end': '200'}
 
+
+
+
+
+# test_json()
+# exit(1)
 
 test_condition()
 test_regex()

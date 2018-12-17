@@ -35,7 +35,7 @@ class json_transformer(trans_comp_base):
     FMT_MAP = {
         "simple": "{prefix}{current}{suffix}",
         "full":  "{parent_list_str}{sep}{prefix}{current}{suffix}",  # "{sep.join(parent_path)}{sep}{prefix}{current}{suffix}",
-        "parent": "{parent_list[-1]}{sep}{prefix}{current}{suffix}",
+        "parent": "{parent}{sep}{prefix}{current}{suffix}",
         "root": "{parent_list[0]}{sep}{prefix}{current}{suffix}"
         # could also be custom formatting string using up to five placehodler: parent_list, current, sep, prefix, suffix
         # could also be formatting function accepting the two parameters: parrent_list, current key, value
@@ -94,10 +94,11 @@ class json_transformer(trans_comp_base):
         if isinstance(fmt, (six.text_type, six.binary_type)):
             fmt = json_transformer.FMT_MAP.get(fmt.strip().lower(), fmt)
             try:
-                ret = fmt.format(parent_list_str=sep.join(parent_list), parent_list=parent_list, current=current, sep=sep, prefix=prefix, suffix=suffix), \
+                ret = fmt.format(parent=parent_list[-1], parent_list_str=sep.join(parent_list), parent_list=parent_list, current=current, sep=sep, prefix=prefix, suffix=suffix), \
                    json_transformer._n(value)
-            except ValueError as ex:
-                logger.info("json_transformer")
+            except Exception as ex:
+                logger.info("json_transformer: fail to format with settings: '{0}'".format( (fmt, current, value,
+                                                                                             parent_list, sep, prefix, suffix) ))
         elif isinstance(fmt, inspect.isfunction):
             ret = fmt(parent_list, current, value)
 
