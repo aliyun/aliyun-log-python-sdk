@@ -71,7 +71,8 @@ class json_transformer(trans_comp_base):
         """
         self.expand = expand
         if expand is None:
-            self.expand = not jmes
+            # when jmes is not configured or configure but no output configured
+            self.expand = not jmes or not output
 
         # self.level = level or 1
         self.jmes = jmes or ""

@@ -594,7 +594,7 @@ def test_split_filter():
     assert t(("data", SPLIT(jmes=jmes, output='data')))(d1) == [{'i': '1', 'data': '{"product_name": "openssl", "version": {"version_data": [{"version_value": "*"}, {"version_value": "0.9.8"}, {"version_value": "0.9.8a"}, {"version_value": "0.9.8b"}, {"version_value": "0.9.8c"}, {"version_value": "0.9.8d"}, {"version_value": "0.9.8f"}, {"version_value": "0.9.8g"}]}}'}, {'i': '1', 'data': '{"product_name": "openjdk", "version": {"version_data": [{"version_value": "-"}, {"version_value": "1.6.0"}, {"version_value": "1.7.0"}]}}'}, {'i': '1', 'data': '{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}'}]
 
 
-def test_json():
+def test_json_filter():
     # jmes filter
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'join(`,`,cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[])'
@@ -621,6 +621,8 @@ def test_json():
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON(jmes='k2', output='k3')) )(d1) == {"data": """{"k1": 100, "k2": 200}""", 'k3': '200'}
 
+
+def test_json_expand():
     # auto expand
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
     assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
@@ -636,6 +638,10 @@ def test_json():
     # extract - depth - level-2
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(depth=2)))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k4': '{"k5": 300}'}
+
+    # expand prefix/suffix
+    d1 = {"data": """{"k1": 100, "k2": 200}"""}
+    assert t( ("data", JSON(prefix="data_", suffix="_end")) )(d1) == {'data': '{"k1": 100, "k2": 200}', 'data_k1_end': '100', 'data_k2_end': '200'}
 
     # extract - format - full
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
@@ -708,15 +714,6 @@ def test_json():
         'people-0.name': 'xm', 'people-0.sex': 'boy', 'people-1.name': 'xz', 'people-1.sex': 'boy',
         'people-2.name': 'xt', 'people-2.sex': 'girl'}
 
-    # jmes - expand
-    d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
-    jmes = 'cve.CVE_data_meta'
-    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': '{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}', 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
-
-    # expand prefix/suffix
-    d1 = {"data": """{"k1": 100, "k2": 200}"""}
-    assert t( ("data", JSON(prefix="data_", suffix="_end")) )(d1) == {'data': '{"k1": 100, "k2": 200}', 'data_k1_end': '100', 'data_k2_end': '200'}
-
 
 def test_json_match():
     # expand - include node, final node
@@ -773,6 +770,27 @@ def test_json_match():
     assert t(("data", JSON(exclude_path='k2')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }', 'k1': '100', 'k3': '200', 'k5': '300'}
 
 
+def test_json_mixed():
+    # jmes - expand
+    d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
+    jmes = 'cve.CVE_data_meta'
+    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': '{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}', 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
+
+    # jmes filter with output - no expand
+    d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    jmes = 'cve.affects.vendor.vendor_data[2].product'
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'data': '{"product_data": [{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}]}'}
+
+    # jmes filter with expand and options
+    d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    assert t( [("data", JSON(jmes=jmes, output='data', expand=True, exclude_path=r'.+version')), DROP_F('data')] )(d1) == {'product_name': 'polarssl'}
+
+
+    # auto expand if no output configured
+    d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    assert t( [("data", JSON(jmes=jmes, fmt='full')), DROP_F('data')] )(d1)  == {'data.product_data.product_data_0.product_name': 'polarssl', 'data.product_data.product_data_0.version.version_data.version_data_0.version_value': '0.10.0', 'data.product_data.product_data_0.version.version_data.version_data_1.version_value': '0.10.1', 'data.product_data.product_data_0.version.version_data.version_data_2.version_value': '0.11.0'}
+
+
 test_condition()
 test_regex()
 test_csv()
@@ -782,8 +800,10 @@ test_lookup_mapping()
 test_kv()
 test_split()
 test_split_filter()
-test_json()
+test_json_expand()
 test_json_match()
+test_json_filter()
+test_json_mixed()
 test_dispatch_transform()
 test_meta()
 test_parse()
