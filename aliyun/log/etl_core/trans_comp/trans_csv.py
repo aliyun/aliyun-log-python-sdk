@@ -17,7 +17,7 @@ class trans_comp_csv(trans_comp_base):
     DEFAULT_QUOTE = '"'
 
     def __init__(self, config, sep=None, quote=None, lstrip=None, restrict=None):
-        if isinstance(config, (six.text_type, six.binary_type) ):
+        if isinstance(config, (six.text_type, six.binary_type)):
             self.keys = self.p_csv_sep.split(config)
         elif isinstance(config, Iterable):
             self.keys = list(config)
@@ -34,13 +34,15 @@ class trans_comp_csv(trans_comp_base):
             data = event[inpt]
             ret = list(csv.reader([data], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
             if self.restrict and len(ret) != len(self.keys):
-                logger.warn("event {0} field {1} contains different count of fields as expected key {2} actual {3}".format(event, inpt, self.keys, ret))
+                logger.warning(
+                    "event {0} field {1} contains different count of fields as expected key {2} actual {3}".format(
+                        event, inpt, self.keys, ret))
                 return event
 
             new_event = dict(zip(self.keys, ret))
             event.update(new_event)
         else:
-            logger.warn("field {0} doesn't exist in event {1}, skip it".format(inpt, event))
+            logger.warning("field {0} doesn't exist in event {1}, skip it".format(inpt, event))
 
         return event
 
@@ -51,4 +53,3 @@ class trans_comp_tsv(trans_comp_csv):
 
 class trans_comp_psv(trans_comp_csv):
     DEFAULT_SEP = '|'
-

@@ -55,7 +55,7 @@ class split_event_transformer(trans_comp_base):
             event[field] = self._n(lst[0])
             return event
 
-    def _parse_list(self, v, filter=None):
+    def _parse_list(self, v, flt=None):
         # process json first (via filter or directly list)
         try:
             ret = json.loads(v)
@@ -65,25 +65,26 @@ class split_event_transformer(trans_comp_base):
                 return ret
 
             # json object and jmes is configured
-            if filter:
-                ret = filter.search(ret)
+            if flt:
+                ret = flt.search(ret)
 
                 if isinstance(ret, (list,)):
                     # result is list as expected
                     return ret
-                elif isinstance(ret, (six.text_type, six.binary_type) ):
+                elif isinstance(ret, (six.text_type, six.binary_type)):
                     # result is just a string. then re-do the process and no jmes is passed this time
                     return self._parse_list(ret)
                 else:
-                    logger.info('split_event_transformer: get unknown type of result with value "{0}" and jmes filter "{1}", skip it'.
-                                format(v, self.jmes))
+                    logger.info(
+                        'split_event_transformer: get unknown type of result with value "{0}" and jmes filter "{1}", skip it'.
+                        format(v, self.jmes))
                     return None
 
             # else: go to next step: parse it as CSV
 
         except Exception as ex:
             # failed at json load or jmes filter. if jmes is configured, then it's an invalid event
-            if filter:
+            if flt:
                 logger.info("split_event_transformer: value {0} is json or not invaid jmes settings {1}, skip it".
                             format(v, self.jmes))
                 return None
@@ -91,13 +92,12 @@ class split_event_transformer(trans_comp_base):
                 logger.debug("split_event_transformer: value {0} is not json, try to use csv".format(v))
 
         # continue to parse it as csv
-        if isinstance(v, (six.text_type, six.binary_type) ):
+        if isinstance(v, (six.text_type, six.binary_type)):
             result = list(csv.reader([v], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
             return result
         else:
             logger.info("split_event_transformer: cannot extract list from value: {0}".format(v))
             return None
-
 
     def __call__(self, event, inpt):
         # overwrite input field

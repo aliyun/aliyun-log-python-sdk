@@ -13,13 +13,14 @@ if the value is not list, v => [v]
 
 """
 
-import functools
 import logging
-import re
-import six
 from collections import Callable
-from ..exceptions import SettingError
+
+import functools
+import six
+
 from ..etl_util import re_full_match, get_re_full_match
+from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def get_check(c):
         return lambda e: c
     elif isinstance(c, Callable):
         return c
-    elif isinstance(c, (dict, )):
+    elif isinstance(c, (dict,)):
         def check(event):
             for k, v in six.iteritems(c):
                 if k in event:
@@ -81,7 +82,7 @@ class condition(object):
             if ck is not None:
                 self.check_list.append(ck)
 
-    DEFAULT_META_KEYS = set( ("__time__", "__topic__", "__source__") )
+    DEFAULT_META_KEYS = set(("__time__", "__topic__", "__source__"))
     tag_meta_check = staticmethod(get_re_full_match(r"__tag__:.+"))
 
     def is_meta_key(self, k):
@@ -104,7 +105,7 @@ class condition(object):
             return ret
 
     def __call__(self, entity):
-        if isinstance(entity, (dict, )):
+        if isinstance(entity, (dict,)):
             return any(c(entity) for c in self.check_list)
         elif isinstance(entity, Callable):
             fn = entity
@@ -115,7 +116,8 @@ class condition(object):
                     if any(c(event) for c in self.check_list):
                         return self.call_processor(fn, event, *args, **kwargs)
                 except Exception as ex:
-                    logger.error('fail to call hooked function "{0}" with event "{1}", error: {2}'.format(fn, event, ex))
+                    logger.error(
+                        'fail to call hooked function "{0}" with event "{1}", error: {2}'.format(fn, event, ex))
 
                 return event
 

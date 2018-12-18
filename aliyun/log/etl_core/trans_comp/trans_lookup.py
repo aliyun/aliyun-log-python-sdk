@@ -23,11 +23,13 @@ class Table(object):
         self.case_insensitive = case_insensitive
 
     def get_row(self, inputs):
-        assert isinstance(inputs, dict), LookupError(msg="trans_comp_lookup: inputs are not dict as expected", settings=inputs)
+        assert isinstance(inputs, dict), LookupError(msg="trans_comp_lookup: inputs are not dict as expected",
+                                                     settings=inputs)
 
         for k, v in six.iteritems(inputs):
             if k not in self.field_names:
-                logger.info("trans_comp_lookup: key {0} doesn't exist in existing fields names: {1}".format(k, self.field_names))
+                logger.info("trans_comp_lookup: key {0} doesn't exist in existing fields names: {1}".format(k,
+                                                                                                            self.field_names))
                 return None
 
         for row in self.rows:
@@ -45,7 +47,7 @@ class DefaultDict(object):
         self.default = dct.get('*', None)
         self.case_insensitive = case_insensitive
         if case_insensitive:
-            self.data = dict((k.lower(),  v) for k, v in six.iteritems(dct))
+            self.data = dict((k.lower(), v) for k, v in six.iteritems(dct))
         else:
             self.data = dct
 
@@ -66,7 +68,7 @@ class trans_comp_lookup(trans_comp_base):
             self.data = DefaultDict(data, case_insensitive)
 
             # init output fields
-            if isinstance(output_fields, (six.binary_type, six.text_type) ):
+            if isinstance(output_fields, (six.binary_type, six.text_type)):
                 self.output_fields = [output_fields]
             elif isinstance(output_fields, Iterable):
                 self.output_fields = []
@@ -78,7 +80,7 @@ class trans_comp_lookup(trans_comp_base):
             else:
                 raise SettingError(settings=output_fields)
 
-        elif isinstance(data, (six.binary_type, six.text_type) ):
+        elif isinstance(data, (six.binary_type, six.text_type)):
 
             self.sig = (data, sep, quote, lstrip)
 
@@ -106,13 +108,13 @@ class trans_comp_lookup(trans_comp_base):
 
             # init output fields
             self.output_fields = {}
-            if isinstance(output_fields, (six.binary_type, six.text_type) ):
+            if isinstance(output_fields, (six.binary_type, six.text_type)):
                 self.output_fields[output_fields] = output_fields
             elif isinstance(output_fields, Iterable):
                 for f in output_fields:
                     if isinstance(f, (six.binary_type, six.text_type)):
                         self.output_fields[f] = f
-                    elif isinstance(f, (tuple, list) ) and len(f) == 2:
+                    elif isinstance(f, (tuple, list)) and len(f) == 2:
                         self.output_fields[f[0]] = f[1]
                     else:
                         raise SettingError(settings=output_fields)
@@ -124,7 +126,6 @@ class trans_comp_lookup(trans_comp_base):
                 raise SettingError(settings=output_fields)
         else:
             raise SettingError(settings=data)
-
 
     def __call__(self, event, inpt):
         if isinstance(self.data, DefaultDict):
@@ -167,9 +168,9 @@ class trans_comp_lookup(trans_comp_base):
                         return event
 
                     if isinstance(i, (tuple, list)) and len(i) != 2:
-                            logger.error('trans_comp_lookup: type of input field "{0}" is unsupported'.format(i))
-                            # must exit, or else skip it for lookup type
-                            return event
+                        logger.error('trans_comp_lookup: type of input field "{0}" is unsupported'.format(i))
+                        # must exit, or else skip it for lookup type
+                        return event
 
                     if isinstance(i, (six.binary_type, six.text_type)):
                         i = (i, i)
@@ -183,7 +184,9 @@ class trans_comp_lookup(trans_comp_base):
 
                 row = self.data.get_row(inpt_map)
                 if row is None:
-                    logger.info('trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(inpt_map, event))
+                    logger.info(
+                        'trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(
+                            inpt_map, event))
                     return event
 
                 for f, f_new in six.iteritems(self.output_fields):

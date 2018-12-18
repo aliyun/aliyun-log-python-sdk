@@ -25,6 +25,7 @@ def re_full_match(pattern, string, *args, **kwargs):
     if m and m.span()[1] == len(string):
         return m
 
+
 @cached
 def get_re_full_match(pattern, flags=0):
     p = re.compile(pattern, flags=flags)

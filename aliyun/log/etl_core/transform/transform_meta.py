@@ -1,10 +1,9 @@
-import re
 import six
 
 from .transform_base import transform_base
+from ..etl_util import get_re_full_match
 from ..exceptions import SettingError
 from ..trans_comp import KV
-from ..etl_util import get_re_full_match
 
 __all__ = ["simple_drop", "simple_keep", 'drop_fields', "keep_fields", "rename_fields", 'extract_kv_fields',
            'DROP', 'KEEP', 'ALIAS', 'RENAME', 'DROP_F', 'KEEP_F', 'KV_F']

@@ -1,11 +1,12 @@
-from .config_parser import ConfigParser
-import os
-import sys
 import copy
 import inspect
 import logging
+import os
+import sys
+
+from .config_parser import ConfigParser
 from .exceptions import SettingError
-from collections import Iterable
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,11 +45,11 @@ class Runner(object):
             if isinstance(new_event, (tuple, list)):
                 result = []
                 for e in new_event:
-                    ret = self._process_event(e, fn_list[i+1:])
+                    ret = self._process_event(e, fn_list[i + 1:])
                     if ret is None:
                         continue
 
-                    if isinstance(ret, (tuple, list) ):
+                    if isinstance(ret, (tuple, list)):
                         result.extend(ret)
                     else:
                         result.append(ret)

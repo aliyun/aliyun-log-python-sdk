@@ -1,10 +1,11 @@
-from .trans_base import trans_comp_base
-import six
-import re
 import logging
-import json
-from ..etl_util import cached
 from collections import Iterable
+
+import re
+import six
+
+from .trans_base import trans_comp_base
+from ..etl_util import cached
 
 __all__ = ['trans_comp_kv']
 

@@ -1,12 +1,13 @@
 import ast
-import logging
-import re
-import six
-from collections import Callable
-from .settings import TransFnType, check_fn_type_by_name, builtin_macros
-from functools import wraps
 import inspect
+import logging
+from collections import Callable
+
+import six
+from functools import wraps
+
 from .etl_util import re_full_match
+from .settings import TransFnType, check_fn_type_by_name, builtin_macros
 
 logger = logging.getLogger(__name__)
 
