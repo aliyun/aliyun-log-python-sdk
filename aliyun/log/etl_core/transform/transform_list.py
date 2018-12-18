@@ -11,6 +11,26 @@ logger = logging.getLogger(__name__)
 __all__ = ['transform']
 
 
+def _dict_transform_fn(tr):
+    def _real_transform(event):
+        result = {}
+        for k, v in six.iteritems(tr):
+            if isinstance(v, Callable):
+                v = v(event)
+
+            if isinstance(v, (six.text_type, six.binary_type)):
+                result[k] = v
+            elif v is None:
+                if k in result:
+                    del result[k]
+            else:
+                logger.warning("unknown type of transform value for key:{0} value:{1}".format(k, v))
+        event.update(result)
+        return event
+
+    return _real_transform
+
+
 class transform(transform_base):
     def __init__(self, trans):
         if not isinstance(trans, list):
@@ -23,23 +43,7 @@ class transform(transform_base):
             if isinstance(tr, Callable):
                 self.transform_list.append(tr)
             elif isinstance(tr, (dict, )):
-                def real_transform(event):
-                    result = {}
-                    for k, v in six.iteritems(tr):
-                        if isinstance(v, Callable):
-                            v = v(event)
-
-                        if isinstance(v, (six.text_type, six.binary_type)):
-                            result[k] = v
-                        elif v is None:
-                            if k in result:
-                                del result[k]
-                        else:
-                            logger.warning("unknown type of transform value for key:{0} value:{1}".format(k, v))
-                    event.update(result)
-                    return event
-
-                self.transform_list.append(real_transform)
+                self.transform_list.append(_dict_transform_fn(tr))
             elif isinstance(tr, tuple):
                 if len(tr) < 2 or len(tr) > 3:
                     logger.warning("invalid transform config: {0}".format(tr))
@@ -49,7 +53,6 @@ class transform(transform_base):
                 if isinstance(config, (six.text_type, six.binary_type)):
                     self.transform_list.append(lambda e: REGEX(*tr[1:])(e, inpt))
                 elif isinstance(config, Callable):
-                    #self.transform_list.append(lambda e: config(e, inpt))
                     self.transform_list.append(bind_event_fn(config, inpt))
                 else:
                     logger.warning("unknown transform config setting: {0}".format(config))
