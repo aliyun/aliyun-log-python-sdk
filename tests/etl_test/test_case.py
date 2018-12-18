@@ -796,10 +796,39 @@ def test_json_mixed():
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
     assert t( [("data", JSON(jmes=jmes, output='data', expand=True, exclude_path=r'.+version')), DROP_F('data')] )(d1) == {'product_name': 'polarssl'}
 
-
     # auto expand if no output configured
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
     assert t( [("data", JSON(jmes=jmes, fmt='full')), DROP_F('data')] )(d1)  == {'data.product_data.product_data_0.product_name': 'polarssl', 'data.product_data.product_data_0.version.version_data.version_data_0.version_value': '0.10.0', 'data.product_data.product_data_0.version.version_data.version_data_1.version_value': '0.10.1', 'data.product_data.product_data_0.version.version_data.version_data_2.version_value': '0.11.0'}
+
+
+def test_zip():
+    # json array
+    assert t( {"combine": ZIP("f1", "f2")})({"f1": '["a","b","c"]', "f2":'["x","y","z"]'}) == {'f1': '["a","b","c"]', 'f2': '["x","y","z"]', 'combine': 'a#x,b#y,c#z'}
+
+    # csv
+    assert t( {"combine": ZIP("f1", "f2")})({"f1": "a,b,c", "f2":"x,y,z"}) == {'f1': 'a,b,c', 'f2': 'x,y,z', 'combine': 'a#x,b#y,c#z'}
+
+    # csv with sep inside
+    assert t( {"combine": ZIP("f1", "f2")})({"f1": '"a,a", b, "c,c"', "f2":'x, "y,y", z'}) == {'f1': '"a,a", b, "c,c"', 'f2': 'x, "y,y", z', 'combine': '"a,a#x","b#y,y","c,c#z"'}
+
+    # combine options - sep
+    assert t( {"combine": ZIP("f1", "f2", sep="|")})({"f1": "a,b,c", "f2":"x,y,z"}) == {'f1': 'a,b,c', 'f2': 'x,y,z', 'combine': 'a#x|b#y|c#z'}
+
+    # combine options - quote
+    assert t( {"combine": ZIP("f1", "f2", quote='|')})({"f1": '"a,a", b, "c,c"', "f2":'x, "y,y", z'}) == {'f1': '"a,a", b, "c,c"', 'f2': 'x, "y,y", z', 'combine': '|a,a#x|,|b#y,y|,|c,c#z|'}
+
+    # zip - join sep
+    assert t( {"combine": ZIP("f1", "f2", combine_sep="|")})({"f1": "a,b,c", "f2":"x,y,z"}) == {'f1': 'a,b,c', 'f2': 'x,y,z', 'combine': 'a|x,b|y,c|z'}
+
+    # zip - different length
+    assert t( {"combine": ZIP("f1", "f2")})({"f1": "a,b", "f2":"x,y,z"}) == {'f1': 'a,b', 'f2': 'x,y,z', 'combine': 'a#x,b#y'}
+    assert t( {"combine": ZIP("f1", "f2")})({"f1": "a,b,c", "f2":"x,y"}) == {'f1': 'a,b,c', 'f2': 'x,y', 'combine': 'a#x,b#y'}
+
+    # parse value - sep
+    assert t({"combine": ZIP("f1", "f2", lparse=("#", '"'), rparse=("|", '"') )})({"f1": "a#b#c", "f2": "x|y|z"}) == {'f1': 'a#b#c', 'f2': 'x|y|z', 'combine': 'a#x,b#y,c#z'}
+
+    # parse value - quote
+    assert t( {"combine": ZIP("f1", "f2", lparse=(",", '|'), rparse=(",", '#'))})({"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z'}) == {"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z', 'combine': '"a,a#x","b#y,y","c,c#z"'}
 
 
 test_condition()
@@ -809,6 +838,7 @@ test_lookup_dict()
 test_lookup_load_csv()
 test_lookup_mapping()
 test_kv()
+test_zip()
 test_split()
 test_split_filter()
 test_json_expand()
@@ -820,6 +850,4 @@ test_meta()
 test_parse()
 test_runner()
 test_module()
-
-
 

@@ -86,7 +86,7 @@ class trans_set_field_zip(trans_comp_base):
             data = ["{0}{1}{2}".format(v[0], self.combine_sep, v[1]) for v in zip(ldata, rdata)]
             writer.writerow(data)
 
-            return buf.getvalue()
+            return buf.getvalue().strip()
         else:
             logger.error("trans_set_field_zip: event '{0}' doesn't contain both fields: {1}, {2}"
                          .format(event, self.field1, self.field2))
