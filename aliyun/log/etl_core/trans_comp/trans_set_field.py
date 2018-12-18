@@ -83,7 +83,7 @@ class trans_set_field_zip(trans_comp_base):
 
             buf = six.StringIO()
             writer = csv.writer(buf, delimiter=self.sep, quotechar=self.quote, quoting=csv.QUOTE_MINIMAL)
-            data = ["{0}{1}{2}".format(v[0], self.combine_sep, v[1]) for v in zip(ldata, rdata)]
+            data = ["{0}{1}{2}".format(self._n(v[0]), self.combine_sep, self._n(v[1])) for v in zip(ldata, rdata)]
             writer.writerow(data)
 
             return buf.getvalue().strip()
