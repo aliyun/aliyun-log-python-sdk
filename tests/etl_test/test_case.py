@@ -169,6 +169,39 @@ def test_dispatch_transform():
 
     assert transform_event(TRANSFORM_LIST_data)(d) == [{"name": "nanjing", "pop": "800"}, {"name": "shanghai", "pop": "2000"}, {"name": "beijing", "pop": "2100"}]
 
+    # combine with zip/split
+    d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    product_jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[]'
+    version_jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[*].version[]'
+    version_data_jmes = 'version_data[*].version_value'
+    d1 = t([("data", JSON(jmes=product_jmes, output='product'))])(d1)
+    d1 = t([("data", JSON(jmes=version_jmes, output='version'))])(d1)
+    d1 = t({"product_version": ZIP("product", "version")})(d1)
+    d1 = t(("product_version", SPLIT))(d1)
+    d1 = t(("product_version", CSV("product,version", sep="#")))(d1)
+    d1 = t(DROP_F('data|product_version'))(d1)
+    d1 = t([("version", SPLIT(jmes=version_data_jmes, output='version'))])(d1)
+
+    assert d1 == [{"product": "openssl", "version": "*"}, {"product": "openssl", "version": "0.9.8"},
+                  {"product": "openssl", "version": "0.9.8a"}, {"product": "openssl", "version": "0.9.8b"},
+                  {"product": "openssl", "version": "0.9.8c"}, {"product": "openssl", "version": "0.9.8d"},
+                  {"product": "openssl", "version": "0.9.8f"}, {"product": "openssl", "version": "0.9.8g"},
+                  {"product": "openjdk", "version": "-"}, {"product": "openjdk", "version": "1.6.0"},
+                  {"product": "openjdk", "version": "1.7.0"}, {"product": "polarssl", "version": "0.10.0"},
+                  {"product": "polarssl", "version": "0.10.1"}, {"product": "polarssl", "version": "0.11.0"}]
+
+    d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
+    transform_list = [
+        ("data", JSON(jmes=product_jmes, output='product')),
+        ("data", JSON(jmes=version_jmes, output='version')),
+        {"product_version": ZIP("product", "version")},
+        ("product_version", SPLIT),
+        ("product_version", CSV("product,version", sep="#")),
+        DROP_F('data|product_version'),
+        ("version", SPLIT(jmes=version_data_jmes, output='version'))
+    ]
+    assert t(transform_list)(
+        d1)  # == [{"product": "openssl", "version": "*"}, {"product": "openssl", "version": "0.9.8"}, {"product": "openssl", "version": "0.9.8a"}, {"product": "openssl", "version": "0.9.8b"}, {"product": "openssl", "version": "0.9.8c"}, {"product": "openssl", "version": "0.9.8d"}, {"product": "openssl", "version": "0.9.8f"}, {"product": "openssl", "version": "0.9.8g"}, {"product": "openjdk", "version": "-"}, {"product": "openjdk", "version": "1.6.0"}, {"product": "openjdk", "version": "1.7.0"}, {"product": "polarssl", "version": "0.10.0"}, {"product": "polarssl", "version": "0.10.1"}, {"product": "polarssl", "version": "0.11.0"}]
 
 
 def test_meta():
