@@ -12,6 +12,10 @@ import six
 t = transform
 
 
+def _j(v):
+    return str(json.dumps(json.loads(v)))
+
+
 def test_condition():
     event = {'k1': '123', 'k2': 'abc', 'k3': "abc123"}
 
@@ -590,8 +594,7 @@ def test_split_filter():
 
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'cve.affects.vendor.vendor_data[*].product.product_data[]'
-    # print(t(("data", SPLIT(jmes=jmes, output='data')))(d1))
-    assert t(("data", SPLIT(jmes=jmes, output='data')))(d1) == [{'i': '1', 'data': '{"product_name": "openssl", "version": {"version_data": [{"version_value": "*"}, {"version_value": "0.9.8"}, {"version_value": "0.9.8a"}, {"version_value": "0.9.8b"}, {"version_value": "0.9.8c"}, {"version_value": "0.9.8d"}, {"version_value": "0.9.8f"}, {"version_value": "0.9.8g"}]}}'}, {'i': '1', 'data': '{"product_name": "openjdk", "version": {"version_data": [{"version_value": "-"}, {"version_value": "1.6.0"}, {"version_value": "1.7.0"}]}}'}, {'i': '1', 'data': '{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}'}]
+    assert t(("data", SPLIT(jmes=jmes, output='data')))(d1) == [{'i': '1', 'data': _j('{"product_name": "openssl", "version": {"version_data": [{"version_value": "*"}, {"version_value": "0.9.8"}, {"version_value": "0.9.8a"}, {"version_value": "0.9.8b"}, {"version_value": "0.9.8c"}, {"version_value": "0.9.8d"}, {"version_value": "0.9.8f"}, {"version_value": "0.9.8g"}]}}')}, {'i': '1', 'data': _j('{"product_name": "openjdk", "version": {"version_data": [{"version_value": "-"}, {"version_value": "1.6.0"}, {"version_value": "1.7.0"}]}}')}, {'i': '1', 'data': _j('{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}')}]
 
 
 def test_json_filter():
@@ -774,12 +777,12 @@ def test_json_mixed():
     # jmes - expand
     d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
     jmes = 'cve.CVE_data_meta'
-    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': '{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}', 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
+    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': _j('{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}'), 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
 
     # jmes filter with output - no expand
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'cve.affects.vendor.vendor_data[2].product'
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'data': '{"product_data": [{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}]}'}
+    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'data': _j('{"product_data": [{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}]}')}
 
     # jmes filter with expand and options
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}

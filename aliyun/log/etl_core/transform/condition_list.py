@@ -82,7 +82,7 @@ class condition(object):
                 self.check_list.append(ck)
 
     DEFAULT_META_KEYS = set( ("__time__", "__topic__", "__source__") )
-    tag_meta_check = get_re_full_match(r"__tag__:.+")
+    tag_meta_check = staticmethod(get_re_full_match(r"__tag__:.+"))
 
     def is_meta_key(self, k):
         return k in self.DEFAULT_META_KEYS or self.tag_meta_check(k)
