@@ -1,5 +1,6 @@
 from functools import wraps
 import re
+import copy
 
 
 def cached(fn):
@@ -38,3 +39,36 @@ def get_re_full_match(pattern, flags=0):
             return m
 
     return ptn_full_match
+
+
+def process_event(event, fn_list, cp=True):
+    if not len(fn_list):
+        return event
+
+    new_event = event
+    if cp:
+        new_event = copy.copy(event)
+
+    if isinstance(new_event, dict):
+        new_event = fn_list[0](new_event)
+        return process_event(new_event, fn_list[1:], cp=False)
+    elif isinstance(new_event, (tuple, list)):
+        result = []
+        for e in new_event:
+            new_e = fn_list[0](e)
+            ret = process_event(new_e, fn_list[1:], cp=False)
+            if ret is None:
+                continue
+
+            if isinstance(ret, (tuple, list)):
+                result.extend(ret)
+            else:
+                result.append(ret)
+
+        if result:
+            if len(result) == 1:
+                return result[0]
+            return result
+        return None  # return None for empty list
+
+    return new_event

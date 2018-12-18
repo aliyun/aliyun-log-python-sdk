@@ -130,11 +130,16 @@ def test_dispatch_transform():
     assert dispatch_event(DISPATCH_LIST_data)(e3) == e3_new
     assert dispatch_event(DISPATCH_LIST_data)(e4) == e4_new
 
+    e1 = {'data': 'LTE_Information 80,-82,17,4402010820E2DC5D,3750,-8'}
+    e2 = {'data': 'Status,1.14% usr 0.00% sys,55464K,1,1,1,19 days 1 hours 09 minutes,7,7,7,7'}
+    e3 = {'data': 'System Reboot [5]'}
+    e4 = {'data': 'Provision Firmware Download start [J18V154.00_R2.67]'}
+
     TRANSFORM_LIST_data = [
-        ({"data": "^LTE_Information "}, {"__topic__": "etl_info"}),
-        ({"data": "^Status,"}, {"__topic__": "machine_status"}),
-        ({"data": "^System Reboot "}, {"__topic__": "reboot_event"}),
-        ({"data": "^Provision Firmware Download start"}, {"__topic__": "download"}),
+        ({"data": "^LTE_Information .+"}, {"__topic__": "etl_info"}),
+        ({"data": "^Status,.+"}, {"__topic__": "machine_status"}),
+        ({"data": "^System Reboot .+"}, {"__topic__": "reboot_event"}),
+        ({"data": "^Provision Firmware Download start.+"}, {"__topic__": "download"}),
         (True, {"event_type": "hello_data"})]
 
     e1_new = {'data': 'LTE_Information 80,-82,17,4402010820E2DC5D,3750,-8', "__topic__": "etl_info", "event_type": "hello_data"}
