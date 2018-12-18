@@ -4,7 +4,7 @@ from collections import Callable
 import six
 from ..trans_comp import REGEX
 from .transform_base import transform_base
-from ..etl_util import process_event
+from ..etl_util import process_event, bind_event_fn
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ class transform(transform_base):
                 if isinstance(config, (six.text_type, six.binary_type)):
                     self.transform_list.append(lambda e: REGEX(*tr[1:])(e, inpt))
                 elif isinstance(config, Callable):
-                    self.transform_list.append(lambda e: config(e, inpt))
+                    #self.transform_list.append(lambda e: config(e, inpt))
+                    self.transform_list.append(bind_event_fn(config, inpt))
                 else:
                     logger.warning("unknown transform config setting: {0}".format(config))
                     continue

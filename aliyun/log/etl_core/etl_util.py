@@ -27,6 +27,15 @@ def re_full_match(pattern, string, *args, **kwargs):
         return m
 
 
+# this function is used to bypass lambda trap
+def bind_event_fn(fn, *args, **kwargs):
+    @wraps(fn)
+    def _real_fn(e):
+        return fn(e, *args, **kwargs)
+
+    return _real_fn
+
+
 @cached
 def get_re_full_match(pattern, flags=0):
     p = re.compile(pattern, flags=flags)
@@ -72,3 +81,46 @@ def process_event(event, fn_list, cp=True):
         return None  # return None for empty list
 
     return new_event
+
+
+def _is_event_list(event):
+    if isinstance(event, (list, tuple)):
+        for e in event:
+            if e is not None and not isinstance(e, dict):
+                break
+        else:
+            return True
+
+    return False
+
+
+def support_event_list_simple(fn):
+    """
+    enable __call__ to accept event_list.
+    :param fn:
+    :return:
+    """
+    @wraps(fn)
+    def _wrapped(self, event, *args, **kwargs):
+        if _is_event_list(event):
+            result = []
+            for e in event:
+                ret = fn(self, e, *args, **kwargs)
+
+                if ret is None:
+                    continue
+
+                if isinstance(ret, (tuple, list)):
+                    result.extend(ret)
+                else:
+                    result.append(ret)
+
+            if result:
+                if len(result) == 1:
+                    return result[0]
+                return result
+            return None
+        else:
+            return fn(self, event, *args, **kwargs)
+
+    return _wrapped

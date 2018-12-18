@@ -152,6 +152,24 @@ def test_dispatch_transform():
     assert transform_event(TRANSFORM_LIST_data)(e3) == e3_new
     assert transform_event(TRANSFORM_LIST_data)(e4) == e4_new
 
+    # test transform event list
+    d = {"i": "1", "data": """[{"name": "nanjing", "pop": "800"}, {"name": "shanghai", "pop": "2000"}, {"name": "beijing", "pop": "2100"}]"""}
+    TRANSFORM_LIST_data = [
+        (ANY, ("data", SPLIT) ),
+        (ANY, ("data", JSON)),
+        (ANY, DROP_F("data|i"))
+    ]
+    assert transform_event(TRANSFORM_LIST_data)(d) == [{"name": "nanjing", "pop": "800"}, {"name": "shanghai", "pop": "2000"}, {"name": "beijing", "pop": "2100"}]
+
+    d = {"i": "1", "data": """[{"name": "nanjing", "pop": "800"}, {"name": "shanghai", "pop": "2000"}, {"name": "beijing", "pop": "2100"}]"""}
+    TRANSFORM_LIST_data = [
+        (ANY, [("data", SPLIT), ("data", JSON), DROP_F("i")] ),
+        (ANY, DROP_F("data"))
+    ]
+
+    assert transform_event(TRANSFORM_LIST_data)(d) == [{"name": "nanjing", "pop": "800"}, {"name": "shanghai", "pop": "2000"}, {"name": "beijing", "pop": "2100"}]
+
+
 
 def test_meta():
     e1 = {'k1': "v1", 'k2': 'v2', 'x1': 'v3', 'x5': 'v4'}

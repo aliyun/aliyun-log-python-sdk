@@ -3,6 +3,10 @@ import six
 
 
 class trans_comp_base(object):
+    @property
+    def __name__(self):
+        return str(type(self))
+
     @staticmethod
     def _n(v):
         if v is None:
