@@ -412,6 +412,14 @@ def test_lookup_load_csv():
     assert t( ("city", LOOKUP(csv_path, ["province", "pop"], quote='|') ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js', 'pop': '800'}
     assert t( ("city", LOOKUP(csv_path, ["province", "pop"], quote='|') ))({'data': '123', 'city': 'shang hai'})  == {'data': '123', 'city': 'shang hai', 'province': 'SHANG,HAI', 'pop': '2000'}
 
+    # headers - list
+    csv_path = _pre_csv("nj,800,js\nsh,2000,sh", 1)
+    assert t( ("ct", LOOKUP(csv_path, "pro", headers=["ct", "pop", "pro"]) ))({'data': '123', 'ct': 'nj'})  == {'data': '123', 'ct': 'nj', 'pro': 'js'}
+
+    # headers - csv
+    csv_path = _pre_csv("nj,800,js\nsh,2000,sh", 1)
+    assert t( ("ct2", LOOKUP(csv_path, "pro", headers="ct2, pop , pro") ))({'data': '123', 'ct2': 'nj'})  == {'data': '123', 'ct2': 'nj', 'pro': 'js'}
+
 
 def test_lookup_mapping():
 

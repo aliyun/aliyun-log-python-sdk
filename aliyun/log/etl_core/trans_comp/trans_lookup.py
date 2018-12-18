@@ -63,7 +63,7 @@ class DefaultDict(object):
 class trans_comp_lookup(trans_comp_base):
     EXTERNAL_CACHE = {}
 
-    def __init__(self, data, output_fields, sep=',', quote='"', lstrip=True, case_insensitive=True):
+    def __init__(self, data, output_fields, sep=',', quote='"', lstrip=True, case_insensitive=True, headers=None):
         if isinstance(data, dict):
             self.data = DefaultDict(data, case_insensitive)
 
@@ -82,7 +82,14 @@ class trans_comp_lookup(trans_comp_base):
 
         elif isinstance(data, (six.binary_type, six.text_type)):
 
-            self.sig = (data, sep, quote, lstrip)
+            # parse headers
+            if headers:
+                if isinstance(headers, (six.text_type, six.binary_type)):
+                    headers = tuple(x.strip() for x in headers.split(","))
+                else:
+                    headers = tuple(headers)
+
+            self.sig = (data, sep, quote, lstrip, headers)
 
             if self.sig in self.EXTERNAL_CACHE:
                 self.data = self.EXTERNAL_CACHE[self.sig]
@@ -100,7 +107,7 @@ class trans_comp_lookup(trans_comp_base):
                         raise SettingError(msg="trans_comp_lookup: cannot locate the file path", settings=data)
 
                 with open(file_path) as file:
-                    reader = csv.DictReader(file, skipinitialspace=lstrip, delimiter=sep, quotechar=quote)
+                    reader = csv.DictReader(file, fieldnames=headers, skipinitialspace=lstrip, delimiter=sep, quotechar=quote)
                     self.data = Table(reader, case_insensitive)
 
                 # put into cache for re-use for other calling
