@@ -31,8 +31,8 @@ class trans_comp_csv(trans_comp_base):
 
     def __call__(self, event, inpt):
         if inpt in event:
-            data = event[inpt]
-            ret = list(csv.reader([data], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
+            data = event[inpt].split("\n")
+            ret = list(csv.reader(data, skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
             if self.restrict and len(ret) != len(self.keys):
                 logger.warning(
                     "event {0} field {1} contains different count of fields as expected key {2} actual {3}".format(
