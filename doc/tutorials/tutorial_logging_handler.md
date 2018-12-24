@@ -185,3 +185,7 @@ logger.info("Hello world")
 - [UwsgiQueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.UwsgiQueuedLogHandler) - 建议使用这个类, 功能和配置完全一样. 但是需要额外安装一个第三方法库`uwsgidecorators`
 - [SimpleLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.SimpleLogHandler) - 即时发送的简单Logging Handler, 配置完全一样. 用于特殊场景下的测试更方便一些, 一般情况下不推荐.
 
+
+## 进行一步参考:
+1. [使用Python Log Handler自动上传并解析JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)
+2. [使用Python Log Handler自动上传并解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)
