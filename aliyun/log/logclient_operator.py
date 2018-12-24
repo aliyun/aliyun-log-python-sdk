@@ -669,7 +669,7 @@ def _transform_events_to_logstore(runner, events, to_client, to_project, to_logs
                 source = event['__source__']
                 del event["__source__"]
 
-            new_events[(dt, topic, source)].append(new_event)
+            new_events[(dt, topic, source)].append(event)
 
     for (dt, topic, source), contents in six.iteritems(new_events):
 
