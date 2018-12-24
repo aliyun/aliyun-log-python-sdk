@@ -22,7 +22,7 @@ install:
 script:
   - python tests/ut/test_util.py
   - python tests/etl_test/test_case.py
-  - python tests/cli_config_check/test_case_safe.py
+  - python tests/cli_config_check/test_case.py
   - python tests/sample.py
   - python tests/integration_test/test_logtail_config.py
   - python tests/integration_test/test_entity.py
