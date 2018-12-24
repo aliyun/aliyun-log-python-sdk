@@ -44,7 +44,7 @@ check_module('./restrict_config_test_data//config7_safe.py')
 
 code = """
 import re
-    """
+"""
 check_module(code, True)
 
 code = """
@@ -61,23 +61,23 @@ check_module(code)
 
 code = """
 KEEP_FIELDS_f1 = {"abc": V("xyz")}
-        """
+"""
 check_module(code)
 
 code = """
 KEEP_FIELDS_f1 = {"abc".lower(): "xyz"}
-        """
+"""
 check_module(code, True)
 
 
 code = """
 KEEP_FIELDS_f1 = {"abc": lambda e: 'v' in e }
-        """
+"""
 check_module(code, True)
 
 code = """
 KEEP_FIELDS_f1 = {"abc": Y("x") }
-        """
+"""
 check_module(code, True)
 
 
