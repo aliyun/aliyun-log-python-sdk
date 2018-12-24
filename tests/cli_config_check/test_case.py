@@ -1,9 +1,11 @@
 import os
 from aliyun.log.etl_core.restrict_config_parser import RestrictConfigParser, InvalidETLConfig
 
+base_dir = os.path.dirname(__file__)
+
 
 def parse_config(config_path):
-        md_path = os.path.abspath(config_path)
+        md_path = os.path.sep.join([base_dir, config_path])
         if os.path.isfile(md_path):
             code = open(md_path, 'r').read()
         else:
