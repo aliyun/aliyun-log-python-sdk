@@ -208,9 +208,13 @@ class IndexConfig(object):
 
     :type all_keys_config: IndexKeyConfig
     :param all_keys_config: the key config of all keys, the new create logstore should never user this param, it only used to compatible with old config
+
+    :type log_reduce: bool
+    :param log_reduce: if to enable logreduce
+
     """
 
-    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None):
+    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None, log_reduce=None):
         if key_config_list is None:
             key_config_list = {}
         self.ttl = ttl
@@ -218,6 +222,7 @@ class IndexConfig(object):
         self.line_config = line_config
         self.key_config_list = key_config_list
         self.modify_time = int(time.time())
+        self.log_reduce = log_reduce
 
     def to_json(self):
         json_value = {}
@@ -228,6 +233,9 @@ class IndexConfig(object):
 
         if self.all_keys_config is not None:
             json_value["all_keys"] = self.all_keys_config.to_json()
+
+        if self.log_reduce is not None:
+            json_value["log_reduce"] = self.log_reduce
 
         return json_value
 
@@ -246,5 +254,6 @@ class IndexConfig(object):
                 key_config = IndexKeyConfig()
                 key_config.from_json(value)
                 self.key_config_list[key] = key_config
+        self.log_reduce = json_value.get('log_reduce', None)
 
         self.modify_time = json_value.get("lastModifyTime", int(time.time()))
