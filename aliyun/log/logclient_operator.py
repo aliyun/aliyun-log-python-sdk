@@ -702,7 +702,7 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
 
         count = removed = processed = failed = 0
         for s in iter_data:
-            events = s.get_flatten_logs_json(time_as_str=True)
+            events = s.get_flatten_logs_json_auto()
 
             c, r, p, f = _transform_events_to_logstore(runner, events, to_client, to_project, to_logstore)
             count += c

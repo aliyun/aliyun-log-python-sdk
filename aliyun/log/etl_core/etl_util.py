@@ -1,7 +1,7 @@
 from functools import wraps
 import re
 import copy
-
+import six
 
 def cached(fn):
     @wraps(fn)
@@ -20,6 +20,11 @@ def cached(fn):
 
 
 def re_full_match(pattern, string, *args, **kwargs):
+    if six.PY2 and isinstance(pattern, six.binary_type):
+        pattern = pattern.decode('utf8', 'ignore')
+    if six.PY2 and isinstance(string, six.binary_type):
+        string = string.decode('utf8', 'ignore')
+
     if hasattr(re, 'fullmatch'):
         return re.fullmatch(pattern, string, *args, **kwargs)
     m = re.match(pattern, string, *args, **kwargs)
@@ -38,11 +43,17 @@ def bind_event_fn(fn, *args, **kwargs):
 
 @cached
 def get_re_full_match(pattern, flags=0):
+    if six.PY2 and isinstance(pattern, six.binary_type):
+        pattern = pattern.decode('utf8', 'ignore')
+
     p = re.compile(pattern, flags=flags)
-    if hasattr(p, 'fullmatch'):
+    if hasattr(p, 'fullmatch'):  # normally it's Py3
         return p.fullmatch
 
     def ptn_full_match(string, *args, **kwargs):
+        if six.PY2 and isinstance(string, six.binary_type):
+            string = string.decode('utf8', 'ignore')
+
         m = p.match(string, *args, **kwargs)
         if m and m.span()[1] == len(string):
             return m

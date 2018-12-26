@@ -11,6 +11,7 @@ from .util import base64_encodestring as b64e
 
 from .log_logs_pb2 import LogGroupList
 from .log_logs_raw_pb2 import LogGroupListRaw
+import six
 
 
 class PullLogResponse(LogResponse):
@@ -25,9 +26,11 @@ class PullLogResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
+        self._is_bytes_type = None
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
         self.loggroup_list = LogGroupList()
+
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
@@ -86,6 +89,7 @@ class PullLogResponse(LogResponse):
                 p = LogGroupListRaw()
                 p.ParseFromString(data)
                 self.loggroup_list = p
+                self._is_bytes_type = True
                 return
             except Exception as ex2:
                 ex_second = ex2
@@ -113,19 +117,31 @@ class PullLogResponse(LogResponse):
                          'tags': tags}
             self.loggroup_list_json.append(log_items)
 
+    DEFAULT_DECODE_LIST = ('utf8', 'gbk8')
+    @staticmethod
+    def _b2u(content):
+        for d in PullLogResponse.DEFAULT_DECODE_LIST:
+            try:
+                return content.decode(d, 'ignore')
+            except UnicodeDecodeError as ex:
+                continue
+        return content
+
     @staticmethod
     def loggroups_to_flattern_list(loggroup_list, time_as_str=None, decode_bytes=None):
         flatten_logs_json = []
         for logGroup in loggroup_list.LogGroups:
             tags = {}
             for tag in logGroup.LogTags:
-                tags["__tag__:{0}".format(tag.Key)] = tag.Value
+                tags[u"__tag__:{0}".format(tag.Key)] = tag.Value
 
             for log in logGroup.Logs:
-                item = {'__time__': str(log.Time) if time_as_str else log.Time, '__topic__': logGroup.Topic, '__source__': logGroup.Source}
+                item = {u'__time__': six.text_type(log.Time) if time_as_str else log.Time,
+                        u'__topic__': logGroup.Topic,
+                        u'__source__': logGroup.Source}
                 item.update(tags)
                 for content in log.Contents:
-                    item[content.Key] = content.Value
+                    item[content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value
                 flatten_logs_json.append(item)
         return flatten_logs_json
 
@@ -133,5 +149,12 @@ class PullLogResponse(LogResponse):
         if self.flatten_logs_json is None:
             self.flatten_logs_json = self.loggroups_to_flattern_list(self.loggroup_list, time_as_str=time_as_str,
                                                                      decode_bytes=decode_bytes)
+
+        return self.flatten_logs_json
+
+    def get_flatten_logs_json_auto(self):
+        if self.flatten_logs_json is None:
+            self.flatten_logs_json = self.loggroups_to_flattern_list(self.loggroup_list, time_as_str=True,
+                                                                     decode_bytes=self._is_bytes_type)
 
         return self.flatten_logs_json
