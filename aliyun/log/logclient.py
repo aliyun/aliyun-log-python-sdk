@@ -189,15 +189,7 @@ class LogClient(object):
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            r = None
-            if method.lower() == 'get':
-                r = requests.get(url, params=params, data=body, headers=headers, timeout=self._timeout)
-            elif method.lower() == 'post':
-                r = requests.post(url, params=params, data=body, headers=headers, timeout=self._timeout)
-            elif method.lower() == 'put':
-                r = requests.put(url, params=params, data=body, headers=headers, timeout=self._timeout)
-            elif method.lower() == 'delete':
-                r = requests.delete(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
