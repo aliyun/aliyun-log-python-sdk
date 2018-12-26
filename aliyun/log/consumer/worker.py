@@ -37,10 +37,9 @@ class ConsumerWorker(Thread):
                 shard_consumer = self._get_shard_consumer(shard)
                 shard_consumer.consume()
             self.clean_shard_consumer(held_shards)
-            try:
-                time.sleep(self.option.data_fetch_interval)
-            except Exception as e:
-                print(e)
+
+            # default sleep for 2s from "LogHubConfig"
+            time.sleep(self.option.data_fetch_interval)
 
     def clean_shard_consumer(self, owned_shards):
         remove_shards = []
