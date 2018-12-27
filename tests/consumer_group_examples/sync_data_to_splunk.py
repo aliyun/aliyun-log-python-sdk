@@ -123,25 +123,20 @@ def get_monitor_option():
     consumer_name = "{0}-{1}".format(consumer_group, current_process().pid)
 
     # This options is used for initialization, will be ignored once consumer group is created and each shard has beeen started to be consumed.
-    cursor_position = CursorPosition.SPECIAL_TIMER_CURSOR
-    cursor_start_time = "2018-12-26 0:0:0"    # Will be used when cursor_position is specific time cursor . could be "begin", "end", "specific time format in ISO", it's log receiving time.
-
-    # during consuption, when shard is splitted, if need to consume the newly splitted shard after its parent shard (read-only) is finished consumption or not.
-    # suggest keep it as False (don't care) until you have good reasion for it.
-    in_order = False
+    # Could be "begin", "end", "specific time format in ISO", it's log receiving time.
+    cursor_start_time = "2018-12-26 0:0:0"
 
     # once a client doesn't report to server * heartbeat_interval * 2 interval, server will consider it's offline and re-assign its task to another consumer.
     # thus  don't set the heatbeat interval too small when the network badwidth or performance of consumtion is not so good.
     heartbeat_interval = 20
 
     # if the coming data source data is not so frequent, please don't configure it too small (<1s)
-    data_fetch_interval = 0.1
+    data_fetch_interval = 1
 
     # create one consumer in the consumer group
     option = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group, consumer_name,
-                          cursor_position=cursor_position,
+                          cursor_position=CursorPosition.SPECIAL_TIMER_CURSOR,
                           cursor_start_time=cursor_start_time,
-                          in_order=in_order,
                           heartbeat_interval=heartbeat_interval,
                           data_fetch_interval=data_fetch_interval)
 
