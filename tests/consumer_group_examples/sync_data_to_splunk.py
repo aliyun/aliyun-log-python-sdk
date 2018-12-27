@@ -79,7 +79,7 @@ class SyncData(ConsumerProcessorBase):
             event.update(self.default_fields)
             if log.get(u"__topic__") == 'audit_log':
                 # suppose we only care about audit log
-                event['time'] = log['__time__']
+                event['time'] = log[u'__time__']
                 event['fields'] = {}
                 del log['__time__']
                 event['fields'].update(log)
