@@ -5,7 +5,6 @@ import logging
 import time
 
 from .checkpoint_tracker import ConsumerCheckpointTracker
-from concurrent.futures import ThreadPoolExecutor
 
 from .config import ConsumerStatus
 from .fetched_log_group import FetchedLogGroup
@@ -17,7 +16,7 @@ from .exceptions import ClientWorkerException
 
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
-                 max_workers=2, max_fetch_log_group_size=1000):
+                 max_fetch_log_group_size=1000, executor=None):
         self.log_client = log_client
         self.shard_id = shard_id
         self.consumer_name = consumer_name
@@ -26,7 +25,7 @@ class ShardConsumerWorker(object):
         self.processor = processor
         self.checkpoint_tracker = ConsumerCheckpointTracker(self.log_client, self.consumer_name,
                                                             self.shard_id)
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.executor = executor
         self.max_fetch_log_group_size = max_fetch_log_group_size
 
         self.consumer_status = ConsumerStatus.INITIALIZING
