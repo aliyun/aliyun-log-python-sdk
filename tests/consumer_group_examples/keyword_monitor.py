@@ -49,7 +49,7 @@ class KeywordMonitor(ConsumerProcessorBase):
                 sample_error_log = log
 
         if match_count:
-            logger.info("Keyword detected for shard {0}, count: {1}, example: {1}".format(self.shard_id, match_count, sample_error_log))
+            logger.info("Keyword detected for shard {0}, count: {1}, example: {2}".format(self.shard_id, match_count, sample_error_log))
         else:
             logger.debug("No keyword detected for shard {0}".format(self.shard_id))
 
@@ -132,6 +132,6 @@ def main():
     except KeyboardInterrupt:
         logger.info("*** try to exit **** ")
         worker.shutdown()
-        
+
 if __name__ == '__main__':
     main()
