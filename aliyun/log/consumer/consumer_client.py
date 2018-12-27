@@ -49,12 +49,12 @@ class ConsumerClient(object):
 
         return None
 
-    def heartbeat(self, shards, responce=None):
-        if responce is None:
-            responce = []
+    def heartbeat(self, shards, response=None):
+        if response is None:
+            response = []
 
         try:
-            responce.extend(
+            response.extend(
                 self.mclient.heart_beat(self.mproject, self.mlogstore,
                                         self.mconsumer_group, self.mconsumer, shards).get_shards())
             return True
