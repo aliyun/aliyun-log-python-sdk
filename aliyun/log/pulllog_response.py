@@ -117,15 +117,28 @@ class PullLogResponse(LogResponse):
                          'tags': tags}
             self.loggroup_list_json.append(log_items)
 
-    DEFAULT_DECODE_LIST = ('utf8', 'gbk8')
+    DEFAULT_DECODE_LIST = ('utf8', 'latin1', 'gbk8')
+
     @staticmethod
     def _b2u(content):
-        for d in PullLogResponse.DEFAULT_DECODE_LIST:
-            try:
-                return content.decode(d, 'ignore')
-            except UnicodeDecodeError as ex:
-                continue
+        if six.PY3 and isinstance(content, six.binary_type):
+            for d in PullLogResponse.DEFAULT_DECODE_LIST:
+                try:
+                    return content.decode(d)
+                except UnicodeDecodeError as ex:
+                    continue
+
+            # force to use utf8
+            return content.decode('utf8', 'ignore')
         return content
+
+    @staticmethod
+    def get_log_count_from_group(loggroup_list):
+        count = 0
+        for logGroup in loggroup_list.LogGroups:
+            for log in logGroup.Logs:
+                count += 1
+        return count
 
     @staticmethod
     def loggroups_to_flattern_list(loggroup_list, time_as_str=None, decode_bytes=None):
