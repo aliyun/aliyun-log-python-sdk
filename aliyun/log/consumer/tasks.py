@@ -5,22 +5,43 @@ import logging
 
 from .config import CursorPosition
 from ..logexception import LogException
+import time
 
 logger = logging.getLogger(__name__)
 
 
 class ConsumerProcessorBase(object):
-    @abc.abstractmethod
+    def __init__(self):
+        self.shard_id = -1
+        self.last_check_time = 0
+        self.checkpoint_timeout = 3
+
+    def save_checkpoint(self, tracker, force=False):
+        current_time = time.time()
+        if force or current_time - self.last_check_time > self.checkpoint_timeout:
+            try:
+                self.last_check_time = current_time
+                tracker.save_check_point(True)
+            except Exception as ex:
+                logger.warning(
+                    "Fail to store checkpoint for shard {0}, error: {1}".format(self.shard_id, ex))
+        else:
+            try:
+                tracker.save_check_point(False)
+            except Exception as ex:
+                logger.warning(
+                    "Fail to store checkpoint for shard {0}, error: {1}".format(self.shard_id, ex))
+
     def initialize(self, shard):
-        raise NotImplementedError('not initialize shard')
+        self.shard_id = shard
 
     @abc.abstractmethod
     def process(self, log_groups, check_point_tracker):
         raise NotImplementedError('not create method process')
 
-    @abc.abstractmethod
     def shutdown(self, check_point_tracker):
-        raise NotImplementedError('not create method shutdown')
+        logger.info("ConsumerProcesser is shutdown, shard id: {0}".format(self.shard_id))
+        self.save_checkpoint(check_point_tracker, force=True)
 
 
 class TaskResult(object):
