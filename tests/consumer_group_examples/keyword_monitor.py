@@ -12,7 +12,7 @@ import re
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] - [%(threadName)s] - {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[RotatingFileHandler("sls_client_{0}.log".format(current_process().pid), maxBytes=100*1024*1024, backupCount=5),
+                    handlers=[RotatingFileHandler("keyword_monitor_{0}.log".format(current_process().pid), maxBytes=100*1024*1024, backupCount=5),
                               logging.StreamHandler()])
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,8 @@ class KeywordMonitor(ConsumerProcessorBase):
     this consumer will keep monitor with k-v fields. like {"content": "error"}
     """
     def __init__(self, keywords=None):
-        super(KeywordMonitor, self).__init__()
+        super(KeywordMonitor, self).__init__()  # remember to call base init
+
         assert keywords, ValueError("At least you need to configure one keywords to monitor")
         assert isinstance(keywords, dict), ValueError("The keyword should be dict as in field:keyword format.")
         self.keywords = keywords
