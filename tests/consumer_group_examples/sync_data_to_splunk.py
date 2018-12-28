@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class SyncData(ConsumerProcessorBase):
     """
-    this consumer will keep monitor with k-v fields. like {"content": "error"}
+    this consumer will forward logs to Splunk.
     """
     def __init__(self, splunk_setting=None):
         """
@@ -141,7 +141,7 @@ def get_monitor_option():
                           data_fetch_interval=data_fetch_interval)
 
     # monitor options
-    keywords = {
+    settings = {
                 "host": "10.1.2.3",
                 "port": 80,
                 "token": "a023nsdu123123123",
@@ -153,14 +153,14 @@ def get_monitor_option():
                 "source": "",               # optional, source
             }
 
-    return option, keywords
+    return option, settings
 
 
 def main():
-    option, keywords = get_monitor_option()
+    option, settings = get_monitor_option()
 
     logger.info("*** start to consume data...")
-    worker = ConsumerWorker(SyncData, option, args=(keywords,) )
+    worker = ConsumerWorker(SyncData, option, args=(settings,) )
     worker.start()
 
     try:
