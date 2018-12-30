@@ -20,10 +20,10 @@ class ConsumerHeatBeat(Thread):
 
     def run(self):
         logger.info('heart beat start')
-        last_heatbeat_time = 0
         while not self.shut_down_flag:
             try:
                 response_shards = []
+                last_heatbeat_time = time.time()
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
                 logger.info('heart beat result: {} get: {}'.format(self.mheart_shards, response_shards))
                 self.mheld_shards = response_shards
@@ -31,7 +31,6 @@ class ConsumerHeatBeat(Thread):
 
                 # default sleep for 2s from "LogHubConfig"
                 time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
-                last_heatbeat_time = time.time()
                 if time_to_sleep > 0 and not self.shut_down_flag:
                     time.sleep(time_to_sleep)
             except Exception as e:

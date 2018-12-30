@@ -41,6 +41,7 @@ class ConsumerWorker(Thread):
         while not self.shut_down_flag:
             held_shards = self.heart_beat.get_held_shards()
 
+            last_fetch_time = time.time()
             for shard in held_shards:
                 if self.shut_down_flag:
                     break
@@ -52,7 +53,6 @@ class ConsumerWorker(Thread):
 
             # default sleep for 2s from "LogHubConfig"
             time_to_sleep = self.option.data_fetch_interval - (time.time() - last_fetch_time)
-            last_fetch_time = time.time()
             if time_to_sleep > 0 and not self.shut_down_flag:
                 time.sleep(time_to_sleep)
 
