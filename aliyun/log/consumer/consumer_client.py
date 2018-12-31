@@ -7,6 +7,8 @@ from .exceptions import ClientWorkerException
 from ..logexception import LogException
 from ..version import USER_AGENT
 
+logger = logging.getLogger(__name__)
+
 
 class ConsumerClient(object):
     def __init__(self, endpoint, access_key_id, access_key, project,
