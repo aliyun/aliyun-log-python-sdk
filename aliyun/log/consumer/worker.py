@@ -11,6 +11,8 @@ from .heart_beat import ConsumerHeatBeat
 from .shard_worker import ShardConsumerWorker
 from concurrent.futures import ThreadPoolExecutor
 
+logger = logging.getLogger(__name__)
+
 
 class ConsumerWorker(Thread):
 
@@ -37,7 +39,6 @@ class ConsumerWorker(Thread):
         self.logger.info('consumer worker "{0}" start '.format(self.option.consumer_name))
         self.heart_beat.start()
 
-        last_fetch_time = 0
         while not self.shut_down_flag:
             held_shards = self.heart_beat.get_held_shards()
 
@@ -47,11 +48,14 @@ class ConsumerWorker(Thread):
                     break
 
                 shard_consumer = self._get_shard_consumer(shard)
+                if shard_consumer is None: # error when init consumer. shutdown directly
+                    self.shutdown()
+                    break
+
                 shard_consumer.consume()
 
             self.clean_shard_consumer(held_shards)
 
-            # default sleep for 2s from "LogHubConfig"
             time_to_sleep = self.option.data_fetch_interval - (time.time() - last_fetch_time)
             if time_to_sleep > 0 and not self.shut_down_flag:
                 time.sleep(time_to_sleep)
@@ -103,8 +107,15 @@ class ConsumerWorker(Thread):
         if consumer is not None:
             return consumer
 
+        try:
+            processer = self.make_processor(*self.process_args, **self.process_kwargs)
+        except Exception as ex:
+            logger.error("fail to init processor {0} with parameters {1}, {2}, detail: {3}".format(
+                self.make_processor, self.process_args, self.process_kwargs, ex, exc_info=True))
+            return None
+
         consumer = ShardConsumerWorker(self.consumer_client, shard_id, self.option.consumer_name,
-                                       self.make_processor(*self.process_args, **self.process_kwargs),
+                                       processer,
                                        self.option.cursor_position, self.option.cursor_start_time,
                                        executor=self.executor)
         self.shard_consumers[shard_id] = consumer
