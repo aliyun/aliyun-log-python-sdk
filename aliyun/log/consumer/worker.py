@@ -57,8 +57,9 @@ class ConsumerWorker(Thread):
             self.clean_shard_consumer(held_shards)
 
             time_to_sleep = self.option.data_fetch_interval - (time.time() - last_fetch_time)
-            if time_to_sleep > 0 and not self.shut_down_flag:
-                time.sleep(time_to_sleep)
+            while time_to_sleep > 0 and not self.shut_down_flag:
+                time.sleep(min(time_to_sleep, 1))
+                time_to_sleep = self.option.data_fetch_interval - (time.time() - last_fetch_time)
 
         # # stopping worker, need to cleanup all existing shard consumer
         self.logger.info('consumer worker "{0}" try to cleanup consumers'.format(self.option.consumer_name))

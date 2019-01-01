@@ -32,8 +32,9 @@ class ConsumerHeatBeat(Thread):
 
                 # default sleep for 2s from "LogHubConfig"
                 time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
-                if time_to_sleep > 0 and not self.shut_down_flag:
-                    time.sleep(time_to_sleep)
+                while time_to_sleep > 0 and not self.shut_down_flag:
+                    time.sleep(min(time_to_sleep, 1))
+                    time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
             except Exception as e:
                 logger.warning("fail to heat beat", e)
 
