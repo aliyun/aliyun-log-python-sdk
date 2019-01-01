@@ -1,3 +1,4 @@
+from __future__ import print_function
 from .logexception import LogException
 import six
 import json
@@ -13,6 +14,7 @@ from .putlogsrequest import PutLogsRequest
 from .logitem import LogItem
 from aliyun.log.pulllog_response import PullLogResponse
 from .consumer import *
+from multiprocessing import RLock
 
 MAX_INIT_SHARD_COUNT = 10
 
@@ -717,13 +719,15 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
 
 
 class TransformDataConsumer(ConsumerProcessorBase):
-    shard_id = -1
-    last_check_time = 0
-
     runner = None
     to_client = None
     to_project = None
     to_logstore = None
+
+    def __init__(self, status_updator):
+        super(TransformDataConsumer, self).__init__()
+        self.count = self.removed = self.processed = self.failed = 0
+        self.status_updator = status_updator
 
     @staticmethod
     def set_transform_options(config, to_client, to_project, to_logstore):
@@ -732,40 +736,23 @@ class TransformDataConsumer(ConsumerProcessorBase):
         TransformDataConsumer.to_project = to_project
         TransformDataConsumer.to_logstore = to_logstore
 
-    def initialize(self, shard):
-        logger.info("TransformDataConsumer::initialize: get shard init: {0}".format(shard))
-        self.shard_id = shard
-
     def process(self, log_groups, check_point_tracker):
         logger.info("TransformDataConsumer::process: get log groups")
 
         logs = PullLogResponse.loggroups_to_flattern_list(log_groups)
-        _transform_events_to_logstore(self.runner, logs, self.to_client, self.to_project, self.to_logstore)
+        c, r, p, f = _transform_events_to_logstore(self.runner, logs, self.to_client, self.to_project, self.to_logstore)
+
+        self.count += c
+        self.removed += r
+        self.processed += p
+        self.failed += f
 
         # save check point
-        current_time = time.time()
-        if current_time - self.last_check_time > 3:
-            try:
-                self.last_check_time = current_time
-                check_point_tracker.save_check_point(True)
-            except Exception:
-                import traceback
-                traceback.print_exc()
-        else:
-            try:
-                check_point_tracker.save_check_point(False)
-            except Exception:
-                import traceback
-                traceback.print_exc()
-
-        return None
+        self.save_checkpoint(check_point_tracker)
 
     def shutdown(self, check_point_tracker):
-        try:
-            check_point_tracker.save_check_point(True)
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        super(TransformDataConsumer, self).shutdown(check_point_tracker)
+        self.status_updator(self.shard_id, self.count, self.removed, self.processed, self.failed)
 
 
 def transform_data(from_client, from_project, from_logstore, from_time,
@@ -849,14 +836,33 @@ def transform_data(from_client, from_project, from_logstore, from_time,
                               worker_pool_size=cg_worker_pool_size)
 
         TransformDataConsumer.set_transform_options(config, to_client, to_project, to_logstore)
-        client_worker1 = ConsumerWorker(TransformDataConsumer, consumer_option=option)
-        client_worker1.start()
+
+        result = {"total_count": 0, "shards": {}}
+        l = RLock()
+
+        def status_updator(shard_id, count=0, removed=0, processed=0, failed=0):
+            logger.info("status update is called, shard: {0}, count: {1}, removed: {2}, processed: {3}, failed: {4}".format(shard_id, count, removed, processed, failed))
+
+            with l:
+                result["total_count"] += count
+                if shard_id in result["shards"]:
+                    data = result["shards"][shard_id]
+                    result["shards"][shard_id] = {"total_count": data["total_count"] + count, "transformed": data["transformed"] + processed, "removed": data["removed"] + removed, "failed": data["failed"] + failed}
+                else:
+                    result["shards"][shard_id] = {"total_count": count, "transformed": processed, "removed": removed, "failed": failed}
+
+        worker = ConsumerWorker(TransformDataConsumer, consumer_option=option, args=(status_updator, ) )
+        worker.start()
 
         try:
-            while True:
-                time.sleep(100)
+            while worker.is_alive():
+                worker.join(timeout=60)
+            logger.info("transform_data: worker exit unexpected, try to shutdown it")
+            worker.shutdown()
         except KeyboardInterrupt:
-            logger.info("shutdown transform data.")
-            client_worker1.shutdown()
-            time.sleep(20)
+            logger.info("transform_data: *** try to exit **** ")
+            print("try to stop transforming data.")
+            worker.shutdown()
+            worker.join(timeout=120)
 
+        return LogResponse({}, result)
