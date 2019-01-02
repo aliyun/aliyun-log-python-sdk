@@ -33,7 +33,16 @@ class ConsumerWorker(Thread):
         self.consumer_client.create_consumer_group(consumer_option.heartbeat_interval*2, consumer_option.in_order)
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval)
 
-        self.executor = ThreadPoolExecutor(max_workers=consumer_option.worker_pool_size)
+        if consumer_option.shared_executor is not None:
+            self.own_executor = False
+            self._executor = consumer_option.shared_executor
+        else:
+            self.own_executor = True
+            self._executor = ThreadPoolExecutor(max_workers=consumer_option.worker_pool_size)
+
+    @property
+    def executor(self):
+        return self._executor
 
     def run(self):
         self.logger.info('consumer worker "{0}" start '.format(self.option.consumer_name))
@@ -65,10 +74,12 @@ class ConsumerWorker(Thread):
         self.logger.info('consumer worker "{0}" try to cleanup consumers'.format(self.option.consumer_name))
         self.shutdown_and_wait()
 
-        self.logger.info('consumer worker "{0}" try to shutdown executors'.format(self.option.consumer_name))
-        self.executor.shutdown()
-
-        self.logger.info('consumer worker "{0}" stopped'.format(self.option.consumer_name))
+        if self.own_executor:
+            self.logger.info('consumer worker "{0}" try to shutdown executors'.format(self.option.consumer_name))
+            self._executor.shutdown()
+            self.logger.info('consumer worker "{0}" stopped'.format(self.option.consumer_name))
+        else:
+            self.logger.info('executor is shared, consumer worker "{0}" stopped'.format(self.option.consumer_name))
 
     def start(self, join=False):
         """
@@ -82,7 +93,7 @@ class ConsumerWorker(Thread):
             try:
                 while self.is_alive():
                     self.join(timeout=60)
-                logger.info("worker exit unexpected, try to shutdown it")
+                logger.info("worker {0} exit unexpected, try to shutdown it".format(self.option.consumer_name))
                 self.shutdown()
             except KeyboardInterrupt:
                 logger.info("*** try to exit **** ")
@@ -136,7 +147,7 @@ class ConsumerWorker(Thread):
         consumer = ShardConsumerWorker(self.consumer_client, shard_id, self.option.consumer_name,
                                        processer,
                                        self.option.cursor_position, self.option.cursor_start_time,
-                                       executor=self.executor)
+                                       executor=self._executor)
         self.shard_consumers[shard_id] = consumer
         return consumer
 
