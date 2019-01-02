@@ -10,11 +10,13 @@ import json
 import socket
 import requests
 
-logging.basicConfig(level=logging.INFO,
-                    format='[%(asctime)s] - [%(threadName)s] - {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[RotatingFileHandler("sync_data_to_splunk_{0}.log".format(current_process().pid), maxBytes=100*1024*1024, backupCount=5),
-                              logging.StreamHandler()])
+# configure logging file
+root = logging.getLogger()
+handler = RotatingFileHandler("{0}_{1}.log".format(os.path.basename(__file__), current_process().pid), maxBytes=100*1024*1024, backupCount=5)
+handler.setFormatter(logging.Formatter(fmt='[%(asctime)s] - [%(threadName)s] - {%(module)s:%(funcName)s:%(lineno)d} %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+root.setLevel(logging.INFO)
+root.addHandler(handler)
+root.addHandler(logging.StreamHandler())
 
 logger = logging.getLogger(__name__)
 
@@ -160,16 +162,7 @@ def main():
 
     logger.info("*** start to consume data...")
     worker = ConsumerWorker(SyncData, option, args=(settings,) )
-    worker.start()
-
-    try:
-        while worker.is_alive():
-            worker.join(timeout=60)
-        logger.info("worker exit unexpected, try to shutdown it")
-        worker.shutdown()
-    except KeyboardInterrupt:
-        logger.info("*** try to exit **** ")
-        worker.shutdown()
+    worker.start(join=True)
 
 
 if __name__ == '__main__':
