@@ -70,6 +70,24 @@ class ConsumerWorker(Thread):
 
         self.logger.info('consumer worker "{0}" stopped'.format(self.option.consumer_name))
 
+    def start(self, join=False):
+        """
+        when calling with join=True, must call it in main thread, or else, the Keyboard Interrupt won't be caputured.
+        :param join: default False, if hold on until the worker is stopped by Ctrl+C or other reasons.
+        :return:
+        """
+        Thread.start(self)
+
+        if join:
+            try:
+                while self.is_alive():
+                    self.join(timeout=60)
+                logger.info("worker exit unexpected, try to shutdown it")
+                self.shutdown()
+            except KeyboardInterrupt:
+                logger.info("*** try to exit **** ")
+                self.shutdown()
+
     def shutdown_and_wait(self):
         while True:
             time.sleep(0.5)
