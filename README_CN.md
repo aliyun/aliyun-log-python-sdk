@@ -994,6 +994,7 @@ migration_manager.migrate()
 ```
 
 ## 最佳实践
+- [日志服务与SIEM（如Splunk）集成方案](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_sync_log_to_splunk.html)
 - [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
 - [Log Handler自动解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)
 - [Log Handler自动解析JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)
