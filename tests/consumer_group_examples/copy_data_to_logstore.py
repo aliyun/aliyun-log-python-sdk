@@ -48,9 +48,13 @@ def get_copy_option():
     # DON'T configure the consumer name especially when you need to run this program in parallel
     consumer_name = "{0}-{1}".format(consumer_group, current_process().pid)
 
+    # This options is used for initialization, will be ignored once consumer group is created and each shard has beeen started to be consumed.
+    # Could be "begin", "end", "specific time format in ISO", it's log receiving time.
+    cursor_start_time = "begin"
+
     # copy from the latest one.
     option = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group, consumer_name,
-                          cursor_position=CursorPosition.END_CURSOR)
+                          cursor_position=CursorPosition.SPECIAL_TIMER_CURSOR, cursor_start_time=cursor_start_time)
 
     # bind put_log_raw which is faster
     to_client = LogClient(to_endpoint, accessKeyId, accessKey)
