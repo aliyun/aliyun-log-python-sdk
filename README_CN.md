@@ -596,9 +596,11 @@ res.log_print();
 通过消费组(Consumer Group)可以获得可保障的自动扩展的日志消费服务.
 
 ### 高级接口
-可以参考这两篇实战文章与样例。
+可以参考这这几篇实战文章与样例。
 - [日志服务与SIEM（如Splunk）集成方案](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_sync_log_to_splunk.html)
 - [使用消费组实时分发数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_dispatch_log.html)
+- [使用消费组实时实时跨域监测多日志库数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_monitor_multiple_logstores.html)
+- 相关[样例代码](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests/consumer_group_examples)
 
 ### 基础接口
 高级接口已经对基础接口进行了封装. 个别情况下也可以通过基础接口进行一些特定的操作.
@@ -929,6 +931,7 @@ migration_manager.migrate()
 ## 最佳实践
 - [日志服务与SIEM（如Splunk）集成方案](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_sync_log_to_splunk.html)
 - [使用消费组实时分发数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_dispatch_log.html)
+- [使用消费组实时实时跨域监测多日志库数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_monitor_multiple_logstores.html)
 - [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
 - [Log Handler自动解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)
 - [Log Handler自动解析JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)
