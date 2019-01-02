@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
 import logging
 from logging.handlers import RotatingFileHandler
 from aliyun.log.consumer import *
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class SyncData(ConsumerProcessorBase):
     """
-    this consumer will keep monitor with k-v fields. like {"content": "error"}
+    this consumer will forward logs to Splunk.
     """
     def __init__(self, splunk_setting=None):
         """
@@ -141,7 +140,7 @@ def get_monitor_option():
                           data_fetch_interval=data_fetch_interval)
 
     # monitor options
-    keywords = {
+    settings = {
                 "host": "10.1.2.3",
                 "port": 80,
                 "token": "a023nsdu123123123",
@@ -153,19 +152,21 @@ def get_monitor_option():
                 "source": "",               # optional, source
             }
 
-    return option, keywords
+    return option, settings
 
 
 def main():
-    option, keywords = get_monitor_option()
+    option, settings = get_monitor_option()
 
     logger.info("*** start to consume data...")
-    worker = ConsumerWorker(SyncData, option, args=(keywords,) )
+    worker = ConsumerWorker(SyncData, option, args=(settings,) )
     worker.start()
 
     try:
-        while True:
-            time.sleep(60)
+        while worker.is_alive():
+            worker.join(timeout=60)
+        logger.info("worker exit unexpected, try to shutdown it")
+        worker.shutdown()
     except KeyboardInterrupt:
         logger.info("*** try to exit **** ")
         worker.shutdown()

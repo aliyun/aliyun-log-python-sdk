@@ -97,6 +97,10 @@ endpoint = 'https://cn-hangzhou.log.aliyuncs.com'
 
 ```
 
+`*.aliyuncs.com`的证书是GlobalSign的, 默认大部分机器已经按照并信任, 如果您的机器没有默认信任, 可以下载证书并安装信任, 可以参考[这个文档](https://success.outsystems.com/Support/Enterprise_Customers/Installation/Install_a_trusted_root_CA__or_self-signed_certificate)来操作.
+
+
+
 ## 数据采集配置
 ### 管理日志项目
 

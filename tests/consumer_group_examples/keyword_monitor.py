@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
 import logging
 from logging.handlers import RotatingFileHandler
 from aliyun.log.consumer import *
@@ -128,11 +127,14 @@ def main():
     worker.start()
 
     try:
-        while True:
-            time.sleep(60)
+        while worker.is_alive():
+            worker.join(timeout=60)
+        logger.info("worker exit unexpected, try to shutdown it")
+        worker.shutdown()
     except KeyboardInterrupt:
         logger.info("*** try to exit **** ")
         worker.shutdown()
+
 
 if __name__ == '__main__':
     main()
