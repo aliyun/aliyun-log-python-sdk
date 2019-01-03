@@ -124,7 +124,8 @@ class ShardConsumerWorker(object):
                 if isinstance(task_result, InitTaskResult):
                     # maintain check points
                     assert self.consumer_status == ConsumerStatus.INITIALIZING, \
-                        ClientWorkerException("get init task result, but status is: " + str(self.consumer_status))
+                        ClientWorkerException(
+                            "get init task result, but status is: " + str(self.consumer_status))
 
                     init_result = task_result
                     self.next_fetch_cursor = init_result.get_cursor()
@@ -138,7 +139,8 @@ class ShardConsumerWorker(object):
                     roll_back_checkpoint = process_task_result.get_rollback_check_point()
                     if roll_back_checkpoint:
                         self.last_fetch_log_group = None
-                        self.logger.info("user defined to roll-back check-point, cancel current fetching task")
+                        self.logger.info(
+                            "user defined to roll-back check-point, cancel current fetching task")
                         self.cancel_current_fetch()
                         self.next_fetch_cursor = roll_back_checkpoint
 
@@ -179,7 +181,8 @@ class ShardConsumerWorker(object):
             self.current_task_exist = True
             self.logger.info("start to cancel fetch job")
             self.cancel_current_fetch()
-            self.task_future = self.executor.submit(consumer_shutdown_task, self.processor, self.checkpoint_tracker)
+            self.task_future = self.executor.submit(
+                consumer_shutdown_task, self.processor, self.checkpoint_tracker)
 
     def cancel_current_fetch(self):
         if self.fetch_data_future is not None:
@@ -219,4 +222,9 @@ class ShardConsumerWorker(object):
             self.check_and_generate_next_task()
 
     def is_shutdown(self):
-        return self.consumer_status == ConsumerStatus.SHUTDOWN_COMPLETE
+        """
+        status of hard-shutdown or normal-shutdown
+        :return: bool
+        """
+        return (self.consumer_status == ConsumerStatus.SHUTDOWN_COMPLETE or
+                self.consumer_status == ConsumerStatus.SHUTTING_DOWN)
