@@ -59,6 +59,25 @@ def test_condition():
     assert condition(lambda e: 'k1' in e and e['k1'].isdigit())(event)
     assert not condition(lambda e: 'k5' in e)(event)
 
+
+def test_condition_not():
+    event = {'k1': '123', 'k2': 'abc', 'k3': "abc123"}
+
+    # dict - string
+    assert not condition({'k1': NOT(r'\d+')})(event)
+    assert not condition([{'k1': NOT(r'\d+')}])(event)
+    assert not condition({'k2': NOT(r'\w+')})(event)
+    assert condition({'k3': NOT(r'\d+')})(event)
+
+    # dict - or
+    assert condition([{'k1': NOT(r'\d+')}, {'k2': NOT(r'\d+')}])(event)
+    assert not condition([{'k1': NOT(r'\d+')}, {'k4': r'\w+'}])(event)
+
+    # dict - and
+    assert not condition([{'k1': NOT(r'\d+'), 'k2': r'\w+'}])(event)
+    assert condition([{'k1': NOT(r'[a-z]+'), 'k3': NOT(r'\d+')}])(event)
+
+
 def test_regex():
     """
 
@@ -873,6 +892,7 @@ def test_zip():
 
 
 test_condition()
+test_condition_not()
 test_regex()
 test_csv()
 test_lookup_dict()

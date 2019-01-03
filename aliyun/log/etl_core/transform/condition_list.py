@@ -19,7 +19,7 @@ from collections import Callable
 import functools
 import six
 
-from ..etl_util import re_full_match, get_re_full_match, u
+from ..etl_util import re_full_match, get_re_full_match, u, NOT
 from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
@@ -83,6 +83,8 @@ class condition(object):
             ck = _get_check(c)
             if ck is not None:
                 self.check_list.append(ck)
+            else:
+                raise SettingError(msg="Invalid condition", settings=c)
 
     DEFAULT_META_KEYS = set(("__time__", "__topic__", "__source__"))
     tag_meta_check = staticmethod(get_re_full_match(r"__tag__:.+"))

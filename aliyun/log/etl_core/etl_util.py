@@ -21,16 +21,21 @@ def cached(fn):
 
 
 def re_full_match(pattern, string, *args, **kwargs):
+    is_not = isinstance(pattern, NOT)
     if six.PY2 and isinstance(pattern, six.binary_type):
         pattern = pattern.decode('utf8', 'ignore')
     if six.PY2 and isinstance(string, six.binary_type):
         string = string.decode('utf8', 'ignore')
 
+    ret = None
     if hasattr(re, 'fullmatch'):
-        return re.fullmatch(pattern, string, *args, **kwargs)
-    m = re.match(pattern, string, *args, **kwargs)
-    if m and m.span()[1] == len(string):
-        return m
+        ret = re.fullmatch(pattern, string, *args, **kwargs)
+    else:
+        m = re.match(pattern, string, *args, **kwargs)
+        if m and m.span()[1] == len(string):
+            ret = m
+
+    return not ret if is_not else ret
 
 
 # this function is used to bypass lambda trap
@@ -156,3 +161,31 @@ def u(d):
 
     return d
 
+
+class NOT(object):
+    def __new__(self, v):
+        if isinstance(v, six.binary_type):
+            return _NOT_B(v)
+        elif isinstance(v, six.text_type):
+            return _NOT_U(v)
+        else:
+            raise ValueError("NOT can only be used with string. ")
+
+
+class _NOT_B(six.binary_type, NOT):
+    def __init__(self, v):
+        super(_NOT_B, self).__init__(v)
+        self.v = v
+
+    def decode(self, *args, **kwargs):
+        return _NOT_B(self.v.decode(*args, **kwargs))
+
+
+class _NOT_U(six.text_type, NOT):
+    def __init__(self, v):
+        if six.PY2:
+            super(_NOT_U, self).__init__(v)
+        self.v = v
+
+    def encode(self, *args, **kwargs):
+        return _NOT_B(self.v.encode(*args, **kwargs))
