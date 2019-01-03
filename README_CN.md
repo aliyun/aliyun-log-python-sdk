@@ -596,76 +596,11 @@ res.log_print();
 通过消费组(Consumer Group)可以获得可保障的自动扩展的日志消费服务.
 
 ### 高级接口
-1. 构建消费逻辑
-
-	继承类`ConsumerProcessorBase`重写方法`initialize`, `process`和`shutdown`定义特定逻辑.
-
-	```python
-	from aliyun.log.consumer import ConsumerProcessorBase
-
-	class SampleConsumer(ConsumerProcessorBase):
-	    def initialize(self, shard):
-	        pass
-
-	    def process(self, log_groups, check_point_tracker):
-	        for log_group in log_groups.LogGroups:
-	            items = []
-	            for log in log_group.Logs:
-	                item = dict()
-	                item['time'] = log.Time
-	                for content in log.Contents:
-	                    item[content.Key] = content.Value
-	                items.append(item)
-	            log_items = dict()
-	            log_items['topic'] = log_group.Topic
-	            log_items['source'] = log_group.Source
-	            log_items['logs'] = items
-
-	            # 打印日志
-	            print(log_items)
-
-	        check_point_tracker.save_check_point(True)
-
-
-	    def shutdown(self, check_point_tracker):
-	        check_point_tracker.save_check_point(True)
-
-	```
-
-2. 构建消费工作者
-
-	这里在同一消费组下准备2个消费者的配置项:
-
-	```python
-	from aliyun.log.consumer import LogHubConfig, CursorPosition
-
-	# 准备配置项
-	option1 = LogHubConfig(endpoint, access_id, access_key, "project1", "logstore1", "consume_group1",
-	                       "consumer A", CursorPosition.BEGIN_CURSOR)
-	option2 = LogHubConfig(endpoint, access_id, access_key, "project1", "logstore1", "consume_group1",
-	                       "consumer B", CursorPosition.BEGIN_CURSOR)
-	```
-
-	构建两个工作者:
-
-	```python
-	worker1 = ConsumerWorker(SampleConsumer, option1)
-	worker2 = ConsumerWorker(SampleConsumer, option2)
-	```
-
-3. 启动关闭工作者
-
-	```python
-	# 启动
-	worker1.start()
-	worker2.start()
-
-	time.sleep(60)
-
-	# 关闭
-	worker1.shutdown()
-	worker2.shutdown()
-	```
+可以参考这这几篇实战文章与样例。
+- [日志服务与SIEM（如Splunk）集成方案](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_sync_log_to_splunk.html)
+- [使用消费组实时分发数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_dispatch_log.html)
+- [使用消费组实时实时跨域监测多日志库数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_monitor_multiple_logstores.html)
+- 相关[样例代码](https://github.com/aliyun/aliyun-log-python-sdk/tree/master/tests/consumer_group_examples)
 
 ### 基础接口
 高级接口已经对基础接口进行了封装. 个别情况下也可以通过基础接口进行一些特定的操作.
@@ -994,6 +929,9 @@ migration_manager.migrate()
 ```
 
 ## 最佳实践
+- [日志服务与SIEM（如Splunk）集成方案](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_sync_log_to_splunk.html)
+- [使用消费组实时分发数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_dispatch_log.html)
+- [使用消费组实时实时跨域监测多日志库数据](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_consumer_group_monitor_multiple_logstores.html)
 - [使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
 - [Log Handler自动解析KV格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_kv.html)
 - [Log Handler自动解析JSON格式的日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler_json.html)

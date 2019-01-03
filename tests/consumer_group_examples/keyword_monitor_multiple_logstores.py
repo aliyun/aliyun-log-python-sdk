@@ -7,6 +7,7 @@ from aliyun.log.consumer import *
 from aliyun.log.pulllog_response import PullLogResponse
 from multiprocessing import current_process
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 # configure logging file
 root = logging.getLogger()
@@ -23,7 +24,7 @@ class KeywordMonitor(ConsumerProcessorBase):
     """
     this consumer will keep monitor with k-v fields. like {"content": "error"}
     """
-    def __init__(self, keywords=None):
+    def __init__(self, keywords=None, logstore=None):
         super(KeywordMonitor, self).__init__()  # remember to call base init
 
         assert keywords, ValueError("At least you need to configure one keywords to monitor")
@@ -32,6 +33,7 @@ class KeywordMonitor(ConsumerProcessorBase):
         self.kw_check = {}
         for k, v in self.keywords.items():
             self.kw_check[k] = re.compile(v)
+        self.logstore = logstore
 
     def process(self, log_groups, check_point_tracker):
         logs = PullLogResponse.loggroups_to_flattern_list(log_groups)
@@ -64,15 +66,17 @@ def get_monitor_option():
     ##########################
 
     # load connection info env and consumer group name from envs
-    endpoint = os.environ.get('SLS_ENDPOINT', '')
+    endpoints = os.environ.get('SLS_ENDPOINTS', '').split(";")  # endpoints list separated by ;
     accessKeyId = os.environ.get('SLS_AK_ID', '')
     accessKey = os.environ.get('SLS_AK_KEY', '')
-    project = os.environ.get('SLS_PROJECT', '')
-    logstore = os.environ.get('SLS_LOGSTORE', '')
+    projects = os.environ.get('SLS_PROJECTS', '').split(";")    # projects list, separated by ; must be same len as endpoints
+    logstores = os.environ.get('SLS_LOGSTORES', '').split(";")  # logstores list, seperated by ; pared with project. and separated by ',' for one project.
     consumer_group = os.environ.get('SLS_CG', '')
 
-    assert endpoint and accessKeyId and accessKey and project and logstore and consumer_group, \
-        ValueError("endpoint/access_id/key/project/logstore/consumer_group/name cannot be empty")
+    assert endpoints and accessKeyId and accessKey and projects and logstores and consumer_group, \
+        ValueError("endpoints/access_id/key/projects/logstores/consumer_group/name cannot be empty")
+
+    assert len(endpoints) and len(projects) and len(logstores), ValueError("endpoints/projects/logstores must be paired")
 
     ##########################
     # Some advanced options
@@ -83,50 +87,65 @@ def get_monitor_option():
 
     # This options is used for initialization, will be ignored once consumer group is created and each shard has beeen started to be consumed.
     # Could be "begin", "end", "specific time format in ISO", it's log receiving time.
-    cursor_start_time = "end"
+    cursor_start_time = "begin"
 
-    # during consuption, when shard is splitted, if need to consume the newly splitted shard after its parent shard (read-only) is finished consumption or not.
-    # suggest keep it as False (don't care) until you have good reasion for it.
-    in_order = False
+    exeuctor = ThreadPoolExecutor(max_workers=2)
 
-    # once a client doesn't report to server * heartbeat_interval * 2 interval, server will consider it's offline and re-assign its task to another consumer.
-    # thus  don't set the heatbeat interval too small when the network badwidth or performance of consumtion is not so good.
-    heartbeat_interval = 20
+    options = []
+    for i in range(len(endpoints)):
+        endpoint = endpoints[i].strip()
+        project = projects[i].strip()
+        if not endpoint or not project:
+            logger.error("project: {0} or endpoint {1} is empty, skip".format(project, endpoint))
+            continue
 
-    # if the coming data source data is not so frequent, please don't configure it too small (<1s)
-    data_fetch_interval = 0.1
+        logstore_list = logstores[i].split(",")
+        for logstore in logstore_list:
+            logstore = logstore.strip()
+            if not logstore:
+                logger.error("logstore for project: {0} or endpoint {1} is empty, skip".format(project, endpoint))
+                continue
 
-    # fetch size in each request, normally use default.
-    # maximum is 1000, could be lower.
-    # the lower the size the memory efficiency might be better.
-    max_fetch_log_group_size = 1000
-
-    # suggest keep the default size (2), use multiple process instead
-    # when you need to have more concurrent processing, launch this consumer for mulitple times and give them different consuer name in same consumer group
-    worker_pool_size = 2
-
-    # create one consumer in the consumer group
-    option = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group, consumer_name,
-                          cursor_position=CursorPosition.END_CURSOR,
-                          cursor_start_time=cursor_start_time,
-                          in_order=in_order,
-                          heartbeat_interval=heartbeat_interval,
-                          data_fetch_interval=data_fetch_interval,
-                          max_fetch_log_group_size=max_fetch_log_group_size,
-                          worker_pool_size=worker_pool_size)
+            option = LogHubConfig(endpoint, accessKeyId, accessKey, project, logstore, consumer_group,
+                                  consumer_name, cursor_position=CursorPosition.SPECIAL_TIMER_CURSOR,
+                                  cursor_start_time=cursor_start_time, shared_executor=exeuctor)
+            options.append(option)
 
     # monitor options
     keywords = {'status': r'5\d{2}'}
 
-    return option, keywords
+    return exeuctor, options, keywords
 
 
 def main():
-    option, keywords = get_monitor_option()
+    exeuctor, options, keywords = get_monitor_option()
 
     logger.info("*** start to consume data...")
-    worker = ConsumerWorker(KeywordMonitor, option, args=(keywords,) )
-    worker.start(join=True)
+    workers = []
+
+    for option in options:
+        worker = ConsumerWorker(KeywordMonitor, option, args=(keywords,) )
+        workers.append(worker)
+        worker.start()
+
+    try:
+        for i, worker in enumerate(workers):
+            while worker.is_alive():
+                worker.join(timeout=60)
+            logger.info("worker project: {0} logstore: {1} exit unexpected, try to shutdown it".format(
+                options[i].project, options[i].logstore))
+            worker.shutdown()
+    except KeyboardInterrupt:
+        logger.info("*** try to exit **** ")
+        for worker in workers:
+            worker.shutdown()
+
+        # wait for all workers to shutdown before shutting down executor
+        for worker in workers:
+            while worker.is_alive():
+                worker.join(timeout=60)
+
+    exeuctor.shutdown()
 
 
 if __name__ == '__main__':

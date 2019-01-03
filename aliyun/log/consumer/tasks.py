@@ -44,6 +44,19 @@ class ConsumerProcessorBase(object):
         self.save_checkpoint(check_point_tracker, force=True)
 
 
+class ConsumerProcessorAdaptor(ConsumerProcessorBase):
+    def __init__(self, func):
+        super(ConsumerProcessorAdaptor, self).__init__()
+        self.func = func
+
+    def process(self, log_groups, check_point_tracker):
+        ret = self.func(self.shard_id, log_groups)
+        if isinstance(ret, bool) and not ret:
+            return  # do not save checkpoint when getting False
+
+        self.save_checkpoint(check_point_tracker)
+
+
 class TaskResult(object):
     def __init__(self, task_exception):
         self.task_exception = task_exception
