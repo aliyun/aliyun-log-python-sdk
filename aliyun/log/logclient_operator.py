@@ -714,7 +714,7 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
 
         return shard_id, count, removed, processed, failed
     except Exception as ex:
-        logger.error(ex)
+        logger.error(ex, exc_info=True)
         raise
 
 
@@ -805,12 +805,15 @@ def transform_data(from_client, from_project, from_logstore, from_time,
                        for shard in target_shards]
 
             for future in as_completed(futures):
-                partition, count, removed, processed, failed = future.result()
-                total_count += count
-                total_removed += removed
-                if count:
-                    result[partition] = {"total_count": count, "transformed":
-                        processed, "removed": removed, "failed": failed}
+                if future.exception():
+                    logger.error("get error when transforming data: {0}".format(future.exception()))
+                else:
+                    partition, count, removed, processed, failed = future.result()
+                    total_count += count
+                    total_removed += removed
+                    if count:
+                        result[partition] = {"total_count": count, "transformed":
+                            processed, "removed": removed, "failed": failed}
 
         return LogResponse({}, {"total_count": total_count, "shards": result})
 
