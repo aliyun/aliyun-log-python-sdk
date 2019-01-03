@@ -30,9 +30,9 @@ class split_event_transformer(trans_comp_base):
         self.sep = sep or self.DEFAULT_SEP
         self.lstrip = True if lstrip is None else lstrip
         self.quote = quote or self.DEFAULT_QUOTE
-        self.output_field = output
+        self.output_field = self._u(output)
 
-        self.jmes = jmes or ""
+        self.jmes = self._u(jmes or "")
         self.jmes_filter = None
         if jmes:
             try:
@@ -76,7 +76,7 @@ class split_event_transformer(trans_comp_base):
                     return self._parse_list(ret)
                 else:
                     logger.info(
-                        'split_event_transformer: get unknown type of result with value "{0}" and jmes filter "{1}", skip it'.
+                        u'split_event_transformer: get unknown type of result with value "{0}" and jmes filter "{1}", skip it'.
                         format(v, self.jmes))
                     return None
 
@@ -85,21 +85,23 @@ class split_event_transformer(trans_comp_base):
         except Exception as ex:
             # failed at json load or jmes filter. if jmes is configured, then it's an invalid event
             if flt:
-                logger.info("split_event_transformer: value {0} is json or not invaid jmes settings {1}, skip it".
+                logger.info(u"split_event_transformer: value {0} is json or not invaid jmes settings {1}, skip it".
                             format(v, self.jmes))
                 return None
             else:
-                logger.debug("split_event_transformer: value {0} is not json, try to use csv".format(v))
+                logger.debug(u"split_event_transformer: value {0} is not json, try to use csv".format(v))
 
         # continue to parse it as csv
         if isinstance(v, (six.text_type, six.binary_type)):
             result = list(csv.reader([v], skipinitialspace=self.lstrip, delimiter=self.sep, quotechar=self.quote))[0]
             return result
         else:
-            logger.info("split_event_transformer: cannot extract list from value: {0}".format(v))
+            logger.info(u"split_event_transformer: cannot extract list from value: {0}".format(v))
             return None
 
     def __call__(self, event, inpt):
+        inpt = self._u(inpt)
+
         # overwrite input field
         if not self.output_field:
             self.output_field = inpt
@@ -109,6 +111,6 @@ class split_event_transformer(trans_comp_base):
             ret = self._parse_list(event[inpt], self.jmes_filter)
             return self._process_list(event, self.output_field, ret)
         else:
-            logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
+            logger.error(u"trans_comp_lookup: unknown type of input field {0}".format(inpt))
 
         return event

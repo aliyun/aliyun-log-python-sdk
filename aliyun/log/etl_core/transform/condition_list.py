@@ -19,7 +19,7 @@ from collections import Callable
 import functools
 import six
 
-from ..etl_util import re_full_match, get_re_full_match
+from ..etl_util import re_full_match, get_re_full_match, u
 from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['condition']
 
 
-def get_check(c):
+def _get_check(c):
     if isinstance(c, bool):
         return lambda e: c
     elif isinstance(c, Callable):
@@ -62,6 +62,8 @@ class condition(object):
         :param pass_meta: if pass meta fields like __time__, __topic__, __tag:xxx__ to processor, by default True
         :param restore_meta: restore meta after processor. by default (None), False for pass_meta=True and True for pass_meta=False,
         """
+        cond = u(cond)
+
         if not isinstance(cond, list):
             self.cond = [cond]
         else:
@@ -78,7 +80,7 @@ class condition(object):
 
         self.check_list = []
         for c in self.cond:
-            ck = get_check(c)
+            ck = _get_check(c)
             if ck is not None:
                 self.check_list.append(ck)
 
@@ -90,6 +92,9 @@ class condition(object):
 
     def call_processor(self, fn, evt, *args, **kwargs):
         event = evt
+        args = u(args)
+        kwargs = u(kwargs)
+
         if not self.pass_meta:
             # no meta version
             event = dict((k, v) for k, v in six.iteritems(event) if not self.is_meta_key(k))
@@ -105,6 +110,8 @@ class condition(object):
             return ret
 
     def __call__(self, entity):
+        entity = u(entity)
+
         if isinstance(entity, (dict,)):
             return any(c(entity) for c in self.check_list)
         elif isinstance(entity, Callable):
@@ -117,12 +124,12 @@ class condition(object):
                         return self.call_processor(fn, event, *args, **kwargs)
                 except Exception as ex:
                     logger.error(
-                        'fail to call hooked function "{0}" with event "{1}", error: {2}'.format(fn, event, ex))
+                        u'fail to call hooked function "{0}" with event "{1}", error: {2}'.format(fn, event, ex))
 
                 return event
 
             return _wrapped
         else:
-            errors = "condition: unsupported data type: {0}".format(entity)
+            errors = u"condition: unsupported data type: {0}".format(entity)
             logger.error(errors)
             raise SettingError(settings=errors)

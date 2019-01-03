@@ -8,6 +8,7 @@ import os
 from time import time
 from random import randint
 import six
+import string
 
 t = transform
 
@@ -46,8 +47,8 @@ def test_condition():
     assert not condition([{'k1': r'\d+', 'k3': r'\d+'}])(event)
 
     # dict - lambda
-    assert condition({'k1': str.isdigit})(event)
-    assert condition({'k2': str.islower})(event)
+    assert condition({'k1': unicode.isdigit if six.PY2 else str.isdigit})(event)
+    assert condition({'k2': unicode.islower if six.PY2 else str.islower})(event)
     assert not condition({'k3': lambda x: x.isupper()})(event)
 
     # dict - bool
@@ -533,36 +534,20 @@ def test_kv():
     assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
 
     # multi-bytes check
-    if six.PY2:
-        d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-        assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们'.encode('utf8'), 'k1': u'你好'.encode('utf8'), "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
+    d3 = {"data": u'i=c3, k1=你好 k2=他们'}
+    assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'}
 
-        d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-        assert t(("data", KV))(d4) == {'i': 'c4', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
+    d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '}
+    assert t(("data", KV))(d4) == {'i': 'c4', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c4, 姓名=小明 年龄=中文 '}
 
-        d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-        assert t(("data", KV))(d5) == {'i': 'c5', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
+    d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '}
+    assert t(("data", KV))(d5) == {'i': 'c5', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c5, 姓名="小明" 年龄="中文" '}
 
-        d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
-        assert t(("data", KV))(d6) == {'i': 'c6', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c6, 姓名=小明 年龄=中文'}
+    d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
+    assert t(("data", KV))(d6) == {'i': 'c6', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c6, 姓名=小明 年龄=中文'}
 
-        d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
-        assert t(("data", KV))(d7) == {'i': 'c7', u'姓名'.encode('utf8'): u'小明'.encode('utf8'), u'年龄'.encode('utf8'): u'中文'.encode('utf8'), "data": u'i=c7, 姓名="小明" 年龄=中文 '}
-    else:
-        d3 = {"data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-        assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'.encode('utf8')}
-
-        d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-        assert t(("data", KV))(d4) == {'i': 'c4', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c4, 姓名=小明 年龄=中文 '.encode('utf8')}
-
-        d5 = {"data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-        assert t(("data", KV))(d5) == {'i': 'c5', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c5, 姓名="小明" 年龄="中文" '.encode('utf8')}
-
-        d6 = {"data": u'i=c6, 姓名=小明 年龄=中文'}
-        assert t(("data", KV))(d6) == {'i': 'c6', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c6, 姓名=小明 年龄=中文'}
-
-        d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
-        assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
 
 
     # new line in value

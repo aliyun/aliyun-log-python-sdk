@@ -58,7 +58,7 @@ class drop_event(transform_base):
     @support_event_list_simple
     def __call__(self, event):
         if self.c(event):
-            logger.info("drop_event: drop event: {0}".format(event))
+            logger.info(u"drop_event: drop event: {0}".format(event))
             return None
         return event
 
@@ -71,7 +71,7 @@ class keep_event(transform_base):
     def __call__(self, event):
         if self.c(event):
             return event
-        logger.info("keep_event: drop event: {0}".format(event))
+        logger.info(u"keep_event: drop event: {0}".format(event))
         return None
 
 

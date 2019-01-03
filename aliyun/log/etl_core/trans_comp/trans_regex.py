@@ -28,20 +28,26 @@ class trans_comp_regex(trans_comp_base):
     """
 
     def __init__(self, pattern, fields_info=None):
+        pattern = self._u(pattern)
+        fields_info = self._u(fields_info)
+
         self.config = pattern
+
         try:
             self.ptn = re.compile(pattern)
         except re.error as ex:
-            logger.error('transform_regex: cannot compile pattern: "{0}"'.format(ex))
+            logger.error(u'transform_regex: cannot compile pattern: "{0}"'.format(ex))
             raise SettingError(ex, pattern)
 
         self.fields_info = None
         if isinstance(fields_info, (six.text_type, six.binary_type, list, dict)):
             self.fields_info = fields_info
         elif fields_info is not None:
-            logger.warning('transform_regex: unknown fields info type: "{0}"'.format(fields_info))
+            logger.warning(u'transform_regex: unknown fields info type: "{0}"'.format(fields_info))
 
     def __call__(self, event, inpt):
+        inpt = self._u(inpt)
+
         if not isinstance(inpt, list):
             inputs = [inpt]
         else:
@@ -58,15 +64,15 @@ class trans_comp_regex(trans_comp_base):
                 if m:
                     event.update(m.groupdict())
                 else:
-                    logger.info('transform_regex: field value "{0}" cannot extract value with config "{1}"'
+                    logger.info(u'transform_regex: field value "{0}" cannot extract value with config "{1}"'
                                 .format(event[data], self.config))
 
                 if self.fields_info:
                     # use m first
                     if not m:
                         logger.warning(
-                            'transform_regex: field value "{0}" cannot extract value '
-                            'with config "{1}" with field info {2}'.format(event[data], self.config, self.fields_info))
+                            u'transform_regex: field value "{0}" cannot extract value '
+                            u'with config "{1}" with field info {2}'.format(event[data], self.config, self.fields_info))
                         break
 
                     if isinstance(self.fields_info, (six.binary_type, six.text_type)):
@@ -81,8 +87,8 @@ class trans_comp_regex(trans_comp_base):
                                     event[m.expand(k)] = m.expand(v)
                                 except re.error as ex:
                                     logger.info(
-                                        'transform_regex: cannot expand matched group "{0}" for fields info "{1}:{2}", '
-                                        'detail: "{3}"'.format(
+                                        u'transform_regex: cannot expand matched group "{0}" for fields info "{1}:{2}", '
+                                        u'detail: "{3}"'.format(
                                             m.group(), k, v, ex
                                         ))
                     elif isinstance(self.fields_info, list):
@@ -90,8 +96,8 @@ class trans_comp_regex(trans_comp_base):
                             for i, g in enumerate(m.groups()):
                                 if i >= len(self.fields_info):
                                     logger.warning(
-                                        'transform_regex: field value "{0}" captured group count not equal to '
-                                        'config "{1}" with field info {2}'.format(event[data],
+                                        u'transform_regex: field value "{0}" captured group count not equal to '
+                                        u'config "{1}" with field info {2}'.format(event[data],
                                                                                   self.config, self.fields_info))
                                     break
                                 event[self.fields_info[i]] = g
@@ -99,16 +105,16 @@ class trans_comp_regex(trans_comp_base):
                             ms = [m] + list(find_iter)
                             if len(ms) != len(self.fields_info):
                                 logger.warning(
-                                    'transform_regex: field value "{0}" match count not equal to '
-                                    'config "{1}" with field info {2}'.format(event[data], self.config,
+                                    u'transform_regex: field value "{0}" match count not equal to '
+                                    u'config "{1}" with field info {2}'.format(event[data], self.config,
                                                                               self.fields_info))
                             for i, m in enumerate(ms):
                                 if i >= len(self.fields_info):
                                     break
                                 event[self.fields_info[i]] = m.group()
                     else:
-                        logger.warning('transform_regex: unknown fields info type: "{0}"'.format(self.fields_info))
+                        logger.warning(u'transform_regex: unknown fields info type: "{0}"'.format(self.fields_info))
             else:
-                logger.info('transform_regex: event "{0}" doesn not contain field "{1}"'.format(event, data))
+                logger.info(u'transform_regex: event "{0}" doesn not contain field "{1}"'.format(event, data))
 
         return event

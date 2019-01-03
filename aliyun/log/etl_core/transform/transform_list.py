@@ -4,7 +4,7 @@ from collections import Callable
 import six
 from ..trans_comp import REGEX
 from .transform_base import transform_base
-from ..etl_util import process_event, bind_event_fn
+from ..etl_util import process_event, bind_event_fn, u
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def _dict_transform_fn(tr):
                 if k in result:
                     del result[k]
             else:
-                logger.warning("unknown type of transform value for key:{0} value:{1}".format(k, v))
+                logger.warning(u"unknown type of transform value for key:{0} value:{1}".format(k, v))
         event.update(result)
         return event
 
@@ -33,6 +33,8 @@ def _dict_transform_fn(tr):
 
 class transform(transform_base):
     def __init__(self, trans):
+        trans = u(trans)
+
         if not isinstance(trans, list):
             self.trans = [trans]
         else:
@@ -46,7 +48,7 @@ class transform(transform_base):
                 self.transform_list.append(_dict_transform_fn(tr))
             elif isinstance(tr, tuple):
                 if len(tr) < 2 or len(tr) > 3:
-                    logger.warning("invalid transform config: {0}".format(tr))
+                    logger.warning(u"invalid transform config: {0}".format(tr))
                     continue
 
                 inpt, config = tr[0], tr[1]
@@ -55,7 +57,7 @@ class transform(transform_base):
                 elif isinstance(config, Callable):
                     self.transform_list.append(bind_event_fn(config, inpt))
                 else:
-                    logger.warning("unknown transform config setting: {0}".format(config))
+                    logger.warning(u"unknown transform config setting: {0}".format(config))
                     continue
 
     def __call__(self, event):

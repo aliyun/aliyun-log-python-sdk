@@ -1,6 +1,6 @@
 import json
 import six
-
+from ..etl_util import u
 
 class trans_comp_base(object):
     @property
@@ -9,6 +9,11 @@ class trans_comp_base(object):
 
     @staticmethod
     def _n(v):
+        """
+        convert string to utf8 in Py2 or unicode in Py3
+        :param v:
+        :return:
+        """
         if v is None:
             return ""
 
@@ -23,3 +28,12 @@ class trans_comp_base(object):
             v = v.decode('utf8', "ignore")
 
         return str(v)
+
+    @staticmethod
+    def _u(d):
+        """
+        convert string, string container or unicode
+        :param d:
+        :return:
+        """
+        return u(d)

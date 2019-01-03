@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['trans_comp_lookup']
 
 
-class LookupError(SettingError):
+class ETLLookupError(SettingError):
     pass
 
 
@@ -23,12 +23,12 @@ class Table(object):
         self.case_insensitive = case_insensitive
 
     def get_row(self, inputs):
-        assert isinstance(inputs, dict), LookupError(msg="trans_comp_lookup: inputs are not dict as expected",
-                                                     settings=inputs)
+        assert isinstance(inputs, dict), ETLLookupError(msg="trans_comp_lookup: inputs are not dict as expected",
+                                                        settings=inputs)
 
         for k, v in six.iteritems(inputs):
             if k not in self.field_names:
-                logger.info("trans_comp_lookup: key {0} doesn't exist in existing fields names: {1}".format(k,
+                logger.info(u"trans_comp_lookup: key {0} doesn't exist in existing fields names: {1}".format(k,
                                                                                                             self.field_names))
                 return None
 
@@ -64,6 +64,12 @@ class trans_comp_lookup(trans_comp_base):
     EXTERNAL_CACHE = {}
 
     def __init__(self, data, output_fields, sep=',', quote='"', lstrip=True, case_insensitive=True, headers=None):
+        data = self._u(data)
+        output_fields = self._u(output_fields)
+        sep = sep
+        quote = quote
+        headers = self._u(headers)
+
         if isinstance(data, dict):
             self.data = DefaultDict(data, case_insensitive)
 
@@ -95,7 +101,7 @@ class trans_comp_lookup(trans_comp_base):
                 self.data = self.EXTERNAL_CACHE[self.sig]
             else:
                 type_path = data.split("://")
-                file_type = type_path[0] if len(type_path) == 2 else 'file'
+                file_type = type_path[0] if len(type_path) == 2 else u'file'
                 file_path = type_path[1] if len(type_path) == 2 else data
                 if file_type != 'file':
                     raise SettingError(msg="trans_comp_lookup: unsupported file type", settings=data)
@@ -135,6 +141,8 @@ class trans_comp_lookup(trans_comp_base):
             raise SettingError(settings=data)
 
     def __call__(self, event, inpt):
+        inpt = self._u(inpt)
+
         if isinstance(self.data, DefaultDict):
             # simple dict mode
             if isinstance(inpt, (six.binary_type, six.text_type)):
@@ -143,11 +151,11 @@ class trans_comp_lookup(trans_comp_base):
             if isinstance(inpt, Iterable):
                 for i in inpt:
                     if not isinstance(i, (six.binary_type, six.text_type)):
-                        logger.error('trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
+                        logger.error(u'trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
                         continue
 
                     if i not in event:
-                        logger.info('trans_comp_lookup: event "{0}" doesn not contain field "{1}"'.format(event, i))
+                        logger.info(u'trans_comp_lookup: event "{0}" doesn not contain field "{1}"'.format(event, i))
                         continue
 
                     # get input value
@@ -158,9 +166,9 @@ class trans_comp_lookup(trans_comp_base):
                         if f_v in self.data:
                             event[f_n] = self.data[f_v]
                         else:
-                            logger.info('trans_comp_lookup: value {0} not exit in lookup {1}'.format(f_v, self.data))
+                            logger.info(u'trans_comp_lookup: value {0} not exit in lookup {1}'.format(f_v, self.data))
             else:
-                logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
+                logger.error(u"trans_comp_lookup: unknown type of input field {0}".format(inpt))
         else:
             # lookup type
             if isinstance(inpt, (six.binary_type, six.text_type)):
@@ -170,12 +178,12 @@ class trans_comp_lookup(trans_comp_base):
                 inpt_map = {}
                 for i in inpt:
                     if not isinstance(i, (six.binary_type, six.text_type, list, tuple)):
-                        logger.error('trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
+                        logger.error(u'trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
                         # must exit, or else skip it for lookup type
                         return event
 
                     if isinstance(i, (tuple, list)) and len(i) != 2:
-                        logger.error('trans_comp_lookup: type of input field "{0}" is unsupported'.format(i))
+                        logger.error(u'trans_comp_lookup: type of input field "{0}" is unsupported'.format(i))
                         # must exit, or else skip it for lookup type
                         return event
 
@@ -183,7 +191,7 @@ class trans_comp_lookup(trans_comp_base):
                         i = (i, i)
 
                     if i[0] not in event:
-                        logger.info('trans_comp_lookup: event "{0}" doesn not contain field "{1}"'.format(event, i[0]))
+                        logger.info(u'trans_comp_lookup: event "{0}" doesn not contain field "{1}"'.format(event, i[0]))
                         # must exit, or else skip it for lookup type
                         return event
 
@@ -192,7 +200,7 @@ class trans_comp_lookup(trans_comp_base):
                 row = self.data.get_row(inpt_map)
                 if row is None:
                     logger.info(
-                        'trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(
+                        u'trans_comp_lookup: cannot find proper value for inpt "{0}" in event "{0}" doesn not contain field "{1}"'.format(
                             inpt_map, event))
                     return event
 
@@ -200,9 +208,9 @@ class trans_comp_lookup(trans_comp_base):
                     if f in row:
                         event[f_new] = row[f]
                     else:
-                        logger.info("trans_comp_lookup: field {0} doesn't exit in lookup row {1}".format(f, row))
+                        logger.info(u"trans_comp_lookup: field {0} doesn't exit in lookup row {1}".format(f, row))
 
             else:
-                logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
+                logger.error(u"trans_comp_lookup: unknown type of input field {0}".format(inpt))
 
         return event

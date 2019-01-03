@@ -27,28 +27,28 @@ def trans_comp_json(*args, **kwargs):
 
 
 class json_transformer(trans_comp_base):
-    DEFAULT_SEP = '.'
+    DEFAULT_SEP = u'.'
     DEFAULT_FMT = "simple"
     DEFAULT_DEPTH = 100
-    DEFAULT_INCLUDE_NODE = ''
-    DEFAULT_EXCLUDE_NODE = ''
-    DEFAULT_INCLUDE_PATH = ''
-    DEFAULT_EXCLUDE_PATH = ''
+    DEFAULT_INCLUDE_NODE = u''
+    DEFAULT_EXCLUDE_NODE = u''
+    DEFAULT_INCLUDE_PATH = u''
+    DEFAULT_EXCLUDE_PATH = u''
 
-    DEFAULT_FMT_ARRAY = "{parent_rlist[0]}_{index}"  # could also be custom formatting string using up to five placehodler: parent_list, parent_list, current, sep, prefix, suffix
+    DEFAULT_FMT_ARRAY = u"{parent_rlist[0]}_{index}"  # could also be custom formatting string using up to five placehodler: parent_list, parent_list, current, sep, prefix, suffix
     FMT_MAP = {
-        "simple": lambda prefix, current, suffix, *args, **kwargs: "{prefix}{current}{suffix}".format(prefix=prefix,
+        "simple": lambda prefix, current, suffix, *args, **kwargs: u"{prefix}{current}{suffix}".format(prefix=prefix,
                                                                                                       current=current,
                                                                                                       suffix=suffix),
         "full": lambda parent_list, sep, prefix, current, suffix, *args,
-                       **kwargs: "{parent_list_str}{sep}{prefix}{current}{suffix}".format(
+                       **kwargs: u"{parent_list_str}{sep}{prefix}{current}{suffix}".format(
             parent_list_str=sep.join(parent_list), current=current, sep=sep, prefix=prefix, suffix=suffix),
         "parent": lambda parent_list, sep, prefix, current, suffix, *args,
-                         **kwargs: "{parent}{sep}{prefix}{current}{suffix}".format(parent=parent_list[-1],
+                         **kwargs: u"{parent}{sep}{prefix}{current}{suffix}".format(parent=parent_list[-1],
                                                                                    current=current, sep=sep,
                                                                                    prefix=prefix, suffix=suffix),
         "root": lambda parent_list, sep, prefix, current, suffix, *args,
-                       **kwargs: "{parent_list[0]}{sep}{prefix}{current}{suffix}".format(parent_list=parent_list,
+                       **kwargs: u"{parent_list[0]}{sep}{prefix}{current}{suffix}".format(parent_list=parent_list,
                                                                                          current=current, sep=sep,
                                                                                          prefix=prefix, suffix=suffix)
         # could also be custom formatting string using up to five placehodler: parent_list, parent_list, current, sep, prefix, suffix
@@ -85,11 +85,11 @@ class json_transformer(trans_comp_base):
             self.expand = not jmes or not output
 
         # self.level = level or 1
-        self.jmes = jmes or ""
-        self.prefix = "" if prefix is None else prefix
-        self.suffix = "" if suffix is None else suffix
-        self.sep = self.DEFAULT_SEP if sep is None else sep
-        self.output = output or ""
+        self.jmes = self._u(jmes or "")
+        self.prefix = self._u("" if prefix is None else prefix)
+        self.suffix = self._u("" if suffix is None else suffix)
+        self.sep = self._u(self.DEFAULT_SEP if sep is None else sep)
+        self.output = self._u(output or "")
         self.jmes_filter = None
         self.jmes_ignore_none = True if jmes_ignore_none is None else jmes_ignore_none
         if jmes:
@@ -98,15 +98,15 @@ class json_transformer(trans_comp_base):
             except jmespath.exceptions.ParseError as ex:
                 raise SettingError(ex=ex, msg="Invalid JMES filter setting", settings=jmes)
         elif self.output:
-            logger.warning("json_transformer: parameter output '{0}' will be ignored as there's no filter is selected."
+            logger.warning(u"json_transformer: parameter output '{0}' will be ignored as there's no filter is selected."
                            .format(output))
 
         self.depth = min((depth or self.DEFAULT_DEPTH), self.DEFAULT_DEPTH)
-        self.include_node = include_node or self.DEFAULT_INCLUDE_NODE
-        self.exclude_node = exclude_node or self.DEFAULT_EXCLUDE_NODE
-        self.include_path = include_path or self.DEFAULT_INCLUDE_PATH
-        self.exclude_path = exclude_path or self.DEFAULT_EXCLUDE_PATH
-        self.fmt = fmt or self.DEFAULT_FMT
+        self.include_node = self._u(include_node or self.DEFAULT_INCLUDE_NODE)
+        self.exclude_node = self._u(exclude_node or self.DEFAULT_EXCLUDE_NODE)
+        self.include_path = self._u(include_path or self.DEFAULT_INCLUDE_PATH)
+        self.exclude_path = self._u(exclude_path or self.DEFAULT_EXCLUDE_PATH)
+        self.fmt = self._u(fmt or self.DEFAULT_FMT)
 
         try:
             self.include_node_match = get_re_full_match(self.include_node)
@@ -117,12 +117,12 @@ class json_transformer(trans_comp_base):
             raise SettingError(ex=ex, msg="Invalid regex string for include/exclude")
 
         self.expand_array = True if expand_array is None else expand_array
-        self.format_array = fmt_array or self.DEFAULT_FMT_ARRAY
+        self.format_array = self._u(fmt_array or self.DEFAULT_FMT_ARRAY)
 
     def _skip_keys(self, key, parent_list):
         if (self.include_node and not self.include_node_match(key)) or (
                 self.exclude_node and self.exclude_node_match(key)):
-            logger.info("json_transformer: 'key' {0} is not in include keys '{1}' or in exclude keys '{2}', skip it."
+            logger.info(u"json_transformer: 'key' {0} is not in include keys '{1}' or in exclude keys '{2}', skip it."
                         .format(key, self.include_node, self.exclude_node))
             return True
 
@@ -131,7 +131,7 @@ class json_transformer(trans_comp_base):
             if (self.include_path and not self.include_path_match(path)) or (
                     self.exclude_path and self.exclude_path_match(path)):
                 logger.info(
-                    "json_transformer: path '{0}' is not in include path '{1}' or in exclude path '{2}', skip it."
+                    u"json_transformer: path '{0}' is not in include path '{1}' or in exclude path '{2}', skip it."
                     .format(path, self.include_path, self.exclude_path))
                 return True
 
@@ -139,7 +139,7 @@ class json_transformer(trans_comp_base):
 
     def format_add_kv(self, event, fmt, current, value, parent_list, parent_rlist, sep, prefix, suffix):
         if self._skip_keys(current, parent_list):
-            logger.info("json_transformer: 'key' {0} is not in include keys '{1}' or in exclude keys '{2}', skip it."
+            logger.info(u"json_transformer: 'key' {0} is not in include keys '{1}' or in exclude keys '{2}', skip it."
                         .format(current, self.include_node, self.exclude_node))
             return
 
@@ -157,21 +157,21 @@ class json_transformer(trans_comp_base):
                               prefix=prefix, suffix=suffix), \
                           json_transformer._n(value)
             except Exception as ex:
-                logger.info("json_transformer: fail to format with settings: '{0}'".format((fmt, current, value,
+                logger.info(u"json_transformer: fail to format with settings: '{0}'".format((fmt, current, value,
                                                                                             parent_list, sep, prefix,
                                                                                             suffix)))
         elif inspect.isfunction(fmt):
             try:
                 ret = fmt(parent_list, current, value)
             except Exception as ex:
-                logger.info("json_transformer: fail to call formatting string: {0} wuth parameters: {1}"
+                logger.info(u"json_transformer: fail to call formatting string: {0} wuth parameters: {1}"
                             .format(fmt, (parent_list, current, value)))
 
         if ret and len(ret) == 2:
             k, v = ret
             event[json_transformer._n(k)] = json_transformer._n(v)
         else:
-            logger.info("json_transformer: unexpected format result: {0}, fmt: '{1}', k: '{2}', v: '{3}', skip it"
+            logger.info(u"json_transformer: unexpected format result: {0}, fmt: '{1}', k: '{2}', v: '{3}', skip it"
                         .format(ret, fmt, current, value))
 
     def _expand_json(self, event, key, value, parent_list, parent_rlist, depth, sep, prefix, suffix):
@@ -180,7 +180,7 @@ class json_transformer(trans_comp_base):
                 or (not isinstance(value, (list, tuple, dict))) \
                 or (isinstance(value, (list, tuple)) and not self.expand_array):
             # 1. depth hit, 2. basic type, 3. array but not expand
-            logger.info("json_transformer: hit stop parsing, key: '{0}', value: '{1}', parent: '{2}', depth: '{3}'"
+            logger.info(u"json_transformer: hit stop parsing, key: '{0}', value: '{1}', parent: '{2}', depth: '{3}'"
                         .format(key, value, parent_list, depth))
             self.format_add_kv(event, self.fmt, self._n(key), self._n(value), parent_list, parent_rlist, sep, prefix,
                                suffix)
@@ -202,7 +202,7 @@ class json_transformer(trans_comp_base):
                                        suffix)
 
         else:
-            logger.info("json_transformer: skip unsupported message '{0}' of type '{1}' when expanding"
+            logger.info(u"json_transformer: skip unsupported message '{0}' of type '{1}' when expanding"
                         .format(value, type(value)))
 
     def _process_message(self, key, value):
@@ -211,18 +211,18 @@ class json_transformer(trans_comp_base):
             try:
                 value = json.loads(value)
             except Exception as ex:
-                logger.info("json_transformer: fail to load event into json object: {0}, error: {1}".format(value, ex))
+                logger.info(u"json_transformer: fail to load event into json object: {0}, error: {1}".format(value, ex))
                 return None
 
         if self.jmes_filter:
             try:
                 value = self.jmes_filter.search(value)
                 if value is None and self.jmes_ignore_none:
-                    logger.info("split_event_transformer: value {0} get null from jmes settings {1}, skip it".
+                    logger.info(u"split_event_transformer: value {0} get null from jmes settings {1}, skip it".
                                 format(value, self.jmes))
                     return None
             except Exception as ex:
-                logger.info("split_event_transformer: value {0} with invalid jmes settings {1}, skip it".
+                logger.info(u"split_event_transformer: value {0} with invalid jmes settings {1}, skip it".
                             format(value, self.jmes))
                 return None
 
@@ -235,23 +235,9 @@ class json_transformer(trans_comp_base):
 
         return new_event
 
-    def extract_json(self, message):
-        new_event = {}
-        if isinstance(message, (six.binary_type, six.text_type)):
-            try:
-                message = json.loads(message)
-            except Exception as ex:
-                logger.info(
-                    "json_transformer: fail to load event into json object: {0}, error: {1}".format(message, ex))
-                return message
-
-        if isinstance(message, dict):
-            for k, v in six.iteritems(message):
-                new_event["{0}{1}{2}".format(self.prefix, self._n(k), self.suffix)] = self._n(v)
-
-        return new_event
-
     def __call__(self, event, inpt):
+        inpt = self._u(inpt)
+
         # simple dict mode
         if isinstance(inpt, (six.binary_type, six.text_type)):
             inpt = [inpt]
@@ -259,11 +245,11 @@ class json_transformer(trans_comp_base):
         if isinstance(inpt, Iterable):
             for i in inpt:
                 if not isinstance(i, (six.binary_type, six.text_type)):
-                    logger.error('trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
+                    logger.error(u'trans_comp_lookup: type of input field "{0}" is unknown'.format(i))
                     continue
 
                 if i not in event:
-                    logger.info('trans_comp_lookup: event "{0}" does not contain field "{1}"'.format(event, i))
+                    logger.info(u'trans_comp_lookup: event "{0}" does not contain field "{1}"'.format(event, i))
                     continue
 
                 # get input value
@@ -272,8 +258,8 @@ class json_transformer(trans_comp_base):
                     event.update(new_event)
                 else:
                     logger.info(
-                        'trans_comp_lookup: event "{0}" does not extract value from field "{1}"'.format(event, i))
+                        u'trans_comp_lookup: event "{0}" does not extract value from field "{1}"'.format(event, i))
         else:
-            logger.error("trans_comp_lookup: unknown type of input field {0}".format(inpt))
+            logger.error(u"trans_comp_lookup: unknown type of input field {0}".format(inpt))
 
         return event

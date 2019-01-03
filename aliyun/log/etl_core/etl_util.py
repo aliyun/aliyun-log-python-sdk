@@ -3,6 +3,7 @@ import re
 import copy
 import six
 
+
 def cached(fn):
     @wraps(fn)
     def _wrapped(*args, **kwargs):
@@ -135,3 +136,23 @@ def support_event_list_simple(fn):
             return fn(self, event, *args, **kwargs)
 
     return _wrapped
+
+
+def u(d):
+    """
+    convert string, string container or unicode
+    :param d:
+    :return:
+    """
+    if six.PY2:
+        if isinstance(d, six.binary_type):
+            return d.decode("utf8", "ignore")
+        elif isinstance(d, list):
+            return [u(x) for x in d]
+        elif isinstance(d, tuple):
+            return tuple(u(x) for x in d)
+        elif isinstance(d, dict):
+            return dict( (u(k), u(v)) for k, v in six.iteritems(d))
+
+    return d
+
