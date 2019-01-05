@@ -14,6 +14,19 @@ from .tasks import consumer_fetch_task, consumer_initialize_task, \
 from .exceptions import ClientWorkerException
 
 
+class ShardConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        shard_consumer_worker = self.extra[
+            'shard_consumer_worker']  # type: ShardConsumerWorker
+        consumer_client = shard_consumer_worker.log_client
+        _id = '/'.join([
+            consumer_client.mproject, consumer_client.mlogstore,
+            consumer_client.mconsumer_group, consumer_client.mconsumer,
+            str(shard_consumer_worker.shard_id)
+        ])
+        return "[%s]%s" % (_id, msg), kwargs
+
+
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
                  max_fetch_log_group_size=1000, executor=None):
@@ -41,7 +54,8 @@ class ShardConsumerWorker(object):
         self.last_fetch_time = 0
         self.last_fetch_count = 0
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = ShardConsumerWorkerLoggerAdapter(
+            logging.getLogger(__name__), {"shard_consumer_worker": self})
 
     def consume(self):
         self.logger.debug('consumer start consuming')

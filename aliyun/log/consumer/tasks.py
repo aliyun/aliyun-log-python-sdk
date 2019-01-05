@@ -40,7 +40,14 @@ class ConsumerProcessorBase(object):
         raise NotImplementedError('not create method process')
 
     def shutdown(self, check_point_tracker):
-        logger.info("ConsumerProcesser is shutdown, shard id: {0}".format(self.shard_id))
+        consumer_client = check_point_tracker.consumer_group_client
+        _id = '/'.join([
+            consumer_client.mproject, consumer_client.mlogstore,
+            consumer_client.mconsumer_group, consumer_client.mconsumer,
+            str(self.shard_id)
+        ])
+        logger.info("[%s]ConsumerProcesser is shutdown, shard id: %s", _id,
+                    self.shard_id)
         self.save_checkpoint(check_point_tracker, force=True)
 
 
