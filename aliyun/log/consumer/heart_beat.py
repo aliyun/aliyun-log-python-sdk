@@ -6,7 +6,7 @@ import time
 from threading import Thread
 
 
-class HeatBeatLoggerAdapter(logging.LoggerAdapter):
+class HeartBeatLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         heart_beat = self.extra['heart_beat']  # type: ConsumerHeatBeat
         _id = '/'.join([
@@ -26,7 +26,7 @@ class ConsumerHeatBeat(Thread):
         self.mheld_shards = []
         self.mheart_shards = []
         self.shut_down_flag = False
-        self.logger = HeatBeatLoggerAdapter(
+        self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
 
     def run(self):
