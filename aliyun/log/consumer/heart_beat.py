@@ -37,7 +37,16 @@ class ConsumerHeatBeat(Thread):
                 last_heatbeat_time = time.time()
 
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
-                self.logger.info('heart beat result: {0} get: {1}'.format(self.mheart_shards, response_shards))
+                self.logger.debug('heart beat result: %s get: %s',
+                                  self.mheart_shards, response_shards)
+                current_set, response_set = set(
+                    self.mheart_shards), set(response_shards)
+                if current_set - response_set:
+                    self.logger.info("following shard will be removed: %s",
+                                     list(current_set - response_set))
+                if response_set - current_set:
+                    self.logger.info("following shard will be added: %s",
+                                     list(response_set - current_set))
                 self.mheld_shards = response_shards
                 self.mheart_shards = self.mheld_shards[:]
 
