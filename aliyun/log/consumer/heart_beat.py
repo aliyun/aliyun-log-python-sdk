@@ -39,14 +39,15 @@ class ConsumerHeatBeat(Thread):
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
                 self.logger.debug('heart beat result: %s get: %s',
                                   self.mheart_shards, response_shards)
-                current_set, response_set = set(
-                    self.mheart_shards), set(response_shards)
-                if current_set - response_set:
-                    self.logger.info("following shard will be removed: %s",
-                                     list(current_set - response_set))
-                if response_set - current_set:
-                    self.logger.info("following shard will be added: %s",
-                                     list(response_set - current_set))
+                if self.logger.isEnabledFor(logging.INFO):
+                    current_set, response_set = set(
+                        self.mheart_shards), set(response_shards)
+                    add_set = response_set - current_set
+                    remove_set = current_set - response_set
+                    if any([add_set, remove_set]):
+                        self.logger.info(
+                            "shard reorganize, adding: %s, removing: %s",
+                            list(add_set), list(remove_set))
                 self.mheld_shards = response_shards
                 self.mheart_shards = self.mheld_shards[:]
 
