@@ -8,7 +8,7 @@ from .checkpoint_tracker import ConsumerCheckpointTracker
 
 from .config import ConsumerStatus
 from .fetched_log_group import FetchedLogGroup
-from .tasks import ProcessTaskResult, InitTaskResult, FetchTaskResult
+from .tasks import ProcessTaskResult, InitTaskResult, FetchTaskResult, TaskResult
 from .tasks import consumer_fetch_task, consumer_initialize_task, \
     consumer_process_task, consumer_shutdown_task
 from .exceptions import ClientWorkerException
@@ -189,12 +189,20 @@ class ShardConsumerWorker(object):
 
     def _sample_log_error(self, result):
         # record the time when error happens
+        if not isinstance(result, TaskResult):
+            return
+
+        exc = result.get_exception()
+        if exc is None:
+            return
+
         current_time = time.time()
-        if result is not None \
-            and result.get_exception() is not None \
-                and current_time - self.last_log_error_time > 5:
-            self.logger.warning(result.get_exception(), exc_info=True)
-            self.last_log_error_time = current_time
+        if current_time - self.last_log_error_time <= 5:
+            return
+
+        self.logger.warning(exc, exc_info=exc)
+        self.last_log_error_time = current_time
+
 
     def _update_status(self, task_succcess):
         if self.consumer_status == ConsumerStatus.SHUTTING_DOWN:
