@@ -7,7 +7,15 @@ from .exceptions import ClientWorkerException
 from ..logexception import LogException
 from ..version import USER_AGENT
 
-logger = logging.getLogger(__name__)
+
+class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        consumer_client = self.extra['consumer_client']  # type: ConsumerClient
+        _id = '/'.join([
+            consumer_client.mproject, consumer_client.mlogstore,
+            consumer_client.mconsumer_group, consumer_client.mconsumer
+        ])
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ConsumerClient(object):
@@ -22,7 +30,8 @@ class ConsumerClient(object):
         self.mlogstore = logstore
         self.mconsumer_group = consumer_group
         self.mconsumer = consumer
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = ConsumerClientLoggerAdapter(
+            logging.getLogger(__name__), {"consumer_client": self})
 
     def create_consumer_group(self, timeout, in_order):
         try:

@@ -11,12 +11,21 @@ from .heart_beat import ConsumerHeatBeat
 from .shard_worker import ShardConsumerWorker
 from concurrent.futures import ThreadPoolExecutor
 
-logger = logging.getLogger(__name__)
+
+class ConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        consumer_worker = self.extra['consumer_worker']  # type: ConsumerWorker
+        consumer_option = consumer_worker.option
+        _id = '/'.join([
+            consumer_option.project, consumer_option.logstore,
+            consumer_option.consumer_group_name, consumer_option.consumer_name
+        ])
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ConsumerWorker(Thread):
-
-    def __init__(self, make_processor, consumer_option, args=None, kwargs=None):
+    def __init__(self, make_processor, consumer_option, args=None,
+                 kwargs=None):
         super(ConsumerWorker, self).__init__()
         self.make_processor = make_processor
         self.process_args = args or ()
@@ -27,7 +36,8 @@ class ConsumerWorker(Thread):
                            consumer_option.project, consumer_option.logstore, consumer_option.consumer_group_name,
                            consumer_option.consumer_name, consumer_option.securityToken)
         self.shut_down_flag = False
-        self.logger = logging.getLogger(__name__)
+        self.logger = ConsumerWorkerLoggerAdapter(
+            logging.getLogger(__name__), {"consumer_worker": self})
         self.shard_consumers = {}
 
         self.consumer_client.create_consumer_group(consumer_option.heartbeat_interval*2, consumer_option.in_order)
@@ -93,10 +103,10 @@ class ConsumerWorker(Thread):
             try:
                 while self.is_alive():
                     self.join(timeout=60)
-                logger.info("worker {0} exit unexpected, try to shutdown it".format(self.option.consumer_name))
+                self.logger.info("worker {0} exit unexpected, try to shutdown it".format(self.option.consumer_name))
                 self.shutdown()
             except KeyboardInterrupt:
-                logger.info("*** try to exit **** ")
+                self.logger.info("*** try to exit **** ")
                 self.shutdown()
 
     def shutdown_and_wait(self):
@@ -140,7 +150,7 @@ class ConsumerWorker(Thread):
         try:
             processer = self.make_processor(*self.process_args, **self.process_kwargs)
         except Exception as ex:
-            logger.error("fail to init processor {0} with parameters {1}, {2}, detail: {3}".format(
+            self.logger.error("fail to init processor {0} with parameters {1}, {2}, detail: {3}".format(
                 self.make_processor, self.process_args, self.process_kwargs, ex, exc_info=True))
             return None
 
@@ -150,4 +160,3 @@ class ConsumerWorker(Thread):
                                        executor=self._executor)
         self.shard_consumers[shard_id] = consumer
         return consumer
-
