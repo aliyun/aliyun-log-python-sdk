@@ -5,6 +5,8 @@ import logging
 import sys
 import time
 
+import six
+
 from ..logexception import LogException
 from .config import CursorPosition
 
@@ -66,16 +68,19 @@ class ConsumerProcessorAdaptor(ConsumerProcessorBase):
 
 
 class TaskResult(object):
+    exc_info = None
+    task_exception = None
+
     def __init__(self, task_exception):
-        self.task_exception = task_exception
+        if task_exception is not None:
+            self.task_exception = task_exception
+            if six.PY2:
+                self.exc_info = sys.exc_info()
+            else:
+                self.exc_info = task_exception
 
     def get_exception(self):
         return self.task_exception
-
-    @property
-    def exc_info(self):
-        return (type(self.task_exception), self.task_exception,
-                self.task_exception.__traceback__)
 
 
 class ProcessTaskResult(TaskResult):
