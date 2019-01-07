@@ -47,7 +47,7 @@ class ConsumerHeatBeat(Thread):
                     if any([add_set, remove_set]):
                         self.logger.info(
                             "shard reorganize, adding: %s, removing: %s",
-                            list(add_set), list(remove_set))
+                            add_set, remove_set)
                 self.mheld_shards = response_shards
                 self.mheart_shards = self.mheld_shards[:]
 
