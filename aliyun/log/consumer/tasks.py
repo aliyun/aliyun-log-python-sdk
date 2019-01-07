@@ -2,12 +2,11 @@
 
 import abc
 import logging
-
-from .config import CursorPosition
-from ..logexception import LogException
-import time
-import six
 import sys
+import time
+
+from ..logexception import LogException
+from .config import CursorPosition
 
 logger = logging.getLogger(__name__)
 
@@ -69,19 +68,14 @@ class ConsumerProcessorAdaptor(ConsumerProcessorBase):
 class TaskResult(object):
     def __init__(self, task_exception):
         self.task_exception = task_exception
-        self._exc_info = None
-        if six.PY2 and task_exception is not None:
-            self._exc_info = sys.exc_info()
 
     def get_exception(self):
         return self.task_exception
 
     @property
     def exc_info(self):
-        if six.PY3:
-            return self.task_exception
-        else:
-            return self._exc_info
+        return (type(self.task_exception), self.task_exception,
+                self.task_exception.__traceback__)
 
 
 class ProcessTaskResult(TaskResult):
