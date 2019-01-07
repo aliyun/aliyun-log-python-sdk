@@ -12,6 +12,7 @@ from .tasks import ProcessTaskResult, InitTaskResult, FetchTaskResult, TaskResul
 from .tasks import consumer_fetch_task, consumer_initialize_task, \
     consumer_process_task, consumer_shutdown_task
 from .exceptions import ClientWorkerException
+import six
 
 
 class ShardConsumerWorker(object):
@@ -200,9 +201,8 @@ class ShardConsumerWorker(object):
         if current_time - self.last_log_error_time <= 5:
             return
 
-        self.logger.warning(exc, exc_info=exc)
+        self.logger.warning(exc, exc_info=result.exc_info)
         self.last_log_error_time = current_time
-
 
     def _update_status(self, task_succcess):
         if self.consumer_status == ConsumerStatus.SHUTTING_DOWN:
