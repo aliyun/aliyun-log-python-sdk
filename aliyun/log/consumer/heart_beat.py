@@ -14,7 +14,7 @@ class HeartBeatLoggerAdapter(logging.LoggerAdapter):
             heart_beat.log_client.mconsumer_group,
             heart_beat.log_client.mconsumer
         ])
-        return "[%s]%s" % (_id, msg), kwargs
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ConsumerHeatBeat(Thread):
@@ -39,7 +39,7 @@ class ConsumerHeatBeat(Thread):
                 self.log_client.heartbeat(self.mheart_shards, response_shards)
                 self.logger.debug('heart beat result: %s get: %s',
                                   self.mheart_shards, response_shards)
-                if self.logger.isEnabledFor(logging.INFO):
+                if self.mheart_shards != response_shards:
                     current_set, response_set = set(
                         self.mheart_shards), set(response_shards)
                     add_set = response_set - current_set

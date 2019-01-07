@@ -24,7 +24,7 @@ class ShardConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
             consumer_client.mconsumer_group, consumer_client.mconsumer,
             str(shard_consumer_worker.shard_id)
         ])
-        return "[%s]%s" % (_id, msg), kwargs
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ShardConsumerWorker(object):

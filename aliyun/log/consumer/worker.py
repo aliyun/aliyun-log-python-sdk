@@ -20,7 +20,7 @@ class ConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
             consumer_option.project, consumer_option.logstore,
             consumer_option.consumer_group_name, consumer_option.consumer_name
         ])
-        return "[%s]%s" % (_id, msg), kwargs
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ConsumerWorker(Thread):

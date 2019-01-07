@@ -15,7 +15,7 @@ class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
             consumer_client.mproject, consumer_client.mlogstore,
             consumer_client.mconsumer_group, consumer_client.mconsumer
         ])
-        return "[%s]%s" % (_id, msg), kwargs
+        return "[{0}]{1}".format(_id, msg), kwargs
 
 
 class ConsumerClient(object):
