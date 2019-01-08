@@ -58,7 +58,7 @@ class SyncData(ConsumerProcessorBase):
         self.r.max_redirects = 1
         self.r.verify = self.option.get("ssl_verify", True)
         self.r.headers['Authorization'] = "Splunk {}".format(self.option['token'])
-        self.url = "{0}://{1}:{2}/services/collector/event".format("http" if not self.option.get('https') else "https", self.option['host'], self.option['port'])
+        self.url = "{0}://{1}:{2}/services/collector".format("http" if not self.option.get('https') else "https", self.option['host'], self.option['port'])
 
         self.default_fields = {}
         if self.option.get("sourcetype"):
@@ -78,22 +78,22 @@ class SyncData(ConsumerProcessorBase):
             #    Python3: {"__time__": "12312312", "__topic__": "topic", "field1": "value1", "field2": "value2"}
             event = {}
             event.update(self.default_fields)
-            if log.get(u"__topic__") == 'audit_log':
-                # suppose we only care about audit log
-                event['time'] = log[u'__time__']
-                event['fields'] = {}
-                del log['__time__']
-                event['fields'].update(log)
+            # suppose we only care about audit log
+            event['time'] = log[u'__time__']
+            event['fields'] = {}
+            del log['__time__']
+            event['fields'].update(log)
 
-                data = json.dumps(event, sort_keys=True)
+            data = json.dumps(event, sort_keys=True)
 
-                try:
-                    req = self.r.post(self.url, data=data, timeout=self.timeout)
-                    req.raise_for_status()
-                except Exception as err:
-                    logger.debug("Failed to connect to remote Splunk server ({0}). Exception: {1}", self.url, err)
+            try:
+                req = self.r.post(self.url, data=data, timeout=self.timeout)
+                req.raise_for_status()
+            except Exception as err:
+                logger.debug("Failed to connect to remote Splunk server ({0}). Exception: {1}".format(self.url, err))
+                raise err
 
-                    # TODO: add some error handling here or retry etc.
+                # TODO: add some error handling here or retry etc.
 
         logger.info("Complete send data to remote")
 
