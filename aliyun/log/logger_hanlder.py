@@ -4,7 +4,7 @@ from .logitem import LogItem
 from .putlogsrequest import PutLogsRequest
 from threading import Thread
 import atexit
-from time import time
+from time import time, sleep
 from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
 from collections import Callable
@@ -282,9 +282,9 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param fields: list of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
 
-    :param queue_size: queue size, default is 4096 logs
+    :param queue_size: queue size, default is 40960 logs, about 10MB ~ 40MB
 
-    :param put_wait: maximum delay to send the logs, by default 2 seconds
+    :param put_wait: maximum delay to send the logs, by default 2 seconds and wait double time for when Queue is full.
 
     :param close_wait: when program exit, it will try to send all logs in queue in this timeperiod, by default 5 seconds
 
@@ -346,7 +346,7 @@ class QueuedLogHandler(SimpleLogHandler):
         self.stop_time = None
         self.put_wait = put_wait or 2  # default is 2 seconds
         self.close_wait = close_wait or 5  # default is 5 seconds
-        self.queue_size = queue_size or 4096  # default is 4096 items
+        self.queue_size = queue_size or 40960  # default is 40960, about 10MB ~ 40MB
         self.batch_size = min(batch_size or 1024, self.queue_size)  # default is 1024 items
 
         self.init_worker()
@@ -371,24 +371,25 @@ class QueuedLogHandler(SimpleLogHandler):
         req = self.make_request(record)
         req.__record__ = record
         try:
-            self.queue.put(req, timeout=self.put_wait)
+            self.queue.put(req, timeout=self.put_wait*2)
         except Full as ex:
             self.handleError(record)
 
     def _get_batch_requests(self, timeout=None):
+        """try to get request as fast as possible, once empty and stop falg or time-out, just return Empty"""
         reqs = []
         s = time()
-        while len(reqs) < self.batch_size:
+        while len(reqs) < self.batch_size and (time() - s) < timeout:
             try:
-                req = self.queue.get(timeout=timeout)
+                req = self.queue.get(block=False)
                 self.queue.task_done()
 
                 reqs.append(req)
-
-                if (time() - s) >= timeout:
-                    break
             except Empty as ex:
-                break
+                if self.stop_flag:
+                    break
+                else:
+                    sleep(0.1)
 
         if not reqs:
             raise Empty
@@ -408,7 +409,7 @@ class QueuedLogHandler(SimpleLogHandler):
     def _post(self):
         while not self.stop_flag or (time() - self.stop_time) <= self.close_wait:
             try:
-                req = self._get_batch_requests(timeout=2)
+                req = self._get_batch_requests(timeout=self.put_wait)
             except Empty as ex:
                 if self.stop_flag:
                     break
@@ -439,11 +440,11 @@ class UwsgiQueuedLogHandler(QueuedLogHandler):
 
     :param fields: list of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
 
-    :param queue_size: queue size, default is 4096 logs
+    :param queue_size: queue size, default is 40960 logs, about 10MB ~ 40MB
 
-    :param put_wait: maximum delay to send the logs, by default 2 seconds
+    :param put_wait: maximum delay to send the logs, by default 2 seconds and wait double time for when Queue is full.
 
-    :param close_wait: when program exit, it will try to send all logs in queue in this timeperiod, by default 5 seconds
+    :param close_wait: when program exit, it will try to send all logs in queue in this timeperiod, by default 2 seconds
 
     :param batch_size: merge this cound of logs and send them batch, by default min(1024, queue_size)
 
@@ -474,6 +475,13 @@ class UwsgiQueuedLogHandler(QueuedLogHandler):
     :param kwargs: other parameters  passed to logging.Handler
     """
     def __init__(self, *args, **kwargs):
+        # change close_wait from default 5 to 2
+        if len(args) >= 10:
+            if args[9] is None:
+                args = args[:9] + (2,) + args[10:]
+        elif 'close_wait' in kwargs and kwargs['close_wait'] is None:
+            kwargs['close_wait'] = 2
+
         super(UwsgiQueuedLogHandler, self).__init__(*args, **kwargs)
 
     def init_worker(self):
