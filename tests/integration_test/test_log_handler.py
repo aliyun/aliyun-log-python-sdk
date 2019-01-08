@@ -27,6 +27,30 @@ def test_log_handler(end_point, access_key_id, access_key, project, logstore):
     print("...finish... %s seconds" % (time() - s))
 
 
+def test_log_handler_extra(end_point, access_key_id, access_key, project, logstore):
+    logger = logging.getLogger(__name__)
+
+    aliyun_logger = QueuedLogHandler(end_point, access_key_id, access_key, project, logstore)
+    aliyun_logger.setLevel(logging.INFO)
+    aliyun_logger.set_fields([LogFields.level, LogFields.func_name, LogFields.file_path])
+    aliyun_logger.set_topic("sdk test")
+    logger.addHandler(aliyun_logger)
+    logger.setLevel(logging.INFO)
+
+    logger.error("x1", extra={"a": 100, "b": [1,2,3]})
+    logger.error("x2", extra={"a": 100, "b": "xyz"})
+    logger.error("x3", extra={"a": 100, "b": [1, "abc", {"x": 200}]})
+    logger.error("x4", extra={"a": 100.1, "b": "xyz"})
+    logger.error("x5", extra={"a": u"中国".encode('utf8'), "b": {u"中国".encode('utf8'): u"中国".encode('utf8')}})
+    logger.error("x6", extra={"a": u"中国", "b": {u"中国": u"中国"}})
+
+    try:
+        1/0
+    except ZeroDivisionError as ex:
+        logger.error(ex)
+        logger.error(ex, exc_info=True)
+
+
 def test_log_handler_json(end_point, access_key_id, access_key, project, logstore):
     logger = logging.getLogger('json')
 
@@ -134,6 +158,9 @@ def main():
             print(x.get_flatten_logs_json())
             assert len(x.get_flatten_logs_json()) == 10
             break
+
+        # test extra
+        test_log_handler_extra(endpoint, accessKeyId, accessKey, project, logstore)
 
         # test extract json
         test_log_handler_json(endpoint, accessKeyId, accessKey, project, logstore)

@@ -7,7 +7,7 @@ import atexit
 from time import time
 from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
-
+from collections import Callable
 import six
 
 if six.PY2:
@@ -28,6 +28,7 @@ class LogFields(Enum):
     """
     record_name = 'name'
     level = 'levelname'
+    file_name = 'filename'
     func_name = 'funcName'
     module = 'module'
     file_path = 'pathname'
@@ -36,6 +37,25 @@ class LogFields(Enum):
     process_name = 'processName'
     thread_id = 'thread'
     thread_name = 'threadName'
+
+    level_no = 'levelno'
+    asc_time = 'asctime'
+    created_timestamp = 'created'
+    micro_second = 'msecs'
+    relative_created = 'relativeCreated'
+
+
+DEFAULT_RECORD_LOG_FIELDS = set((LogFields.record_name, LogFields.level,
+                                 LogFields.func_name, LogFields.module,
+                                 LogFields.file_path, LogFields.line_no,
+                                 LogFields.process_id, LogFields.process_name,
+                                 LogFields.thread_id, LogFields.thread_name))
+
+BLACK_FIELD_LIST = set(['exc_info', 'exc_text', 'stack_info', 'msg', 'args', 'message'])
+
+BUILTIN_LOG_FIELDS_NAMES = set(x for x in dir(LogFields) if not x.startswith('__'))
+BUILTIN_LOG_FIELDS_NAMES.update(set(LogFields[x].value for x in BUILTIN_LOG_FIELDS_NAMES))
+BUILTIN_LOG_FIELDS_NAMES.update(BLACK_FIELD_LIST)
 
 
 class SimpleLogHandler(logging.Handler, object):
@@ -54,7 +74,7 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param topic: topic, by default is empty
 
-    :param fields: list of LogFields or list of names of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name
+    :param fields: list of LogFields or list of names of LogFields, default is LogFields.record_name, LogFields.level, LogFields.func_name, LogFields.module, LogFields.file_path, LogFields.line_no, LogFields.process_id, LogFields.process_name, LogFields.thread_id, LogFields.thread_name, you could also just use he string name like 'thread_name', it's also possible customize extra fields in this list by disable extra fields and put white list here.
 
     :param buildin_fields_prefix: prefix of builtin fields, default is empty. suggest using "__" when extract json is True to prevent conflict.
 
@@ -78,6 +98,8 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
 
+    :param extra: if show extra info, default True to show all. default is True. Note: the extra field will also be handled with buildin_fields_prefix/suffix
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
@@ -87,7 +109,7 @@ class SimpleLogHandler(logging.Handler, object):
                  extract_json_prefix=None, extract_json_suffix=None,
                  extract_kv=None, extract_kv_drop_message=None,
                  extract_kv_prefix=None, extract_kv_suffix=None,
-                 extract_kv_sep=None,
+                 extract_kv_sep=None, extra=None,
                  **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
@@ -97,11 +119,7 @@ class SimpleLogHandler(logging.Handler, object):
         self.log_store = log_store
         self.client = None
         self.topic = topic
-        self.fields = (LogFields.record_name, LogFields.level,
-                       LogFields.func_name, LogFields.module,
-                       LogFields.file_path, LogFields.line_no,
-                       LogFields.process_id, LogFields.process_name,
-                       LogFields.thread_id, LogFields.thread_name) if fields is None else fields
+        self.fields = DEFAULT_RECORD_LOG_FIELDS if fields is None else set(fields)
 
         self.extract_json = False if extract_json is None else extract_json
         self.extract_json_prefix = "" if extract_json_prefix is None else extract_json_prefix
@@ -116,6 +134,7 @@ class SimpleLogHandler(logging.Handler, object):
         self.extract_kv_drop_message = False if extract_kv_drop_message is None else extract_kv_drop_message
         self.extract_kv_sep = "=" if extract_kv_sep is None else extract_kv_sep
         self.extract_kv_ptn = self._get_extract_kv_ptn()
+        self.extra = True if extra is None else extra
 
     def set_topic(self, topic):
         self.topic = topic
@@ -137,7 +156,7 @@ class SimpleLogHandler(logging.Handler, object):
         if v is None:
             return ""
 
-        if isinstance(v, (dict, list)):
+        if isinstance(v, (dict, list, tuple)):
             try:
                 v = json.dumps(v)
             except Exception:
@@ -183,6 +202,14 @@ class SimpleLogHandler(logging.Handler, object):
 
         return data
 
+    def _add_record_fields(self, record, k, contents):
+        v = getattr(record, k, None)
+        if v is None or isinstance(v, Callable):
+            return
+
+        v = self._n(v)
+        contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v))
+
     def make_request(self, record):
         contents = []
         message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
@@ -203,13 +230,27 @@ class SimpleLogHandler(logging.Handler, object):
 
         # add builtin fields
         for x in self.fields:
-            if isinstance(x, (six.binary_type, six.text_type)):
-                x = LogFields[x]
+            k = x
+            if isinstance(x, LogFields):
+                k = x.name
+                x = x.value
+            elif isinstance(x, (six.binary_type, six.text_type)):
+                if x in BLACK_FIELD_LIST:
+                    continue  # by pass for those reserved fields. make no sense to render them
 
-            v = getattr(record, x.value)
-            if not isinstance(v, (six.binary_type, six.text_type)):
-                v = str(v)
-            contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, x.name, self.buildin_fields_suffix), v))
+                if x in BUILTIN_LOG_FIELDS_NAMES:
+                    k = LogFields[x].name
+                    x = LogFields[x].value
+                elif self.extra:  # will handle it later
+                    continue
+
+            self._add_record_fields(record, x, contents)
+
+        # handle extra
+        if self.extra:
+            for x in dir(record):
+                if not x.startswith('__') and not x in BUILTIN_LOG_FIELDS_NAMES:
+                    self._add_record_fields(record, x, contents)
 
         item = LogItem(contents=contents, timestamp=record.created)
 
@@ -271,6 +312,8 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
 
+    :param extra: if show extra info, default True to show all. default is True
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
@@ -282,6 +325,7 @@ class QueuedLogHandler(SimpleLogHandler):
                  extract_kv=None, extract_kv_drop_message=None,
                  extract_kv_prefix=None, extract_kv_suffix=None,
                  extract_kv_sep=None,
+                 extra=None,
                  **kwargs):
         super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store,
                                                topic=topic, fields=fields,
@@ -296,6 +340,7 @@ class QueuedLogHandler(SimpleLogHandler):
                                                extract_kv_prefix=extract_kv_prefix,
                                                extract_kv_suffix=extract_kv_suffix,
                                                extract_kv_sep=extract_kv_sep,
+                                               extra=extra,
                                                **kwargs)
         self.stop_flag = False
         self.stop_time = None
@@ -423,6 +468,8 @@ class UwsgiQueuedLogHandler(QueuedLogHandler):
     :param extract_kv_suffix: suffix of fields extracted from KV when extract_json is True. default is ""
 
     :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
+
+    :param extra: if show extra info, default True to show all. default is True
 
     :param kwargs: other parameters  passed to logging.Handler
     """
