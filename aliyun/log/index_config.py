@@ -62,8 +62,8 @@ class IndexJsonKeyConfig(object) :
         json_value["json_keys"] = self.json_keys
 
     def from_json(self, json_value) : 
-        self.index_all = json_value["index_all"]
-        self.max_depth = json_value["max_depth"]
+        self.index_all = json_value.get("index_all", True)
+        self.max_depth = json_value.get("max_depth", -1)
         self.alias = None
         self.json_keys = {}
         if "alias" in json_value:
