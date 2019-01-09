@@ -520,7 +520,7 @@ def _split_one_shard_to_multiple(client, project, logstore, shard_info, count, c
 
             current_shard_count += res.count - 1
             increased_shard_count += res.count - 1
-            logger.info("split shard: ", project, logstore, shard_info, count, current_shard_count)
+            logger.info("split shard: project={0}, logstore={1}, shard_info={2}, count={3}, current_shard_count={4}".format(project, logstore, shard_info, count, current_shard_count))
         except Exception as ex:
             print(ex)
             print(x, project, logstore, shard_info, count, current_shard_count)
