@@ -871,7 +871,7 @@ class LogClient(object):
             begin_cursor = res.get_next_cursor()
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=500,
-                      compress=True, encodings=None):
+                      compress=True, encodings=None, shard_list=None):
         """ dump all logs seperatedly line into file_path, file_path, the time parameters are log received time on server side.
 
         :type project_name: string
@@ -898,6 +898,9 @@ class LogClient(object):
         :type encodings: string list
         :param encodings: encoding like ["utf8", "latin1"] etc to dumps the logs in json format to file. default is ["utf8",]
 
+        :type shard_list: string
+        :param shard_list: shard number list. could be comma seperated list or range: 1,20,31-40
+
         :return: LogResponse {"total_count": 30, "files": {'file_path_1': 10, "file_path_2": 20} })
 
         :raise: LogException
@@ -906,7 +909,7 @@ class LogClient(object):
             file_path += "{}"
 
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
-                             batch_size=batch_size, compress=compress, encodings=encodings)
+                             batch_size=batch_size, compress=compress, encodings=encodings, shard_list=shard_list)
 
     def create_logstore(self, project_name, logstore_name,
                         ttl=30,

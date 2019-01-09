@@ -362,18 +362,21 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
 
 
 def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True,
-                  encodings=None):
+                  encodings=None, shard_list=None):
     cpu_count = multiprocessing.cpu_count() * 2
+
     shards = client.list_shards(project_name, logstore_name).get_shards_info()
-    worker_size = min(cpu_count, len(shards))
+    current_shards = [str(shard['shardID']) for shard in shards]
+    target_shards = _parse_shard_list(shard_list, current_shards)
+    worker_size = min(cpu_count, len(target_shards))
 
     result = dict()
     total_count = 0
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
         futures = [pool.submit(dump_worker, client, project_name, logstore_name, from_time, to_time,
-                               shard_id=shard['shardID'], file_path=file_path.format(shard['shardID']),
+                               shard_id=shard, file_path=file_path.format(shard),
                                batch_size=batch_size, compress=compress, encodings=encodings)
-                   for shard in shards]
+                   for shard in target_shards]
 
         for future in as_completed(futures):
             file_path, count = future.result()
