@@ -342,7 +342,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
 
     count = 0
     for data in res:
-        for log in data.get_flatten_logs_json(decode_bytes=data._is_bytes_type):
+        for log in data.get_flatten_logs_json(decode_bytes=True):
             with open(file_path, "a+") as f:
                 count += 1
                 try:
