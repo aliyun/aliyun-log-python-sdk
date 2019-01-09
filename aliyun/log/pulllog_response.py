@@ -158,7 +158,7 @@ class PullLogResponse(LogResponse):
                         u'__source__': logGroup.Source}
                 item.update(tags)
                 for content in log.Contents:
-                    item[content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value
+                    item[PullLogResponse._b2u(content.Key) if decode_bytes else content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value
                 flatten_logs_json.append(item)
         return flatten_logs_json
 

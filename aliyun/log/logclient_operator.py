@@ -334,14 +334,15 @@ def get_encoder_cls(encodings):
 
 def dump_worker(client, project_name, logstore_name, from_time, to_time,
                 shard_id, file_path,
-                batch_size=1000, compress=True, encodings=None):
+                batch_size=1000, compress=True, encodings=None, no_escape=None):
     res = client.pull_log(project_name, logstore_name, shard_id, from_time, to_time, batch_size=batch_size,
                           compress=compress)
     encodings = encodings or ('utf8', 'latin1', 'gbk')
+    ensure_ansi = not no_escape
 
     count = 0
     for data in res:
-        for log in data.get_flatten_logs_json():
+        for log in data.get_flatten_logs_json(decode_bytes=data._is_bytes_type):
             with open(file_path, "a+") as f:
                 count += 1
                 try:
@@ -349,7 +350,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
                         last_ex = None
                         for encoding in encodings:
                             try:
-                                f.write(json.dumps(log, encoding=encoding))
+                                f.write(json.dumps(log, encoding=encoding, ensure_ascii=ensure_ansi))
                                 f.write("\n")
                                 break
                             except UnicodeDecodeError as ex:
@@ -357,7 +358,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
                         else:
                             raise last_ex
                     else:
-                        f.write(json.dumps(log, cls=get_encoder_cls(encodings)))
+                        f.write(json.dumps(log, cls=get_encoder_cls(encodings), ensure_ascii=ensure_ansi))
                         f.write("\n")
                 except Exception as ex:
                     print("shard: {0} Fail to dump log: {1}".format(shard_id, b64e(repr(log))))
@@ -367,7 +368,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
 
 
 def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=500, compress=True,
-                  encodings=None, shard_list=None):
+                  encodings=None, shard_list=None, no_escape=None):
     cpu_count = multiprocessing.cpu_count() * 2
 
     shards = client.list_shards(project_name, logstore_name).get_shards_info()
@@ -380,7 +381,7 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
         futures = [pool.submit(dump_worker, client, project_name, logstore_name, from_time, to_time,
                                shard_id=shard, file_path=file_path.format(shard),
-                               batch_size=batch_size, compress=compress, encodings=encodings)
+                               batch_size=batch_size, compress=compress, encodings=encodings, no_escape=no_escape)
                    for shard in target_shards]
 
         for future in as_completed(futures):
