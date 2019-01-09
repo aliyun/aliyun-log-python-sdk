@@ -15,6 +15,8 @@ from .logitem import LogItem
 from aliyun.log.pulllog_response import PullLogResponse
 from .consumer import *
 from multiprocessing import RLock
+from .util import base64_encodestring as b64e
+
 
 MAX_INIT_SHARD_COUNT = 10
 
@@ -342,21 +344,24 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
         for log in data.get_flatten_logs_json():
             with open(file_path, "a+") as f:
                 count += 1
-
-                if six.PY2:
-                    last_ex = None
-                    for encoding in encodings:
-                        try:
-                            f.write(json.dumps(log, encoding=encoding))
-                            f.write("\n")
-                            break
-                        except UnicodeDecodeError as ex:
-                            last_ex = ex
+                try:
+                    if six.PY2:
+                        last_ex = None
+                        for encoding in encodings:
+                            try:
+                                f.write(json.dumps(log, encoding=encoding))
+                                f.write("\n")
+                                break
+                            except UnicodeDecodeError as ex:
+                                last_ex = ex
+                        else:
+                            raise last_ex
                     else:
-                        raise last_ex
-                else:
-                    f.write(json.dumps(log, cls=get_encoder_cls(encodings)))
-                    f.write("\n")
+                        f.write(json.dumps(log, cls=get_encoder_cls(encodings)))
+                        f.write("\n")
+                except Exception as ex:
+                    print("shard: {0} Fail to dump log: {1}".format(shard_id, b64e(repr(log))))
+                    raise ex
 
     return file_path, count
 
