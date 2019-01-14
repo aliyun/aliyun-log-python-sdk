@@ -17,10 +17,10 @@ class GetHistogramsRequest(LogRequest):
     :param logstore: logstore name
     
     :type fromTime: int/string
-    :param fromTime: the begin time or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+    :param fromTime: the begin time or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00" e.g. "2018-01-02 12:12:10", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
     
     :type toTime: int/string
-    :param toTime: the end time or format of time in readable time like "%Y-%m-%d %H:%M:%S CST" e.g. "2018-01-02 12:12:10", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+    :param toTime: the end time or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00" e.g. "2018-01-02 12:12:10", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
     :type topic: string
     :param topic: topic name of logs
