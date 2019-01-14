@@ -769,7 +769,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=1000, end_cursor=None, compress=True):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None):
         """ batch pull log data from log service
         Unsuccessful opertaion will cause an LogException.
 
@@ -792,7 +792,7 @@ class LogClient(object):
         :param end_cursor: the end cursor position to get data
 
         :type compress: boolean
-        :param compress: if use zip compress for transfer data
+        :param compress: if use zip compress for transfer data, default is True
 
         :return: PullLogResponse
         
@@ -800,7 +800,7 @@ class LogClient(object):
         """
 
         headers = {}
-        if compress:
+        if compress is None or compress:
             headers['Accept-Encoding'] = 'gzip'
         else:
             headers['Accept-Encoding'] = ''
@@ -811,6 +811,7 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/shards/" + str(shard_id)
         params['type'] = 'log'
         params['cursor'] = cursor
+        count = count or 1000
         params['count'] = str(count)
         if end_cursor:
             params['end_cursor'] = end_cursor
@@ -828,7 +829,7 @@ class LogClient(object):
         else:
             return PullLogResponse(resp, header)
 
-    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=1000, compress=True):
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None):
         """ batch pull log data from log service using time-range
         Unsuccessful opertaion will cause an LogException. the time parameter means the time when server receives the logs
 
@@ -870,8 +871,8 @@ class LogClient(object):
 
             begin_cursor = res.get_next_cursor()
 
-    def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=500,
-                      compress=True, encodings=None, shard_list=None, no_escape=None):
+    def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
+                      compress=None, encodings=None, shard_list=None, no_escape=None):
         """ dump all logs seperatedly line into file_path, file_path, the time parameters are log received time on server side.
 
         :type project_name: string
@@ -2593,7 +2594,7 @@ class LogClient(object):
     def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,
                   shard_list=None,
-                  batch_size=500, compress=True, new_topic=None, new_source=None):
+                  batch_size=None, compress=None, new_topic=None, new_source=None):
         """
         copy data from one logstore to another one (could be the same or in different region), the time is log received time on server side.
 
@@ -2644,7 +2645,7 @@ class LogClient(object):
     def transform_data(self, project, logstore, config, from_time, to_time=None,
                        to_client=None, to_project=None, to_logstore=None,
                        shard_list=None,
-                       batch_size=500, compress=True,
+                       batch_size=None, compress=None,
                        cg_name=None, c_name=None,
                        cg_heartbeat_interval=None, cg_data_fetch_interval=None, cg_in_order=None,
                        cg_worker_pool_size=None
