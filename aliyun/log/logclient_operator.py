@@ -365,7 +365,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
                     except Exception as ex:
                         logger.error("shard: {0} Fail to dump log: {1}".format(shard_id, b64e(repr(log))), exc_info=True)
                         raise ex
-            next_cursor = res.next_cursor
+            next_cursor = data.next_cursor
     except Exception as ex:
         logger.error("dump log failed: task info {0} failed to copy data to target, next cursor: {1} detail: {2}".
                      format(
@@ -735,7 +735,7 @@ def transform_worker(from_client, from_project, from_logstore, shard_id, from_ti
             processed += p
             failed += f
 
-        next_cursor = iter_data.next_cursor
+            next_cursor = s.next_cursor
         return shard_id, count, removed, processed, failed
     except Exception as ex:
         logger.error("transform data failed: task info {0} failed to copy data to target, next cursor: {1} detail: {2}".
