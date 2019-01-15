@@ -6,9 +6,14 @@ log service server to put/get data.
 """
 
 try:
-    import logservice_lz4
+    import lz4framed as lz4
+
+    def lz_decompress(raw_size, data):
+        prefix = b'\x04"M\x18h@' + struct.pack('<I', raw_size) + b'\x00\x00\x00\x00p\xb4\x02\x00\x00'
+        return lz4.decompress(prefix + data + b'\x00\x00\x00\x00')
+
 except ImportError:
-    pass
+    lz4 = None
 
 import json
 import requests
@@ -48,6 +53,7 @@ from .version import API_VERSION, USER_AGENT
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
 from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
+import struct
 
 logger = logging.getLogger(__name__)
 
@@ -305,14 +311,13 @@ class LogClient(object):
         raw_body_size = len(body)
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
-        # if raw_body_size > 5 * 1024 * 1024:  # 10 MB
-        #     raise LogException('InvalidLogSize',
-        #                        "logItems' size exceeds maximum limitation: 5 MB. now: {0} MB.".format(
-        #                            raw_body_size / 1024.0 / 1024))
-
         if compress is None or compress:
-            headers['x-log-compresstype'] = 'deflate'
-            body = zlib.compress(body)
+            if lz4:
+                headers['x-log-compresstype'] = 'lz4'
+                body = lz4.compress(body)[19:-4]
+            else:
+                headers['x-log-compresstype'] = 'deflate'
+                body = zlib.compress(body)
 
         params = {}
         resource = '/logstores/' + logstore + "/shards/lb"
@@ -370,8 +375,12 @@ class LogClient(object):
 
         compress_data = None
         if is_compress:
-            headers['x-log-compresstype'] = 'deflate'
-            compress_data = zlib.compress(body)
+            if lz4:
+                headers['x-log-compresstype'] = 'lz4'
+                compress_data = lz4.compress(body)[19:-4]
+            else:
+                headers['x-log-compresstype'] = 'deflate'
+                compress_data = zlib.compress(body)
 
         params = {}
         logstore = request.get_logstore()
@@ -801,7 +810,10 @@ class LogClient(object):
 
         headers = {}
         if compress is None or compress:
-            headers['Accept-Encoding'] = 'gzip'
+            if lz4:
+                headers['Accept-Encoding'] = 'lz4'
+            else:
+                headers['Accept-Encoding'] = 'gzip'
         else:
             headers['Accept-Encoding'] = ''
 
@@ -820,8 +832,11 @@ class LogClient(object):
         compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
         if compress_type == 'lz4':
             raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
-            raw_data = logservice_lz4.uncompress(raw_size, resp)
-            return PullLogResponse(raw_data, header)
+            if lz4:
+                raw_data = lz_decompress(raw_size, resp)
+                return PullLogResponse(raw_data, header)
+            else:
+                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=resp)
         elif compress_type in ('gzip', 'deflate'):
             raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
             raw_data = zlib.decompress(resp)
