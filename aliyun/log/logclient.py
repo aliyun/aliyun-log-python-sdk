@@ -6,11 +6,13 @@ log service server to put/get data.
 """
 
 try:
-    import lz4framed as lz4
+    import lz4
 
     def lz_decompress(raw_size, data):
-        prefix = b'\x04"M\x18h@' + struct.pack('<I', raw_size) + b'\x00\x00\x00\x00p\xb4\x02\x00\x00'
-        return lz4.decompress(prefix + data + b'\x00\x00\x00\x00')
+        return lz4.decompress(struct.pack('<I', raw_size) + data)
+
+    def lz_compresss(data):
+        return lz4.dumps(data)[4:]
 
 except ImportError:
     lz4 = None
@@ -314,7 +316,7 @@ class LogClient(object):
         if compress is None or compress:
             if lz4:
                 headers['x-log-compresstype'] = 'lz4'
-                body = lz4.compress(body)[19:-4]
+                body = lz_compresss(body)
             else:
                 headers['x-log-compresstype'] = 'deflate'
                 body = zlib.compress(body)
@@ -377,7 +379,7 @@ class LogClient(object):
         if is_compress:
             if lz4:
                 headers['x-log-compresstype'] = 'lz4'
-                compress_data = lz4.compress(body)[19:-4]
+                compress_data = lz4.compress(body)
             else:
                 headers['x-log-compresstype'] = 'deflate'
                 compress_data = zlib.compress(body)
