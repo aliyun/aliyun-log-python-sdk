@@ -926,8 +926,8 @@ class LogClient(object):
 
         :raise: LogException
         """
-        if "{}" not in file_path:
-            file_path += "{}"
+        if "{}" not in file_path or "{0}" not in file_path:
+            file_path += "{0}"
 
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
                              batch_size=batch_size, compress=compress, encodings=encodings,
