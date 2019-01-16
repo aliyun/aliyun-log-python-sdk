@@ -18,7 +18,7 @@ from multiprocessing import RLock
 from .util import base64_encodestring as b64e
 
 
-MAX_INIT_SHARD_COUNT = 10
+MAX_INIT_SHARD_COUNT = 200
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +78,6 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
                                             max_split_shard=ret.max_split_shard,
                                             preserve_storage=ret.preserve_storage
                                             )
-
-            # arrange shard to expected count
-            if expected_rwshard_count > MAX_INIT_SHARD_COUNT:
-                res = arrange_shard(to_client, to_project, logstore_name, expected_rwshard_count)
 
             # copy index
             try:
@@ -200,19 +196,18 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
             # update logstore's settings
             ret = to_client.update_logstore(to_project, to_logstore,
                                             ttl=ret.get_ttl(),
-                                            shard_count=min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
                                             enable_tracking=ret.get_enable_tracking(),
                                             append_meta=ret.append_meta,
                                             auto_split=ret.auto_split,
                                             max_split_shard=ret.max_split_shard,
                                             preserve_storage=ret.preserve_storage
                                             )
+
+            # arrange shard to expected count
+            res = arrange_shard(to_client, to_project, to_logstore, min(expected_rwshard_count, MAX_INIT_SHARD_COUNT))
         else:
             raise
 
-    # arrange shard to expected count
-    if expected_rwshard_count > MAX_INIT_SHARD_COUNT:
-        res = arrange_shard(to_client, to_project, to_logstore, expected_rwshard_count)
 
     # copy index
     try:
