@@ -9,7 +9,7 @@ try:
     import lz4
 
     def lz_decompress(raw_size, data):
-        return lz4.decompress(struct.pack('<I', raw_size) + data)
+        return lz4.loads(struct.pack('<I', raw_size) + data)
 
     def lz_compresss(data):
         return lz4.dumps(data)[4:]
@@ -379,7 +379,7 @@ class LogClient(object):
         if is_compress:
             if lz4:
                 headers['x-log-compresstype'] = 'lz4'
-                compress_data = lz4.compress(body)
+                compress_data = lz_compresss(body)
             else:
                 headers['x-log-compresstype'] = 'deflate'
                 compress_data = zlib.compress(body)
