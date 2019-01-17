@@ -4,6 +4,7 @@ import six
 
 from .trans_base import trans_comp_base
 from ..exceptions import SettingError
+from ..etl_util import cached, get_re_full_match, get_set_mode_if_skip_fn
 
 logger = logging.getLogger(__name__)
 
@@ -12,22 +13,22 @@ __all__ = ['trans_comp_regex']
 
 class trans_comp_regex(trans_comp_base):
     """
-    "123 456": "\d+", "f1" ==> f1: 123
-    "123 456": "\d+", ["f1", "f2"] ==> f1: 123   f2: 456
-    "abc 123": "(\w+) (\d+)", ["f1", "f2"]  ==> f1: abc   f2: 456
-    "abc 123": "(?P<f1>\w+) (?P<f2>\d+)" ==> f1: abc   f2: 456
-
-    "abc:123 xyz:456": "(\w+):(\d+)", {"k_\1": "v_\2"} ==> k_abc: 123    k_xyz: 456
-
-    Corner Case:
-    "!abc 123# xyz 456": "(\w+) (\d+)", ["f1", "f2"], True  ==> f1: abc f2: 123
-
     # full match: ^$
     # ignore group: (?:...)
     # case insensitive: (?i)
     """
+    DEFAULT_KEYWORD_PTN = u'[\u4e00-\u9fa5\u0800-\u4e00a-zA-Z][\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]*'
+    SET_MODE = {
+                "fill": get_set_mode_if_skip_fn(False, True, False),
+                "add": get_set_mode_if_skip_fn(True, False, False),
+                "overwrite": get_set_mode_if_skip_fn(False, False, False),
+                "fill-auto": get_set_mode_if_skip_fn(False, True, True),
+                "add-auto": get_set_mode_if_skip_fn(True, False, True),
+                "overwrite-auto": get_set_mode_if_skip_fn(False, False, True)
+                }
+    DEFAULT_SET_MODE = 'fill-auto'
 
-    def __init__(self, pattern, fields_info=None):
+    def __init__(self, pattern, fields_info=None, mode=None):
         pattern = self._u(pattern)
         fields_info = self._u(fields_info)
 
@@ -44,6 +45,9 @@ class trans_comp_regex(trans_comp_base):
             self.fields_info = fields_info
         elif fields_info is not None:
             logger.warning(u'transform_regex: unknown fields info type: "{0}"'.format(fields_info))
+
+        self.kw_ptn = get_re_full_match(self.DEFAULT_KEYWORD_PTN)
+        self.skip_if = self.SET_MODE.get(mode, self.SET_MODE[self.DEFAULT_SET_MODE])
 
     def __call__(self, event, inpt):
         inpt = self._u(inpt)
@@ -62,7 +66,12 @@ class trans_comp_regex(trans_comp_base):
                     break
 
                 if m:
-                    event.update(m.groupdict())
+                    for k, v in six.iteritems(m.groupdict()):
+                        # only check mode
+                        if not self.skip_if(event, k, v):
+                            event[k] = v
+                        else:
+                            logger.debug("trans_comp_regex: skip detected k-v due to current mode: {0}".format((k, v)))
                 else:
                     logger.info(u'transform_regex: field value "{0}" cannot extract value with config "{1}"'
                                 .format(event[data], self.config))
@@ -77,14 +86,26 @@ class trans_comp_regex(trans_comp_base):
 
                     if isinstance(self.fields_info, (six.binary_type, six.text_type)):
                         # only find first one
-                        event[self.fields_info] = m.group()
+                        k, v = self.fields_info, m.group()
+                        if not self.skip_if(event, k, v):
+                            event[k] = v
+                        else:
+                            logger.debug(
+                                "trans_comp_regex: skip detected k-v due to current mode: {0}".format(
+                                    (k, v)))
                     elif isinstance(self.fields_info, (dict, )):
                         ms = [m] + list(find_iter)
 
                         for i, m in enumerate(ms):
                             for k, v in six.iteritems(self.fields_info):
                                 try:
-                                    event[m.expand(k)] = m.expand(v)
+                                    kk, vv = m.expand(k), m.expand(v)
+                                    if kk and self.kw_ptn(kk) and not self.skip_if(event, kk, vv):
+                                        event[kk] = vv
+                                    else:
+                                        logger.debug(
+                                            "trans_comp_regex: skip detected k-v due to current mode: {0}".format(
+                                                (kk, vv)))
                                 except re.error as ex:
                                     logger.info(
                                         u'transform_regex: cannot expand matched group "{0}" for fields info "{1}:{2}", '
@@ -100,7 +121,14 @@ class trans_comp_regex(trans_comp_base):
                                         u'config "{1}" with field info {2}'.format(event[data],
                                                                                   self.config, self.fields_info))
                                     break
-                                event[self.fields_info[i]] = g
+
+                                k, v = self.fields_info[i], g
+                                if k and self.kw_ptn(k) and not self.skip_if(event, k, v):
+                                    event[k] = v
+                                else:
+                                    logger.debug(
+                                        "trans_comp_regex: skip detected k-v due to current mode: {0}".format(
+                                            (k, v)))
                         else:
                             ms = [m] + list(find_iter)
                             if len(ms) != len(self.fields_info):
@@ -111,7 +139,14 @@ class trans_comp_regex(trans_comp_base):
                             for i, m in enumerate(ms):
                                 if i >= len(self.fields_info):
                                     break
-                                event[self.fields_info[i]] = m.group()
+
+                                k, v = self.fields_info[i], m.group()
+                                if k and self.kw_ptn(k) and not self.skip_if(event, k, v):
+                                    event[k] = v
+                                else:
+                                    logger.debug(
+                                        "trans_comp_regex: skip detected k-v due to current mode: {0}".format(
+                                            (k, v)))
                     else:
                         logger.warning(u'transform_regex: unknown fields info type: "{0}"'.format(self.fields_info))
             else:
