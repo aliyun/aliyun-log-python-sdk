@@ -154,8 +154,10 @@ def test_regex():
 
     # simple
     assert t( ("k1", r"hello (?P<name>\w+)") )({'k1': 'hello ding'}) == {'k1': 'hello ding', 'name': 'ding'}
+
     # multiple
     assert t( ("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': '1234'}
+
     # not match
     assert t( ("k1", r"(?P<abc>\d+)") )({'k1': 'aBc1234'}) == {'k1': 'aBc1234', 'abc': '1234'}
 
@@ -181,6 +183,43 @@ def test_regex():
 
     # regex 3-tuple dict
     assert t(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456'}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
+
+    #######
+    #### mode
+
+    # mode - default - empty
+    assert t( ("k1", r"hello (?P<name>\w+)") )({'k1': 'hello ding', "name": ""}) == {'k1': 'hello ding', 'name': 'ding'}
+    assert t( ("k1", REGEX(r"hello (?P<name>\w+)", mode='add')) )({'k1': 'hello ding', "name": ""}) == {'k1': 'hello ding', 'name': ''}
+    assert t( ("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d+)") )({'k1': 'aBc1234', 'num': ''}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': '1234'}
+    assert t(("k1", r"(\w+) (\d+)", ["f1", "f2"]))({'k1': 'abc 123', "f2": ""}) == {'k1': 'abc 123', 'f1': "abc", "f2": "123"}
+    assert t(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456', "k_xyz": ""}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
+    assert t(("k1", REGEX(r"(\w+):(\d+)", {r"k_\1": r"v_\2"}, mode='add')))({'k1': 'abc:123 xyz:456', "k_xyz": ""}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": ""}
+
+    # mode - default - non-exit (skip, cause as above)
+
+    # mode - default - non-empty
+    assert t( ("k1", r"hello (?P<name>\w+)") )({'k1': 'hello ding', "name": "xx"}) == {'k1': 'hello ding', 'name': 'xx'}
+    assert t( ("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d+)") )({'k1': 'aBc1234', 'num': 'xx'}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': 'xx'}
+    assert t( ("k1", REGEX(r"(?i)(?P<word>[a-z]+)(?P<num>\d+)", mode='overwrite')) )({'k1': 'aBc1234', 'num': 'xx'}) == {'k1': 'aBc1234', 'word': 'aBc', 'num': '1234'}
+    assert t(("k1", r"(\w+) (\d+)", ["f1", "f2"]))({'k1': 'abc 123', "f2": "xx"}) == {'k1': 'abc 123', 'f1': "abc", "f2": "xx"}
+    assert t(("k1", REGEX(r"(\w+) (\d+)", ["f1", "f2"], mode='overwrite')))({'k1': 'abc 123', "f2": "xx"}) == {'k1': 'abc 123', 'f1': "abc", "f2": "123"}
+    assert t(("k1", r"(\w+):(\d+)", {r"k_\1": r"v_\2"}))({'k1': 'abc:123 xyz:456', "k_xyz": "xx"}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "xx"}
+    assert t(("k1", REGEX(r"(\w+):(\d+)", {r"k_\1": r"v_\2"}, mode='overwrite')))({'k1': 'abc:123 xyz:456', "k_xyz": "xx"}) == {'k1': 'abc:123 xyz:456', 'k_abc': "v_123", "k_xyz": "v_456"}
+
+    # mode - default - dest empty
+    assert t(("k1", r"hello (?P<name>\w*)"))({'k1': 'hello '}) == {'k1': 'hello '}
+    assert t(("k1", REGEX(r"hello (?P<name>\w*)", mode='fill')))({'k1': 'hello '}) == {'k1': 'hello ', "name": ""}
+
+    assert t(("k1", r"(?i)(?P<word>[a-z]+)(?P<num>\d*)"))({'k1': 'aBc'}) == {'k1': 'aBc', 'word': 'aBc'}
+    assert t(("k1", REGEX(r"(?i)(?P<word>[a-z]+)(?P<num>\d*)", mode="overwrite")))({'k1': 'aBc'}) == {'k1': 'aBc', 'word': 'aBc', 'num': ""}
+    assert t(("k1", r"(\w+) xx(\d*)", ["f1", "f2"]))({'k1': 'abc xx'}) == {'k1': 'abc xx', 'f1': "abc"}
+    assert t(("k1", r"(\w+):(\d+)", {r"\1": r"\2"}))({'k1': '123:123 xyz:456'}) == {'k1': '123:123 xyz:456',
+                                                                                        "xyz": "456"}
+    assert t(("k1", r"(\w+):(\d*)", {r"\1": r"\2"}))({'k1': 'abc: xyz:456'}) == {'k1': 'abc: xyz:456',
+                                                                                        "xyz": "456"}
+    assert t(("k1", REGEX(r"(\w+):(\d*)", {r"\1": r"\2"}, mode="add")))({'k1': 'abc: xyz:456'}) == {'k1': 'abc: xyz:456',
+                                                                                                    "abc": "",
+                                                                                                    "xyz": "456"}
 
 
 def test_dispatch_transform():

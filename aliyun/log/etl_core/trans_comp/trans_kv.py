@@ -5,7 +5,7 @@ import re
 import six
 
 from .trans_base import trans_comp_base
-from ..etl_util import cached, get_re_full_match
+from ..etl_util import cached, get_re_full_match, get_set_mode_if_skip_fn
 
 __all__ = ['trans_comp_kv']
 
@@ -21,30 +21,17 @@ def trans_comp_kv(*args, **kwargs):
         return kv_transformer(*args, **kwargs)
 
 
-def _get_check_fn(skip_if_src_exist, skip_if_src_not_empty, skip_if_value_empty):
-    def if_skip(event, key, value):
-        if skip_if_src_exist and key in event:
-            return True
-        if skip_if_src_not_empty and key in event and event[key]:
-            return True
-        if skip_if_value_empty and not value:
-            return True
-
-        return False
-    return if_skip
-
-
 class kv_transformer(trans_comp_base):
     DEFAULT_SEP = u'='
     DEFAULT_QUOTE = u'"'
     DEFAULT_KEYWORD_PTN = u'[\u4e00-\u9fa5\u0800-\u4e00a-zA-Z][\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]*'
     SET_MODE = {
-                "fill": _get_check_fn(False, True, False),
-                "add": _get_check_fn(True, False, False),
-                "overwrite": _get_check_fn(False, False, False),
-                "fill-auto": _get_check_fn(False, True, True),
-                "add-auto": _get_check_fn(True, False, True),
-                "overwrite-auto": _get_check_fn(False, False, True)
+                "fill": get_set_mode_if_skip_fn(False, True, False),
+                "add": get_set_mode_if_skip_fn(True, False, False),
+                "overwrite": get_set_mode_if_skip_fn(False, False, False),
+                "fill-auto": get_set_mode_if_skip_fn(False, True, True),
+                "add-auto": get_set_mode_if_skip_fn(True, False, True),
+                "overwrite-auto": get_set_mode_if_skip_fn(False, False, True)
                 }
     DEFAULT_SET_MODE = 'fill-auto'
 
@@ -80,6 +67,9 @@ class kv_transformer(trans_comp_base):
                 new_event[u"{0}{1}{2}".format(self.prefix, k1, self.suffix)] = v1
             elif k2 and self.kw_ptn(k2) and not self.skip_if(event, k2, v2):
                 new_event[u"{0}{1}{2}".format(self.prefix, k2, self.suffix)] = v2
+
+            if (k1 and v1) or (k2, v2):
+                logger.debug("kv_transformer: skip detected key due to current mode: {0}".format((k1, v1, k2, v2)))
 
         return new_event
 

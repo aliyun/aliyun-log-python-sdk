@@ -191,3 +191,17 @@ class _NOT_U(six.text_type, NOT):
 
     def encode(self, *args, **kwargs):
         return _NOT_B(self.v.encode(*args, **kwargs))
+
+
+def get_set_mode_if_skip_fn(skip_if_src_exist, skip_if_src_not_empty, skip_if_value_empty):
+    def if_skip(event, key, value):
+        if skip_if_src_exist and key in event:
+            return True
+        if skip_if_src_not_empty and key in event and event[key]:
+            return True
+        if skip_if_value_empty and not value:
+            return True
+
+        return False
+    return if_skip
+
