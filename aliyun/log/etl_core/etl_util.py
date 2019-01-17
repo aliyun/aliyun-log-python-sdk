@@ -3,14 +3,16 @@ import re
 import copy
 import six
 
+DEFAULT_FN_CACHE_SIZE = 102400  # 100K
 
 def cached(fn):
     @wraps(fn)
     def _wrapped(*args, **kwargs):
         sig = str(args) + str(kwargs)
-        if not hasattr(fn, "__CACHE__") or sig not in fn.__CACHE__:
+        if not hasattr(fn, "__CACHE__") or len(fn.__CACHE__) > DEFAULT_FN_CACHE_SIZE:
             setattr(fn, "__CACHE__", {})
 
+        if sig not in fn.__CACHE__:
             ret = fn(*args, **kwargs)
             fn.__CACHE__[sig] = ret
             return ret
