@@ -3,6 +3,8 @@ import json
 import logging
 import six
 import csv
+from collections import Iterable
+from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
 
@@ -10,23 +12,32 @@ __all__ = ['V', 'trans_set_field_zip']
 
 
 class V(trans_comp_base):
-    def __init__(self, config):
+    def __init__(self, *config):
+        if not config:
+            raise SettingError(settings=config)
+
         config = self._u(config)
         self.field = config
+
+    def _get_value(self, e):
+        # it's string list
+        for field in self.field:
+            if field in e:
+                return e.get(field, None)
 
     def __call__(self, event, inpt=None):
         inpt = self._u(inpt)
 
         if inpt is None:
             # it's a field setting value mode (just return value)
-            return event.get(self.field, None)
+            return self._get_value(event)
         else:
             # it's transform mote (do configuration)
-            if self.field not in event:
-                if inpt in event:
-                    del event[inpt]
-            else:
-                event[inpt] = event[self.field]
+            value = self._get_value(event)
+            if value is not None:
+                event[inpt] = value
+            elif inpt in event:
+                del event[inpt]
 
         return event
 

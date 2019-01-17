@@ -78,6 +78,62 @@ def test_condition_not():
     assert condition([{'k1': NOT(r'[a-z]+'), 'k3': NOT(r'\d+')}])(event)
 
 
+def test_v():
+    """
+
+    """
+    #####
+    ### dict mode
+    # fill
+    assert t({'k2': V("k1")})({'k1': 'v1'}) == {'k1': 'v1', 'k2': 'v1'}
+
+    # overwrite
+    assert t({'k2': V("k1")})({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v1'}
+
+    # no exist
+    assert t({'k2': V("k3")})({'k1': 'v1'}) == {'k1': 'v1'}
+
+    # no exit and no-change
+    assert t({'k1': V("k3")})({'k1': 'v1'}) == {'k1': 'v1'}
+
+    # coalesce set
+    assert t({'k3': V('k4', 'k1', 'k2')})({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v1'}
+
+    # no exist
+    assert t({'k3': V('k4', 'k5')})({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2'}
+
+    # fill
+    assert t({'k3': V('k3', 'k1', 'k2')})({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v1'}
+
+    # no-change
+    assert t({'k3': V('k3', 'k1', 'k2')})({'k1': 'v1', 'k2': 'v2', 'k3': 'v3'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v3'}
+
+    #####
+    ## parameter mode
+    assert t(('k2', V("k1")))({'k1': 'v1'}) == {'k1': 'v1', 'k2': 'v1'}
+
+    # overwrite
+    assert t(('k2', V("k1")))({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v1'}
+
+    # no exist
+    assert t(('k2', V("k3")))({'k1': 'v1'}) == {'k1': 'v1'}
+
+    # no exit -- NOTE the difference
+    assert t(('k1', V("k3")))({'k1': 'v1'}) == {}
+
+    # coalesce set
+    assert t(('k3', V('k4', 'k1', 'k2')))({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v1'}
+
+    # no exist
+    assert t(('k3', V('k4', 'k5')))({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2'}
+
+    # fill
+    assert t(('k3', V('k3', 'k1', 'k2')))({'k1': 'v1', 'k2': 'v2'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v1'}
+
+    # no-change
+    assert t(('k3', V('k3', 'k1', 'k2')))({'k1': 'v1', 'k2': 'v2', 'k3': 'v3'}) == {'k1': 'v1', 'k2': 'v2', 'k3': 'v3'}
+
+
 def test_regex():
     """
 
@@ -893,6 +949,7 @@ def test_zip():
 
 test_condition()
 test_condition_not()
+test_v()
 test_regex()
 test_csv()
 test_lookup_dict()
