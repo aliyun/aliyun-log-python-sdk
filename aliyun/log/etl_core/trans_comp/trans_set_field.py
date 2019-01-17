@@ -3,7 +3,6 @@ import json
 import logging
 import six
 import csv
-from collections import Iterable
 from ..exceptions import SettingError
 
 logger = logging.getLogger(__name__)
