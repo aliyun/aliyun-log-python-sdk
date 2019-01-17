@@ -608,6 +608,51 @@ def test_kv():
     d2 = {"data": 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
     assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
 
+    # keyword char set
+    d2 = {"data": 'i=c2, k1=" v 1 " 3=4  3k=100 s= , 1=2'}
+    assert t(("data", KV))(d2) == {'i': 'c2', 'k1': 'v 1', 'data': 'i=c2, k1=" v 1 " 3=4  3k=100 s= , 1=2'}
+
+    # keyword char set
+    d2 = {"data": 'a=1b=2'}
+    assert t(("data", KV))(d2) == {'a': '1b', "data": 'a=1b=2'}
+
+    ##### Mode
+    # mode - default - empty
+    d2 = {"data": 'a=100', "a": ""}
+    assert t(("data", KV))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="overwrite")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="overwrite-auto")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="add")))(d2) == {"data": 'a=100', "a": ""}
+    assert t(("data", KV(mode="add-auto")))(d2) == {"data": 'a=100', "a": ""}
+    assert t(("data", KV(mode="fill")))(d2) == {"data": 'a=100', "a": "100"}
+
+    # mode - default - non-exit
+    d2 = {"data": 'a=100'}
+    assert t(("data", KV))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="add")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="fill")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="overwrite")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="overwrite-auto")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="add-auto")))(d2) == {"data": 'a=100', "a": "100"}
+
+    # mode - default - non-empty
+    d2 = {"data": 'a=100', "a": "200"}
+    assert t(("data", KV))(d2) == {"data": 'a=100', "a": "200"}
+    assert t(("data", KV(mode="add")))(d2) == {"data": 'a=100', "a": "200"}
+    assert t(("data", KV(mode="fill")))(d2) == {"data": 'a=100', "a": "200"}
+    assert t(("data", KV(mode="overwrite")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="overwrite-auto")))(d2) == {"data": 'a=100', "a": "100"}
+    assert t(("data", KV(mode="add-auto")))(d2) == {"data": 'a=100', "a": "200"}
+
+    # mode - default - dest empty
+    d2 = {"data": 'a=" "', "a": "200"}
+    assert t(("data", KV))(d2) == {"data": 'a=" "', "a": "200"}
+    assert t(("data", KV(mode="add")))(d2) == {"data": 'a=" "', "a": "200"}
+    assert t(("data", KV(mode="fill")))(d2) == {"data": 'a=" "', "a": "200"}
+    assert t(("data", KV(mode="overwrite")))(d2) == {"data": 'a=" "', "a": ""}
+    assert t(("data", KV(mode="overwrite-auto")))(d2) == {"data": 'a=" "', "a": "200"}
+    assert t(("data", KV(mode="add-auto")))(d2) == {"data": 'a=" "', "a": "200"}
+
     # multi-bytes check
     d3 = {"data": u'i=c3, k1=你好 k2=他们'}
     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'}
@@ -623,7 +668,6 @@ def test_kv():
 
     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
-
 
     # new line in value
     d8 = {"data": """i=c8, k1="hello
@@ -946,6 +990,9 @@ def test_zip():
     # parse value - quote
     assert t( {"combine": ZIP("f1", "f2", lparse=(",", '|'), rparse=(",", '#'))})({"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z'}) == {"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z', 'combine': '"a,a#x","b#y,y","c,c#z"'}
 
+# d2 = {"data": 'a=100', "a": "200"}
+# print(t(("data", KV))(d2))
+# exit(0)
 
 test_condition()
 test_condition_not()
