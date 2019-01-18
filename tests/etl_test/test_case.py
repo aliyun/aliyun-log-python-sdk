@@ -221,7 +221,6 @@ def test_regex():
                                                                                                     "abc": "",
                                                                                                     "xyz": "456"}
 
-
 def test_dispatch_transform():
     DISPATCH_LIST_data = [
         ({"data": "LTE_Information .+"}, {"__topic__": "etl_info"}),
@@ -913,24 +912,24 @@ def test_json_filter():
     # jmes filter
     d1 = {'i': '1', 'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'join(`,`,cve.affects.vendor.vendor_data[*].product.product_data[*].product_name[])'
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {"i": "1", 'data':  "openssl,openjdk,polarssl"}
+    assert t( ("data", JSON(jmes=jmes, output='data', mode='overwrite-auto')) )(d1) == {"i": "1", 'data':  "openssl,openjdk,polarssl"}
 
     # jmes filter - real match, empty result
     d1 = {'i': '1', 'data': '{"f1": ""}'}
     jmes = 'f1'
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': ''}
+    assert t( ("data", JSON(jmes=jmes, output='data', mode='overwrite')) )(d1) == {'i': '1', 'data': ''}
 
     # jmes filter 1 option: jmes_ignore_none
     d1 = {'i': '1', 'data': '{"f1": [1,2,3]}'}
     jmes = 'f1[4]'
     assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": [1,2,3]}'}
-    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False, mode='overwrite')))(d1) == {'i': '1', 'data': ''}
 
     # jmes filter 2 option: jmes_ignore_none
     d1 = {'i': '1', 'data': '{"f1": "123"}'}
     jmes = 'f2'
     assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'i': '1', 'data': '{"f1": "123"}'}
-    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False)))(d1) == {'i': '1', 'data': ''}
+    assert t(("data", JSON(jmes=jmes, output='data', jmes_ignore_none=False, mode='overwrite')))(d1) == {'i': '1', 'data': ''}
 
     # jmes filter - output
     d1 = {"data": """{"k1": 100, "k2": 200}"""}
@@ -1010,7 +1009,7 @@ def test_json_expand():
 
     # extract - array
     d3 = {"data": """[1,2,3]"""}
-    assert t( ("data", JSON(expand_array=False)) )(d3) == {"data": """[1, 2, 3]"""}
+    assert t( ("data", JSON(expand_array=False)) )(d3) == {"data": """[1,2,3]"""}
 
     # extract - array - expand
     d3 = {"data": """[1,2,3]"""}
@@ -1030,7 +1029,37 @@ def test_json_expand():
         'people-2.name': 'xt', 'people-2.sex': 'girl'}
 
 
+    ######
+    ## Mode
+
+    # src empty
+    d1 = {"data": """{"k1": 100, "k2": 200}""", "k2": ""}
+    assert t(("data", JSON))(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
+
+    d1 = {"data": """{"k1": 100, "k2": 200}""", "k2": ""}
+    assert t(("data", JSON(mode="add")))(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": ""}
+
+    # src not empty
+    d1 = {"data": """{"k1": 100, "k2": 200}""", "k2": "xx"}
+    assert t(("data", JSON))(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "xx"}
+
+    d1 = {"data": """{"k1": 100, "k2": 200}""", "k2": "xx"}
+    assert t(("data", JSON(mode="overwrite")))(d1) == {"data": """{"k1": 100, "k2": 200}""", "k1": "100", "k2": "200"}
+
+    # dst empty
+    d1 = {"data": """{"k1": 100, "k2": ""}"""}
+    assert t(("data", JSON))(d1) == {"data": """{"k1": 100, "k2": ""}""", "k1": "100"}
+
+    d1 = {"data": """{"k1": 100, "k2": ""}"""}
+    assert t(("data", JSON(mode='fill')))(d1) == {"data": """{"k1": 100, "k2": ""}""", "k1": "100", "k2": ""}
+
+
 def test_json_match():
+
+    # default: filter name
+    d1 = {"data": """{"k1": 100, "__123__": 200, "1k": "300"}"""}
+    assert t( ("data", JSON) )(d1) == {"data": """{"k1": 100, "__123__": 200, "1k": "300"}""", "k1": "100"}
+
     # expand - include node, final node
     d2 = {"data": """{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }"""}
     assert t(("data", JSON(include_node='k5')))(d2) == {'data': '{"k1": 100, "k2": {"k3": 200, "k4": {"k5": 300} } }',
@@ -1089,12 +1118,12 @@ def test_json_mixed():
     # jmes - expand
     d1 = {'i': '1', 'data': _get_file_content('json_data/simple_data.json')}
     jmes = 'cve.CVE_data_meta'
-    assert t( ("data", JSON(jmes=jmes, output='data', expand=True)) )(d1) == {'i': '1', 'data': _j('{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}'), 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
+    assert t( ("data", JSON(jmes=jmes, output='data', expand=True, mode='overwrite')) )(d1) == {'i': '1', 'data': _j('{"ASSIGNER": "cve@mitre.org", "ID": "CVE-2013-0169"}'), 'ASSIGNER': 'cve@mitre.org', 'ID': 'CVE-2013-0169'}
 
     # jmes filter with output - no expand
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
     jmes = 'cve.affects.vendor.vendor_data[2].product'
-    assert t( ("data", JSON(jmes=jmes, output='data')) )(d1) == {'data': _j('{"product_data": [{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}]}')}
+    assert t( ("data", JSON(jmes=jmes, output='data', mode='overwrite')) )(d1) == {'data': _j('{"product_data": [{"product_name": "polarssl", "version": {"version_data": [{"version_value": "0.10.0"}, {"version_value": "0.10.1"}, {"version_value": "0.11.0"}]}}]}')}
 
     # jmes filter with expand and options
     d1 = {'data': _get_file_content('json_data/CVE-2013-0169.json')}
@@ -1134,9 +1163,6 @@ def test_zip():
     # parse value - quote
     assert t( {"combine": ZIP("f1", "f2", lparse=(",", '|'), rparse=(",", '#'))})({"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z'}) == {"f1": '|a,a|, b, |c,c|', "f2":'x, #y,y#, z', 'combine': '"a,a#x","b#y,y","c,c#z"'}
 
-# d2 = {"data": 'a=100', "a": "200"}
-# print(t(("data", KV))(d2))
-# exit(0)
 
 test_condition()
 test_condition_not()

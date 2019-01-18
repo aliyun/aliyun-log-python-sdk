@@ -8,7 +8,7 @@ import re
 import six
 from jmespath.exceptions import ParseError
 
-from .trans_base import trans_comp_base
+from .trans_base import trans_comp_check_mdoe_base
 from ..etl_util import get_re_full_match
 from ..exceptions import SettingError
 
@@ -26,11 +26,11 @@ def trans_comp_json(*args, **kwargs):
         return json_transformer(*args, **kwargs)
 
 
-class json_transformer(trans_comp_base):
+class json_transformer(trans_comp_check_mdoe_base):
     DEFAULT_SEP = u'.'
     DEFAULT_FMT = "simple"
     DEFAULT_DEPTH = 100
-    DEFAULT_INCLUDE_NODE = u''
+    DEFAULT_INCLUDE_NODE = trans_comp_check_mdoe_base.DEFAULT_KEYWORD_PTN
     DEFAULT_EXCLUDE_NODE = u''
     DEFAULT_INCLUDE_PATH = u''
     DEFAULT_EXCLUDE_PATH = u''
@@ -60,7 +60,7 @@ class json_transformer(trans_comp_base):
                  expand=None, depth=None, include_node=None, exclude_node=None,
                  include_path=None, exclude_path=None,
                  fmt=None, sep=None, prefix=None, suffix=None,
-                 expand_array=None, fmt_array=None,
+                 expand_array=None, fmt_array=None, mode=None
                  ):
         """
         :param jmes:  jmes filter to select or generate new field
@@ -79,6 +79,8 @@ class json_transformer(trans_comp_base):
         :param expand_array: if expand array or just render it. default is True. item in array will be with name index, e.g. [1,2,3] will be considered as {"0": 1, "1": 2, "2": 3}
         :param fmt_array: format string for key name of each array element, default is "{parent_rlist[0]}_{index}", can be custom formatting string using placehodler: parent_list, parent_list, current
         """
+        super(json_transformer, self).__init__(mode=mode)
+
         self.expand = expand
         if expand is None:
             # when jmes is not configured or configure but no output configured
@@ -255,7 +257,8 @@ class json_transformer(trans_comp_base):
                 # get input value
                 new_event = self._process_message(i, event[i])
                 if new_event and isinstance(new_event, dict):
-                    event.update(new_event)
+                    #event.update(new_event)
+                    self.sets(event, new_event)
                 else:
                     logger.info(
                         u'trans_comp_lookup: event "{0}" does not extract value from field "{1}"'.format(event, i))
