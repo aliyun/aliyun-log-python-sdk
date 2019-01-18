@@ -293,7 +293,7 @@ def test_dispatch_transform():
     d1 = t([("data", JSON(jmes=version_jmes, output='version'))])(d1)
     d1 = t({"product_version": ZIP("product", "version")})(d1)
     d1 = t(("product_version", SPLIT))(d1)
-    d1 = t(("product_version", CSV("product,version", sep="#")))(d1)
+    d1 = t(("product_version", CSV("product,version", sep="#", mode='overwrite')))(d1)
     d1 = t(DROP_F('data|product_version'))(d1)
     d1 = t([("version", SPLIT(jmes=version_data_jmes, output='version'))])(d1)
 
@@ -488,6 +488,39 @@ def test_csv():
 
     # PSV
     assert t( ("data", PSV(r"city,pop,province") ))({'data': 'nj|800|js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj|800|js', 'pop': '800'}
+
+    ####
+    ## Mode
+    # mode - default - src empty
+    assert t( ("data", CSV(r"city,pop,province") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite-auto") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': '', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add-auto") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': '', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="fill") ))({'data': 'nj,800,js', 'city': ''})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+
+    # mode - default - src non-exit
+    assert t( ("data", CSV(r"city,pop,province", mode="add") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="fill") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite-auto") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add-auto") ))({'data': 'nj,800,js'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+
+    # mode - default - src non-empty
+    assert t( ("data", CSV(r"city,pop,province") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite-auto") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nj', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add-auto") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': 'nj,800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="fill") ))({'data': 'nj,800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': 'nj,800,js', 'pop': '800'}
+
+    # mode - default - dest empty
+    assert t( ("data", CSV(r"city,pop,province") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': ',800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': '', 'data': ',800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="overwrite-auto") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': ',800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': ',800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="add-auto") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': ',800,js', 'pop': '800'}
+    assert t( ("data", CSV(r"city,pop,province", mode="fill") ))({'data': ',800,js', 'city': 'nanjing'})  == {'province': 'js', 'city': 'nanjing', 'data': ',800,js', 'pop': '800'}
 
 
 def test_lookup_dict():

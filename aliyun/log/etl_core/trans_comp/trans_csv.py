@@ -1,4 +1,4 @@
-from .trans_base import trans_comp_base
+from .trans_base import trans_comp_check_mdoe_base
 import csv
 import six
 import re
@@ -11,12 +11,13 @@ __all__ = ['trans_comp_csv', 'trans_comp_tsv', 'trans_comp_psv']
 logger = logging.getLogger(__name__)
 
 
-class trans_comp_csv(trans_comp_base):
+class trans_comp_csv(trans_comp_check_mdoe_base):
     p_csv_sep = re.compile(r'\s*,\s*')
     DEFAULT_SEP = ','
     DEFAULT_QUOTE = '"'
 
-    def __init__(self, config, sep=None, quote=None, lstrip=None, restrict=None):
+    def __init__(self, config, sep=None, quote=None, lstrip=None, restrict=None, mode=None):
+        super(trans_comp_csv, self).__init__(mode=mode)
         config = self._u(config)
         if isinstance(config, (six.text_type, six.binary_type)):
             self.keys = self.p_csv_sep.split(config)
@@ -42,7 +43,7 @@ class trans_comp_csv(trans_comp_base):
                 return event
 
             new_event = dict(zip(self.keys, ret))
-            event.update(new_event)
+            self.sets(event, new_event)
         else:
             logger.warning(u"field {0} doesn't exist in event {1}, skip it".format(inpt, event))
 
