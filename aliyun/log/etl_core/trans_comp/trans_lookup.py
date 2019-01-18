@@ -1,4 +1,4 @@
-from .trans_base import trans_comp_base
+from .trans_base import trans_comp_check_mdoe_base
 import six
 import os
 from ..exceptions import SettingError
@@ -60,10 +60,12 @@ class DefaultDict(object):
         return item in self.data or self.default is not None
 
 
-class trans_comp_lookup(trans_comp_base):
+class trans_comp_lookup(trans_comp_check_mdoe_base):
     EXTERNAL_CACHE = {}
 
-    def __init__(self, data, output_fields, sep=',', quote='"', lstrip=True, case_insensitive=True, headers=None):
+    def __init__(self, data, output_fields, sep=',', quote='"', lstrip=True, case_insensitive=True, headers=None, mode=None):
+        super(trans_comp_lookup, self).__init__(mode=mode)
+
         data = self._u(data)
         output_fields = self._u(output_fields)
         sep = sep
@@ -164,7 +166,7 @@ class trans_comp_lookup(trans_comp_base):
                     # set output value
                     for f_n in self.output_fields:
                         if f_v in self.data:
-                            event[f_n] = self.data[f_v]
+                            self.set(event, f_n, self.data[f_v])
                         else:
                             logger.info(u'trans_comp_lookup: value {0} not exit in lookup {1}'.format(f_v, self.data))
             else:
@@ -206,7 +208,7 @@ class trans_comp_lookup(trans_comp_base):
 
                 for f, f_new in six.iteritems(self.output_fields):
                     if f in row:
-                        event[f_new] = row[f]
+                        self.set(event, f_new, row[f])
                     else:
                         logger.info(u"trans_comp_lookup: field {0} doesn't exit in lookup row {1}".format(f, row))
 

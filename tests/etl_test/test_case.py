@@ -546,7 +546,43 @@ def test_lookup_dict():
     # multiple inputs
     assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "http"}) == {'data': '123', "pro": "http", "type": "tcp"}
     assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "protocol": "http"}) == {'data': '123', "protocol": "http", "type": "tcp"}
-    assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type")))({'data': '123', "pro": "dns", "protocol": "http"}) == {'data': '123', "pro": "dns", "protocol": "http", "type": "tcp"}
+    assert t((["pro", "protocol"], LOOKUP({"http": "tcp", "dns": "udp", "https": "tcp"}, "type", mode='overwrite')))({'data': '123', "pro": "dns", "protocol": "http"}) == {'data': '123', "pro": "dns", "protocol": "http", "type": "tcp"}
+
+    ####
+    ## Mode
+    # mode - default - src empty
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite-auto") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": ""}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add-auto") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": ""}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="fill") ) )({'data': '123', "pro": "1", "protocol": ""})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+
+    # mode - default - src non-exit
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite-auto") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add-auto") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="fill") ) )({'data': '123', "pro": "1"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+
+    # mode - default - src non-empty
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite-auto") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "TCP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="add-auto") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "TCP", "2": "UDP", "3": "HTTP"}, "protocol", mode="fill") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+
+    # mode - default - dest empty
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": ""}
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol", mode="overwrite-auto") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol", mode="add") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol", mode="add-auto") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+    assert t( ("pro", LOOKUP({"1": "", "2": "UDP", "3": "HTTP"}, "protocol", mode="fill") ) )({'data': '123', "pro": "1", "protocol": "SNMP"})  == {'data': '123', "pro": "1", "protocol": "SNMP"}
+
+
+
 
 
 import atexit
