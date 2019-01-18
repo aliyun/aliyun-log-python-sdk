@@ -708,6 +708,42 @@ def test_lookup_mapping():
     assert t( (["c1", "c2"], LOOKUP(csv_path, ["d1", "d2"]) ) )({'data': '123', 'c1': 'c', 'c2': 'v'})  == {'data': '123', 'c1': 'c', 'c2': 'v', 'd1': '0', 'd2': '0'}
 
 
+    #######
+    ## Mode
+    # mode - default - empty
+    csv_path = _pre_csv("city,pop,province\nnj,800,js\nsh,2000,sh")
+    assert t( ("city", LOOKUP(csv_path, "province") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite-auto") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': ''}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add-auto") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': ''}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="fill") ))({'data': '123', 'city': 'nj', 'province': ''}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+
+    # mode - default - non-exit
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="fill") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite-auto") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add-auto") ))({'data': '123', 'city': 'nj'})  == {'data': '123', 'city': 'nj', 'province': 'js'}
+
+    # mode - default - non-empty
+    assert t( ("city", LOOKUP(csv_path, "province") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'JiangSu'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite-auto") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'js'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'JiangSu'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add-auto") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'JiangSu'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="fill") ))({'data': '123', 'city': 'nj', 'province': 'JiangSu'}) == {'data': '123', 'city': 'nj', 'province': 'JiangSu'}
+
+    # mode - default - dest empty
+    csv_path = _pre_csv("city,pop,province\nnj,800,\nsh,2000,sh")
+    assert t( ("city", LOOKUP(csv_path, "province") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj', 'province': ''}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="overwrite-auto") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj', 'province': ''}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="add-auto") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj'}
+    assert t( ("city", LOOKUP(csv_path, "province", mode="fill") ))({'data': '123', 'city': 'nj'}) == {'data': '123', 'city': 'nj', 'province': ''}
+
+
 def test_kv():
     # verify the KV extract pattern match
     d1 = {"data": "i=c1, k1=v1,k2=v2 k3=v3"}
