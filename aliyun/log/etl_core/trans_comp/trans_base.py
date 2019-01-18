@@ -70,3 +70,11 @@ class trans_comp_check_mdoe_base(trans_comp_base):
 
         logger.debug("{1}: skip detected k-v due to current mode: {0}".format((k, v), type(self)))
         return False
+
+    def sets(self, e, e_new, check_kw_name=False):
+        has_update = False
+        for k, v in six.iteritems(e_new):
+            has_update = self.set(e, k, v, check_kw_name=check_kw_name) or has_update
+
+        return has_update
+

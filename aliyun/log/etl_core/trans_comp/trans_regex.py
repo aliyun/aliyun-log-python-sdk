@@ -53,8 +53,7 @@ class trans_comp_regex(trans_comp_check_mdoe_base):
                     break
 
                 if m:
-                    for k, v in six.iteritems(m.groupdict()):
-                        self.set(event, k, v)
+                    self.sets(event, m.groupdict())
                 else:
                     logger.info(u'transform_regex: field value "{0}" cannot extract value with config "{1}"'
                                 .format(event[data], self.config))
