@@ -27,22 +27,33 @@ class kv_transformer(trans_comp_check_mdoe_base):
 
     @staticmethod
     @cached
-    def _get_kv_ptn(sep, quote):
+    def _get_kv_ptn(sep, quote, escape):
         p1 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)'
-        p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*{1}\s*([^{1}]*?)\s*{1}'
+        if not escape:
+            p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*{1}\s*([^{1}]*?)\s*{1}'
+        else:
+            p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*{1}\s*((?:[^{1}]|\\\\{1})*?[^\\\\]){1}'
         ps = u'|'.join([p1, p2]).format(sep, quote)
 
         logger.info(u"trans_comp_kv: get ptn: {0}".format(ps))
         return re.compile(ps)
 
-    def __init__(self, prefix=None, suffix=None, sep=None, quote=None, mode=None):
+    def __init__(self, prefix=None, suffix=None, sep=None, quote=None, escape=None, mode=None):
         super(kv_transformer, self).__init__(mode=mode)
         self.prefix = self._u("" if prefix is None else prefix)
         self.suffix = self._u("" if suffix is None else suffix)
+        self.escape = False if escape is None else escape
 
-        sep = self._u(self.DEFAULT_SEP if sep is None else sep)
-        quote = self._u(self.DEFAULT_QUOTE if quote is None else quote)
-        self.ptn = self._get_kv_ptn(sep, quote)
+        self.sep = self._u(self.DEFAULT_SEP if sep is None else sep)
+        self.quote = self._u(self.DEFAULT_QUOTE if quote is None else quote)
+        self.ptn = self._get_kv_ptn(self.sep, self.quote, self.escape)
+        self.normalize = None
+
+    def set(self, e, k, v, real_k=None, check_kw_name=False):
+        """override base to handle escape case: replace \" to " """
+        if self.escape:
+            v = v.strip().replace("\\" + self.quote, self.quote)
+        return super(kv_transformer, self).set(e, k, v, real_k=real_k, check_kw_name=check_kw_name)
 
     def _extract_kv(self, event, value):
         if isinstance(value, six.binary_type):

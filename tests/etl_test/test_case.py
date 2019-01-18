@@ -747,17 +747,21 @@ def test_kv():
     # verify the KV extract pattern match
     d1 = {"data": "i=c1, k1=v1,k2=v2 k3=v3"}
     assert t( ("data", KV) )(d1) == {'i': 'c1', 'k2': 'v2', 'k1': 'v1', 'k3': 'v3', 'data': 'i=c1, k1=v1,k2=v2 k3=v3'}
+    assert t( ("data", KV(escape=True)) )(d1) == {'i': 'c1', 'k2': 'v2', 'k1': 'v1', 'k3': 'v3', 'data': 'i=c1, k1=v1,k2=v2 k3=v3'}
 
     d2 = {"data": 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
     assert t(("data", KV))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
+    assert t(("data", KV(escape=True)))(d2) == {'i': 'c2', 'k2': 'v 2', 'k1': 'v 1', 'k3': '~!@#=`;.>', 'data': 'i=c2, k1=" v 1 ", k2="v 2" k3="~!@#=`;.>"'}
 
     # keyword char set
     d2 = {"data": 'i=c2, k1=" v 1 " 3=4  3k=100 s= , 1=2'}
     assert t(("data", KV))(d2) == {'i': 'c2', 'k1': 'v 1', 'data': 'i=c2, k1=" v 1 " 3=4  3k=100 s= , 1=2'}
+    assert t(("data", KV(escape=True)))(d2) == {'i': 'c2', 'k1': 'v 1', 'data': 'i=c2, k1=" v 1 " 3=4  3k=100 s= , 1=2'}
 
     # keyword char set
     d2 = {"data": 'a=1b=2'}
     assert t(("data", KV))(d2) == {'a': '1b', "data": 'a=1b=2'}
+    assert t(("data", KV(escape=True)))(d2) == {'a': '1b', "data": 'a=1b=2'}
 
     ##### Mode
     # mode - default - empty
@@ -799,6 +803,7 @@ def test_kv():
     # multi-bytes check
     d3 = {"data": u'i=c3, k1=你好 k2=他们'}
     assert t(("data", KV))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'}
+    assert t(("data", KV(mode="add-auto")))(d3) == {'i': 'c3', 'k2': u'他们', 'k1': u'你好', "data": u'i=c3, k1=你好 k2=他们'}
 
     d4 = {"data": u'i=c4, 姓名=小明 年龄=中文 '}
     assert t(("data", KV))(d4) == {'i': 'c4', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c4, 姓名=小明 年龄=中文 '}
@@ -811,6 +816,7 @@ def test_kv():
 
     d7 = {"data": u'i=c7, 姓名="小明" 年龄=中文 '}
     assert t(("data", KV))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
+    assert t(("data", KV(mode="add-auto")))(d7) == {'i': 'c7', u'姓名': u'小明', u'年龄': u'中文', "data": u'i=c7, 姓名="小明" 年龄=中文 '}
 
     # new line in value
     d8 = {"data": """i=c8, k1="hello
@@ -833,6 +839,7 @@ def test_kv():
     # prefix/suffix
     d11 = {"data": "i=c11, k1=v1,k2=v2 k3=v3"}
     assert t( ("data", KV(prefix="d_", suffix="_e")) )(d11) == {'d_i_e': 'c11', 'd_k3_e': 'v3', 'd_k2_e': 'v2', 'data': 'i=c11, k1=v1,k2=v2 k3=v3', 'd_k1_e': 'v1'}
+    assert t( ("data", KV(prefix="d_", suffix="_e", escape=True)) )(d11) == {'d_i_e': 'c11', 'd_k3_e': 'v3', 'd_k2_e': 'v2', 'data': 'i=c11, k1=v1,k2=v2 k3=v3', 'd_k1_e': 'v1'}
 
     # multiple inputs
     d12 = {"data1": "i=c12, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
@@ -846,6 +853,21 @@ def test_kv():
 
     d14 = {"data1": "i=c14, k1=v1", "data2": "k2=v2 k3=v3", "data3": "k4=v4"}
     assert KV_F(r'data2')(d14) == {'k3': 'v3', 'k2': 'v2', 'data1': 'i=c14, k1=v1', 'data3': 'k4=v4', 'data2': 'k2=v2 k3=v3'}
+
+    ####
+    # auto escape
+    d2 = {"data": r'a=b, k1=" v \"1 2 3", c=d'}
+    assert t(("data", KV))(d2) == {"data": r'a=b, k1=" v \"1 2 3", c=d', "a": "b", "c": "d", "k1": 'v \\'}
+
+    d2 = {"data": r'a=b, k1=" v \"1 2 3", c=d'}
+    # print(t(("data", KV(escape=True)))(d2))
+    assert t(("data", KV(escape=True)))(d2) == {"data": r'a=b, k1=" v \"1 2 3", c=d', "a": "b", "c": "d", "k1": 'v "1 2 3'}
+
+    d10 = {"data": r"i=c10 a='k1=k2\';k2=k3'"}
+    assert t(("data", KV(quote="'")))(d10) == {'i': 'c10', 'a': 'k1=k2\\', "k2": "k3", 'data': r"i=c10 a='k1=k2\';k2=k3'"}
+
+    d10 = {"data": r"i=c10 a='k1=k2\';k2=k3'"}
+    assert t(("data", KV(quote="'", escape=True)))(d10) == {'i': 'c10', 'a': "k1=k2';k2=k3", 'data': r"i=c10 a='k1=k2\';k2=k3'"}
 
 
 def test_split():
