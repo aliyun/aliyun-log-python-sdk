@@ -4,7 +4,7 @@ from collections import Iterable
 import re
 import six
 
-from .trans_base import trans_comp_base
+from .trans_base import trans_comp_check_mdoe_base
 from ..etl_util import cached, get_re_full_match, get_set_mode_if_skip_fn
 
 __all__ = ['trans_comp_kv']
@@ -21,19 +21,9 @@ def trans_comp_kv(*args, **kwargs):
         return kv_transformer(*args, **kwargs)
 
 
-class kv_transformer(trans_comp_base):
+class kv_transformer(trans_comp_check_mdoe_base):
     DEFAULT_SEP = u'='
     DEFAULT_QUOTE = u'"'
-    DEFAULT_KEYWORD_PTN = u'[\u4e00-\u9fa5\u0800-\u4e00a-zA-Z][\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]*'
-    SET_MODE = {
-                "fill": get_set_mode_if_skip_fn(False, True, False),
-                "add": get_set_mode_if_skip_fn(True, False, False),
-                "overwrite": get_set_mode_if_skip_fn(False, False, False),
-                "fill-auto": get_set_mode_if_skip_fn(False, True, True),
-                "add-auto": get_set_mode_if_skip_fn(True, False, True),
-                "overwrite-auto": get_set_mode_if_skip_fn(False, False, True)
-                }
-    DEFAULT_SET_MODE = 'fill-auto'
 
     @staticmethod
     @cached
@@ -46,14 +36,13 @@ class kv_transformer(trans_comp_base):
         return re.compile(ps)
 
     def __init__(self, prefix=None, suffix=None, sep=None, quote=None, mode=None):
+        super(kv_transformer, self).__init__(mode=mode)
         self.prefix = self._u("" if prefix is None else prefix)
         self.suffix = self._u("" if suffix is None else suffix)
 
         sep = self._u(self.DEFAULT_SEP if sep is None else sep)
         quote = self._u(self.DEFAULT_QUOTE if quote is None else quote)
         self.ptn = self._get_kv_ptn(sep, quote)
-        self.kw_ptn = get_re_full_match(self.DEFAULT_KEYWORD_PTN)
-        self.skip_if = self.SET_MODE.get(mode, self.SET_MODE[self.DEFAULT_SET_MODE])
 
     def _extract_kv(self, event, value):
         if isinstance(value, six.binary_type):
@@ -63,13 +52,10 @@ class kv_transformer(trans_comp_base):
 
         new_event = {}
         for k1, v1, k2, v2 in r:
-            if k1 and self.kw_ptn(k1) and not self.skip_if(event, k1, v1):
-                new_event[u"{0}{1}{2}".format(self.prefix, k1, self.suffix)] = v1
-            elif k2 and self.kw_ptn(k2) and not self.skip_if(event, k2, v2):
-                new_event[u"{0}{1}{2}".format(self.prefix, k2, self.suffix)] = v2
-
-            if (k1 and v1) or (k2, v2):
-                logger.debug("kv_transformer: skip detected key due to current mode: {0}".format((k1, v1, k2, v2)))
+            if k1:
+                self.set(event, k1, v1, real_k=u"{0}{1}{2}".format(self.prefix, k1, self.suffix), check_kw_name=True)
+            if k2:
+                self.set(event, k2, v2, real_k=u"{0}{1}{2}".format(self.prefix, k2, self.suffix), check_kw_name=True)
 
         return new_event
 
