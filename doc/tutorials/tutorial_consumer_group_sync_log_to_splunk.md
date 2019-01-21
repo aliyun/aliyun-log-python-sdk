@@ -325,3 +325,11 @@ nohup pypy3 sync_data.py &
 可以在不同机器上启动消费者，这样当一台机器停止或者损坏的清下，其他机器上的消费者可以自动接管并从断点进行消费。
 
 理论上，为了备用，也可以启动大于shard数量的消费者。
+
+
+## 更多案例
+- 日志服务Python消费组实战（一）：[日志服务与SIEM（如Splunk）集成实战](https://yq.aliyun.com/articles/684035)
+- 日志服务Python消费组实战（二）：[实时日志分发](https://yq.aliyun.com/articles/684081)
+- 日志服务Python消费组实战（三）：[实时跨域监测多日志库数据](https://yq.aliyun.com/articles/684108)
+- 日志服务Python消费组实战（三）：[日志服务与SIEM（集成实战(二)：syslog篇](https://yq.aliyun.com/articles/684108)
+- [本文Github样例](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/tests/consumer_group_examples/sync_data_to_splunk.py)

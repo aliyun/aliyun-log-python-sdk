@@ -160,3 +160,10 @@ nohup pypy3 dispatch_data.py &
 如果服务入口（endpoint）配置为`https://`前缀，如`https://cn-beijing.log.aliyuncs.com`，程序与SLS的连接将自动使用HTTPS加密。
 
 服务器证书`*.aliyuncs.com`是GlobalSign签发，默认大多数Linux/Windows的机器会自动信任此证书。如果某些特殊情况，机器不信任此证书，可以参考[这里](https://success.outsystems.com/Support/Enterprise_Customers/Installation/Install_a_trusted_root_CA__or_self-signed_certificate)下载并安装此证书。
+
+## 更多案例
+- 日志服务Python消费组实战（一）：[日志服务与SIEM（如Splunk）集成实战](https://yq.aliyun.com/articles/684035)
+- 日志服务Python消费组实战（二）：[实时日志分发](https://yq.aliyun.com/articles/684081)
+- 日志服务Python消费组实战（三）：[实时跨域监测多日志库数据](https://yq.aliyun.com/articles/684108)
+- 日志服务Python消费组实战（三）：[日志服务与SIEM（集成实战(二)：syslog篇](https://yq.aliyun.com/articles/684108)
+- [本文Github样例](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/tests/consumer_group_examples/copy_data_to_logstore.py)
