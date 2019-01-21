@@ -5,6 +5,8 @@ https://tools.ietf.org/html/rfc3164
 """
 import socket
 from datetime import datetime
+import ssl
+import six
 
 
 def datetime2rfc3339(dt, is_utc=False):
@@ -66,7 +68,7 @@ SEV_DEBUG = 7
 
 class SyslogClientBase(object):
     def __init__(self, server, port, proto='udp', clientname=None,
-                 maxMessageLength=1024, timeout=120):
+                 maxMessageLength=1024, timeout=120, cert_path=None):
         self.socket = None
         self.server = server
         self.port = port
@@ -79,8 +81,16 @@ class SyslogClientBase(object):
                 self.proto = socket.SOCK_DGRAM
             elif proto.upper() == 'TCP':
                 self.proto = socket.SOCK_STREAM
+            elif proto.upper() == 'TLS':
+                self.proto = socket.SOCK_STREAM
+                self.ssl_kwargs ={
+                                    'cert_reqs': ssl.CERT_REQUIRED,
+                                    'ssl_version': ssl.PROTOCOL_TLS,
+                                    'ca_certs': cert_path,
+                                  }
 
         self.clientname = clientname or socket.getfqdn() or socket.gethostname()
+        self.cert_path = cert_path
 
     def connect(self):
         if self.socket is None:
@@ -88,7 +98,13 @@ class SyslogClientBase(object):
             if r is None:
                 return False
             for (addr_fam, sock_kind, proto, ca_name, sock_addr) in r:
-                self.socket = socket.socket(addr_fam, self.proto)
+
+                sock = socket.socket(addr_fam, self.proto)
+                if six.PY3 and self.proto.upper() == "TLS":
+                    self.socket = ssl.wrap_socket(sock, **self.ssl_kwargs)
+                else:
+                    self.socket = sock
+
                 if self.socket is None:
                     return False
 
@@ -146,14 +162,15 @@ class SyslogClientBase(object):
 
 class SyslogClientRFC5424(SyslogClientBase):
     def __init__(self, server, port, proto='udp',
-                 clientname=None, timeout=120):
+                 clientname=None, timeout=120, cert_path=None):
         SyslogClientBase.__init__(self,
                                   server=server,
                                   port=port,
                                   proto=proto,
                                   clientname=clientname,
                                   maxMessageLength=None,
-                                  timeout=timeout
+                                  timeout=timeout,
+                                  cert_path=cert_path
                                   )
 
     def log(self, message, facility=None, severity=None, timestamp=None,
@@ -187,14 +204,15 @@ class SyslogClientRFC5424(SyslogClientBase):
 
 
 class SyslogClientRFC3164(SyslogClientBase):
-    def __init__(self, server, port, proto='udp', clientname=None, timeout=120):
+    def __init__(self, server, port, proto='udp', clientname=None, timeout=120, cert_path=None):
         SyslogClientBase.__init__(self,
                                   server=server,
                                   port=port,
                                   proto=proto,
                                   clientname=clientname,
                                   maxMessageLength=1024,
-                                  timeout=timeout
+                                  timeout=timeout,
+                                  cert_path=cert_path
                                   )
 
     def log(self, message, facility=None, severity=None, timestamp=None,
