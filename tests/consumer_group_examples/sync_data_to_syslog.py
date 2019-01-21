@@ -26,24 +26,25 @@ class SyncData(ConsumerProcessorBase):
     """
     this consumer will forward logs to Splunk.
     """
-    def __init__(self, splunk_setting=None):
+    def __init__(self, target_setting=None):
         """
         """
 
         super(SyncData, self).__init__()   # remember to call base's init
 
-        assert splunk_setting, ValueError("You need to configure settings of remote target")
-        assert isinstance(splunk_setting, dict), ValueError("The settings should be dict to include necessary address and confidentials.")
+        assert target_setting, ValueError("You need to configure settings of remote target")
+        assert isinstance(target_setting, dict), ValueError("The settings should be dict to include necessary address and confidentials.")
 
-        self.option = splunk_setting
+        self.option = target_setting
         self.protocol = self.option['protocol']
         self.timeout = int(self.option.get('timeout', 120))
         self.sep = self.option.get('sep', "||")
         self.host = self.option["host"]
         self.port = int(self.option.get('port', 514))
+        self.cert_path=self.option.get('cert_path', None)
 
         # try connection
-        with SyslogClient(self.host, self.port, proto=self.protocol, timeout=self.timeout) as client:
+        with SyslogClient(self.host, self.port, proto=self.protocol, timeout=self.timeout, cert_path=self.cert_path) as client:
             pass
 
     def process(self, log_groups, check_point_tracker):
@@ -51,13 +52,12 @@ class SyncData(ConsumerProcessorBase):
         logger.info("Get data from shard {0}, log count: {1}".format(self.shard_id, len(logs)))
 
         try:
-            with SyslogClient(self.option["host"], 514, proto='tcp', timeout=120) as client:
+            with SyslogClient(self.host, self.port, proto=self.protocol, timeout=self.timeout, cert_path=self.cert_path) as client:
                 for log in logs:
                     # Put your sync code here to send to remote.
                     # the format of log is just a dict with example as below (Note, all strings are unicode):
-                    #    Python2: {u"__time__": u"12312312", u"__topic__": u"topic", u"field1": u"value1", u"field2": u"value2"}
+                    #    Python2: {"__time__": "12312312", "__topic__": "topic", u"field1": u"value1", u"field2": u"value2"}
                     #    Python3: {"__time__": "12312312", "__topic__": "topic", "field1": "value1", "field2": "value2"}
-                    event = {}
                     # suppose we only care about audit log
                     timestamp = datetime.fromtimestamp(int(log[u'__time__']))
                     del log['__time__']
@@ -125,14 +125,15 @@ def get_monitor_option():
     settings = {
                 "host": "1.2.3.4", # must
                 "port": 514,       # must, port
-                "protocol": "tcp", # must, tcp or udp
+                "protocol": "tcp", # must, tcp, udp, tls (py3 only)
                 "sep": "||",      # must, separator for key=value
+                "cert_path": None,  # optional, cert path when TLS is configured
                 "timeout": 120,   # optional, default 120
                 "facility": syslogclient.FAC_USER,  # optional, default None means syslogclient.FAC_USER
                 "severity": syslogclient.SEV_INFO,  # optional, default None means syslogclient.SEV_INFO
                 "hostname": None, # optional, default hostname of local
                 "tag": None # optional, tag for the log, default -
-            }
+    }
 
     return option, settings
 
