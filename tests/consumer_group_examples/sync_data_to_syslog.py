@@ -123,7 +123,7 @@ def get_monitor_option():
 
     # syslog options
     settings = {
-                "host": "47.75.245.227", # must
+                "host": "1.2.3.4", # must
                 "port": 514,       # must, port
                 "protocol": "tcp", # must, tcp or udp
                 "sep": "||",      # must, separator for key=value
