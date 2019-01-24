@@ -88,8 +88,9 @@ alert_detail = {
         "notificationList": [
             {
                 "type": "DingTalk",
-                "serviceUri": "http://xxxx",
-                "content": "Message",
+                "atMobiles": ['1867393xxxx'],
+                "serviceUri": "https://oapi.dingtalk.com/robot/send?access_token=xxxx",
+                "content": "Hi @1867393xxxx, your alert ${AlertDisplayName} is fired",
             },
             {
                 "type": "MessageCenter",
@@ -97,6 +98,7 @@ alert_detail = {
             },
             {
                 "type": "Email",
+                "subject": "Alerting",
                 "emailList": ["abc@test.com"],
                 "content": "Email Message",
             },
@@ -104,6 +106,11 @@ alert_detail = {
                 "type": "SMS",
                 "mobileList": ["132373830xx"],
                 "content": "Cellphone message"
+            },
+            {
+                "type": "Voice",
+                "mobileList": ["132373830xx"],
+                "content": "Voice notification...",
             }
         ],
         "muteUntil": int(time.time()) + 300,
