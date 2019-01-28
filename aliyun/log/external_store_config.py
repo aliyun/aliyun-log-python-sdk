@@ -44,9 +44,9 @@ class ExternalStoreConfig(object):
     def from_json(json_value):
         externalStoreName = json_value["externalStoreName"]
         storeType = json_value["storeType"]
-        vpcId = json_value["parameter"]["vpc-id"]
-        instanceId = json_value["parameter"]["instance-id"]
-        host = json_value["parameter"]["host"]
+        vpcId = json_value["parameter"].get("vpc-id", "")
+        instanceId = json_value["parameter"].get("instance-id", "")
+        host = json_value["parameter"].get("host", "")
         port = json_value["parameter"]["port"]
         username = json_value["parameter"]["username"]
         password = json_value["parameter"].get("password", "")
