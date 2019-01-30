@@ -73,6 +73,8 @@ class SyslogClientBase(object):
         self.server = server
         self.port = port
         self.proto = socket.SOCK_DGRAM
+        self.ssl_kwargs = None
+
         self.maxMessageLength = maxMessageLength
         self.timeout = timeout
 
@@ -100,7 +102,7 @@ class SyslogClientBase(object):
             for (addr_fam, sock_kind, proto, ca_name, sock_addr) in r:
 
                 sock = socket.socket(addr_fam, self.proto)
-                if six.PY3 and self.proto.upper() == "TLS":
+                if six.PY3 and self.ssl_kwargs:
                     self.socket = ssl.wrap_socket(sock, **self.ssl_kwargs)
                 else:
                     self.socket = sock
