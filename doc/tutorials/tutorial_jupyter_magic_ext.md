@@ -18,9 +18,17 @@
 ```
 
 ## 配置
+
+加载magic命令
 ```
-%load_ext aliyunlog_magic
+%load_ext aliyun.log.ext.jupyter_magic
+```
+
+配置参数，无参数（通过GUI）或者命令行传入需要的参数
+```
 %manage_log
+# 或者
+%manage_log <endpoint> <ak_id> <ak_key> <project> <logstore>
 ```
 
 ## 查询
@@ -33,6 +41,7 @@
 ### 一般查询域统计（配置时间）
 
 第一行用`from_time ~ to_time`这样的格式操作。
+**注意：** 两个`%`
 
 ```sql
 %%log -1day ~ now
@@ -70,6 +79,8 @@ sns.boxenplot(x='host', y='body_bytes_sent', data=log_df);
 %fetch 2019-1-31 10:0:0+8:00 ~ 2019-1-31 10:00:10+8:00
 ```
 
-**Note：**时间范围是服务器接受日志的时间，不同于日志自身的时间。
+**Note：**
 
+1. 时间范围是服务器接受日志的时间，不同于日志自身的时间。
+2. 拉取过程中，取消的话，已经拉取的数据会放到`log_df_part`中。
 
