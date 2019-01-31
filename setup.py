@@ -42,6 +42,7 @@ install_requires.extend(install_requires_common)
 packages = [
             'aliyun',
             'aliyun.log',
+            'aliyun.log.ext',
             'aliyun.log.etl_core',
             'aliyun.log.etl_core.transform',
             'aliyun.log.etl_core.trans_comp',
