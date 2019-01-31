@@ -1,3 +1,5 @@
+#encoding: utf8
+
 from IPython.core.magic import (Magics, magics_class, line_magic,
                                 cell_magic, line_cell_magic)
 import pandas as pd
@@ -11,6 +13,7 @@ import multiprocessing
 import six
 import six.moves.configparser as configparser
 import os
+
 
 CLI_CONFIG_FILENAME = "%s/.aliyunlogcli" % os.path.expanduser('~')
 MAGIC_SECTION = "__jupyter_magic__"
@@ -219,6 +222,25 @@ class MyMagics(Magics):
 
     @line_magic
     def manage_log(self, line):
+        if line:
+            params = line.split(" ")
+            if len(params) == 5:
+                print("连接中...")
+                endpoint, key_id, key_val, project, logstore = params
+                result, detail = self.verify_sls_connection(endpoint, key_id, key_val, project, logstore)
+
+                if result:
+                    clear_output()
+                    print("连接成功.")
+                    _save_config(endpoint, key_id, key_val, project, logstore)
+                    self.client(reset=True)
+                else:
+                    print(detail)
+            else:
+                print("参数错误，请使用GUI配置（无参）或遵循格式：%manage_log <endpoint> <ak_id> <ak_key> <project> <logstore>")
+
+            return
+
         w_1 = widgets.ToggleButtons( options=['基本配置', "高级配置"] )
 
         w_endpoint = widgets.Text( description='服务入口', value=g_default_region)
