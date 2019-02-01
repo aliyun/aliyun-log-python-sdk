@@ -259,6 +259,7 @@ class MyMagics(Magics):
         progress = widgets.FloatProgress(description="", value=0.0, min=0.0, max=1.0, layout=hide_layout)
 
         def work(progress):
+            global result
             total = 100
             for i in range(total):
                 time.sleep(0.2)
