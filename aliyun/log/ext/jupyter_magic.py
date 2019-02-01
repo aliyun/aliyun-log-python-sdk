@@ -4,7 +4,6 @@ from IPython.core.magic import (Magics, magics_class, line_magic,
                                 cell_magic, line_cell_magic)
 import pandas as pd
 from IPython.display import display, clear_output
-import ipywidgets as widgets
 import re, time, threading, datetime
 from pandas import DataFrame
 from aliyun.log import LogClient, LogException
@@ -13,6 +12,34 @@ import multiprocessing
 import six
 import six.moves.configparser as configparser
 import os
+import sys
+
+
+def can_use_widgets():
+    """ Expanded from from http://stackoverflow.com/a/34092072/1958900
+    """
+    if 'IPython' not in sys.modules:
+        # IPython hasn't been imported, definitely not
+        return False
+    from IPython import get_ipython
+
+    # check for `kernel` attribute on the IPython instance
+    if getattr(get_ipython(), 'kernel', None) is None:
+        return False
+
+    try:
+        import ipywidgets as ipy
+        import traitlets
+    except ImportError:
+        return False
+
+    if int(ipy.__version__.split('.')[0]) < 6:
+        print('WARNING: widgets require ipywidgets 6.0 or later')
+        return False
+
+    return True
+
+__CAN_USE_WIDGET__ = can_use_widgets()
 
 
 CLI_CONFIG_FILENAME = "%s/.aliyunlogcli" % os.path.expanduser('~')
@@ -222,7 +249,8 @@ class MyMagics(Magics):
 
     @line_magic
     def manage_log(self, line):
-        if line:
+        line = line or ""
+        if line or not __CAN_USE_WIDGET__:
             params = line.split(" ")
             if len(params) == 5:
                 print(u"连接中...")
@@ -241,6 +269,7 @@ class MyMagics(Magics):
 
             return
 
+        import ipywidgets as widgets
         w_1 = widgets.ToggleButtons( options=[u'基本配置', u"高级配置"] )
 
         w_endpoint = widgets.Text( description=u'服务入口', value=g_default_region)
@@ -299,6 +328,9 @@ class MyMagics(Magics):
     
 
 def df_html(df1):
+    if not __CAN_USE_WIDGET__:
+        return df1._repr_html_()
+
     try:
         import odps
         if len(df1.columns) > 1:
@@ -307,7 +339,6 @@ def df_html(df1):
         return df1._repr_html_()
     except Exception as ex:
         print(ex)
-    finally:
         return df1._repr_html_()
 
 
