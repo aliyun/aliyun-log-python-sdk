@@ -6,8 +6,8 @@ from logging.handlers import RotatingFileHandler
 from aliyun.log.consumer import *
 from aliyun.log.pulllog_response import PullLogResponse
 from multiprocessing import current_process
-import syslogclient
-from syslogclient import SyslogClientRFC5424 as SyslogClient
+import aliyun.log.ext.syslogclient as syslogclient
+from aliyun.log.ext.syslogclient import SyslogClientRFC5424 as SyslogClient
 import six
 from datetime import datetime
 
