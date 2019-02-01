@@ -1,4 +1,4 @@
-#encoding: utf8
+# encoding: utf8
 
 from IPython.core.magic import (Magics, magics_class, line_magic,
                                 cell_magic, line_cell_magic)
@@ -115,7 +115,7 @@ class MyMagics(Magics):
                 return True, result
             except KeyboardInterrupt as ex:
                 clear_output()
-                print("正在取消当前获取……")
+                print(u"正在取消当前获取……")
                 for future in futures:
                     if not future.done():
                         future.cancel()
@@ -161,7 +161,7 @@ class MyMagics(Magics):
     def log_imp(self, line, cell=None):
         from_time, to_time, query = self._get_log_param(line, cell)
 
-        print("根据查询统计语句，从日志服务查询数据(时间范围：{0} ~ {1})，结果将保存到变量{2}中，请稍等……".format(from_time, to_time, DEFAULT_DF_NAME))
+        print(u"根据查询统计语句，从日志服务查询数据(时间范围：{0} ~ {1})，结果将保存到变量{2}中，请稍等……".format(from_time, to_time, DEFAULT_DF_NAME))
         res = self.client().get_log_all(g_default_project, g_default_logstore, from_time=from_time, to_time=to_time,
                                          query=query)
         logs = []
@@ -186,14 +186,14 @@ class MyMagics(Magics):
                 df1.set_index('__time__', inplace=True)
 
         clear_output()
-        print("变量名：{0}".format(DEFAULT_DF_NAME))
+        print(u"变量名：{0}".format(DEFAULT_DF_NAME))
         self.shell.user_ns[DEFAULT_DF_NAME] = df1
         return df1
 
     def fetch_log_imp(self, line):
         from_time, to_time, _ = self._get_log_param(line, "")
 
-        print("从日志服务拉取数据(日志插入时间：{0} ~ {1})，结果将保存到变量{2}中，请稍等……".format(from_time, to_time, DEFAULT_DF_NAME))
+        print(u"从日志服务拉取数据(日志插入时间：{0} ~ {1})，结果将保存到变量{2}中，请稍等……".format(from_time, to_time, DEFAULT_DF_NAME))
         result, logs = self.pull_log_all(self.client(), g_default_project, g_default_logstore, from_time, to_time)
 
         df1 = pd.DataFrame(logs)
@@ -205,10 +205,10 @@ class MyMagics(Magics):
 
         clear_output()
         if not result:
-            print("获取被取消，显示部分结果，变量名：{0}".format(DEFAULT_TMP_DF_NAME))
+            print(u"获取被取消，显示部分结果，变量名：{0}".format(DEFAULT_TMP_DF_NAME))
             self.shell.user_ns[DEFAULT_TMP_DF_NAME] = df1
         else:
-            print("变量名：{0}".format(DEFAULT_DF_NAME))
+            print(u"变量名：{0}".format(DEFAULT_DF_NAME))
             self.shell.user_ns[DEFAULT_DF_NAME] = df1
         return df1
 
@@ -225,31 +225,31 @@ class MyMagics(Magics):
         if line:
             params = line.split(" ")
             if len(params) == 5:
-                print("连接中...")
+                print(u"连接中...")
                 endpoint, key_id, key_val, project, logstore = params
                 result, detail = self.verify_sls_connection(endpoint, key_id, key_val, project, logstore)
 
                 if result:
                     clear_output()
-                    print("连接成功.")
+                    print(u"连接成功.")
                     _save_config(endpoint, key_id, key_val, project, logstore)
                     self.client(reset=True)
                 else:
                     print(detail)
             else:
-                print("参数错误，请使用GUI配置（无参）或遵循格式：%manage_log <endpoint> <ak_id> <ak_key> <project> <logstore>")
+                print(u"参数错误，请使用GUI配置（无参）或遵循格式：%manage_log <endpoint> <ak_id> <ak_key> <project> <logstore>")
 
             return
 
-        w_1 = widgets.ToggleButtons( options=['基本配置', "高级配置"] )
+        w_1 = widgets.ToggleButtons( options=[u'基本配置', u"高级配置"] )
 
-        w_endpoint = widgets.Text( description='服务入口', value=g_default_region)
-        w_key_id = widgets.Password( description='秘钥ID', value=g_default_ak_id)
-        w_key_val = widgets.Password( description='秘钥Key', value=g_default_ak_key)
-        w_project = widgets.Text( description='默认项目', value=g_default_project)
-        w_logstore = widgets.Text( description='默认日志库', value=g_default_logstore)
+        w_endpoint = widgets.Text( description=u'服务入口', value=g_default_region)
+        w_key_id = widgets.Password( description=u'秘钥ID', value=g_default_ak_id)
+        w_key_val = widgets.Password( description=u'秘钥Key', value=g_default_ak_key)
+        w_project = widgets.Text( description=u'默认项目', value=g_default_project)
+        w_logstore = widgets.Text( description=u'默认日志库', value=g_default_logstore)
         w_confirm = widgets.Button(
-            description='修改' if g_default_region else '确认',
+            description=u'修改' if g_default_region else u'确认',
             button_style='info',
             icon='confirm'
         )
@@ -267,13 +267,13 @@ class MyMagics(Magics):
                     progress.value = float(i+1)/total
                 else:
                     progress.value = 100
-                    progress.description = "完成" if result else "失败"
+                    progress.description = u"完成" if result else u"失败"
                     break
                 
         def on_button_clicked(b):
             global result, detail
             progress.layout = show_layout
-            progress.description = "连接中..."
+            progress.description = u"连接中..."
             progress.value = 0
             w_result.value = ""
                
@@ -285,7 +285,7 @@ class MyMagics(Magics):
             result, detail = self.verify_sls_connection(w_endpoint.value, w_key_id.value, w_key_val.value, w_project.value, w_logstore.value)
 
             if result:
-                w_result.value = "连接成功."
+                w_result.value = u"连接成功."
                 _save_config(w_endpoint.value, w_key_id.value, w_key_val.value, w_project.value, w_logstore.value)
                 self.client(reset=True)
             else:
