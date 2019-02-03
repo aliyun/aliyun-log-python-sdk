@@ -59,7 +59,18 @@ class rename_fields(transform_base):
         config = u(config)
 
         if isinstance(config, (dict, )):
-            self.new_name = lambda k: k if k not in config else config[k]
+            try:
+                config_ptn = [(get_re_full_match(k), v) for k, v in six.iteritems(config)]
+
+                def check(k):
+                    for c, new_k in config_ptn:
+                        if c(k):
+                            return new_k
+                    return k
+
+                self.new_name = check
+            except Exception as ex:
+                raise SettingError(ex, "rename setting {0} is not invalid".format(config))
         elif config is None or config == "":
             self.new_name = lambda k: k
         else:
