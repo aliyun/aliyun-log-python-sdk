@@ -177,7 +177,7 @@ class LogClient(object):
         try:
             locale.setlocale(locale.LC_TIME, "C")
         except Exception as ex:
-            logger.info("failed to set locale time to C. skip it: {0}".format(ex))
+            logger.warning("failed to set locale time to C. skip it: {0}".format(ex))
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     @staticmethod
