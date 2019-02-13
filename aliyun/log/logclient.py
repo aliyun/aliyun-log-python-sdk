@@ -999,12 +999,14 @@ class LogClient(object):
         except LogException as ex:
             if ex.get_error_code() == "LogStoreInfoInvalid" and ex.get_error_message() == "redundant key exist in json":
                 logger.warning("LogStoreInfoInvalid, will retry with basic parameters. detail: {0}".format(ex))
-            body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count),
-                    "enable_tracking": enable_tracking }
+                body = {"logstoreName": logstore_name, "ttl": int(ttl), "shardCount": int(shard_count),
+                        "enable_tracking": enable_tracking }
 
-            body_str = six.b(json.dumps(body))
+                body_str = six.b(json.dumps(body))
 
-            (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+                (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+            else:
+                raise
 
         return CreateLogStoreResponse(header, resp)
 
@@ -1128,12 +1130,14 @@ class LogClient(object):
         except LogException as ex:
             if ex.get_error_code() == "LogStoreInfoInvalid" and ex.get_error_message() == "redundant key exist in json":
                 logger.warning("LogStoreInfoInvalid, will retry with basic parameters. detail: {0}".format(ex))
-            body = { "logstoreName": logstore_name, "ttl": int(ttl), "enable_tracking": enable_tracking,
-                     "shardCount": shard_count }
+                body = { "logstoreName": logstore_name, "ttl": int(ttl), "enable_tracking": enable_tracking,
+                         "shardCount": shard_count }
 
-            body_str = six.b(json.dumps(body))
+                body_str = six.b(json.dumps(body))
 
-            (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+                (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+            else:
+                raise
 
         return UpdateLogStoreResponse(header, resp)
 
