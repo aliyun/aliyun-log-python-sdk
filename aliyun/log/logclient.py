@@ -5,18 +5,6 @@ log service server to put/get data.
 :Author: Aliyun
 """
 
-try:
-    import lz4
-
-    def lz_decompress(raw_size, data):
-        return lz4.loads(struct.pack('<I', raw_size) + data)
-
-    def lz_compresss(data):
-        return lz4.dumps(data)[4:]
-
-except ImportError:
-    lz4 = None
-
 import json
 import requests
 import six
@@ -58,6 +46,22 @@ from .external_store_config_response import *
 import struct
 
 logger = logging.getLogger(__name__)
+
+try:
+    import lz4
+
+    if not hasattr(lz4, 'loads') or not hasattr(lz4, 'dumps'):
+        lz4 = None
+    else:
+        def lz_decompress(raw_size, data):
+            return lz4.loads(struct.pack('<I', raw_size) + data)
+
+        def lz_compresss(data):
+            return lz4.dumps(data)[4:]
+
+except ImportError:
+    lz4 = None
+
 
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
