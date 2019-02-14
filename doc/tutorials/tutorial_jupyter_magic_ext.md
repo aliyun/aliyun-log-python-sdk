@@ -40,6 +40,25 @@
 ```
 
 
+**配置DataFrame增强交互的配置（仅适用于Notebook）**:
+```shell
+1. jupyter --path
+进入data的第一个目录（或者第二个也可以），
+例如C:\Users\Administrator\AppData\Roaming\jupyter
+在里面构建一个子目录（如果没有的话）：nbextensions
+
+2. python -c "import odps;print(odps);"
+根据输出找到odps模块所在目录，进入子目录static > ui ，例如：C:\ProgramData\Anaconda3\Lib\site-packages\odps\static\ui
+
+3. 复制#2中的target目录到#1中，并修改target目录为pyodps
+例如： C:\ProgramData\Anaconda3\Lib\site-packages\odps\static\ui\target ==> C:\Users\Administrator\AppData\Roaming\jupyter\nbextensions\pyodps
+
+4. 启动Jupyter前验证下
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
+jupyter nbextension enable pyodps/main
+```
+
+
 **IPython Shell/Jupyter Lab**:
 
 ```shell
