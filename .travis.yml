@@ -17,7 +17,8 @@ matrix:
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install -r requirements-py26.txt; fi
-  - pip install lz4a
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install lz4a; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then pip install lz4a; fi
   - pip install .
 
 script:
