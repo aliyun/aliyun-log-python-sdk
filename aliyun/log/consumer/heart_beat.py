@@ -4,6 +4,7 @@ import logging
 import time
 
 from threading import Thread
+from multiprocessing import RLock
 
 
 class HeartBeatLoggerAdapter(logging.LoggerAdapter):
@@ -26,6 +27,7 @@ class ConsumerHeatBeat(Thread):
         self.mheld_shards = []
         self.mheart_shards = []
         self.shut_down_flag = False
+        self.lock = RLock()
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
 
@@ -48,8 +50,10 @@ class ConsumerHeatBeat(Thread):
                         self.logger.info(
                             "shard reorganize, adding: %s, removing: %s",
                             add_set, remove_set)
-                self.mheld_shards = response_shards
-                self.mheart_shards = self.mheld_shards[:]
+
+                with self.lock:
+                    self.mheart_shards = list(set(self.mheart_shards + response_shards))
+                    self.mheld_shards = response_shards
 
                 # default sleep for 2s from "LogHubConfig"
                 time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
@@ -74,7 +78,8 @@ class ConsumerHeatBeat(Thread):
 
     def remove_heart_shard(self, shard):
         self.logger.info('try to remove shard "{0}", current shard: {1}'.format(shard, self.mheld_shards))
-        if shard in self.mheld_shards:
-            self.mheld_shards.remove(shard)
-        if shard in self.mheart_shards:
-            self.mheart_shards.remove(shard)
+        with self.lock:
+            if shard in self.mheld_shards:
+                self.mheld_shards.remove(shard)
+            if shard in self.mheart_shards:
+                self.mheart_shards.remove(shard)
