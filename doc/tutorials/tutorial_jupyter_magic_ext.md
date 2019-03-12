@@ -196,4 +196,15 @@ sns.boxenplot(x='host', y='body_bytes_sent', data=log_df);
 
 ![img](https://img.alicdn.com/tfs/TB1hyaUF9zqK1RjSZFHXXb3CpXa-932-568.gif)
 
+# 注意事项
+
+1. 魔法命令不支持注释
+
+因框架限制，魔法命令不支持注释（例如下面这种），推荐使用新的单元格放注释。
+
+```
+# count PV for host
+%%log -1 day ~ now
+* | select host, count(1) as pv group by host
+```
 
