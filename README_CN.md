@@ -560,6 +560,7 @@ res = client.get_logs(request)
 res.log_print()
 ```
 
+
 也可以通过接口`get_log`来获取
 ```python
 from time import time
@@ -591,6 +592,7 @@ res = client.get_project_logs(req)
 res.log_print();
 ```
 
+注意：注意SQL中使用的字段需要在索引中配置好，例如上面例子中的`__date__`
 
 ## 实时消费
 通过消费组(Consumer Group)可以获得可保障的自动扩展的日志消费服务.
