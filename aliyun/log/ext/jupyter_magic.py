@@ -191,9 +191,12 @@ class MyMagics(Magics):
         print(u"根据查询统计语句，从日志服务查询数据(时间范围：{0} ~ {1})，结果将保存到变量{2}中，请稍等……".format(from_time, to_time, DEFAULT_DF_NAME))
         res = self.client().get_log_all(g_default_project, g_default_logstore, from_time=from_time, to_time=to_time,
                                          query=query)
+        is_complete = True
         logs = []
         try:
             for data in res:
+                if not data.is_completed():
+                    is_complete = False
                 logs.extend(data.body)
         except Exception as ex:
             print(ex)
@@ -213,7 +216,13 @@ class MyMagics(Magics):
                 df1.set_index('__time__', inplace=True)
 
         clear_output()
-        print(u"变量名：{0}".format(DEFAULT_DF_NAME))
+        if is_complete:
+            print(u"变量名：{0}".format(DEFAULT_DF_NAME))
+        elif is_stat:
+            print(u"变量名：{0}，结果非完整精确结果。".format(DEFAULT_DF_NAME))
+        else:
+            print(u"变量名：{0}，部分结果非完整精确结果。".format(DEFAULT_DF_NAME))
+
         self.shell.user_ns[DEFAULT_DF_NAME] = df1
         return df1
 
