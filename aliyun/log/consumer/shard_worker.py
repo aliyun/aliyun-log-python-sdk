@@ -88,6 +88,8 @@ class ShardConsumerWorker(object):
                 self.last_fetch_log_group = FetchedLogGroup(self.shard_id, task_result.get_fetched_log_group_list(),
                                                             task_result.get_cursor())
                 self.next_fetch_cursor = task_result.get_cursor()
+                if self.next_fetch_cursor == self.log_client.get_end_cursor(self.shard_id):
+                    self.checkpoint_tracker.flush_check_point()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
 
             self._sample_log_error(task_result)

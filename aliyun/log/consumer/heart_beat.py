@@ -5,7 +5,7 @@ import time
 
 from threading import Thread
 from multiprocessing import RLock
-
+from ..logexception import LogException
 
 class HeartBeatLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
@@ -60,6 +60,9 @@ class ConsumerHeatBeat(Thread):
                 while time_to_sleep > 0 and not self.shut_down_flag:
                     time.sleep(min(time_to_sleep, 1))
                     time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
+            except LogException as e:
+                if e.get_error_code() == "NotExistConsumerWithBody":
+                    self.mheart_shards = []
             except Exception as e:
                 self.logger.warning("fail to heat beat", e)
 
