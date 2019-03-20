@@ -62,7 +62,7 @@ class ConsumerHeatBeat(Thread):
                     time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
             except LogException as e:
                 if e.get_error_code() == "NotExistConsumerWithBody":
-                    self.mheart_shards = []
+                    self.mheld_shards = []
             except Exception as e:
                 self.logger.warning("fail to heat beat", e)
 
