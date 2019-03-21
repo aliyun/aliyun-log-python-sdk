@@ -38,7 +38,8 @@ class ConsumerHeatBeat(Thread):
             try:
                 last_heatbeat_time = time.time()
 
-                consumer_crushed = self.log_client.heartbeat(self.mheart_shards, self.mheld_shards)
+                with self.lock:
+                    consumer_crushed = self.log_client.heartbeat(self.mheart_shards, self.mheld_shards)
                 if self.heartbeat_failed_times == 1 and consumer_crushed:
                     self.heartbeat_failed_times = 0
                 if not consumer_crushed:
