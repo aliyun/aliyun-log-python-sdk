@@ -76,7 +76,7 @@ def get_monitor_option():
     assert endpoints and accessKeyId and accessKey and projects and logstores and consumer_group, \
         ValueError("endpoints/access_id/key/projects/logstores/consumer_group/name cannot be empty")
 
-    assert len(endpoints) and len(projects) and len(logstores), ValueError("endpoints/projects/logstores must be paired")
+    assert len(endpoints) == len(projects) == len(logstores), ValueError("endpoints/projects/logstores must be paired")
 
     ##########################
     # Some advanced options
