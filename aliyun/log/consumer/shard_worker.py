@@ -93,7 +93,7 @@ class ShardConsumerWorker(object):
                     self.consume_stop_time = time.time()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
                 if self.last_fetch_count == 0:
-                    if time.time() - self.consume_stop_time > 5:
+                    if self.consume_stop_time != 0 and time.time() - self.consume_stop_time > 5:
                         self.task_future = self.executor.submit(consumer_process_task, self.processor,
                                                                 None, self.checkpoint_tracker, True)
 
