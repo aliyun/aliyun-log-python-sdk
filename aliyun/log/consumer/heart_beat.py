@@ -5,7 +5,6 @@ import time
 
 from threading import Thread
 from multiprocessing import RLock
-from ..logexception import LogException
 
 class HeartBeatLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
