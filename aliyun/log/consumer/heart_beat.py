@@ -27,7 +27,7 @@ class ConsumerHeatBeat(Thread):
         self.mheart_shards = []
         self.shut_down_flag = False
         self.lock = RLock()
-        self.last_hearbeat_succes_unixtime = time.time()
+        self.last_hearbeat_successed_unixtime = time.time()
         self.consumer_group_time_out = consumer_group_time_out
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
@@ -40,7 +40,7 @@ class ConsumerHeatBeat(Thread):
                 last_heatbeat_time = time.time()
 
                 if self.log_client.heartbeat(self.mheart_shards, response_shards):
-                    self.last_hearbeat_succes_unixtime = time.time()
+                    self.last_hearbeat_successed_unixtime = time.time()
                     self.logger.debug('heart beat result: %s get: %s',
                                       self.mheart_shards, response_shards)
                     if self.mheart_shards != response_shards:
@@ -53,7 +53,7 @@ class ConsumerHeatBeat(Thread):
                                 "shard reorganize, adding: %s, removing: %s",
                                 add_set, remove_set)
                 else:
-                    if time.time() - self.last_hearbeat_succes_unixtime > \
+                    if time.time() - self.last_hearbeat_successed_unixtime > \
                             (self.consumer_group_time_out + self.heartbeat_interval):
                         response_shards = []
                         self.logger.info(
