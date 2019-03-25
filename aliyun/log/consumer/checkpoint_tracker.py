@@ -4,7 +4,7 @@ import time
 
 from .exceptions import CheckPointException
 from ..logexception import LogException
-
+from multiprocessing import RLock
 
 class ConsumerCheckpointTracker(object):
 
@@ -17,6 +17,7 @@ class ConsumerCheckpointTracker(object):
         self.temp_check_point = ''
         self.last_persistent_checkpoint = ''
         self.default_flush_check_point_interval = 60
+        self.lock = RLock()
 
     def set_cursor(self, cursor):
         self.cursor = cursor
@@ -39,14 +40,16 @@ class ConsumerCheckpointTracker(object):
         self.last_persistent_checkpoint = cursor
 
     def flush_check_point(self):
-        if self.temp_check_point != '' and self.temp_check_point != self.last_persistent_checkpoint:
-            try:
-                self.consumer_group_client.update_check_point(self.shard_id, self.consumer_name, self.temp_check_point)
-                self.last_persistent_checkpoint = self.temp_check_point
-            except LogException as e:
-                raise CheckPointException("Failed to persistent the cursor to outside system, " +
-                                          self.consumer_name + ", " + str(self.shard_id)
-                                          + ", " + self.temp_check_point, e)
+        with self.lock:
+            if self.temp_check_point != '' and self.temp_check_point != self.last_persistent_checkpoint:
+                try:
+                    self.consumer_group_client.update_check_point(
+                        self.shard_id, self.consumer_name, self.temp_check_point)
+                    self.last_persistent_checkpoint = self.temp_check_point
+                except LogException as e:
+                    raise CheckPointException("Failed to persistent the cursor to outside system, " +
+                                              self.consumer_name + ", " + str(self.shard_id)
+                                              + ", " + self.temp_check_point, e)
 
     def flush_check(self):
         current_time = time.time()
