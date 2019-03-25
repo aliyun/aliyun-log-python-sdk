@@ -54,6 +54,8 @@ class ShardConsumerWorker(object):
         self.last_log_error_time = 0
         self.last_fetch_time = 0
         self.last_fetch_count = 0
+        self.last_success_fetch_unixtime = 0
+        self.save_last_checkpoint = False
 
         self.logger = ShardConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"shard_consumer_worker": self})
@@ -89,6 +91,15 @@ class ShardConsumerWorker(object):
                                                             task_result.get_cursor())
                 self.next_fetch_cursor = task_result.get_cursor()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
+                if self.last_fetch_count > 0:
+                    self.last_success_fetch_unixtime = time.time()
+                    self.save_last_checkpoint = False
+                else:
+                    if self.last_success_fetch_unixtime != 0 and time.time() - self.last_success_fetch_unixtime > 30 \
+                            and self.save_last_checkpoint == False:
+                        self.checkpoint_tracker.flush_check_point()
+                        self.save_last_checkpoint = True
+
 
             self._sample_log_error(task_result)
 

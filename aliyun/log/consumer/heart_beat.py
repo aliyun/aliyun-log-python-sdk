@@ -6,7 +6,6 @@ import time
 from threading import Thread
 from multiprocessing import RLock
 
-
 class HeartBeatLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         heart_beat = self.extra['heart_beat']  # type: ConsumerHeatBeat
@@ -20,7 +19,7 @@ class HeartBeatLoggerAdapter(logging.LoggerAdapter):
 
 class ConsumerHeatBeat(Thread):
 
-    def __init__(self, log_client, heartbeat_interval):
+    def __init__(self, log_client, heartbeat_interval, consumer_group_time_out):
         super(ConsumerHeatBeat, self).__init__()
         self.log_client = log_client
         self.heartbeat_interval = heartbeat_interval
@@ -28,6 +27,8 @@ class ConsumerHeatBeat(Thread):
         self.mheart_shards = []
         self.shut_down_flag = False
         self.lock = RLock()
+        self.last_hearbeat_succes_unixtime = time.time()
+        self.consumer_group_time_out = consumer_group_time_out
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
 
@@ -38,18 +39,30 @@ class ConsumerHeatBeat(Thread):
                 response_shards = []
                 last_heatbeat_time = time.time()
 
-                self.log_client.heartbeat(self.mheart_shards, response_shards)
-                self.logger.debug('heart beat result: %s get: %s',
-                                  self.mheart_shards, response_shards)
-                if self.mheart_shards != response_shards:
-                    current_set, response_set = set(
-                        self.mheart_shards), set(response_shards)
-                    add_set = response_set - current_set
-                    remove_set = current_set - response_set
-                    if any([add_set, remove_set]):
+                if self.log_client.heartbeat(self.mheart_shards, response_shards):
+                    self.last_hearbeat_succes_unixtime = time.time()
+                    self.logger.debug('heart beat result: %s get: %s',
+                                      self.mheart_shards, response_shards)
+                    if self.mheart_shards != response_shards:
+                        current_set, response_set = set(
+                            self.mheart_shards), set(response_shards)
+                        add_set = response_set - current_set
+                        remove_set = current_set - response_set
+                        if any([add_set, remove_set]):
+                            self.logger.info(
+                                "shard reorganize, adding: %s, removing: %s",
+                                add_set, remove_set)
+                else:
+                    if time.time() - self.last_hearbeat_succes_unixtime > \
+                            (self.consumer_group_time_out + self.heartbeat_interval):
+                        response_shards = []
                         self.logger.info(
-                            "shard reorganize, adding: %s, removing: %s",
-                            add_set, remove_set)
+                            "Heart beat timeout, automatic reset consumer held shards")
+                    else:
+                        with self.lock:
+                            response_shards = self.mheld_shards
+                            self.logger.info(
+                                "Heart beat failed, Keep the held shards unchanged")
 
                 with self.lock:
                     self.mheart_shards = list(set(self.mheart_shards + response_shards))

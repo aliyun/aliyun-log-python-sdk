@@ -57,3 +57,4 @@ class LogHubConfig(object):
         self.max_fetch_log_group_size = max_fetch_log_group_size or 1000
         self.worker_pool_size = worker_pool_size or 2
         self.shared_executor = shared_executor
+        self.consumer_group_time_out = self.heartbeat_interval * 2
