@@ -27,7 +27,7 @@ class ConsumerHeatBeat(Thread):
         self.mheart_shards = []
         self.shut_down_flag = False
         self.lock = RLock()
-        self.last_hearbeat_succes_unixtime = 0
+        self.last_hearbeat_succes_unixtime = time.time()
         self.consumer_group_time_out = consumer_group_time_out
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
