@@ -119,7 +119,7 @@ class FetchTaskResult(TaskResult):
         return self.cursor
 
 
-def consumer_process_task(processor, log_groups, check_point_tracker, only_save_checkpoint=False):
+def consumer_process_task(processor, log_groups, check_point_tracker):
     """
     return TaskResult if failed,
     return ProcessTaskResult if succeed
@@ -128,15 +128,12 @@ def consumer_process_task(processor, log_groups, check_point_tracker, only_save_
     :param check_point_tracker:
     :return:
     """
-    if not only_save_checkpoint:
-        try:
-            check_point = processor.process(log_groups, check_point_tracker)
-            check_point_tracker.flush_check()
-        except Exception as e:
-            return TaskResult(e)
-        return ProcessTaskResult(check_point)
-    else:
-        check_point_tracker.flush_check_point()
+    try:
+        check_point = processor.process(log_groups, check_point_tracker)
+        check_point_tracker.flush_check()
+    except Exception as e:
+        return TaskResult(e)
+    return ProcessTaskResult(check_point)
 
 
 def consumer_initialize_task(processor, consumer_client, shard_id, cursor_position, cursor_start_time):

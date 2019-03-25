@@ -27,7 +27,7 @@ class ConsumerHeatBeat(Thread):
         self.mheart_shards = []
         self.shut_down_flag = False
         self.lock = RLock()
-        self.heartbeat_failed_times = 0
+        self.last_hearbeat_succes_unixtime = 0
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
 
@@ -35,20 +35,15 @@ class ConsumerHeatBeat(Thread):
         self.logger.info('heart beat start')
         while not self.shut_down_flag:
             try:
+                with self.lock:
+                    response_shards = self.mheld_shards
                 last_heatbeat_time = time.time()
 
-                with self.lock:
-                    heartbeat_sucessed = self.log_client.heartbeat(self.mheart_shards, self.mheld_shards)
-                if self.heartbeat_failed_times == 1 and heartbeat_sucessed:
-                    self.heartbeat_failed_times = 0
-                if not heartbeat_sucessed:
-                    self.heartbeat_failed_times += 1
-                    if self.heartbeat_failed_times == 2:
-                        with self.lock:
-                            self.mheld_shards = []
-                with self.lock:
-                    self.mheld_shards = list(set(self.mheld_shards))
-                    response_shards = self.mheld_shards
+                if self.log_client.heartbeat(self.mheart_shards, response_shards):
+                    self.last_hearbeat_succes_unixtime = time.time()
+                else:
+                    if time.time() - self.last_hearbeat_succes_unixtime > (self.heartbeat_interval*3):
+                        response_shards = []
                 self.logger.debug('heart beat result: %s get: %s',
                                   self.mheart_shards, response_shards)
                 if self.mheart_shards != response_shards:
@@ -63,13 +58,13 @@ class ConsumerHeatBeat(Thread):
 
                 with self.lock:
                     self.mheart_shards = list(set(self.mheart_shards + response_shards))
+                    self.mheld_shards = list(set(response_shards))
 
                 # default sleep for 2s from "LogHubConfig"
                 time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
                 while time_to_sleep > 0 and not self.shut_down_flag:
                     time.sleep(min(time_to_sleep, 1))
                     time_to_sleep = self.heartbeat_interval - (time.time() - last_heatbeat_time)
-
             except Exception as e:
                 self.logger.warning("fail to heat beat", e)
 
