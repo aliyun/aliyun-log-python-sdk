@@ -40,6 +40,7 @@ class LogHubConfig(object):
         :param max_fetch_log_group_size: default 1000, fetch size in each request, normally use default. maximum is 1000, could be lower. the lower the size the memory efficiency might be better.
         :param worker_pool_size: default 2. suggest keep the default size (2), use multiple process instead, when you need to have more concurrent processing, launch this consumer for mulitple times and give them different consuer name in same consumer group. will be ignored when shared_executor is passed.
         :param shared_executor: shared executor, if not None, worker_pool_size will be ignored
+        :param consumer_group_time_out: Overtime of Consumers in Service-side Consumption Group.
         """
         self.endpoint = endpoint
         self.accessKeyId = access_key_id
@@ -57,3 +58,4 @@ class LogHubConfig(object):
         self.max_fetch_log_group_size = max_fetch_log_group_size or 1000
         self.worker_pool_size = worker_pool_size or 2
         self.shared_executor = shared_executor
+        self.consumer_group_time_out = self.heartbeat_interval * 2

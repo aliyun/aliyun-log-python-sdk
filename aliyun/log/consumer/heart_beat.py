@@ -19,7 +19,7 @@ class HeartBeatLoggerAdapter(logging.LoggerAdapter):
 
 class ConsumerHeatBeat(Thread):
 
-    def __init__(self, log_client, heartbeat_interval):
+    def __init__(self, log_client, heartbeat_interval, consumer_group_time_out):
         super(ConsumerHeatBeat, self).__init__()
         self.log_client = log_client
         self.heartbeat_interval = heartbeat_interval
@@ -28,6 +28,7 @@ class ConsumerHeatBeat(Thread):
         self.shut_down_flag = False
         self.lock = RLock()
         self.last_hearbeat_succes_unixtime = 0
+        self.consumer_group_time_out = consumer_group_time_out
         self.logger = HeartBeatLoggerAdapter(
             logging.getLogger(__name__), {"heart_beat": self})
 
@@ -35,15 +36,18 @@ class ConsumerHeatBeat(Thread):
         self.logger.info('heart beat start')
         while not self.shut_down_flag:
             try:
-                with self.lock:
-                    response_shards = self.mheld_shards
+                response_shards = []
                 last_heatbeat_time = time.time()
 
                 if self.log_client.heartbeat(self.mheart_shards, response_shards):
                     self.last_hearbeat_succes_unixtime = time.time()
                 else:
-                    if time.time() - self.last_hearbeat_succes_unixtime > (self.heartbeat_interval*3):
+                    if time.time() - self.last_hearbeat_succes_unixtime > \
+                            (self.consumer_group_time_out + self.heartbeat_interval):
                         response_shards = []
+                    else:
+                        with self.lock:
+                            response_shards = self.mheld_shards
                 self.logger.debug('heart beat result: %s get: %s',
                                   self.mheart_shards, response_shards)
                 if self.mheart_shards != response_shards:

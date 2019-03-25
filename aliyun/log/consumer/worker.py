@@ -40,8 +40,9 @@ class ConsumerWorker(Thread):
             logging.getLogger(__name__), {"consumer_worker": self})
         self.shard_consumers = {}
 
-        self.consumer_client.create_consumer_group(consumer_option.heartbeat_interval*2, consumer_option.in_order)
-        self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval)
+        self.consumer_client.create_consumer_group(consumer_option.consumer_group_time_out, consumer_option.in_order)
+        self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval,
+                                           consumer_option.consumer_group_time_out)
 
         if consumer_option.shared_executor is not None:
             self.own_executor = False
