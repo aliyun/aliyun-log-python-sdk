@@ -94,13 +94,18 @@ class ProcessTaskResult(TaskResult):
 
 
 class InitTaskResult(TaskResult):
-    def __init__(self, cursor, cursor_persistent):
+    def __init__(self, cursor, cursor_persistent, end_cursor):
         super(InitTaskResult, self).__init__(None)
         self.cursor = cursor
         self.cursor_persistent = cursor_persistent
+        self._end_cursor = end_cursor
 
     def get_cursor(self):
         return self.cursor
+
+    @property
+    def end_cursor(self):
+        return self._end_cursor
 
     def is_cursor_persistent(self):
         return self.cursor_persistent
@@ -136,7 +141,7 @@ def consumer_process_task(processor, log_groups, check_point_tracker):
     return ProcessTaskResult(check_point)
 
 
-def consumer_initialize_task(processor, consumer_client, shard_id, cursor_position, cursor_start_time):
+def consumer_initialize_task(processor, consumer_client, shard_id, cursor_position, cursor_start_time, cursor_end_time=None):
     """
     return TaskResult if failed, or else, return InitTaskResult
     :param processor:
@@ -160,17 +165,22 @@ def consumer_initialize_task(processor, consumer_client, shard_id, cursor_positi
                 cursor = consumer_client.get_end_cursor(shard_id)
             else:
                 cursor = consumer_client.get_cursor(shard_id, cursor_start_time)
-        return InitTaskResult(cursor, is_cursor_persistent)
+
+        end_cursor = None
+        if cursor_end_time is not None:
+            end_cursor = consumer_client.get_cursor(shard_id, cursor_end_time)
+
+        return InitTaskResult(cursor, is_cursor_persistent, end_cursor)
     except Exception as e:
         return TaskResult(e)
 
 
-def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000):
+def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None):
     exception = None
 
     for retry_times in range(3):
         try:
-            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size)
+            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor)
             fetch_log_group_list = response.get_loggroup_list()
             next_cursor = response.get_next_cursor()
             logger.debug("shard id = %s cursor = %s next cursor = %s size: %s",

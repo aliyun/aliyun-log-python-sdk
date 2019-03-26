@@ -30,12 +30,13 @@ class ShardConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
 
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
-                 max_fetch_log_group_size=1000, executor=None):
+                 max_fetch_log_group_size=1000, executor=None, cursor_end_time=None):
         self.log_client = log_client
         self.shard_id = shard_id
         self.consumer_name = consumer_name
         self.cursor_position = cursor_position
         self.cursor_start_time = cursor_start_time
+        self.cursor_end_time = cursor_end_time or None
         self.processor = processor
         self.checkpoint_tracker = ConsumerCheckpointTracker(self.log_client, self.consumer_name,
                                                             self.shard_id)
@@ -48,13 +49,16 @@ class ShardConsumerWorker(object):
         self.fetch_data_future = None
 
         self.next_fetch_cursor = ''
+        self.fetch_end_cursor = None
+
         self.shutdown = False
         self.last_fetch_log_group = None
 
         self.last_log_error_time = 0
         self.last_fetch_time = 0
         self.last_fetch_count = 0
-        self.last_success_fetch_unixtime = 0
+        self.last_success_fetch_time = 0
+        self.last_success_fetch_time_with_data = 0
         self.save_last_checkpoint = False
 
         self.logger = ShardConsumerWorkerLoggerAdapter(
@@ -87,16 +91,18 @@ class ShardConsumerWorker(object):
                 assert isinstance(task_result, FetchTaskResult), \
                     ClientWorkerException("fetch result type is not as expected")
 
+                self.last_success_fetch_time = time.time()
+
                 self.last_fetch_log_group = FetchedLogGroup(self.shard_id, task_result.get_fetched_log_group_list(),
                                                             task_result.get_cursor())
                 self.next_fetch_cursor = task_result.get_cursor()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
                 if self.last_fetch_count > 0:
-                    self.last_success_fetch_unixtime = time.time()
+                    self.last_success_fetch_time_with_data = time.time()
                     self.save_last_checkpoint = False
                 else:
-                    if self.last_success_fetch_unixtime != 0 and time.time() - self.last_success_fetch_unixtime > 30 \
-                            and self.save_last_checkpoint == False:
+                    if self.last_success_fetch_time_with_data != 0 and time.time() - self.last_success_fetch_time_with_data > 30 \
+                            and not self.save_last_checkpoint:
                         self.checkpoint_tracker.flush_check_point()
                         self.save_last_checkpoint = True
 
@@ -121,7 +127,8 @@ class ShardConsumerWorker(object):
                     self.fetch_data_future = \
                         self.executor.submit(consumer_fetch_task,
                                              self.log_client, self.shard_id, self.next_fetch_cursor,
-                                             max_fetch_log_group_size=self.max_fetch_log_group_size)
+                                             max_fetch_log_group_size=self.max_fetch_log_group_size,
+                                             end_cursor=self.fetch_end_cursor)
                 else:
                     self.fetch_data_future = None
             else:
@@ -154,6 +161,7 @@ class ShardConsumerWorker(object):
 
                     init_result = task_result
                     self.next_fetch_cursor = init_result.get_cursor()
+                    self.fetch_end_cursor = init_result.end_cursor
                     self.checkpoint_tracker.set_memory_check_point(self.next_fetch_cursor)
                     if init_result.is_cursor_persistent():
                         self.checkpoint_tracker.set_persistent_check_point(self.next_fetch_cursor)
@@ -185,7 +193,7 @@ class ShardConsumerWorker(object):
         if self.consumer_status == ConsumerStatus.INITIALIZING:
             self.current_task_exist = True
             self.task_future = self.executor.submit(consumer_initialize_task, self.processor, self.log_client,
-                                                    self.shard_id, self.cursor_position, self.cursor_start_time)
+                                                    self.shard_id, self.cursor_position, self.cursor_start_time, self.cursor_end_time)
 
         elif self.consumer_status == ConsumerStatus.PROCESSING:
             if self.last_fetch_log_group is not None:

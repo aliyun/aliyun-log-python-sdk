@@ -40,6 +40,8 @@ class ConsumerWorker(Thread):
             logging.getLogger(__name__), {"consumer_worker": self})
         self.shard_consumers = {}
 
+        self.last_owned_consumer_finish_time = 0
+
         self.consumer_client.create_consumer_group(consumer_option.consumer_group_time_out, consumer_option.in_order)
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval,
                                            consumer_option.consumer_group_time_out)
@@ -55,6 +57,34 @@ class ConsumerWorker(Thread):
     def executor(self):
         return self._executor
 
+    def _need_stop(self):
+        """
+        check if need to stop:
+        1. end_cursor has been hit and there's no more shard assinged (wait for heatbeat_interval * 3)
+        :return:
+        """
+        if not self.option.cursor_end_time:
+            return False
+
+        all_finish = True
+        for shard, consumer in self.shard_consumers.items():
+            if consumer.is_shutdown():
+                continue
+
+            # has not yet do any successful fetch yet or get some data
+            if consumer.last_success_fetch_time == 0 or consumer.last_fetch_count > 0:
+                return False
+
+        # init self.last_owned_consumer_finish_time if it's None
+        if all_finish and self.last_owned_consumer_finish_time == 0:
+            self.last_owned_consumer_finish_time = time.time()
+
+        if abs(time.time() - self.last_owned_consumer_finish_time) >= \
+                self.option.consumer_group_time_out + self.option.heartbeat_interval:
+            return True
+
+        return False
+
     def run(self):
         self.logger.info('consumer worker "{0}" start '.format(self.option.consumer_name))
         self.heart_beat.start()
@@ -68,13 +98,17 @@ class ConsumerWorker(Thread):
                     break
 
                 shard_consumer = self._get_shard_consumer(shard)
-                if shard_consumer is None: # error when init consumer. shutdown directly
+                if shard_consumer is None:  # error when init consumer. shutdown directly
                     self.shutdown()
                     break
 
                 shard_consumer.consume()
 
             self.clean_shard_consumer(held_shards)
+
+            if self._need_stop():
+                self.logger.info("all owned shards complete the tasks, owned shards: {0}".format(self.shard_consumers))
+                self.shutdown()
 
             time_to_sleep = self.option.data_fetch_interval - (time.time() - last_fetch_time)
             while time_to_sleep > 0 and not self.shut_down_flag:
@@ -158,6 +192,7 @@ class ConsumerWorker(Thread):
         consumer = ShardConsumerWorker(self.consumer_client, shard_id, self.option.consumer_name,
                                        processer,
                                        self.option.cursor_position, self.option.cursor_start_time,
-                                       executor=self._executor)
+                                       executor=self._executor,
+                                       cursor_end_time=self.option.cursor_end_time)
         self.shard_consumers[shard_id] = consumer
         return consumer
