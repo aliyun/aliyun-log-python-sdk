@@ -872,7 +872,64 @@ res.log_print();
 
 - 创建配置
 
-  通过`create_shipper`创建一个投递配置.
+  通过`create_shipper`创建一个投递配置. 可以传入一个json字符串（如下）或者对应的dict对象（如get_shipper获得的对象结果），如下：
+
+OSS以CSV格式投递：
+```json
+{
+  "shipperName": "oss-ship-test1",
+  "targetConfiguration": {
+    "bufferInterval": 300,
+    "bufferSize": 256,
+    "compressType": "none",
+    "enable": true,
+    "ossBucket": "bucket1",
+    "ossPrefix": "bucket_folder1",
+    "pathFormat": "%Y/%m/%d/%H/%M",
+    "roleArn": "acs:ram::1234:role/aliyunlogdefaultrole",
+    "storage": {
+      "detail": {
+        "columns": [
+          "k3",
+          "k4"
+        ],
+        "delimiter": "|",
+        "header": false,
+        "nullIdentifier": "",
+        "quote": "\""
+      },
+      "format": "csv"
+    }
+  },
+  "targetType": "oss"
+}
+```
+
+OSS以JSON格式投递（注意storage.detail.columns为空是必须的，这个和get_shipper有所差别）：
+```json
+{
+  "shipperName": "oss-ship-test1",
+  "targetConfiguration": {
+    "bufferInterval": 300,
+    "bufferSize": 256,
+    "compressType": "snappy",
+    "enable": true,
+    "ossBucket": "bucket1",
+    "ossPrefix": "bucket_folder1",
+    "pathFormat": "%Y/%m/%d/%H/%M",
+    "roleArn": "acs:ram::1234:role/aliyunlogdefaultrole",
+    "storage": {
+      "detail": {
+        "columns": [
+        ]
+      },
+      "format": "json"
+    }
+  },
+  "targetType": "oss"
+}
+
+```
 
 - 获取配置
 

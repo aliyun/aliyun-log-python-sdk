@@ -291,7 +291,7 @@ Shipper
    create_shipper
    update_shipper
    delete_shipper
-   get_shipper_config
+   get_shipper
    list_shipper
    get_shipper_tasks
    retry_shipper_tasks
@@ -321,8 +321,6 @@ Definitions
 .. autoclass:: SyslogConfigDetail
 .. autoclass:: MachineGroupDetail
 .. autoclass:: PutLogsRequest
-.. autoclass:: OssShipperConfig
-.. autoclass:: OdpsShipperConfig
 .. autoclass:: ShipperTask
 
 .. autoclass:: LogResponse
@@ -405,16 +403,6 @@ Definitions
 .. autoclass:: GetConfigAppliedMachineGroupsResponse
    :members:
 
-.. autoclass:: CreateShipperResponse
-   :members:
-.. autoclass:: UpdateShipperResponse
-   :members:
-.. autoclass:: DeleteShipperResponse
-   :members:
-.. autoclass:: GetShipperConfigResponse
-   :members:
-.. autoclass:: ListShipperResponse
-   :members:
 .. autoclass:: GetShipperTasksResponse
    :members:
 .. autoclass:: RetryShipperTasksResponse
