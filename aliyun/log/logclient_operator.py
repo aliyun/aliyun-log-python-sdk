@@ -846,16 +846,12 @@ def transform_data(from_client, from_project, from_logstore, from_time,
         cg_data_fetch_interval = cg_data_fetch_interval or 2
         cg_in_order = False if cg_in_order is None else cg_in_order
         cg_worker_pool_size = cg_worker_pool_size or 3
-        cursor_position = CursorPosition.SPECIAL_TIMER_CURSOR
-        if from_time.lower() == "begin":
-            cursor_position = CursorPosition.BEGIN_CURSOR
-        elif from_time.lower() == "end":
-            cursor_position = CursorPosition.END_CURSOR
-        cursor_start_time = from_time
 
         option = LogHubConfig(from_client._endpoint, from_client._accessKeyId, from_client._accessKey,
                               from_project, from_logstore, cg_name,
-                              c_name, cursor_position=cursor_position, cursor_start_time=cursor_start_time,
+                              c_name, cursor_position=CursorPosition.SPECIAL_TIMER_CURSOR,
+                              cursor_start_time=from_time,
+                              cursor_end_time=to_time,
                               heartbeat_interval=cg_heartbeat_interval, data_fetch_interval=cg_data_fetch_interval,
                               in_order=cg_in_order,
                               worker_pool_size=cg_worker_pool_size)

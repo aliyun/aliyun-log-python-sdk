@@ -2462,7 +2462,7 @@ class LogClient(object):
         :param from_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_time: string/int
-        :param to_time: curosr value, leave it as None if consumer group is configured. could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+        :param to_time: curosr value, could be begin, timestamp or readable time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :type to_client: LogClient
         :param to_client: logclient instance, if empty will use source client
@@ -2483,10 +2483,10 @@ class LogClient(object):
         :param compress: if use compression, by default it's True
 
         :type cg_name: string
-        :param cg_name: consumer group name. must configure if it's consumer group mode.
+        :param cg_name: consumer group name to enable scability and availability support.
 
         :type c_name: string
-        :param c_name: consumer group name for consumer group mode,  default:  CLI-transform-data-${process_id}
+        :param c_name: consumer name for consumer group mode, must be different for each consuer in one group, normally leave it as default:  CLI-transform-data-${process_id}
 
         :type cg_heartbeat_interval: int
         :param cg_heartbeat_interval: cg_heartbeat_interval, default 20
