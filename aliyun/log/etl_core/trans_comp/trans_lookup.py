@@ -3,7 +3,10 @@ import six
 import os
 from ..exceptions import SettingError
 import csv
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 import logging
 import inspect
 

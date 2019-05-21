@@ -3,7 +3,10 @@
 
 import sys
 import base64
-import collections
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import hashlib
 import hmac
 import socket
@@ -147,10 +150,10 @@ class Util(object):
             return data.encode('utf8')
         elif six.PY3 and isinstance(data, six.binary_type):
             return data.decode('utf8')
-        elif isinstance(data, collections.Mapping):
+        elif isinstance(data, collections_abc.Mapping):
             return dict((Util.convert_unicode_to_str(k), Util.convert_unicode_to_str(v))
                         for k, v in six.iteritems(data))
-        elif isinstance(data, collections.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
+        elif isinstance(data, collections_abc.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
             return type(data)(map(Util.convert_unicode_to_str, data))
 
         return data
