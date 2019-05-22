@@ -14,7 +14,10 @@ if the value is not list, v => [v]
 """
 
 import logging
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 
 import functools
 import six

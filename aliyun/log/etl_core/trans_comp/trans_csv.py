@@ -2,7 +2,10 @@ from .trans_base import trans_comp_check_mdoe_base
 import csv
 import six
 import re
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 from ..exceptions import SettingError
 import logging
 

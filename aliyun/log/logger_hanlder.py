@@ -7,7 +7,10 @@ import atexit
 from time import time, sleep
 from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 import six
 
 if six.PY2:
