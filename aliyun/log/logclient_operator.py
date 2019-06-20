@@ -347,7 +347,10 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
                             last_ex = None
                             for encoding in encodings:
                                 try:
-                                    f.write(json.dumps(log, encoding=encoding, ensure_ascii=ensure_ansi))
+                                    ret = json.dumps(log, encoding=encoding, ensure_ascii=ensure_ansi)
+                                    if isinstance(ret, unicode):
+                                        ret = ret.encode(encoding, errors="ignore")
+                                    f.write(ret)
                                     f.write("\n")
                                     break
                                 except UnicodeDecodeError as ex:
