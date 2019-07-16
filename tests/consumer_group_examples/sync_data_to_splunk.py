@@ -78,11 +78,18 @@ class SyncData(ConsumerProcessorBase):
             #    Python3: {"__time__": "12312312", "__topic__": "topic", "field1": "value1", "field2": "value2"}
             event = {}
             event.update(self.default_fields)
-            # suppose we only care about audit log
             event['time'] = log[u'__time__']
-            event['fields'] = {}
             del log['__time__']
-            event['fields'].update(log)
+
+            json_topic = {"actiontrail_audit_event": ["event"] }
+            topic = log.get("__topic__", "")
+            if topic in json_topic:
+                try:
+                    for field in json_topic[topic]:
+                        log[field] = json.loads(log[field])
+                except Exception as ex:
+                    pass
+            event['event'] = json.dumps(log)
 
             data = json.dumps(event, sort_keys=True)
 
