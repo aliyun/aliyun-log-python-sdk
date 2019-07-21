@@ -91,10 +91,10 @@ Spark Streaming、Storm 以及Flink Connector都以Consumer Library作为基础�
 
 ### 安装
 **环境**
-1. 强烈推荐[PyPy3](https://pypy.org/download.html)来运行本程序，而不是使用标准CPython解释器。
+1. 目前推荐使用CPython3官方版来运行 (注: 基于我们目前测试pypy3.6-beta发现一些稳定性问题, 这里暂时不做推荐). 
 2. 日志服务的Python SDK可以如下安装：
 ```shell
-pypy3 -m pip install aliyun-log-python-sdk -U
+python3 -m pip install aliyun-log-python-sdk -U
 ```
 更多SLS Python SDK的使用手册，可以参考[这里](https://aliyun-log-python-sdk.readthedocs.io/README_CN.html)
 
@@ -284,7 +284,7 @@ export SLS_PROJECT=<SLS Project Name>
 export SLS_LOGSTORE=<SLS Logstore Name>
 export SLS_CG=<消费组名，可以简单命名为"syc_data">
 
-pypy3 sync_data.py
+python3 sync_data.py
 ```
 
 **限制与约束**
@@ -299,9 +299,9 @@ pypy3 sync_data.py
 基于消费组的程序可以直接启动多次以便达到并发作用：
 
 ```shell
-nohup pypy3 sync_data.py &
-nohup pypy3 sync_data.py &
-nohup pypy3 sync_data.py &
+nohup python3 sync_data.py &
+nohup python3 sync_data.py &
+nohup python3 sync_data.py &
 ...
 ```
 
@@ -315,7 +315,7 @@ nohup pypy3 sync_data.py &
 服务器证书`*.aliyuncs.com`是GlobalSign签发，默认大多数Linux/Windows的机器会自动信任此证书。如果某些特殊情况，机器不信任此证书，可以参考[这里](https://success.outsystems.com/Support/Enterprise_Customers/Installation/Install_a_trusted_root_CA__or_self-signed_certificate)下载并安装此证书。
 
 ### 性能吞吐
-基于测试，在没有带宽限制、接收端速率限制（如Splunk端）的情况下，以推进硬件用`pypy3`运行上述样例，单个消费者占用大约`10%的单核CPU`下可以消费达到`5 MB/s`原始日志的速率。因此，理论上可以达到`50 MB/s`原始日志`每个CPU核`，也就是`每个CPU核每天可以消费4TB原始日志`。
+基于测试，在没有带宽限制、接收端速率限制（如Splunk端）的情况下，以推进硬件用`python3`运行上述样例，单个消费者占用大约`20%的单核CPU`下可以消费达到`2 MB/s`原始日志的速率。因此，理论上可以达到`10 MB/s`原始日志`每个CPU核`，也就是`每个CPU核每天可以消费0.9TB原始日志`。
 
 **注意:** 这个数据依赖带宽、硬件参数和SIEM接收端（如Splunk）是否能够较快接收数据。
 
