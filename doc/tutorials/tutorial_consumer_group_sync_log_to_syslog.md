@@ -156,7 +156,7 @@ class SyncData(ConsumerProcessorBase):
     这个消费者从SLS消费数据并发送给syslog server
     """
     def __init__(self, splunk_setting):
-	    """初始化并验证syslog server连通性"""
+        """初始化并验证syslog server连通性"""
         super(SyncData, self).__init__()   # remember to call base's init
 
         assert target_setting, ValueError("You need to configure settings of remote target")
@@ -190,13 +190,13 @@ class SyncData(ConsumerProcessorBase):
 
                     io = six.StringIO()
                     first = True
-					# TODO： 这里可以根据需要修改格式化内容，这里使用Key=Value传输，并使用默认的||进行分割
+                    # TODO： 这里可以根据需要修改格式化内容，这里使用Key=Value传输，并使用默认的||进行分割
                     for k, v in six.iteritems(log):
                         io.write("{0}{1}={2}".format(self.sep, k, v))
 
                     data = io.getvalue()
 
-					# TODO：这里可以根据需要修改facility或者severity
+                    # TODO：这里可以根据需要修改facility或者severity
                     client.log(data, facility=self.option.get("facility", None), severity=self.option.get("severity", None), timestamp=timestamp, program=self.option.get("tag", None), hostname=self.option.get("hostname", None))
 
         except Exception as err:
@@ -238,7 +238,7 @@ export SLS_PROJECT=<SLS Project Name>
 export SLS_LOGSTORE=<SLS Logstore Name>
 export SLS_CG=<消费组名，可以简单命名为"syc_data">
 
-pypy3 sync_data.py
+python3 sync_data.py
 ```
 
 **限制与约束**
