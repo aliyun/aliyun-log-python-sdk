@@ -1,25 +1,29 @@
+import re
+import sys
+import json
+import atexit
 import logging
+import traceback
+from enum import Enum
+from time import time, sleep
+from threading import Thread
+
+import six
+
 from .logclient import LogClient
 from .logitem import LogItem
 from .putlogsrequest import PutLogsRequest
-from threading import Thread
-import atexit
-from time import time, sleep
-from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
+
 try:
     from collections.abc import Callable
 except ImportError:
     from collections import Callable
-import six
 
 if six.PY2:
     from Queue import Empty, Full, Queue
 else:
     from queue import Empty, Full, Queue
-
-import json
-import re
 
 
 class LogFields(Enum):
@@ -213,7 +217,7 @@ class SimpleLogHandler(logging.Handler, object):
         v = self._n(v)
         contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v))
 
-    def make_request(self, record):
+    def make_log_item(self, record):
         contents = []
         message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
         if isinstance(record.msg, dict) and self.extract_json:
@@ -255,13 +259,13 @@ class SimpleLogHandler(logging.Handler, object):
                 if not x.startswith('__') and not x in BUILTIN_LOG_FIELDS_NAMES:
                     self._add_record_fields(record, x, contents)
 
-        item = LogItem(contents=contents, timestamp=record.created)
+        return LogItem(contents=contents, timestamp=record.created)
 
-        return PutLogsRequest(self.project, self.log_store, self.topic, logitems=[item, ])
 
     def emit(self, record):
         try:
-            req = self.make_request(record)
+            item = self.make_log_item(record)
+            req = PutLogsRequest(self.project, self.log_store, self.topic, logitems=[item, ])
             self.send(req)
         except Exception as e:
             self.handleError(record)
@@ -371,58 +375,39 @@ class QueuedLogHandler(SimpleLogHandler):
         self.worker.join(timeout=self.close_wait + 1)
 
     def emit(self, record):
-        req = self.make_request(record)
-        req.__record__ = record
+        log_item = self.make_log_item(record)
         try:
-            self.queue.put(req, timeout=self.put_wait*2)
+            self.queue.put(log_item, timeout=self.put_wait*2)
         except Full as ex:
             self.handleError(record)
 
-    def _get_batch_requests(self, timeout=None):
-        """try to get request as fast as possible, once empty and stop falg or time-out, just return Empty"""
-        reqs = []
-        s = time()
-        while len(reqs) < self.batch_size and (time() - s) < timeout:
-            try:
-                req = self.queue.get(block=False)
-                self.queue.task_done()
+    def _get_batch_log_items(self, timeout=None):
+        """try to get log items as fast as possible, once empty and stop flag or time-out, just return Empty"""
+        log_items = []
+        start_time = time()
 
-                reqs.append(req)
-            except Empty as ex:
+        while len(log_items) < self.batch_size and (time() - start_time) < timeout:
+            try:
+                log_item = self.queue.get(block=True, timeout=0.1)
+                log_items.append(log_item)
+            except Empty:
                 if self.stop_flag:
                     break
-                else:
-                    sleep(0.1)
 
-        if not reqs:
-            raise Empty
-        elif len(reqs) <= 1:
-            return reqs[0]
-        else:
-            logitems = []
-            req = reqs[0]
-            for req in reqs:
-                logitems.extend(req.get_log_items())
-
-            ret = PutLogsRequest(self.project, self.log_store, req.topic, logitems=logitems)
-            ret.__record__ = req.__record__
-
-            return ret
+        return log_items
 
     def _post(self):
         while not self.stop_flag or (time() - self.stop_time) <= self.close_wait:
-            try:
-                req = self._get_batch_requests(timeout=self.put_wait)
-            except Empty as ex:
-                if self.stop_flag:
-                    break
-                else:
-                    continue
+            items = self._get_batch_log_items(self.put_wait)
+            if not items:
+                continue
 
             try:
+                req = PutLogsRequest(self.project, self.log_store, self.topic, logitems=items)
                 self.send(req)
             except Exception as ex:
-                self.handleError(req.__record__)
+                sys.stderr.write('--- Aliyun %s Worker Send Log Failed, Log Item Count: %s ---\n' % (self, len(items)))
+                traceback.print_exc(limit=None, file=sys.stderr)
 
 
 class UwsgiQueuedLogHandler(QueuedLogHandler):
