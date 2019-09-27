@@ -21,6 +21,7 @@ from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
 from .getlogsresponse import GetLogsResponse
+from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
@@ -615,6 +616,49 @@ class LogClient(object):
 
             if count == 0 or is_stats_query(query):
                 break
+
+    def get_context_logs(self, project, logstore, pack_id, pack_meta, back_lines, forward_lines):
+        """ Get context logs of specified log from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type pack_id: string
+        :param pack_id: package ID of the start log, such as 895CEA449A52FE-1 ({hex prefix}-{hex sequence number}).
+
+        :type pack_meta: string
+        :param pack_meta: package meta of the start log, such as 0|MTU1OTI4NTExMjg3NTQ2MjQ3MQ==|2|1.
+
+        :type back_lines: int
+        :param back_lines: the number of logs to request backward, at most 100.
+
+        :type forward_lines: int
+        :param forward_lines: the number of logs to request forward, at most 100.
+
+        :return: GetContextLogsResponse
+        """
+        ret = None
+        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+            headers = {}
+            params = {'pack_id': pack_id,
+                      'pack_meta': pack_meta,
+                      'type': 'context_log',
+                      'back_lines': back_lines,
+                      'forward_lines': forward_lines}
+
+            resource = "/logstores/" + logstore
+            (resp, header) = self._send("GET", project, None, resource, params, headers)
+            ret = GetContextLogsResponse(resp, header)
+            if ret.is_completed():
+                break
+
+            time.sleep(DEFAULT_QUERY_RETRY_INTERVAL)
+
+        return ret
 
     def get_project_logs(self, request):
         """ Get logs from log service.
