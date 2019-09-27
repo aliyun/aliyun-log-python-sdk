@@ -97,6 +97,7 @@ def sample_get_logs(client, project, logstore):
     for x in res:
         x.log_print()
 
+
 # @log_enter_exit
 def sample_get_histograms(client, project, logstore):
     topic = 'TestTopic_2'
