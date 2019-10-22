@@ -173,7 +173,7 @@ class ListLogStoreResponse(LogResponse):
             raise ValueError("passed response is not a ListLogstoresResponse: " + str(type(response)))
 
         self.count += response.get_count()
-        self.total = response.get_total() # use the latest total count
+        self.total_count = response.get_total() # use the latest total count
         self.logstores.extend(response.get_logstores())
 
         # update body
