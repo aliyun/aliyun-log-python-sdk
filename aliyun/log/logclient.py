@@ -1634,7 +1634,7 @@ class LogClient(object):
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogtailConfigResponse(resp, headers)
 
-    def list_logtail_config(self, project_name, offset=0, size=100):
+    def list_logtail_config(self, project_name, logstore_name=None, offset=0, size=100):
         """ list logtail config name in a project
         Unsuccessful opertaion will cause an LogException.
 
@@ -1660,6 +1660,8 @@ class LogClient(object):
         resource = "/configs"
         params['offset'] = str(offset)
         params['size'] = str(size)
+        if logstore_name is not None:
+            params['logstoreName'] = logstore_name
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogtailConfigResponse(resp, header)
 
