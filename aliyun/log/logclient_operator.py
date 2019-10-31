@@ -2,6 +2,7 @@ from __future__ import print_function
 from .logexception import LogException
 import six
 import json
+import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 from .logresponse import LogResponse
@@ -340,7 +341,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
     try:
         for data in res:
             for log in data.get_flatten_logs_json(decode_bytes=True):
-                with open(file_path, "a+") as f:
+                with open(os.path.expanduser(file_path), "a+") as f:
                     count += 1
                     try:
                         if six.PY2:
