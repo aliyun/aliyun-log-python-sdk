@@ -6,14 +6,6 @@ import time
 import os
 
 
-def enable_alert(client, project, alert_name):
-    return client.enable_alert(project, alert_name)
-
-
-def disable_alert(client, project, alert_name):
-    return client.disable_alert(project, alert_name)
-
-
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', 'cn-hangzhou.log.aliyuncs.com')
     accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
@@ -28,12 +20,12 @@ def main():
 
     client = LogClient(endpoint, accessKeyId, accessKey, token)
 
-    disable_alert_response = disable_alert(client, project, alert_name)
+    disable_alert_response = client.disable_alert(project, alert_name)
     disable_alert_response.log_print()
 
     time.sleep(10)
 
-    enable_alert_response = enable_alert(client, project, alert_name)
+    enable_alert_response = client.enable_alert(project, alert_name)
     enable_alert_response.log_print()
 
 
