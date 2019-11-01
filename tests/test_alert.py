@@ -2,7 +2,6 @@
 from __future__ import print_function
 
 from aliyun.log import *
-import time
 import os
 
 
@@ -22,8 +21,6 @@ def main():
 
     disable_alert_response = client.disable_alert(project, alert_name)
     disable_alert_response.log_print()
-
-    time.sleep(10)
 
     enable_alert_response = client.enable_alert(project, alert_name)
     enable_alert_response.log_print()
