@@ -45,6 +45,7 @@ from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
 from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 import struct
+from .logresponse import LogResponse
 
 logger = logging.getLogger(__name__)
 
@@ -2599,6 +2600,20 @@ class LogClient(object):
         :raise: LogException
         """
         return arrange_shard(self, project, logstore, count)
+
+    def enable_alert(self, project_name, job_name):
+        headers = {}
+        params = {"action": "enable"}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return LogResponse(header)
+
+    def disable_alert(self, project_name, job_name):
+        headers = {}
+        params = {"action": "disable"}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return LogResponse(header)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
