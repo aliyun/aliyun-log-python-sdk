@@ -36,5 +36,6 @@ def main():
     enable_alert_response = enable_alert(client, project, alert_name)
     enable_alert_response.log_print()
 
+
 if __name__ == '__main__':
     main()

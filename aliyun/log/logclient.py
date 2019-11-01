@@ -2601,19 +2601,19 @@ class LogClient(object):
         """
         return arrange_shard(self, project, logstore, count)
 
-    def enable_alert(self,project_name,job_name):
+    def enable_alert(self, project_name, job_name):
         headers = {}
         params = {"action": "enable"}
         resource = "/jobs/" + job_name
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
-        return LogResponse(header, {})
+        return LogResponse(header)
 
-    def disable_alert(self,project_name,job_name):
+    def disable_alert(self, project_name, job_name):
         headers = {}
         params = {"action": "disable"}
         resource = "/jobs/" + job_name
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
-        return LogResponse(header, {})
+        return LogResponse(header)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
