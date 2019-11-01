@@ -53,8 +53,7 @@ class GetExternalStoreResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.externalStoreConfig = ExternalStoreConfig("", "", "", "", "", "", "", "", "", "", "")
-        self.externalStoreConfig.from_json(resp)
+        self.externalStoreConfig = ExternalStoreConfig.from_json(resp)
 
     def get_external_store_config(self):
         """
