@@ -2313,7 +2313,7 @@ class LogClient(object):
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
-    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None):
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
         """
         copy logstore, index, logtail config to target logstore, machine group are not included yet.
         the target logstore will be crated if not existing
@@ -2333,9 +2333,12 @@ class LogClient(object):
         :type to_client: LogClient
         :param to_client: logclient instance, use it to operate on the "to_project" if being specified for cross region purpose
 
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+
         :return:
         """
-        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client)
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
     def list_project(self, offset=0, size=100):
         """ list the project
