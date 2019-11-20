@@ -17,6 +17,7 @@ from aliyun.log.pulllog_response import PullLogResponse
 from .consumer import *
 from multiprocessing import RLock
 from .util import base64_encodestring as b64e
+import copy
 
 
 MAX_INIT_SHARD_COUNT = 200
@@ -130,7 +131,7 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             break
 
 
-def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None):
+def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
     """
     copy logstore, index, logtail config to target logstore, machine group are not included yet.
     the target logstore will be crated if not existing
@@ -153,14 +154,20 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
     :type to_client: LogClient
     :param to_client: logclient instance, use it to operate on the "to_project" if being specified
 
+    :type to_region_endpoint: string
+    :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+
     :return:
     """
 
-    # check client
-    if to_project is not None:
-        # copy to a different project in different client
+    if to_region_endpoint is not None and to_client is None:
+        to_client = copy.deepcopy(from_client)
+        to_client.set_endpoint(to_region_endpoint)
+    else:
         to_client = to_client or from_client
 
+    # check client
+    if to_project is not None:
         # check if target project exists or not
         ret = from_client.get_project(from_project)
         try:
@@ -173,7 +180,6 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
                 raise
 
     to_project = to_project or from_project
-    to_client = to_client or from_client
 
     # return if logstore are the same one
     if from_client is to_client and from_project == to_project and from_logstore == to_logstore:
