@@ -643,7 +643,7 @@ class LogClient(object):
         :return: GetContextLogsResponse
         """
         ret = None
-        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+        for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
             headers = {}
             params = {'pack_id': pack_id,
                       'pack_meta': pack_meta,
