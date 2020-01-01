@@ -522,7 +522,7 @@ class LogClient(object):
                               query, reverse)
 
         ret = None
-        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+        for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
             headers = {}
             params = {'from': parse_timestamp(from_time),
                       'to': parse_timestamp(to_time),
