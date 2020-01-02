@@ -49,6 +49,10 @@ from .logresponse import LogResponse
 
 logger = logging.getLogger(__name__)
 
+if six.PY3:
+    xrange = range
+
+
 try:
     import lz4
 
