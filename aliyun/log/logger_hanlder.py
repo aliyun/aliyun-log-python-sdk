@@ -1,29 +1,25 @@
-import re
-import sys
-import json
-import atexit
 import logging
-import traceback
-from enum import Enum
-from time import time, sleep
-from threading import Thread
-
-import six
-
 from .logclient import LogClient
 from .logitem import LogItem
 from .putlogsrequest import PutLogsRequest
+from threading import Thread
+import atexit
+from time import time, sleep
+from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
-
-try:
-    from collections.abc import Callable
-except ImportError:
+try:	import six
+    from collections.abc import Callable	
+except ImportError:	
     from collections import Callable
+import six
 
 if six.PY2:
     from Queue import Empty, Full, Queue
 else:
     from queue import Empty, Full, Queue
+
+import json
+import re
 
 
 class LogFields(Enum):
@@ -142,9 +138,45 @@ class SimpleLogHandler(logging.Handler, object):
         self.extract_kv_sep = "=" if extract_kv_sep is None else extract_kv_sep
         self.extract_kv_ptn = self._get_extract_kv_ptn()
         self.extra = True if extra is None else extra
+        self._skip_message = False
+        self._built_in_root_filed = ""
+        self._log_tags = None
+        self._source = None
+
+    @property
+    def skip_message(self):
+        return self._skip_message
+
+    @skip_message.setter
+    def skip_message(self, value):
+        self._skip_message = value
+
+    @property
+    def built_in_root_field(self):
+        return self._built_in_root_filed
+
+    @built_in_root_field.setter
+    def built_in_root_field(self, value):
+        self._built_in_root_filed = value
+
+    @property
+    def log_tags(self):
+        return self._log_tags
+
+    @log_tags.setter
+    def log_tags(self, value):
+        self._log_tags = value
 
     def set_topic(self, topic):
         self.topic = topic
+
+    @property
+    def source(self):
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        self._source = value
 
     def create_client(self):
         self.client = LogClient(self.end_point, self.access_key_id, self.access_key)
@@ -210,14 +242,21 @@ class SimpleLogHandler(logging.Handler, object):
         return data
 
     def _add_record_fields(self, record, k, contents):
+        data = self._get_record_fields(record, k)
+        if data:
+            contents.append(data)
+
+    def _get_record_fields(self, record, k):
         v = getattr(record, k, None)
         if v is None or isinstance(v, Callable):
             return
 
         v = self._n(v)
-        contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v))
+        return "{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v
 
-    def make_log_item(self, record):
+    def make_request(self, record):
+        # add builtin fields
+        built_root = {}
         contents = []
         message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
         if isinstance(record.msg, dict) and self.extract_json:
@@ -225,17 +264,27 @@ class SimpleLogHandler(logging.Handler, object):
             contents.extend(data)
 
             if not self.extract_json_drop_message or not data:
-                contents.append((message_field_name, self.format(record)))
+                if not self._skip_message:
+                    if self._built_in_root_filed:
+                        built_root[message_field_name] = self.format(record)
+                    else:
+                        contents.append((message_field_name, self.format(record)))
         elif isinstance(record.msg, (six.text_type, six.binary_type)) and self.extract_kv:
             data = self.extract_kv_str(record.msg)
             contents.extend(data)
 
             if not self.extract_kv_drop_message or not data:  # if it's not KV
-                contents.append((message_field_name, self.format(record)))
-        else:
-            contents = [(message_field_name, self.format(record))]
+                if not self._skip_message:
+                    if self._built_in_root_filed:
+                        built_root[message_field_name] = self.format(record)
+                    else:
+                        contents.append((message_field_name, self.format(record)))
+        elif not self._skip_message:
+            if self._built_in_root_filed:
+                built_root[message_field_name] = self.format(record)
+            else:
+                contents = [(message_field_name, self.format(record))]
 
-        # add builtin fields
         for x in self.fields:
             k = x
             if isinstance(x, LogFields):
@@ -250,8 +299,15 @@ class SimpleLogHandler(logging.Handler, object):
                     x = LogFields[x].value
                 elif self.extra:  # will handle it later
                     continue
+            if not self._built_in_root_filed:
+                self._add_record_fields(record, x, contents)
+            else:
+                data = self._get_record_fields(record, x)
+                if data:
+                    built_root[data[0]] = data[1]
 
-            self._add_record_fields(record, x, contents)
+        if self._built_in_root_filed and built_root:
+            contents.append((self._n(self._built_in_root_filed), json.dumps(built_root)))
 
         # handle extra
         if self.extra:
@@ -259,13 +315,13 @@ class SimpleLogHandler(logging.Handler, object):
                 if not x.startswith('__') and not x in BUILTIN_LOG_FIELDS_NAMES:
                     self._add_record_fields(record, x, contents)
 
-        return LogItem(contents=contents, timestamp=record.created)
+        item = LogItem(contents=contents, timestamp=record.created)
 
+        return PutLogsRequest(self.project, self.log_store, self.topic, source=self._source, logitems=[item, ], logtags=self._log_tags)
 
     def emit(self, record):
         try:
-            item = self.make_log_item(record)
-            req = PutLogsRequest(self.project, self.log_store, self.topic, logitems=[item, ])
+            req = self.make_request(record)
             self.send(req)
         except Exception as e:
             self.handleError(record)
@@ -375,39 +431,58 @@ class QueuedLogHandler(SimpleLogHandler):
         self.worker.join(timeout=self.close_wait + 1)
 
     def emit(self, record):
-        log_item = self.make_log_item(record)
+        req = self.make_request(record)
+        req.__record__ = record
         try:
-            self.queue.put(log_item, timeout=self.put_wait*2)
+            self.queue.put(req, timeout=self.put_wait*2)
         except Full as ex:
             self.handleError(record)
 
-    def _get_batch_log_items(self, timeout=None):
-        """try to get log items as fast as possible, once empty and stop flag or time-out, just return Empty"""
-        log_items = []
-        start_time = time()
-
-        while len(log_items) < self.batch_size and (time() - start_time) < timeout:
+    def _get_batch_requests(self, timeout=None):
+        """try to get request as fast as possible, once empty and stop falg or time-out, just return Empty"""
+        reqs = []
+        s = time()
+        while len(reqs) < self.batch_size and (time() - s) < timeout:
             try:
-                log_item = self.queue.get(block=True, timeout=0.1)
-                log_items.append(log_item)
-            except Empty:
+                req = self.queue.get(block=False)
+                self.queue.task_done()
+
+                reqs.append(req)
+            except Empty as ex:
                 if self.stop_flag:
                     break
+                else:
+                    sleep(0.1)
 
-        return log_items
+        if not reqs:
+            raise Empty
+        elif len(reqs) <= 1:
+            return reqs[0]
+        else:
+            logitems = []
+            req = reqs[0]
+            for req in reqs:
+                logitems.extend(req.get_log_items())
+
+            ret = PutLogsRequest(self.project, self.log_store, req.topic, logitems=logitems, logtags=self._log_tags)
+            ret.__record__ = req.__record__
+
+            return ret
 
     def _post(self):
         while not self.stop_flag or (time() - self.stop_time) <= self.close_wait:
-            items = self._get_batch_log_items(self.put_wait)
-            if not items:
-                continue
+            try:
+                req = self._get_batch_requests(timeout=self.put_wait)
+            except Empty as ex:
+                if self.stop_flag:
+                    break
+                else:
+                    continue
 
             try:
-                req = PutLogsRequest(self.project, self.log_store, self.topic, logitems=items)
                 self.send(req)
             except Exception as ex:
-                sys.stderr.write('--- Aliyun %s Worker Send Log Failed, Log Item Count: %s ---\n' % (self, len(items)))
-                traceback.print_exc(limit=None, file=sys.stderr)
+                self.handleError(req.__record__)
 
 
 class UwsgiQueuedLogHandler(QueuedLogHandler):
