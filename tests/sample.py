@@ -260,9 +260,9 @@ def sample_crud_consumer_group(client, project, logstore, consumer_group):
     ret = client.heart_beat(project, logstore, consumer_group, consumer_name1, [])
     ret.log_print()
 
-    ret = client.update_check_point(project, logstore, consumer_group, 0, base64_encodestring('0'),
-                                    consumer_name1, force_success=True)
-    ret.log_print()
+    #ret = client.update_check_point(project, logstore, consumer_group, 0, base64_encodestring('0'),
+    #                                consumer_name1, force_success=True)
+    #ret.log_print()
 
     ret = client.get_check_point(project, logstore, consumer_group)
     ret.log_print()
