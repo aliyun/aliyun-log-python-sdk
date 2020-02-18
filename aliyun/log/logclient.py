@@ -207,7 +207,14 @@ class LogClient(object):
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            if 'log-cli-v-' in self._user_agent:
+                requests.adapters.DEFAULT_RETRIES = 100
+                with requests.session() as s:
+                    s.keep_alive = False
+                    r = getattr(s, method.lower())(url, params=params, data=body, headers=headers,
+                                                        timeout=self._timeout)
+            else:
+                r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
