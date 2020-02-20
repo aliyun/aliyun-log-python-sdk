@@ -13,7 +13,7 @@ import zlib
 from datetime import datetime
 import logging
 import locale
-
+from itertools import cycle
 from .acl_response import *
 from .consumer_group_request import *
 from .consumer_group_response import *
@@ -46,6 +46,7 @@ from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
+from copy import copy
 
 logger = logging.getLogger(__name__)
 
@@ -207,14 +208,7 @@ class LogClient(object):
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            if 'log-cli-v-' in self._user_agent:
-                requests.adapters.DEFAULT_RETRIES = 100
-                with requests.session() as s:
-                    s.keep_alive = False
-                    r = getattr(s, method.lower())(url, params=params, data=body, headers=headers,
-                                                        timeout=self._timeout)
-            else:
-                r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
@@ -267,19 +261,42 @@ class LogClient(object):
         else:
             headers['Host'] = self._logHost
 
-        headers['Date'] = self._getGMT()
-
-        if self._securityToken:
-            headers["x-acs-security-token"] = self._securityToken
-
-        signature = Util.get_request_authorization(method, resource,
-                                                   self._accessKey, params, headers)
-
-        headers['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
-        headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
+        retry_times = range(10) if 'log-cli-v-' not in self._user_agent else cycle(range(10))
+        last_err = None
         url = url + resource
+        sig_retry = 0
+        for _ in retry_times:
+            try:
+                headers2 = copy(headers)
+                params2 = copy(params)
+                headers2['Date'] = self._getGMT()
 
-        return self._sendRequest(method, url, params, body, headers, respons_body_type)
+                if self._securityToken:
+                    headers2["x-acs-security-token"] = self._securityToken
+
+                signature = Util.get_request_authorization(method, resource,
+                                                           self._accessKey, params2, headers2)
+
+                headers2['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
+                headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
+
+                return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
+            except LogException as ex:
+                last_err = ex
+                if ex.get_error_code() in ('InternalServerError', 'RequestTimeout') or ex.resp_status >= 500\
+                        or (ex.get_error_code() == 'LogRequestError'
+                            and 'httpconnectionpool' in ex.get_error_message().lower()):
+                    time.sleep(1)
+                    continue
+                else:
+                    sig_retry += 1
+                    if sig_retry >= 10:
+                        raise
+                    else:
+                        time.sleep(1)
+                        continue
+
+        raise last_err
 
     @staticmethod
     def _get_unicode(key):
