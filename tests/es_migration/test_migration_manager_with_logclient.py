@@ -18,17 +18,22 @@ logger.addHandler(ch)
 
 
 def main():
-    log_client = LogClient(endpoint=os.getenv("endpoint"), accessKeyId=os.getenv("access_key_id"),
-                           accessKey=os.getenv("access_key"))
-    log_client.es_migration(hosts="elastic:elastic@localhost:9200",
-                            indexes="all_data_types*",
-                            project_name=os.getenv("project_name"),
-                            scroll="2m",
-                            pool_size=24,
-                            time_reference="es_date",
-                            source="my_source",
-                            topic="my_topic",
-                            wait_time_in_secs=60)
+    log_client = LogClient(
+        endpoint=os.getenv("endpoint"),
+        accessKeyId=os.getenv("access_key_id"),
+        accessKey=os.getenv("access_key"),
+    )
+    log_client.es_migration(
+        cache_path='/tmp/es_migrate',
+        hosts="elastic:elastic@localhost:9200",
+        indexes="all_data_types*",
+        project_name=os.getenv("project_name"),
+        pool_size=24,
+        time_reference="es_date",
+        source="my_source",
+        topic="my_topic",
+        wait_time_in_secs=60,
+    )
 
 
 if __name__ == "__main__":
