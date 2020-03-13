@@ -25,7 +25,7 @@ except ImportError:
 import sys
 import re
 
-install_requires_common = ['requests', 'six', 'python-dateutil', 'elasticsearch>=6.0.0,<7.0.0', 'jmespath']
+install_requires_common = ['requests', 'six', 'python-dateutil', 'elasticsearch>=7.0.0,<8.0.0', 'jmespath']
 install_requires = []
 
 if sys.version_info[:2] == (2, 6):
