@@ -80,7 +80,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_index": "index1"
         }
         DocLogItemConverter._add_index(doc, log_item)
-        self.assertSetEqual({("__tag__:_index", "index1")}, set(log_item.contents))
+        self.assertSetEqual({("__tag__:__es_index__", "index1")}, set(log_item.contents))
 
     def test_add_index_without_index_field(self):
         log_item = LogItem()
@@ -98,7 +98,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_type": "_doc"
         }
         DocLogItemConverter._add_type(doc, log_item)
-        self.assertSetEqual({("__tag__:_type", "_doc")}, set(log_item.contents))
+        self.assertSetEqual({("__tag__:__es_type__", "_doc")}, set(log_item.contents))
 
     def test_add_type_without_index_field(self):
         log_item = LogItem()
