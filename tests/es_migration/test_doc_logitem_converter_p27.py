@@ -72,7 +72,7 @@ class TestDocLogItemConverter(unittest.TestCase):
         excepted_contents = [
             ('es_short', '-2'),
             ('es_boolean', 'true'),
-            ('__tag__:_index', 'all_data_types'),
+            ('__tag__:__es_index__', 'all_data_types'),
             ('__tag__:_type', '_doc'),
             ('es_ip_range', '192.168.0.0/16'),
             ('es_double_range', '{"gte": 1.23}'),
@@ -115,7 +115,7 @@ class TestDocLogItemConverter(unittest.TestCase):
             "_index": "index1"
         }
         DocLogItemConverter._add_index(doc, log_item)
-        self.assertSetEqual({("__tag__:_index", "index1")}, set(log_item.contents))
+        self.assertSetEqual({("__tag__:__es_index__", "index1")}, set(log_item.contents))
 
     def test_add_index_without_index_field(self):
         log_item = LogItem()
