@@ -4,8 +4,8 @@ six
 futures
 enum34
 python-dateutil
-# Elasticsearch 6.x
-elasticsearch>=6.0.0,<7.0.0
+# Elasticsearch 7.x
+elasticsearch>=7.0.0,<8.0.0
 dateparser
 jmespath
 lz4a
