@@ -2395,83 +2395,106 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
-    def es_migration(self, hosts,
-                     project_name,
-                     indexes=None,
-                     query=None,
-                     scroll="5m",
-                     logstore_index_mappings=None,
-                     pool_size=10,
-                     time_reference=None,
-                     source=None,
-                     topic=None,
-                     wait_time_in_secs=60,
-                     auto_creation=True):
+    def es_migration(
+            self,
+            cache_path,
+            hosts,
+            project_name,
+            indexes=None,
+            query=None,
+            logstore_index_mappings=None,
+            pool_size=None,
+            time_reference=None,
+            source=None,
+            topic=None,
+            batch_size=None,
+            wait_time_in_secs=None,
+            auto_creation=True,
+    ):
         """
         migrate data from elasticsearch to aliyun log service
 
+        :type cache_path: string
+        :param cache_path: a path to store migration cache, like checkpoint.
+
         :type hosts: string
-        :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
+        :param hosts: a comma-separated list of source ES nodes.
+            e.g. "localhost:9200,other_host:9200"
 
         :type project_name: string
-        :param project_name: specify the project_name of your log services. e.g. "your_project"
+        :param project_name: specify the project_name of your log services.
+            e.g. "your_project"
 
         :type indexes: string
-        :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
+        :param indexes: a comma-separated list of source index names.
+            e.g. "index1,index2"
 
         :type query: string
-        :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
-
-        :type scroll: string
-        :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
+        :param query: used to filter docs, so that you can specify the docs you
+            want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
 
         :type logstore_index_mappings: string
-        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
+        :param logstore_index_mappings: specify the mappings of log service
+            logstore and ES index.
+            e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}}'
 
         :type pool_size: int
-        :param pool_size: specify the size of process pool. e.g. 10
+        :param pool_size: specify the size of process pool.
+            Default is 10, if not set.
 
         :type time_reference: string
-        :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
+        :param time_reference: specify what ES doc's field to use as log's
+            time field. e.g. "field1"
 
         :type source: string
-        :param source: specify the value of log's source field. e.g. "your_source"
+        :param source: specify the value of log's source field.
+            e.g. "your_source"
 
         :type topic: string
         :param topic: specify the value of log's topic field. e.g. "your_topic"
 
+        :type batch_size: int
+        :param batch_size: max number of logs written into SLS in a batch.
+            SLS requires that it's no bigger than 512KB in size and 1024 lines
+            in one batch.
+            Default is 1000, if not set.
+
         :type wait_time_in_secs: int
-        :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
+        :param wait_time_in_secs: specify the waiting time between initialize
+            aliyun log and executing data migration task.
+            Default is 10, if not set.
 
         :type auto_creation: bool
-        :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
+        :param auto_creation: specify whether to let the tool create logstore
+            and index automatically for you. e.g. True
 
-        :return: MigrationResponse
+        :return: ''
 
         :raise: Exception
         """
-        from .es_migration import MigrationManager
-        from .es_migration import MigrationResponse
+        from .es_migration import MigrationManager, MigrationConfig
 
-        migration_manager = MigrationManager(hosts=hosts,
-                                             indexes=indexes,
-                                             query=query,
-                                             scroll=scroll,
-                                             endpoint=self._endpoint,
-                                             project_name=project_name,
-                                             access_key_id=self._accessKeyId,
-                                             access_key=self._accessKey,
-                                             logstore_index_mappings=logstore_index_mappings,
-                                             pool_size=pool_size,
-                                             time_reference=time_reference,
-                                             source=source,
-                                             topic=topic,
-                                             wait_time_in_secs=wait_time_in_secs,
-                                             auto_creation=auto_creation)
-        res = migration_manager.migrate()
-        resp = MigrationResponse()
-        resp.body = res
-        return resp
+        config = MigrationConfig(
+            cache_path=cache_path,
+            hosts=hosts,
+            indexes=indexes,
+            query=query,
+            project_name=project_name,
+            logstore_index_mappings=logstore_index_mappings,
+            pool_size=pool_size,
+            time_reference=time_reference,
+            source=source,
+            topic=topic,
+            batch_size=batch_size,
+            wait_time_in_secs=wait_time_in_secs,
+            auto_creation=auto_creation,
+            endpoint=self._endpoint,
+            access_key_id=self._accessKeyId,
+            access_key=self._accessKey,
+        )
+        migration_manager = MigrationManager(config)
+        migration_manager.migrate()
+        return ''
 
     def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,

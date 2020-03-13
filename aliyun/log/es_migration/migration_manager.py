@@ -5,225 +5,424 @@
 # All rights reserved.
 
 
-import logging
+import os
+import os.path as op
 import time
-from multiprocessing import Pool
-
+import json
+import uuid
+import signal
+import logging
+import traceback
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from elasticsearch import Elasticsearch
-
-from .. import LogClient, LogException
-from ..version import ES_MIGRATION_USER_AGENT
-from .collection_task import CollectionTaskStatus, run_collection_task
-from .collection_task_config import CollectionTaskConfig
+from aliyun.log.logclient import LogClient, LogException
+from aliyun.log.util import PrefixLoggerAdapter
+from .migration_log import setup_logging
+from .migration_task import MigrationTask, MigrationLogstore, Checkpoint
 from .index_logstore_mappings import IndexLogstoreMappings
 from .mapping_index_converter import MappingIndexConverter
-from .util import split_and_strip
-
-results = []
 
 
-def log_result(result):
-    results.append(result)
+_logger = logging.getLogger(__name__)
 
 
-class MigrationManager(object):
+class MigrationConfig(object):
     """
-    MigrationManager, migrate data from elasticsearch to aliyun log service
+    migrate data from elasticsearch to aliyun log service
+
+    :type cache_path: string
+    :param cache_path: a path to store migration cache, like checkpoint.
 
     :type hosts: string
-    :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
-
-    :type indexes: string
-    :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
-
-    :type query: string
-    :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
-
-    :type scroll: string
-    :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
-
-    :type endpoint: string
-    :param endpoint: specify the endpoint of your log services. e.g. "cn-beijing.log.aliyuncs.com"
+    :param hosts: a comma-separated list of source ES nodes.
+        e.g. "localhost:9200,other_host:9200"
 
     :type project_name: string
-    :param project_name: specify the project_name of your log services. e.g. "your_project"
+    :param project_name: specify the project_name of your log services.
+        e.g. "your_project"
 
-    :type access_key_id: string
-    :param access_key_id: specify the access_key_id of your account.
+    :type indexes: string
+    :param indexes: a comma-separated list of source index names.
+        e.g. "index1,index2"
 
-    :type access_key: string
-    :param access_key: specify the access_key of your account.
+    :type query: string
+    :param query: used to filter docs, so that you can specify the docs you
+        want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
 
     :type logstore_index_mappings: string
-    :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
+    :param logstore_index_mappings: specify the mappings of log service
+        logstore and ES index.
+        e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}}'
 
     :type pool_size: int
-    :param pool_size: specify the size of process pool. e.g. 10
+    :param pool_size: specify the size of process pool.
+        Default is 10, if not set.
 
     :type time_reference: string
-    :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
+    :param time_reference: specify what ES doc's field to use as log's
+        time field. e.g. "field1"
 
     :type source: string
-    :param source: specify the value of log's source field. e.g. "your_source"
+    :param source: specify the value of log's source field.
+        e.g. "your_source"
 
     :type topic: string
     :param topic: specify the value of log's topic field. e.g. "your_topic"
 
+    :type batch_size: int
+    :param batch_size: max number of logs written into SLS in a batch.
+        SLS requires that it's no bigger than 512KB in size and 1024 lines
+        in one batch.
+        Default is 1000, if not set.
+
     :type wait_time_in_secs: int
-    :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
+    :param wait_time_in_secs: specify the waiting time between initialize
+        aliyun log and executing data migration task.
+        Default is 10, if not set.
 
     :type auto_creation: bool
-    :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
+    :param auto_creation: specify whether to let the tool create logstore
+        and index automatically for you. e.g. True
+
+    :return: None
+
+    :raise: Exception
     """
 
-    def __init__(self, hosts=None, indexes=None, query=None, scroll="5m", endpoint=None, project_name=None,
-                 access_key_id=None, access_key=None, logstore_index_mappings=None, pool_size=10, time_reference=None,
-                 source=None, topic=None, wait_time_in_secs=60, auto_creation=True):
-        self.hosts = hosts
-        self.indexes = indexes
-        self.query = query
-        self.scroll = scroll
-        self.endpoint = endpoint
-        self.project_name = project_name
-        self.access_key_id = access_key_id
-        self.access_key = access_key
-        self.logstore_index_mappings = logstore_index_mappings
-        self.pool_size = pool_size
-        self.time_reference = time_reference
-        self.source = source
-        self.topic = topic
-        self.wait_time_in_secs = wait_time_in_secs
-        self.auto_creation = auto_creation
+    default_pool_size = 10
+    default_wait_time = 60
+    default_batch_size = 1000
+
+    def __init__(
+            self,
+            cache_path,
+            endpoint=None,
+            access_key_id=None,
+            access_key=None,
+            project_name=None,
+            hosts=None,
+            indexes=None,
+            query=None,
+            time_reference=None,
+            logstore_index_mappings=None,
+            source=None,
+            topic=None,
+            pool_size=None,
+            batch_size=None,
+            wait_time_in_secs=None,
+            auto_creation=True,
+    ):
+        self.cache_path = cache_path
+        self.access_key_id, self.access_key = access_key_id, access_key
+
+        self.ckpt_path = op.join(cache_path, 'ckpt')
+        os.makedirs(self.ckpt_path, exist_ok=True)
+        self._config_file = op.join(self.cache_path, 'config.json')
+        self._valid = True
+        if self._load_cache():
+            cont = {
+                'endpoint': endpoint,
+                'project_name': project_name,
+                'hosts': hosts,
+                'indexes': indexes,
+                'query': query,
+                'logstore_index_mappings': logstore_index_mappings,
+                'source': source,
+                'topic': topic,
+                'pool_size': pool_size,
+                'batch_size': batch_size,
+                'wait_time_in_secs': wait_time_in_secs,
+                'auto_creation': auto_creation,
+            }
+            self._cont.update({k: v for k, v in cont.items() if v is not None})
+        else:
+            if pool_size is None:
+                pool_size = self.default_pool_size
+            if batch_size is None:
+                batch_size = self.default_batch_size
+            if wait_time_in_secs is None:
+                wait_time_in_secs = self.default_wait_time
+            self._cont = {
+                'endpoint': endpoint,
+                'project_name': project_name,
+                'hosts': hosts,
+                'indexes': indexes,
+                'query': query,
+                'time_reference': time_reference,
+                'logstore_index_mappings': logstore_index_mappings,
+                'source': source,
+                'topic': topic,
+                'pool_size': pool_size,
+                'batch_size': batch_size,
+                'wait_time_in_secs': wait_time_in_secs,
+                'auto_creation': auto_creation,
+            }
+        self._dump_cache()
+
+    @property
+    def valid(self):
+        return self._valid
+
+    def get(self, name):
+        return self._cont.get(name)
+
+    def _load_cache(self):
+        cached = False
+        try:
+            with open(self._config_file) as f:
+                cont = f.read()
+        except FileNotFoundError:
+            cont = ''
+
+        if len(cont) > 0:
+            try:
+                self._cont = json.loads(cont)
+                cached = True
+            except json.JSONDecodeError:
+                raise Exception('Invalid migration configuration cache')
+        return cached
+
+    def _dump_cache(self):
+        with open(self._config_file, 'w') as f:
+            f.write(json.dumps(self._cont, indent=2))
+
+
+class MigrationManager(object):
+    def __init__(self, config: MigrationConfig):
+        self._config = config
+        _uuid = str(uuid.uuid4())
+        self._id = ''.join(_uuid.split('-'))
+        self._es = Elasticsearch(
+            hosts=self._config.get('hosts'),
+            verify_certs=False,
+        )
+        self._log_client = LogClient(
+            endpoint=self._config.get('endpoint'),
+            accessKeyId=self._config.access_key_id,
+            accessKey=self._config.access_key,
+        )
+        setup_logging(
+            self._id,
+            self._config.get('endpoint'),
+            self._config.get('project_name'),
+            self._config.access_key_id,
+            self._config.access_key,
+        )
+        self._logger = logging.getLogger(__name__)
+        self._shutdown_flag = op.join(self._config.cache_path, 'shutdown.lock')
+        print('#migration: {}'.format(self._id))
 
     def migrate(self):
-        es = Elasticsearch(split_and_strip(self.hosts, ","))
-        log_client = LogClient(self.endpoint, self.access_key_id, self.access_key)
-        log_client.set_user_agent(ES_MIGRATION_USER_AGENT)
+        self._logger.info('Migration starts')
+        tasks = self._discover_tasks()
+        task_cnt = len(tasks)
+        pool_size = min(self._config.get('pool_size'), task_cnt)
+        print('#pool_size: {}'.format(pool_size))
+        print('#tasks: {}'.format(task_cnt))
 
-        index_lst = self.get_index_lst(es, self.indexes)
-        index_logstore_mappings = IndexLogstoreMappings(index_lst, self.logstore_index_mappings)
-
-        if self.auto_creation:
-            self.init_aliyun_log(es, log_client, self.project_name, index_logstore_mappings, self.wait_time_in_secs)
-
-        shard_cnt = self.get_shard_count(es, self.indexes, self.query)
-        p = Pool(min(shard_cnt, self.pool_size))
-
-        for i in range(shard_cnt):
-            config = CollectionTaskConfig(task_id=i,
-                                          slice_id=i,
-                                          slice_max=shard_cnt,
-                                          hosts=self.hosts,
-                                          indexes=self.indexes,
-                                          query=self.query,
-                                          scroll=self.scroll,
-                                          endpoint=self.endpoint,
-                                          project=self.project_name,
-                                          access_key_id=self.access_key_id,
-                                          access_key=self.access_key,
-                                          index_logstore_mappings=index_logstore_mappings,
-                                          time_reference=self.time_reference,
-                                          source=self.source,
-                                          topic=self.topic)
-            p.apply_async(func=run_collection_task, args=(config,), callback=log_result)
-
-        p.close()
-        p.join()
-
-        return self.logging_summary_info(shard_cnt)
-
-    @classmethod
-    def logging_summary_info(cls, shard_cnt):
-        total_started_task_cnt = shard_cnt
-        success_task_cnt = 0
-        fail_task_cnt = 0
-        doc_cnt = 0
-        summary_info = ""
-
-        logging.info("========Tasks Info========")
-        summary_info += "========Tasks Info========" + "\n"
-
-        for res in results:
-            logging.info(res)
-            summary_info += str(res) + "\n"
-            doc_cnt += res.count
-            if res.status == CollectionTaskStatus.SUCCESS:
-                success_task_cnt += 1
-            else:
-                fail_task_cnt += 1
-
-        logging.info("========Summary========")
-        summary_info += "========Summary========" + "\n"
-
-        total_started_task_cnt_info = "Total started task count: %d" % total_started_task_cnt
-        logging.info(total_started_task_cnt_info)
-        summary_info += total_started_task_cnt_info + "\n"
-
-        success_task_cnt_info = "Successful task count: %d" % success_task_cnt
-        logging.info(success_task_cnt_info)
-        summary_info += success_task_cnt_info + "\n"
-
-        fail_task_cnt_info = "Failed task count: %d" % fail_task_cnt
-        logging.info(fail_task_cnt_info)
-        summary_info += fail_task_cnt_info + "\n"
-
-        doc_cnt_info = "Total collected documentation count: %d" % doc_cnt
-        logging.info(doc_cnt_info)
-        summary_info += doc_cnt_info + "\n"
-
-        return summary_info
-
-    @classmethod
-    def get_shard_count(cls, es, indexes, query=None):
-        resp = es.count(index=indexes, body=query)
-        return resp["_shards"]["total"]
-
-    @classmethod
-    def get_index_lst(cls, es, indexes):
-        resp = es.indices.stats(index=indexes)
-        return resp["indices"].keys()
-
-    @classmethod
-    def init_aliyun_log(cls, es, log_client, project_name, index_logstore_mappings, wait_time_in_secs):
-        logging.info("Start to init aliyun log")
-        cls._create_logstores(log_client, project_name, index_logstore_mappings)
-        cls._create_index_configs(es, log_client, project_name, index_logstore_mappings)
-        logging.info("Init aliyun log successfully")
-        logging.info("Enter wating time, wait_time_in_secs=%d", wait_time_in_secs)
-        time.sleep(wait_time_in_secs)
-        logging.info("Exit wating time")
-
-    @classmethod
-    def _create_logstores(cls, log_client, project_name, index_logstore_mappings):
-        logstores = index_logstore_mappings.get_all_logstores()
-        for logstore in logstores:
+        self._prepare()
+        futures = []
+        state = {
+            'total': task_cnt,
+            Checkpoint.finished: 0,
+            Checkpoint.dropped: 0,
+            Checkpoint.failed: 0,
+        }
+        with ProcessPoolExecutor(max_workers=pool_size) as pool:
+            for task in tasks:
+                futures.append(
+                    pool.submit(
+                        _migration_worker,
+                        self._config,
+                        task,
+                        self._shutdown_flag,
+                    )
+                )
             try:
-                log_client.create_logstore(project_name=project_name, logstore_name=logstore)
-            except LogException as e:
-                if e.get_error_code() == "LogStoreAlreadyExist":
-                    logging.info("The logstore %s is already exist, skip the creation step.", logstore)
-                    continue
-                else:
-                    raise
+                for future in as_completed(futures):
+                    res = future.result()
+                    if res in state:
+                        state[res] += 1
+                    self._logger.info('State', extra=state)
+                    print('>> state:', json.dumps(state))
+            except BaseException:
+                self._logger.error(
+                    'Exception',
+                    extra={'traceback': traceback.format_exc()},
+                )
+                for future in futures:
+                    if not future.done():
+                        future.cancel()
+                list(as_completed(futures, timeout=10))
 
-    @classmethod
-    def _create_index_configs(cls, es, log_client, project_name, index_logstore_mappings):
+        if state[Checkpoint.finished] + state[Checkpoint.dropped] >= task_cnt:
+            self._logger.info('All migration tasks finished')
+        self._logger.info('Migration exits')
+        print('exit:', json.dumps(state))
+        return state
+
+    def _prepare(self):
+        if op.exists(self._shutdown_flag):
+            os.unlink(self._shutdown_flag)
+
+        def _handle_term_sig(signum, frame):
+            # Raise Ctrl+C
+            with open(self._shutdown_flag, 'w') as f:
+                f.write('')
+            raise KeyboardInterrupt()
+
+        signal.signal(signal.SIGINT, _handle_term_sig)
+        signal.signal(signal.SIGTERM, _handle_term_sig)
+
+    def _discover_tasks(self):
+        indexes = self._config.get('indexes')
+        data = self._es.search_shards(indexes)
+        tasks = []
+        for shard in data['shards']:
+            for item in shard:
+                # Ignore internal index
+                if not indexes and item['index'].startswith('.'):
+                    continue
+                if item['state'] == 'STARTED' and item['primary']:
+                    tasks.append(
+                        {'es_index': item['index'], 'es_shard': item['shard']},
+                    )
+        return self._handle_cache(tasks)
+
+    def _handle_cache(self, tasks):
+        file_tasks = op.join(self._config.cache_path, 'tasks.json')
+        if op.exists(file_tasks):
+            with open(file_tasks) as f:
+                cont = f.read()
+        else:
+            cont = '[]'
+
+        try:
+            old_tasks = json.loads(cont)
+        except json.JSONDecodeError:
+            self._logger.error('Invalid task cache', extra={'cache': cont})
+            old_tasks = []
+
+        task_map = {
+            (task['es_index'], task['es_shard']): task['id']
+            for task in old_tasks
+        }
+        _mappings = IndexLogstoreMappings(
+            list([task['es_index'] for task in tasks]),
+            self._config.get('logstore_index_mappings'),
+        )
+        cnt, new_tasks = len(old_tasks), []
+        for task in tasks:
+            _task = (task['es_index'], task['es_shard'])
+            if _task not in task_map:
+                task['id'] = cnt
+                task['logstore'] = _mappings.get_logstore(task['es_index'])
+                new_tasks.append(task)
+                cnt += 1
+        tasks = old_tasks + new_tasks
+
+        with open(file_tasks, 'w') as f:
+            f.write(json.dumps(tasks, indent=2))
+
+        if self._config.get('auto_creation'):
+            self._setup_aliyun_log(_mappings)
+        return tasks
+
+    def _setup_aliyun_log(self, index_logstore_mappings):
+        print('setup aliyun log service...')
+        self._logger.info('Setup AliyunLog start')
         logstores = index_logstore_mappings.get_all_logstores()
         for logstore in logstores:
-            indexes = index_logstore_mappings.get_indexes(logstore)
-            first_index = True
-            for index in indexes:
-                resp = es.indices.get(index=index)
-                for mapping in resp[index]["mappings"].values():
-                    index_config = MappingIndexConverter.to_index_config(mapping)
-                    if first_index:
-                        try:
-                            log_client.create_index(project_name, logstore, index_config)
-                            first_index = False
-                        except LogException as e:
-                            if e.get_error_code() == "IndexAlreadyExist":
-                                continue
-                            else:
-                                raise
-                    else:
-                        log_client.update_index(project_name, logstore, index_config)
+            self._logger.info('Setup AliyunLog', extra={'logstore': logstore})
+            self._setup_logstore(index_logstore_mappings, logstore)
+        self._logger.info('Init AliyunLog wait')
+        time.sleep(self._config.get('wait_time_in_secs'))
+        self._logger.info('Init AliyunLog finish')
+
+    def _setup_logstore(self, index_logstore_mappings, logstore):
+        try:
+            self._log_client.create_logstore(
+                project_name=self._config.get('project_name'),
+                logstore_name=logstore,
+            )
+        except LogException as exc:
+            if exc.get_error_code() == 'LogStoreAlreadyExist':
+                self._logger.info(
+                    'Logstore already exist, skip creation.',
+                    extra={'logstore': logstore},
+                )
+            else:
+                raise
+        self._setup_index(index_logstore_mappings, logstore)
+
+    def _setup_index(self, index_logstore_mappings, logstore):
+        indexes = index_logstore_mappings.get_indexes(logstore)
+        for index in indexes:
+            try:
+                resp = self._es.indices.get(index=index)
+            except FileNotFoundError:
+                self._logger.error('Index not found', extra={'es_index': index})
+                continue
+            mappings = resp[index]['mappings']
+            index_config = MappingIndexConverter.to_index_config(mappings)
+            try:
+                self._log_client.create_index(
+                    self._config.get('project_name'),
+                    logstore,
+                    index_config,
+                )
+            except LogException as exc:
+                if exc.get_error_code() == 'IndexAlreadyExist':
+                    self._log_client.update_index(
+                        self._config.get('project_name'),
+                        logstore,
+                        index_config,
+                    )
+                    continue
+                raise
+
+
+def _migration_worker(config: MigrationConfig, task, shutdown_flag):
+    if op.exists(shutdown_flag):
+        # Already interrupted
+        return Checkpoint.interrupted
+
+    extra = {
+        'task_id': task['id'],
+        'es_index': task['es_index'],
+        'es_shard': task['es_shard'],
+        'logstore': task['logstore'],
+    }
+    print('migrate:', json.dumps(extra))
+    logger = PrefixLoggerAdapter('', extra, _logger, {})
+    logger.info('Migration worker starts')
+    try:
+        logstore = MigrationLogstore(
+            endpoint=config.get('endpoint'),
+            access_id=config.access_key_id,
+            access_key=config.access_key,
+            project_name=config.get('project_name'),
+            logstore_name=task['logstore'],
+            topic=config.get('topic'),
+            source=config.get('source'),
+        )
+        task = MigrationTask(
+            _id=task['id'],
+            es_client=Elasticsearch(config.get('hosts')),
+            es_index=task['es_index'],
+            es_shard=task['es_shard'],
+            logstore=logstore,
+            ckpt_path=config.ckpt_path,
+            time_reference=config.get('time_reference'),
+            batch_size=config.get('batch_size'),
+            logger=logger,
+        )
+        return task.run()
+    except BaseException:
+        logger.error(
+            'Exception in migration worker',
+            extra=traceback.format_exc(),
+        )
+        raise
+    finally:
+        logger.info('Migration worker exits')

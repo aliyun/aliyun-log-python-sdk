@@ -8,10 +8,10 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 
 | 参数 | 必选 | 说明 | 样例 |
 | -------- | -------- | -------- | -------- |
+| cache_path | yes | 用于缓存迁移进度的本地文件位置，实现断点续传。当存在迁移缓存的时候，以下参数中`time_reference`更改无效。 | /path/to/cache |
 | hosts | yes | elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200"<br>"user:secret@localhost:9200" |
 | indexes | no | elasticsearch index 列表，多个 index 之间用逗号分隔，支持通配符(*)。<br>默认抓取目标 es 中所有 index 的数据。 | "index1"<br>"my_index*,other_index" |
 | query | no | 用于过滤文档，使用该参数您可以指定需要迁移的文档。<br>默认不会对文档进行过滤。 | '{"query": {"match": {"title": "python"}}}' |
-| scroll | no | 用于告诉 elasticsearch 需要将查询上下文信息保留多长时间。<br>默认值为 5m。 | "5m" |
 | endpoint | yes | 日志服务中用于存储迁移数据的 project 所属 endpoint。 | "cn-beijing.log.aliyuncs.com" |
 | project_name | yes | 日志服务中用于存储迁移数据的 project。<br>需要您提前创建好。 | "your_project" |
 | access_key_id | yes | 用户访问秘钥对中的 access_key_id。 | |
@@ -21,6 +21,7 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 | time_reference | no | 将 elasticsearch 文档中指定的字段映射成日志的 time 字段。<br>默认使用当前时间戳作为日志 time 字段的值。 | "field1" |
 | source | no | 指定日志的 source 字段的值。<br>默认值为参数 hosts 的值。 | "your_source" |
 | topic | no | 指定日志的 topic 字段的值。<br>默认值为空。 | "your_topic" |
+| batch_size | no | 批量写入 SLS 的日志数目。SLS 要求同时写入的一批数据不超过 512KB，而且不超过1024条。 | 1000 |
 | wait_time_in_secs | no | 指定 logstore、索引创建好后，MigrationManager 执行数据迁移任务前需要等待的时间。<br>默认值为 60，表示等待 60s。 | 60 |
 | auto_creation | no | 指定是否让 MigrationManager 为您自动创建好 logstore 和 索引。<br>默认值为 True，表示自动创建。 | True<br>False |
 
@@ -90,90 +91,140 @@ MigrationManager 会根据 Elasticsearch 的[数据类型](https://www.elastic.c
 - 当全部任务执行完成后，migrate 方法才会退出。
 
 ## 任务执行情况展示
-MigrationManager 使用 logging 记录任务的执行情况，您可以通过如下配置指定将结果输出至控制台。
+MigrationManager 使用 logging 记录任务的执行情况，并将日志上报到SLS，迁移状态监控在SLS中更加便捷，位置在上文中输入的参数 project 里面的 logstore: `internal-es-migration-log`。该 logstore 会在任务执行时自动创建。
 
+迁移程序开始后，在控制台中可以看到以下内容：
 ```
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler(sys.stdout)
-logger.addHandler(ch)
+#migration: c34d9636f8934cc18b9727263c476b66
+setup aliyun log service...
+#pool_size: 3
+#tasks: 12
+migrate: {"task_id": 0, "es_index": "my_index_01", "es_shard": 0, "logstore": "my-logstore-01"}
+migrate: {"task_id": 1, "es_index": "my_index_02", "es_shard": 0, "logstore": "my-logstore-02"}
+migrate: {"task_id": 2, "es_index": "my_index_03", "es_shard": 0, "logstore": "my-logstore-03"}
+migrate: {"task_id": 3, "es_index": "my_index_04", "es_shard": 0, "logstore": "my-logstore-04"}
+migrate: {"task_id": 4, "es_index": "my_index_01", "es_shard": 1, "logstore": "my-logstore-01"}
+migrate: {"task_id": 5, "es_index": "my_index_02", "es_shard": 1, "logstore": "my-logstore-02"}
+>> state: {"total": 12, "finished": 1, "dropped": 0, "failed": 0}
+>> state: {"total": 12, "finished": 2, "dropped": 0, "failed": 0}
+migrate: {"task_id": 6, "es_index": "my_index_03", "es_shard": 1, "logstore": "my-logstore-03"}
+migrate: {"task_id": 7, "es_index": "my_index_04", "es_shard": 1, "logstore": "my-logstore-04"}
+>> state: {"total": 12, "finished": 3, "dropped": 0, "failed": 0}
+migrate: {"task_id": 8, "es_index": "my_index_01", "es_shard": 2, "logstore": "my-logstore-01"}
+```
+`migration`是本次迁移程序的 ID，用于在SLS中检索相应日志。`pool_size`是并行执行迁移的进程数，`tasks`是总的任务数目。migrate 是任务开始执行，state是迁移的进度。在SLS中也可以检索到相应的日志条目：
+```
+__source__:  127.0.0.1
+__tag__:__migration__:  c34d9636f8934cc18b9727263c476b66
+__topic__:  
+dropped:  0
+failed:  0
+finished:  5
+logging:  {"message": "State", "funcName": "migrate", "levelname": "INFO", "module": "migration_manager", "process": "12353", "thread": "140034546173760"}
+total:  12
 ```
 
-- 单个迁移任务执行结果展示。
-
+单个迁移任务执行进度日志：
 ```
-========Tasks Info========
-...
-task_id=1, slice_id=1, slice_max=10, hosts=localhost:9200, indexes=None, query=None, project=test-project, time_cost_in_seconds=128.71100688, status=CollectionTaskStatus.SUCCESS, count=129330, message=None
-...
-
-编号为 1 的迁移任务执行成功，耗时 128.7s，迁移文档数量 129330。
+__source__:  127.0.0.1
+__tag__:__migration__:  c34d9636f8934cc18b9727263c476b66
+__topic__:  
+checkpoint:  {"_id": "anBkzXABMIXHzcoem-t0", "offset": {"@timestamp": "2020-02-28T22:40:11"}}
+es_index:  my_index
+es_shard:  2
+logging:  {"message": "Migration progress", "process": "12311", "thread": "140047528814400", "module": "migration_task", "funcName": "_run", "levelname": "INFO"}
+logstore:  my_logstore
+progress:  10230
+status:  processing
+task:  {"es_index": "my_index", "es_shard": 2, "logstore": "my_logstore", "time_reference": "@timestamp"}
+task_id:  5
+update_time:  2020-03-12T23:55:10
 ```
+以上是在 id 为 c34d9636f8934cc18b9727263c476b66 的迁移程序中，task_id 为5的任务的执行状态。
 
-- 迁移任务执行结果汇总信息。
-
-```
-========Summary========
-Total started task count: 10
-Successful task count: 10
-Failed task count: 0
-Total collected documentation count: 1000000
-
-MigrationManager 总共启动了 10 个数据数据迁移任务，全部执行成功。迁移文档总数 1000000。
-```
 
 ## 使用样例
 
 - 将 hosts 为 `localhost:9200` 的 Elasticsearch 中的所有文档导入日志服务的项目 `project1` 中。
 
-```
-migration_manager = MigrationManager(hosts="localhost:9200",   
-                                     endpoint=endpoint,
-                                     project_name="project1",
-                                     access_key_id=access_key_id,
-                                     access_key=access_key)
-migration_manager.migrate()
+```Python
+config = MigrationConfig(
+    cache_path='/path/to/cache',
+    hosts="localhost:9200",   
+    endpoint=endpoint,
+    project_name="project1",
+    access_key_id=access_key_id,
+    access_key=access_key,
+)
+manager = MigrationManager(config)
+manager.migrate()
 ```
 
 - 指定将 Elasticsearch 中索引名以 `myindex_` 开头的数据写入日志库 `logstore1`，将索引 `index1,index2` 中的数据写入日志库 `logstore2` 中。
 
-```
-migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",
-                                     endpoint=endpoint,
-                                     project_name="project1",
-                                     access_key_id=access_key_id,
-                                     access_key=access_key,
-				     logstore_index_mappings='{"logstore1": "myindex_*", "logstore2": "index1,index2"}}')
+```Python
+config = MigrationConfig(
+    cache_path='/path/to/cache',
+    hosts="localhost:9200",   
+    endpoint=endpoint,
+    project_name="project1",
+    access_key_id=access_key_id,
+    access_key=access_key,
+    logstore_index_mappings='{"logstore1": "myindex_*", "logstore2": "index1,index2"}}'
+)
+migration_manager = MigrationManager(config)
 migration_manager.migrate()
 ```
 
 - 使用参数 query 指定从 Elasticsearch 中抓取 `title` 字段等于 `python` 的文档，并使用文档中的字段 `date1` 作为日志的 time 字段。
 
-```
-migration_manager = MigrationManager(hosts="localhost:9200",
-                                     endpoint=endpoint,
-                                     project_name="project1",
-                                     access_key_id=access_key_id,
-                                     access_key=access_key,
-				     query='{"query": {"match": {"title": "python"}}}',
-				     time_reference="date1")
+```Python
+config = MigrationConfig(
+    cache_path='/path/to/cache',
+    hosts="localhost:9200",   
+    endpoint=endpoint,
+    project_name="project1",
+    access_key_id=access_key_id,
+    access_key=access_key,
+    query='{"query": {"match": {"title": "python"}}}',
+    time_reference="date1",
+)
+migration_manager = MigrationManager(config)
 migration_manager.migrate()
 ```
 
 - 使用 HTTP 基本认证`user:secret@localhost:9200`，从 Elasticserch 中迁移数据。
 
-```
-migration_manager = MigrationManager(hosts="user:secret@localhost:9200",   
-                                     endpoint=endpoint,
-                                     project_name="project1",
-                                     access_key_id=access_key_id,
-                                     access_key=access_key)
+```Python
+config = MigrationConfig(
+    cache_path='/path/to/cache',
+    hosts="user:secret@localhost:9200",   
+    endpoint=endpoint,
+    project_name="project1",
+    access_key_id=access_key_id,
+    access_key=access_key,
+)
+migration_manager = MigrationManager(config)
 migration_manager.migrate()
 ```
 
-## 常见问题
-**Q**：是否支持抓取特定时间范围内的 ES 数据？
 
+## 常见问题
+
+**Q**：支持的 ES 哪些版本？
+**A**：此版本的迁移工具支持 ES v7.x。
+
+**Q**：是否支持抓取特定时间范围内的 ES 数据？
 **A**：ES 本身并没有内置 time 字段，如果文档中某个字段代表时间，可以使用参数 query 进行过滤。
 
+**Q**：如何使用断点续传？
+**A**：调用参数中 cache_path 指定 checkpoint 的存放位置，当迁移程序中断后，重新打开时指定相同的 cache_path 便可以继续迁移任务，可以更改迁移参数，比如 pool_size，batch_size。
 
+**Q**：time_reference 有什么作用？
+**A**：参数 time_reference 用于标记日志在 SLS 中的时间戳，另外还用于在迁移过程中的 chenkpoint，在中断重启时快速定位到续传点。所以应尽可能指定 time_reference 参数。
+
+**Q**：是否支持 Python 2.7？
+**A**：ES 迁移工具只支持 Python 3.x，不支持 Python 2.x。
+
+**Q**：数据迁移的速度有多快？
+**A**：同 region 下的 ESC 到 SLS 的迁移，单个 SLS shard， 单个 ES shard，pool_size 为1，可实现接近5M/s的迁移速度。可通过调整 SLS shard 和 pool_size 大小来达到提速。
