@@ -324,7 +324,8 @@ class MigrationManager(object):
         with open(file_tasks, 'w') as f:
             f.write(json.dumps(tasks, indent=2))
 
-        self._setup_aliyun_log(_mappings)
+        if self._config.get('auto_creation'):
+            self._setup_aliyun_log(_mappings)
         return tasks
 
     def _setup_aliyun_log(self, index_logstore_mappings):
