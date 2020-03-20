@@ -2412,61 +2412,46 @@ class LogClient(object):
             auto_creation=True,
     ):
         """
-        migrate data from elasticsearch to aliyun log service
+        Migrate data from elasticsearch to aliyun log service (SLS)
 
         :type cache_path: string
-        :param cache_path: a path to store migration cache, like checkpoint.
+        :param cache_path: file path to store migration cache, which used for resuming migration process when stopped. Please ensure it's clean for new migration task.
 
         :type hosts: string
-        :param hosts: a comma-separated list of source ES nodes.
-            e.g. "localhost:9200,other_host:9200"
+        :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
 
         :type project_name: string
-        :param project_name: specify the project_name of your log services.
-            e.g. "your_project"
+        :param project_name: specify the project_name of your log services. e.g. "your_project"
 
         :type indexes: string
-        :param indexes: a comma-separated list of source index names.
-            e.g. "index1,index2"
+        :param indexes: a comma-separated list of source index names. e.g. "index1,index2"
 
         :type query: string
-        :param query: used to filter docs, so that you can specify the docs you
-            want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
+        :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
 
         :type logstore_index_mappings: string
-        :param logstore_index_mappings: specify the mappings of log service
-            logstore and ES index.
-            e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}}'
+        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}}'
 
         :type pool_size: int
-        :param pool_size: specify the size of process pool.
-            Default is 10, if not set.
+        :param pool_size: specify the size of migration task process pool. Default is 10 if not set.
 
         :type time_reference: string
-        :param time_reference: specify what ES doc's field to use as log's
-            time field. e.g. "field1"
+        :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
 
         :type source: string
-        :param source: specify the value of log's source field.
-            e.g. "your_source"
+        :param source: specify the value of log's source field. e.g. "your_source"
 
         :type topic: string
         :param topic: specify the value of log's topic field. e.g. "your_topic"
 
         :type batch_size: int
-        :param batch_size: max number of logs written into SLS in a batch.
-            SLS requires that it's no bigger than 512KB in size and 1024 lines
-            in one batch.
-            Default is 1000, if not set.
+        :param batch_size: max number of logs written into SLS in a batch. SLS requires that it's no bigger than 512KB in size and 1024 lines in one batch. Default is 1000 if not set.
 
         :type wait_time_in_secs: int
-        :param wait_time_in_secs: specify the waiting time between initialize
-            aliyun log and executing data migration task.
-            Default is 10, if not set.
+        :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. Default is 60 if not set.
 
         :type auto_creation: bool
-        :param auto_creation: specify whether to let the tool create logstore
-            and index automatically for you. e.g. True
+        :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
 
         :return: ''
 
