@@ -1,14 +1,16 @@
 # Elasticsearch 数据迁移
 
 ## 概述
-使用 Python SDK 提供的 [MigrationManager](/aliyun/log/es_migration/migration_manager.py) 可以方便您快速将 Elasticsearch 中的数据导入日志服务。
+使用 Aliyun-Log-Python-SDK 提供的 [MigrationManager](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/aliyun/log/es_migration/migration_manager.py)可以方便您快速将 Elasticsearch 中的数据导入日志服务。
 MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html) 从 Elasticsearch 中抓取数据。
+
+如何一步一步完成从 Elasticsearch 迁移数据到 SLS，请参考 [阿里云官方最佳实践](https://www.aliyun.com/acts/best-practice/preview?id=471965)。
 
 ## 配置
 
 | 参数 | 必选 | 说明 | 样例 |
 | -------- | -------- | -------- | -------- |
-| cache_path | yes | 用于缓存迁移进度的本地文件位置，实现断点续传。当存在迁移缓存的时候，以下参数中`time_reference`更改无效。 | /path/to/cache |
+| cache_path | yes | 用于缓存迁移进度的本地文件位置，实现断点续传。当存在迁移缓存的时候，以下参数中`time_reference`更改无效。对新的迁移任务，请确认指定路径为空文件夹，以防迁移任务受干扰。 | /path/to/cache |
 | hosts | yes | elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200"<br>"user:secret@localhost:9200" |
 | indexes | no | elasticsearch index 列表，多个 index 之间用逗号分隔，支持通配符(*)。<br>默认抓取目标 es 中所有 index 的数据。 | "index1"<br>"my_index*,other_index" |
 | query | no | 用于过滤文档，使用该参数您可以指定需要迁移的文档。<br>默认不会对文档进行过滤。 | '{"query": {"match": {"title": "python"}}}' |
@@ -212,19 +214,29 @@ migration_manager.migrate()
 ## 常见问题
 
 **Q**：支持的 ES 哪些版本？
-**A**：此版本的迁移工具支持 ES v7.x。
+
+**A**：最新版本的 Aliyun-Log-Python-SDK 迁移工具支持 ES v7.x。如果需要迁移 ES v6.x，请使用 Aliyun-Log-Python-SDK v0.6.47。
 
 **Q**：是否支持抓取特定时间范围内的 ES 数据？
+
 **A**：ES 本身并没有内置 time 字段，如果文档中某个字段代表时间，可以使用参数 query 进行过滤。
 
 **Q**：如何使用断点续传？
+
 **A**：调用参数中 cache_path 指定 checkpoint 的存放位置，当迁移程序中断后，重新打开时指定相同的 cache_path 便可以继续迁移任务，可以更改迁移参数，比如 pool_size，batch_size。
 
 **Q**：time_reference 有什么作用？
+
 **A**：参数 time_reference 用于标记日志在 SLS 中的时间戳，另外还用于在迁移过程中的 chenkpoint，在中断重启时快速定位到续传点。所以应尽可能指定 time_reference 参数。
 
 **Q**：是否支持 Python 2.7？
-**A**：ES 迁移工具只支持 Python 3.x，不支持 Python 2.x。
+
+**A**：ES 迁移工具只支持 Python 3.x，请安装 Python 3.x 进行操作。
 
 **Q**：数据迁移的速度有多快？
+
 **A**：同 region 下的 ESC 到 SLS 的迁移，单个 SLS shard， 单个 ES shard，pool_size 为1，可实现接近5M/s的迁移速度。可通过调整 SLS shard 和 pool_size 大小来达到提速。
+
+**Q**：ES 中存储大量冷数据，index都是closed状态，全部打开会对服务器产生很大压力，怎么做迁移？
+
+**A**：基于断点续传功能，分批进行迁移。在确定好迁移任务后，开启一部分index，执行迁移指令开始迁移，完成后关闭这些index，开启另一批index，执行完全相同的迁移命令，会自动连续执行新的迁移任务。分批依次执行，直到全部完成。
