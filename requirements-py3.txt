@@ -3,8 +3,8 @@ protobuf>=3.4.0
 six
 enum34
 python-dateutil
-# Elasticsearch 7.x
-elasticsearch>=7.0.0,<8.0.0
+# Elasticsearch below 7.x
+elasticsearch<7.0.0
 dateparser
 jmespath
 lz4a
