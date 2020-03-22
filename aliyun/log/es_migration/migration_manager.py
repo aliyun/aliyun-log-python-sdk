@@ -17,6 +17,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from elasticsearch import Elasticsearch
 from aliyun.log.logclient import LogClient, LogException
 from aliyun.log.util import PrefixLoggerAdapter
+from .util import split_and_strip
 from .migration_log import setup_logging
 from .migration_task import MigrationTask, MigrationLogstore, Checkpoint
 from .index_logstore_mappings import IndexLogstoreMappings
@@ -148,6 +149,10 @@ class MigrationConfig(object):
     def get(self, name):
         return self._cont.get(name)
 
+    @property
+    def hosts(self):
+        return split_and_strip(self.get('hosts'), sep=',')
+
     def _load_cache(self):
         cached = False
         try:
@@ -175,7 +180,10 @@ class MigrationManager(object):
         _uuid = str(uuid.uuid4())
         self._id = ''.join(_uuid.split('-'))
         self._es = Elasticsearch(
-            hosts=self._config.get('hosts'),
+            hosts=self._config.hosts,
+            timeout=60,
+            max_retries=30,
+            retry_on_timeout=True,
             verify_certs=False,
         )
         self._log_client = LogClient(
@@ -391,7 +399,13 @@ def _migration_worker(config: MigrationConfig, task, shutdown_flag):
         )
         task = MigrationTask(
             _id=task['id'],
-            es_client=Elasticsearch(config.get('hosts')),
+            es_client=Elasticsearch(
+                hosts=config.hosts,
+                timeout=60,
+                max_retries=30,
+                retry_on_timeout=True,
+                verify_certs=False,
+            ),
             es_index=task['es_index'],
             es_shard=task['es_shard'],
             logstore=logstore,
