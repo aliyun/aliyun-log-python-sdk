@@ -17,6 +17,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from elasticsearch import Elasticsearch
 from aliyun.log.logclient import LogClient, LogException
 from aliyun.log.util import PrefixLoggerAdapter
+from .util import split_and_strip
 from .migration_log import setup_logging
 from .migration_task import MigrationTask, MigrationLogstore, Checkpoint
 from .index_logstore_mappings import IndexLogstoreMappings
@@ -148,6 +149,10 @@ class MigrationConfig(object):
     def get(self, name):
         return self._cont.get(name)
 
+    @property
+    def hosts(self):
+        return split_and_strip(self.get('hosts'), sep=',')
+
     def _load_cache(self):
         cached = False
         try:
@@ -175,7 +180,10 @@ class MigrationManager(object):
         _uuid = str(uuid.uuid4())
         self._id = ''.join(_uuid.split('-'))
         self._es = Elasticsearch(
-            hosts=self._config.get('hosts'),
+            hosts=self._config.hosts,
+            timeout=60,
+            max_retries=30,
+            retry_on_timeout=True,
             verify_certs=False,
         )
         self._log_client = LogClient(
@@ -198,7 +206,7 @@ class MigrationManager(object):
         self._logger.info('Migration starts')
         tasks = self._discover_tasks()
         task_cnt = len(tasks)
-        pool_size = min(self._config.get('pool_size'), task_cnt)
+        pool_size = max(1, min(self._config.get('pool_size'), task_cnt))
         print('#pool_size: {}'.format(pool_size))
         print('#tasks: {}'.format(task_cnt))
 
@@ -315,17 +323,17 @@ class MigrationManager(object):
         self._logger.info('Setup AliyunLog start')
         logstores = index_logstore_mappings.get_all_logstores()
         for logstore in logstores:
-            self._logger.info('Setup AliyunLog', extra={'logstore': logstore})
             self._setup_logstore(index_logstore_mappings, logstore)
-        self._logger.info('Init AliyunLog wait')
+        self._logger.info('Setup AliyunLog wait')
         time.sleep(self._config.get('wait_time_in_secs'))
-        self._logger.info('Init AliyunLog finish')
+        self._logger.info('Setup AliyunLog finish')
 
     def _setup_logstore(self, index_logstore_mappings, logstore):
         try:
             self._log_client.create_logstore(
                 project_name=self._config.get('project_name'),
                 logstore_name=logstore,
+                shard_count=8,
                 ttl=3650,
             )
         except LogException as exc:
@@ -341,6 +349,10 @@ class MigrationManager(object):
     def _setup_index(self, index_logstore_mappings, logstore):
         indexes = index_logstore_mappings.get_indexes(logstore)
         for index in indexes:
+            self._logger.info(
+                'Setup AliyunLog Logstore',
+                extra={'logstore': logstore, 'es_index': index},
+            )
             try:
                 resp = self._es.indices.get(index=index)
             except FileNotFoundError:
@@ -391,7 +403,13 @@ def _migration_worker(config: MigrationConfig, task, shutdown_flag):
         )
         task = MigrationTask(
             _id=task['id'],
-            es_client=Elasticsearch(config.get('hosts')),
+            es_client=Elasticsearch(
+                hosts=config.hosts,
+                timeout=60,
+                max_retries=30,
+                retry_on_timeout=True,
+                verify_certs=False,
+            ),
             es_index=task['es_index'],
             es_shard=task['es_shard'],
             logstore=logstore,

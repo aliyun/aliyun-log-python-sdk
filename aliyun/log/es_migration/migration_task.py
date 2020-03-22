@@ -163,7 +163,10 @@ class MigrationTask(object):
             self._run()
         except NotFoundError:
             self._ckpt.update(status=Checkpoint.dropped)
-            self._logger.info('ES index dropped')
+            self._logger.info(
+                'ES index dropped',
+                extra={'traceback': traceback.format_exc()},
+            )
         except KeyboardInterrupt:
             self._logger.info('Interrupted')
             self._ckpt.update(status=Checkpoint.interrupted)
@@ -241,7 +244,7 @@ class MigrationTask(object):
                 break
 
             rnd += 1
-            if rnd % 20 == 0:
+            if rnd % 100 == 0:
                 if checking:
                     self._logger.info('Scanning migrated documents')
                 else:
