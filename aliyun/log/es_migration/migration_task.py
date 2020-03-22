@@ -138,9 +138,9 @@ class MigrationTask(object):
         )
 
         if self._time_reference:
-            es_sort = [{self._time_reference: 'asc'}, {'_id': 'asc'}]
+            es_sort = [{self._time_reference: 'asc'}, {'_uid': 'asc'}]
         else:
-            es_sort = [{'_id': 'asc'}]
+            es_sort = [{'_uid': 'asc'}]
         self._es_query['sort'] = es_sort
         if self._time_reference in self._ckpt.offset:
             self._es_query['query'] = {
