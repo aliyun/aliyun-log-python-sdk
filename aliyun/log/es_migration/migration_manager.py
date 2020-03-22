@@ -346,23 +346,23 @@ class MigrationManager(object):
             except FileNotFoundError:
                 self._logger.error('Index not found', extra={'es_index': index})
                 continue
-            mappings = resp[index]['mappings']
-            index_config = MappingIndexConverter.to_index_config(mappings)
-            try:
-                self._log_client.create_index(
-                    self._config.get('project_name'),
-                    logstore,
-                    index_config,
-                )
-            except LogException as exc:
-                if exc.get_error_code() == 'IndexAlreadyExist':
-                    self._log_client.update_index(
+            for mappings in resp[index]["mappings"].values():
+                index_config = MappingIndexConverter.to_index_config(mappings)
+                try:
+                    self._log_client.create_index(
                         self._config.get('project_name'),
                         logstore,
                         index_config,
                     )
-                    continue
-                raise
+                except LogException as exc:
+                    if exc.get_error_code() == 'IndexAlreadyExist':
+                        self._log_client.update_index(
+                            self._config.get('project_name'),
+                            logstore,
+                            index_config,
+                        )
+                        continue
+                    raise
 
 
 def _migration_worker(config: MigrationConfig, task, shutdown_flag):
