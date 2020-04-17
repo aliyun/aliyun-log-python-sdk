@@ -70,11 +70,15 @@ class MigrationConfig(object):
     :type auto_creation: bool
     :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
 
+    :type retries_failed: int
+    :param retries_failed: specify retrying times for failed tasks. e.g. 10
+
     """
 
     default_pool_size = 10
     default_wait_time = 60
     default_batch_size = 1000
+    default_retries_failed = 10
 
     def __init__(
             self,
@@ -94,6 +98,7 @@ class MigrationConfig(object):
             batch_size=None,
             wait_time_in_secs=None,
             auto_creation=True,
+            retries_failed=None,
     ):
         self.cache_path = cache_path
         self.access_key_id, self.access_key = access_key_id, access_key
@@ -125,6 +130,8 @@ class MigrationConfig(object):
                 batch_size = self.default_batch_size
             if wait_time_in_secs is None:
                 wait_time_in_secs = self.default_wait_time
+            if retries_failed is None:
+                retries_failed = self.default_retries_failed
             self._cont = {
                 'endpoint': endpoint,
                 'project_name': project_name,
@@ -139,6 +146,7 @@ class MigrationConfig(object):
                 'batch_size': batch_size,
                 'wait_time_in_secs': wait_time_in_secs,
                 'auto_creation': auto_creation,
+                'retries_failed': retries_failed,
             }
         self._dump_cache()
 
@@ -206,49 +214,67 @@ class MigrationManager(object):
         self._logger.info('Migration starts')
         tasks = self._discover_tasks()
         task_cnt = len(tasks)
-        pool_size = max(1, min(self._config.get('pool_size'), task_cnt))
+        pool_size = min(self._config.get('pool_size'), task_cnt)
         print('#pool_size: {}'.format(pool_size))
         print('#tasks: {}'.format(task_cnt))
 
         self._prepare()
-        futures = []
-        state = {
-            'total': task_cnt,
-            Checkpoint.finished: 0,
-            Checkpoint.dropped: 0,
-            Checkpoint.failed: 0,
-        }
         with ProcessPoolExecutor(max_workers=pool_size) as pool:
-            for task in tasks:
-                futures.append(
-                    pool.submit(
-                        _migration_worker,
-                        self._config,
-                        task,
-                        self._shutdown_flag,
-                    )
-                )
-            try:
-                for future in as_completed(futures):
-                    res = future.result()
-                    if res in state:
-                        state[res] += 1
-                    self._logger.info('State', extra=state)
-                    print('>> state:', json.dumps(state))
-            except BaseException:
-                self._logger.error(
-                    'Exception',
-                    extra={'traceback': traceback.format_exc()},
-                )
-                for future in futures:
-                    if not future.done():
-                        future.cancel()
-                list(as_completed(futures, timeout=10))
+            retries_failed = self._config.get('retries_failed')
+            for i in range(retries_failed):
+                msg = 'Start migration tasks'
+                print('\n>>>> ', msg)
+                _logger.info(msg, extra={'retries': i})
 
-        if state[Checkpoint.finished] + state[Checkpoint.dropped] >= task_cnt:
-            self._logger.info('All migration tasks finished')
+                futures = []
+                state = {
+                    'total': task_cnt,
+                    Checkpoint.finished: 0,
+                    Checkpoint.dropped: 0,
+                    Checkpoint.failed: 0,
+                }
+                for task in tasks:
+                    futures.append(
+                        pool.submit(
+                            _migration_worker,
+                            self._config,
+                            task,
+                            self._shutdown_flag,
+                        )
+                    )
+                try:
+                    for future in as_completed(futures):
+                        res = future.result()
+                        if res in state:
+                            state[res] += 1
+                        self._logger.info('State', extra=state)
+                        print('>> state:', json.dumps(state))
+                except BaseException:
+                    self._logger.error(
+                        'Exception',
+                        extra={'traceback': traceback.format_exc()},
+                    )
+                    for future in futures:
+                        if not future.done():
+                            future.cancel()
+                    list(as_completed(futures, timeout=10))
+
+                if op.exists(self._shutdown_flag):
+                    # Already interrupted
+                    break
+
+                if state[Checkpoint.finished] + state[Checkpoint.dropped] >= task_cnt:
+                    print('All migration tasks finished')
+                    break
+
+                if i < retries_failed - 1:
+                    msg = 'Waiting for retrying failed tasks...'
+                    print(msg)
+                    _logger.info(msg)
+                    time.sleep(60 * 2)
+
         self._logger.info('Migration exits')
-        print('exit:', json.dumps(state))
+        print('\nexit:', json.dumps(state))
         return state
 
     def _prepare(self):
@@ -323,10 +349,11 @@ class MigrationManager(object):
         self._logger.info('Setup AliyunLog start')
         logstores = index_logstore_mappings.get_all_logstores()
         for logstore in logstores:
+            self._logger.info('Setup AliyunLog', extra={'logstore': logstore})
             self._setup_logstore(index_logstore_mappings, logstore)
-        self._logger.info('Setup AliyunLog wait')
+        self._logger.info('Init AliyunLog wait')
         time.sleep(self._config.get('wait_time_in_secs'))
-        self._logger.info('Setup AliyunLog finish')
+        self._logger.info('Init AliyunLog finish')
 
     def _setup_logstore(self, index_logstore_mappings, logstore):
         try:

@@ -2410,6 +2410,7 @@ class LogClient(object):
             batch_size=None,
             wait_time_in_secs=None,
             auto_creation=True,
+            retries_failed=None,
     ):
         """
         Migrate data from elasticsearch to aliyun log service (SLS)
@@ -2453,6 +2454,9 @@ class LogClient(object):
         :type auto_creation: bool
         :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
 
+        :type retries_failed: int
+        :param retries_failed: specify retrying times for failed tasks. e.g. 10
+
         :return: ''
 
         :raise: Exception
@@ -2473,6 +2477,7 @@ class LogClient(object):
             batch_size=batch_size,
             wait_time_in_secs=wait_time_in_secs,
             auto_creation=auto_creation,
+            retries_failed=retries_failed,
             endpoint=self._endpoint,
             access_key_id=self._accessKeyId,
             access_key=self._accessKey,
