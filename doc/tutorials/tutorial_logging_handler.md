@@ -182,8 +182,8 @@ logger.info("Hello world")
 
 这里主要介绍了`QueuedLogHandler`, 但是在UWSGI下因为进程调度模型的原因, **这个类无法正常工作**. 因此提供了另外2个Handler, 如下: 
 
-- [UwsgiQueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.UwsgiQueuedLogHandler) - 建议使用这个类, 功能和配置完全一样. 但是需要额外安装一个第三方法库`uwsgidecorators`
-- [SimpleLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.SimpleLogHandler) - 即时发送的简单Logging Handler, 配置完全一样. 用于特殊场景下的测试更方便一些, 一般情况下不推荐.
+- [UwsgiQueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.UwsgiQueuedLogHandler) - **这个类目前在实验阶段，因uwsgi机制，会出现特定进程被kill后丢失，不推荐使用**, 配置一样. 需要额外安装一个第三方法库`uwsgidecorators`
+- [SimpleLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.SimpleLogHandler) - 即时发送的简单Logging Handler, 配置完全一样. 在数据量不大的情况下可以使用（例如每日100万条内）.
 
 
 ## 进行一步参考:
