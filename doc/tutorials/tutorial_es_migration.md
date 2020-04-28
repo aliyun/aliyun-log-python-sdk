@@ -214,10 +214,6 @@ migration_manager.migrate()
 
 ## 常见问题
 
-**Q**：支持的 ES 哪些版本？
-
-**A**：最新版本的 Aliyun-Log-Python-SDK 迁移工具支持 ES v7.x。如果需要迁移 ES v6.x，请使用 Aliyun-Log-Python-SDK v0.6.47。
-
 **Q**：是否支持抓取特定时间范围内的 ES 数据？
 
 **A**：ES 本身并没有内置 time 字段，如果文档中某个字段代表时间，可以使用参数 query 进行过滤。
@@ -229,10 +225,6 @@ migration_manager.migrate()
 **Q**：time_reference 有什么作用？
 
 **A**：参数 time_reference 用于标记日志在 SLS 中的时间戳，另外还用于在迁移过程中的 chenkpoint，在中断重启时快速定位到续传点。所以应尽可能指定 time_reference 参数。
-
-**Q**：是否支持 Python 2.7？
-
-**A**：ES 迁移工具只支持 Python 3.x，请安装 Python 3.x 进行操作。
 
 **Q**：数据迁移的速度有多快？
 
