@@ -115,7 +115,7 @@ class MigrationTask(object):
     def __init__(
             self, _id, es_client, es_index, es_shard,
             logstore, ckpt_path, batch_size, logger,
-            es_query=None, time_reference=None,
+            es_version, es_query=None, time_reference=None,
     ):
         self._id = _id
         self._es_client = es_client
@@ -137,10 +137,11 @@ class MigrationTask(object):
             self._logger,
         )
 
+        id_key = '_id' if es_version >= 7 else '_uid'
         if self._time_reference:
-            es_sort = [{self._time_reference: 'asc'}, {'_id': 'asc'}]
+            es_sort = [{self._time_reference: 'asc'}, {id_key: 'asc'}]
         else:
-            es_sort = [{'_id': 'asc'}]
+            es_sort = [{id_key: 'asc'}]
         self._es_query['sort'] = es_sort
         if self._time_reference in self._ckpt.offset:
             self._es_query['query'] = {
