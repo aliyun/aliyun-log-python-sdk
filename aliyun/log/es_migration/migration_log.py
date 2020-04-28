@@ -5,6 +5,7 @@
 # All rights reserved.
 
 
+import time
 import logging
 from aliyun.log import (
     LogException, LogClient, SimpleLogHandler, IndexLineConfig, IndexConfig,
@@ -27,6 +28,7 @@ _migration_logstore = 'internal-es-migration-log'
 def setup_logging(migration, endpoint, project, access_key_id, access_key):
     # setup internal logstore
     _setup_migration_logstore(endpoint, project, access_key_id, access_key)
+    time.sleep(10)
 
     # set logging level for libs
     logging.getLogger('requests').setLevel(logging.WARNING)

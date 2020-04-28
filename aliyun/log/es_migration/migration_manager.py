@@ -183,7 +183,7 @@ class MigrationConfig(object):
 
 
 class MigrationManager(object):
-    def __init__(self, config: MigrationConfig):
+    def __init__(self, config):
         self._config = config
         _uuid = str(uuid.uuid4())
         self._id = ''.join(_uuid.split('-'))
@@ -194,6 +194,7 @@ class MigrationManager(object):
             retry_on_timeout=True,
             verify_certs=False,
         )
+        self._es_version = int(self._es.info()['version']['number'].split('.')[0])
         self._log_client = LogClient(
             endpoint=self._config.get('endpoint'),
             accessKeyId=self._config.access_key_id,
@@ -240,6 +241,7 @@ class MigrationManager(object):
                             self._config,
                             task,
                             self._shutdown_flag,
+                            self._es_version,
                         )
                     )
                 try:
@@ -385,26 +387,29 @@ class MigrationManager(object):
             except FileNotFoundError:
                 self._logger.error('Index not found', extra={'es_index': index})
                 continue
-            mappings = resp[index]['mappings']
-            index_config = MappingIndexConverter.to_index_config(mappings)
-            try:
-                self._log_client.create_index(
-                    self._config.get('project_name'),
-                    logstore,
-                    index_config,
-                )
-            except LogException as exc:
-                if exc.get_error_code() == 'IndexAlreadyExist':
-                    self._log_client.update_index(
+            _mappings = resp[index]['mappings']
+            if self._es_version >= 7:
+                _mappings = {'': _mappings}
+            for mappings in _mappings.values():
+                index_config = MappingIndexConverter.to_index_config(mappings)
+                try:
+                    self._log_client.create_index(
                         self._config.get('project_name'),
                         logstore,
                         index_config,
                     )
-                    continue
-                raise
+                except LogException as exc:
+                    if exc.get_error_code() == 'IndexAlreadyExist':
+                        self._log_client.update_index(
+                            self._config.get('project_name'),
+                            logstore,
+                            index_config,
+                        )
+                        continue
+                    raise
 
 
-def _migration_worker(config: MigrationConfig, task, shutdown_flag):
+def _migration_worker(config, task, shutdown_flag, es_version):
     if op.exists(shutdown_flag):
         # Already interrupted
         return Checkpoint.interrupted
@@ -444,6 +449,7 @@ def _migration_worker(config: MigrationConfig, task, shutdown_flag):
             time_reference=config.get('time_reference'),
             batch_size=config.get('batch_size'),
             logger=logger,
+            es_version=es_version,
         )
         return task.run()
     except BaseException:

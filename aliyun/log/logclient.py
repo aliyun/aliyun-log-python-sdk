@@ -2457,7 +2457,7 @@ class LogClient(object):
         :type retries_failed: int
         :param retries_failed: specify retrying times for failed tasks. e.g. 10
 
-        :return: ''
+        :return: LogResponse
 
         :raise: Exception
         """
@@ -2484,7 +2484,7 @@ class LogClient(object):
         )
         migration_manager = MigrationManager(config)
         migration_manager.migrate()
-        return ''
+        return LogResponse({})
 
     def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,
