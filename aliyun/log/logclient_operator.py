@@ -63,11 +63,13 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
     # list logstore and copy them
     offset, size = 0, default_fetch_size
+    source_logstores = set()
     while True:
         ret = from_client.list_logstore(from_project, offset=offset, size=size)
         count = ret.get_logstores_count()
         total = ret.get_logstores_total()
-        for logstore_name in ret.get_logstores():
+        source_logstores = set(ret.get_logstores())
+        for logstore_name in source_logstores:
             # copy logstore
             ret = from_client.get_logstore(from_project, logstore_name)
             res_shard = from_client.list_shards(from_project, logstore_name)
@@ -95,6 +97,10 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             except LogException as ex:
                 if ex.get_error_code() == 'IndexConfigNotExist':
                     pass
+                elif ex.get_error_code() == 'IndexAlreadyExist':
+                    # target already has index, overwrite it
+                    ret2 = to_client.update_index(to_project, logstore_name, ret.get_index_config())
+                    pass
                 else:
                     raise
 
@@ -117,6 +123,7 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
     # list logtail config and copy them
     offset, size = 0, default_fetch_size
+    source_configs = set()
     while True:
         ret = from_client.list_logtail_config(from_project, offset=offset, size=size)
         count = ret.get_configs_count()
@@ -124,6 +131,10 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
         for config_name in ret.get_configs():
             ret = from_client.get_logtail_config(from_project, config_name)
+            if ret.logtail_config.logstore_name not in source_logstores:
+                continue
+
+            source_configs.add(config_name)
             for x in range(60):
                 try:
                     ret2 = to_client.create_logtail_config(to_project, ret.logtail_config)
@@ -148,11 +159,20 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
         for group_name in ret.get_machine_group():
             ret = from_client.get_machine_group(from_project, group_name)
-            ret = to_client.create_machine_group(to_project, ret.get_machine_group())
+            try:
+                ret = to_client.create_machine_group(to_project, ret.get_machine_group())
+            except LogException as ex:
+                if ex.get_error_code() == 'GroupAlreadyExist':
+                    pass
+                else:
+                    raise ex
 
             # list all applied config and copy the relationship
             ret = from_client.get_machine_group_applied_configs(from_project, group_name)
             for config_name in ret.get_configs():
+                if config_name not in source_configs:
+                    continue
+
                 for x in range(60):
                     try:
                        to_client.apply_config_to_machine_group(to_project, config_name, group_name)
