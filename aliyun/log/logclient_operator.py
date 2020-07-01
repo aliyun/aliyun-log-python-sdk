@@ -72,24 +72,44 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             ret = from_client.get_logstore(from_project, logstore_name)
             res_shard = from_client.list_shards(from_project, logstore_name)
             expected_rwshard_count = len([shard for shard in res_shard.shards if shard['status'].lower() == 'readwrite'])
-            ret = to_client.create_logstore(to_project, logstore_name, ret.get_ttl(),
-                                            min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
-                                            enable_tracking=ret.get_enable_tracking(),
-                                            append_meta=ret.append_meta,
-                                            auto_split=ret.auto_split,
-                                            max_split_shard=ret.max_split_shard,
-                                            preserve_storage=ret.preserve_storage
-                                            )
+            try:
+                ret2 = to_client.create_logstore(to_project, logstore_name, ret.get_ttl(),
+                                                min(expected_rwshard_count, MAX_INIT_SHARD_COUNT),
+                                                enable_tracking=ret.get_enable_tracking(),
+                                                append_meta=ret.append_meta,
+                                                auto_split=ret.auto_split,
+                                                max_split_shard=ret.max_split_shard,
+                                                preserve_storage=ret.preserve_storage
+                                                )
+            except LogException as ex:
+                if ex.get_error_code().lower() == "logstorealreadyexist":
+                    pass
+                else:
+                    raise
 
             # copy index
+            index_config = None
             try:
                 ret = from_client.get_index_config(from_project, logstore_name)
-                ret = to_client.create_index(to_project, logstore_name, ret.get_index_config())
+                index_config = ret.get_index_config()
             except LogException as ex:
                 if ex.get_error_code() == 'IndexConfigNotExist':
                     pass
                 else:
                     raise
+
+            if index_config is not None:
+                for x in range(60):
+                    try:
+                        ret2 = to_client.create_index(to_project, logstore_name, ret.get_index_config())
+                        break
+                    except LogException as ex:
+                        if ex.get_error_code().lower() == "logstorenotexist" and x < 59:
+                            time.sleep(1)
+                            continue
+                        if ex.get_error_code().lower() == "indexconfigalreadyexist":
+                            break
+                        raise ex
 
         offset += count
         if count < size or offset >= total:
@@ -104,7 +124,16 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
         for config_name in ret.get_configs():
             ret = from_client.get_logtail_config(from_project, config_name)
-            ret = to_client.create_logtail_config(to_project, ret.logtail_config)
+            for x in range(60):
+                try:
+                    ret2 = to_client.create_logtail_config(to_project, ret.logtail_config)
+                except LogException as ex:
+                    if ex.get_error_code().lower() == "logstorenotexist" and x < 59:
+                        time.sleep(1)
+                        continue
+                    if ex.get_error_code().lower() == "configalreadyexist":
+                        break
+                    raise ex
 
         offset += count
         if count < size or offset >= total:
@@ -124,7 +153,14 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             # list all applied config and copy the relationship
             ret = from_client.get_machine_group_applied_configs(from_project, group_name)
             for config_name in ret.get_configs():
-                to_client.apply_config_to_machine_group(to_project, config_name, group_name)
+                for x in range(60):
+                    try:
+                       to_client.apply_config_to_machine_group(to_project, config_name, group_name)
+                    except LogException as ex:
+                        if ex.get_error_code().lower() in ("confignotexist", "groupnotexist") and x < 59:
+                            time.sleep(1)
+                            continue
+                        raise ex
 
         offset += count
         if count < size or offset >= total:
