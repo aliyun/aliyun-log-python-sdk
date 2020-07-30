@@ -41,7 +41,11 @@ class MappingIndexConverter(object):
         key_config_list = {"_id": cls.handle_id()}
         if not properties:
             return key_config_list
+        fields = set()
         for field_name, field_desc in properties.items():
+            if field_name.lower() in fields:
+                continue
+            fields.add(field_name.lower())
             if "type" in field_desc:
                 field_type = field_desc["type"]
                 if field_type not in field_type_handlers:

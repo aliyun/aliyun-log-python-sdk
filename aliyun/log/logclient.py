@@ -13,7 +13,7 @@ import zlib
 from datetime import datetime
 import logging
 import locale
-
+from itertools import cycle
 from .acl_response import *
 from .consumer_group_request import *
 from .consumer_group_response import *
@@ -46,8 +46,13 @@ from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
+from copy import copy
 
 logger = logging.getLogger(__name__)
+
+if six.PY3:
+    xrange = range
+
 
 try:
     import lz4
@@ -256,19 +261,42 @@ class LogClient(object):
         else:
             headers['Host'] = self._logHost
 
-        headers['Date'] = self._getGMT()
-
-        if self._securityToken:
-            headers["x-acs-security-token"] = self._securityToken
-
-        signature = Util.get_request_authorization(method, resource,
-                                                   self._accessKey, params, headers)
-
-        headers['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
-        headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
+        retry_times = range(10) if 'log-cli-v-' not in self._user_agent else cycle(range(10))
+        last_err = None
         url = url + resource
+        sig_retry = 0
+        for _ in retry_times:
+            try:
+                headers2 = copy(headers)
+                params2 = copy(params)
+                headers2['Date'] = self._getGMT()
 
-        return self._sendRequest(method, url, params, body, headers, respons_body_type)
+                if self._securityToken:
+                    headers2["x-acs-security-token"] = self._securityToken
+
+                signature = Util.get_request_authorization(method, resource,
+                                                           self._accessKey, params2, headers2)
+
+                headers2['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
+                headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
+
+                return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
+            except LogException as ex:
+                last_err = ex
+                if ex.get_error_code() in ('InternalServerError', 'RequestTimeout') or ex.resp_status >= 500\
+                        or (ex.get_error_code() == 'LogRequestError'
+                            and 'httpconnectionpool' in ex.get_error_message().lower()):
+                    time.sleep(1)
+                    continue
+                else:
+                    sig_retry += 1
+                    if sig_retry >= 10:
+                        raise
+                    else:
+                        time.sleep(1)
+                        continue
+
+        raise last_err
 
     @staticmethod
     def _get_unicode(key):
@@ -522,7 +550,7 @@ class LogClient(object):
                               query, reverse)
 
         ret = None
-        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+        for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
             headers = {}
             params = {'from': parse_timestamp(from_time),
                       'to': parse_timestamp(to_time),
@@ -643,7 +671,7 @@ class LogClient(object):
         :return: GetContextLogsResponse
         """
         ret = None
-        for _c in range(DEFAULT_QUERY_RETRY_COUNT):
+        for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
             headers = {}
             params = {'pack_id': pack_id,
                       'pack_meta': pack_meta,
@@ -2313,7 +2341,7 @@ class LogClient(object):
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
-    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None):
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
         """
         copy logstore, index, logtail config to target logstore, machine group are not included yet.
         the target logstore will be crated if not existing
@@ -2333,9 +2361,12 @@ class LogClient(object):
         :type to_client: LogClient
         :param to_client: logclient instance, use it to operate on the "to_project" if being specified for cross region purpose
 
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+
         :return:
         """
-        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client)
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
     def list_project(self, offset=0, size=100):
         """ list the project
@@ -2364,20 +2395,28 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
-    def es_migration(self, hosts,
-                     project_name,
-                     indexes=None,
-                     query=None,
-                     scroll="5m",
-                     logstore_index_mappings=None,
-                     pool_size=10,
-                     time_reference=None,
-                     source=None,
-                     topic=None,
-                     wait_time_in_secs=60,
-                     auto_creation=True):
+    def es_migration(
+            self,
+            cache_path,
+            hosts,
+            project_name,
+            indexes=None,
+            query=None,
+            logstore_index_mappings=None,
+            pool_size=None,
+            time_reference=None,
+            source=None,
+            topic=None,
+            batch_size=None,
+            wait_time_in_secs=None,
+            auto_creation=True,
+            retries_failed=None,
+    ):
         """
-        migrate data from elasticsearch to aliyun log service
+        Migrate data from elasticsearch to aliyun log service (SLS)
+
+        :type cache_path: string
+        :param cache_path: file path to store migration cache, which used for resuming migration process when stopped. Please ensure it's clean for new migration task.
 
         :type hosts: string
         :param hosts: a comma-separated list of source ES nodes. e.g. "localhost:9200,other_host:9200"
@@ -2391,14 +2430,11 @@ class LogClient(object):
         :type query: string
         :param query: used to filter docs, so that you can specify the docs you want to migrate. e.g. '{"query": {"match": {"title": "python"}}}'
 
-        :type scroll: string
-        :param scroll: specify how long a consistent view of the index should be maintained for scrolled search. e.g. "5m"
-
         :type logstore_index_mappings: string
-        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}, "logstore3": "index3"}'
+        :param logstore_index_mappings: specify the mappings of log service logstore and ES index. e.g. '{"logstore1": "my_index*", "logstore2": "index1,index2"}}'
 
         :type pool_size: int
-        :param pool_size: specify the size of process pool. e.g. 10
+        :param pool_size: specify the size of migration task process pool. Default is 10 if not set.
 
         :type time_reference: string
         :param time_reference: specify what ES doc's field to use as log's time field. e.g. "field1"
@@ -2409,38 +2445,46 @@ class LogClient(object):
         :type topic: string
         :param topic: specify the value of log's topic field. e.g. "your_topic"
 
+        :type batch_size: int
+        :param batch_size: max number of logs written into SLS in a batch. SLS requires that it's no bigger than 512KB in size and 1024 lines in one batch. Default is 1000 if not set.
+
         :type wait_time_in_secs: int
-        :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. e.g. 60
+        :param wait_time_in_secs: specify the waiting time between initialize aliyun log and executing data migration task. Default is 60 if not set.
 
         :type auto_creation: bool
         :param auto_creation: specify whether to let the tool create logstore and index automatically for you. e.g. True
 
-        :return: MigrationResponse
+        :type retries_failed: int
+        :param retries_failed: specify retrying times for failed tasks. e.g. 10
+
+        :return: LogResponse
 
         :raise: Exception
         """
-        from .es_migration import MigrationManager
-        from .es_migration import MigrationResponse
+        from .es_migration import MigrationManager, MigrationConfig
 
-        migration_manager = MigrationManager(hosts=hosts,
-                                             indexes=indexes,
-                                             query=query,
-                                             scroll=scroll,
-                                             endpoint=self._endpoint,
-                                             project_name=project_name,
-                                             access_key_id=self._accessKeyId,
-                                             access_key=self._accessKey,
-                                             logstore_index_mappings=logstore_index_mappings,
-                                             pool_size=pool_size,
-                                             time_reference=time_reference,
-                                             source=source,
-                                             topic=topic,
-                                             wait_time_in_secs=wait_time_in_secs,
-                                             auto_creation=auto_creation)
-        res = migration_manager.migrate()
-        resp = MigrationResponse()
-        resp.body = res
-        return resp
+        config = MigrationConfig(
+            cache_path=cache_path,
+            hosts=hosts,
+            indexes=indexes,
+            query=query,
+            project_name=project_name,
+            logstore_index_mappings=logstore_index_mappings,
+            pool_size=pool_size,
+            time_reference=time_reference,
+            source=source,
+            topic=topic,
+            batch_size=batch_size,
+            wait_time_in_secs=wait_time_in_secs,
+            auto_creation=auto_creation,
+            retries_failed=retries_failed,
+            endpoint=self._endpoint,
+            access_key_id=self._accessKeyId,
+            access_key=self._accessKey,
+        )
+        migration_manager = MigrationManager(config)
+        migration_manager.migrate()
+        return LogResponse({})
 
     def copy_data(self, project, logstore, from_time, to_time=None,
                   to_client=None, to_project=None, to_logstore=None,

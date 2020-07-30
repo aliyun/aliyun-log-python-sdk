@@ -7,9 +7,10 @@ import atexit
 from time import time, sleep
 from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
+import six
 try:
-    from collections.abc import Callable
-except ImportError:
+    from collections.abc import Callable	
+except ImportError:	
     from collections import Callable
 import six
 
@@ -138,9 +139,45 @@ class SimpleLogHandler(logging.Handler, object):
         self.extract_kv_sep = "=" if extract_kv_sep is None else extract_kv_sep
         self.extract_kv_ptn = self._get_extract_kv_ptn()
         self.extra = True if extra is None else extra
+        self._skip_message = False
+        self._built_in_root_filed = ""
+        self._log_tags = None
+        self._source = None
+
+    @property
+    def skip_message(self):
+        return self._skip_message
+
+    @skip_message.setter
+    def skip_message(self, value):
+        self._skip_message = value
+
+    @property
+    def built_in_root_field(self):
+        return self._built_in_root_filed
+
+    @built_in_root_field.setter
+    def built_in_root_field(self, value):
+        self._built_in_root_filed = value
+
+    @property
+    def log_tags(self):
+        return self._log_tags
+
+    @log_tags.setter
+    def log_tags(self, value):
+        self._log_tags = value
 
     def set_topic(self, topic):
         self.topic = topic
+
+    @property
+    def source(self):
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        self._source = value
 
     def create_client(self):
         self.client = LogClient(self.end_point, self.access_key_id, self.access_key)
@@ -206,14 +243,21 @@ class SimpleLogHandler(logging.Handler, object):
         return data
 
     def _add_record_fields(self, record, k, contents):
+        data = self._get_record_fields(record, k)
+        if data:
+            contents.append(data)
+
+    def _get_record_fields(self, record, k):
         v = getattr(record, k, None)
         if v is None or isinstance(v, Callable):
             return
 
         v = self._n(v)
-        contents.append(("{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v))
+        return "{0}{1}{2}".format(self.buildin_fields_prefix, k, self.buildin_fields_suffix), v
 
     def make_request(self, record):
+        # add builtin fields
+        built_root = {}
         contents = []
         message_field_name = "{0}message{1}".format(self.buildin_fields_prefix, self.buildin_fields_suffix)
         if isinstance(record.msg, dict) and self.extract_json:
@@ -221,17 +265,27 @@ class SimpleLogHandler(logging.Handler, object):
             contents.extend(data)
 
             if not self.extract_json_drop_message or not data:
-                contents.append((message_field_name, self.format(record)))
+                if not self._skip_message:
+                    if self._built_in_root_filed:
+                        built_root[message_field_name] = self.format(record)
+                    else:
+                        contents.append((message_field_name, self.format(record)))
         elif isinstance(record.msg, (six.text_type, six.binary_type)) and self.extract_kv:
             data = self.extract_kv_str(record.msg)
             contents.extend(data)
 
             if not self.extract_kv_drop_message or not data:  # if it's not KV
-                contents.append((message_field_name, self.format(record)))
-        else:
-            contents = [(message_field_name, self.format(record))]
+                if not self._skip_message:
+                    if self._built_in_root_filed:
+                        built_root[message_field_name] = self.format(record)
+                    else:
+                        contents.append((message_field_name, self.format(record)))
+        elif not self._skip_message:
+            if self._built_in_root_filed:
+                built_root[message_field_name] = self.format(record)
+            else:
+                contents = [(message_field_name, self.format(record))]
 
-        # add builtin fields
         for x in self.fields:
             k = x
             if isinstance(x, LogFields):
@@ -246,8 +300,15 @@ class SimpleLogHandler(logging.Handler, object):
                     x = LogFields[x].value
                 elif self.extra:  # will handle it later
                     continue
+            if not self._built_in_root_filed:
+                self._add_record_fields(record, x, contents)
+            else:
+                data = self._get_record_fields(record, x)
+                if data:
+                    built_root[data[0]] = data[1]
 
-            self._add_record_fields(record, x, contents)
+        if self._built_in_root_filed and built_root:
+            contents.append((self._n(self._built_in_root_filed), json.dumps(built_root)))
 
         # handle extra
         if self.extra:
@@ -257,7 +318,7 @@ class SimpleLogHandler(logging.Handler, object):
 
         item = LogItem(contents=contents, timestamp=record.created)
 
-        return PutLogsRequest(self.project, self.log_store, self.topic, logitems=[item, ])
+        return PutLogsRequest(self.project, self.log_store, self.topic, source=self._source, logitems=[item, ], logtags=self._log_tags)
 
     def emit(self, record):
         try:
@@ -404,7 +465,7 @@ class QueuedLogHandler(SimpleLogHandler):
             for req in reqs:
                 logitems.extend(req.get_log_items())
 
-            ret = PutLogsRequest(self.project, self.log_store, req.topic, logitems=logitems)
+            ret = PutLogsRequest(self.project, self.log_store, req.topic, logitems=logitems, logtags=self._log_tags)
             ret.__record__ = req.__record__
 
             return ret

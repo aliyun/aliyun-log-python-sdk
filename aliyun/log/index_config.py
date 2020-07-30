@@ -7,19 +7,20 @@
 import time
 
 
-class IndexJsonKeyConfig(object) :
+class IndexJsonKeyConfig(object):
     """ The index config of a special json type key
 
     :type index_all: bool
     :param index_all: True if all string value in the json key should be indexed
 
     :type max_depth: int
-    :param max_depth: if index_all is true, only if the json value depth <= max_depth will be index 
+    :param max_depth: if index_all is true, only if the json value depth <= max_depth will be index
 
     :type alias : string
     :param alias : alias name for index key
     """
-    def __init__(self, index_all=True,  max_depth=-1, alias=None):
+
+    def __init__(self, index_all=True, max_depth=-1, alias=None):
         self.index_all = index_all
         self.max_depth = max_depth
         self.alias = alias
@@ -34,34 +35,35 @@ class IndexJsonKeyConfig(object) :
         },
         "k_3" : 200.0
     }
-    
+
     :type key_name : string
     :param key_name : key name , e.g  "map_1.k_1",  "k_3"
-    
+
     :type index_type: string
     :param index_type: one of ['text', 'long', 'double']
 
     :type doc_value : bool
     :param doc_value : if save doc value
-      
+
     :type alias : string
     :param alias : alias name for index key
     """
-    def add_key(self, key_name,  key_type,  doc_value = False ,  alias = None) :
-        if key_type != 'text' and key_type != 'long' and key_type != 'double' :  
+
+    def add_key(self, key_name, key_type, doc_value=False, alias=None):
+        if key_type != 'text' and key_type != 'long' and key_type != 'double':
             return
         self.json_keys[key_name] = {}
         self.json_keys[key_name]["type"] = key_type
         self.json_keys[key_name]["doc_value"] = doc_value
-        if alias is not None :
+        if alias is not None:
             self.json_keys[key_name]["alias"] = alias
-    
+
     def to_json(self, json_value):
         json_value["index_all"] = self.index_all
         json_value["max_depth"] = self.max_depth
         json_value["json_keys"] = self.json_keys
 
-    def from_json(self, json_value) : 
+    def from_json(self, json_value):
         self.index_all = json_value.get("index_all", True)
         self.max_depth = json_value.get("max_depth", -1)
         self.alias = None
@@ -76,10 +78,10 @@ class IndexKeyConfig(object):
     """ The index config of a special log key
 
     :type token_list: string list
-    :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"] 
+    :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"]
 
     :type case_sensitive: bool
-    :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
+    :param case_sensitive: True if the value in the log keys is case sensitive, False other wise
 
     :type index_type: string
     :param index_type: one of ['text', 'long', 'double', 'json']
@@ -109,11 +111,11 @@ class IndexKeyConfig(object):
         self.alias = alias
         self.json_key_config = json_key_config
         self.chn = chinese
-    
-    def set_json_key_config(self, json_key_config) : 
+
+    def set_json_key_config(self, json_key_config):
         self.json_key_config = json_key_config
 
-    def get_json_key_config(self) : 
+    def get_json_key_config(self):
         return self.json_key_config
 
     def to_json(self):
@@ -130,7 +132,7 @@ class IndexKeyConfig(object):
         if self.chn is not None:
             json_value['chn'] = self.chn
 
-        if self.index_type == "json" :
+        if self.index_type == "json":
             self.json_key_config.to_json(json_value)
 
         return json_value
@@ -149,7 +151,7 @@ class IndexKeyConfig(object):
             self.doc_value = bool(json_value["doc_value"])
         if 'alias' in json_value:
             self.alias = json_value['alias']
-        if self.index_type == 'json' : 
+        if self.index_type == 'json':
             self.json_key_config = IndexJsonKeyConfig()
             self.json_key_config.from_json(json_value)
 
@@ -158,10 +160,10 @@ class IndexLineConfig(object):
     """ The index config of the log line
 
     :type token_list: string list
-    :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"] 
+    :param token_list: the token config list, e.g ["," , "\t" , "\n" , " " , ";"]
 
     :type case_sensitive: bool
-    :param case_sensitive: True if the value in the log keys is case sensitive, False other wise 
+    :param case_sensitive: True if the value in the log keys is case sensitive, False other wise
 
     :type include_keys: string list
     :param include_keys: deprecated, will be removed in future version.
@@ -223,6 +225,33 @@ class IndexConfig(object):
         self.key_config_list = key_config_list
         self.modify_time = int(time.time())
         self.log_reduce = log_reduce
+        self.log_reduce_black_list = None
+        self.log_reduce_white_list = None
+        self.docvalue_max_text_len = 0
+
+    '''
+    :type max_len : int 
+    :param max_len : the max len  of the docvalue
+    '''
+
+    def set_docvalue_max_text_len(self, max_len):
+        self.docvalue_max_text_len = max_len
+
+    '''
+    :type black_list : list 
+    :param black_list : the list of black list keys for log reduce, e.g black_list = ["key_1", "key_2"] 
+    '''
+
+    def set_log_reduce_black_list(self, black_list):
+        self.log_reduce_black_list = black_list
+
+    '''
+    :type white_list : list 
+    :param white_list : the list of white list keys for log reduce, e.g white_list = ["key_1", "key_2"] 
+    '''
+
+    def set_log_reduce_white_list(self, white_list):
+        self.log_reduce_white_list = white_list
 
     def to_json(self):
         json_value = {}
@@ -236,6 +265,15 @@ class IndexConfig(object):
 
         if self.log_reduce is not None:
             json_value["log_reduce"] = self.log_reduce
+
+        if self.docvalue_max_text_len > 0:
+            json_value["max_text_len"] = self.docvalue_max_text_len
+
+        if self.log_reduce_white_list != None:
+            json_value["log_reduce_white_list"] = self.log_reduce_white_list
+
+        elif self.log_reduce_black_list != None:
+            json_value["log_reduce_black_list"] = self.log_reduce_black_list
 
         return json_value
 
@@ -255,5 +293,9 @@ class IndexConfig(object):
                 key_config.from_json(value)
                 self.key_config_list[key] = key_config
         self.log_reduce = json_value.get('log_reduce', None)
+        self.log_reduce_white_list = json_value.get('log_reduce_white_list', None)
+        self.log_reduce_black_list = json_value.get('log_reduce_black_list', None)
+
+        self.docvalue_max_text_len = json_value.get('max_text_len', 0)
 
         self.modify_time = json_value.get("lastModifyTime", int(time.time()))

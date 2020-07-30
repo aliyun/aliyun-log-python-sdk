@@ -267,3 +267,16 @@ def is_stats_query(query):
         return True
 
     return False
+
+
+class PrefixLoggerAdapter(logging.LoggerAdapter):
+    def __init__(self, prefix, extra, *args, **kwargs):
+        super(PrefixLoggerAdapter, self).__init__(*args, **kwargs)
+        self._prefix = prefix
+        self._extra = extra
+
+    def process(self, msg, kwargs):
+        kwargs['extra'] = kwargs.get('extra', {})
+        kwargs['extra'].update(self._extra)
+
+        return "{0}{1}".format(self._prefix, msg), kwargs

@@ -1,5 +1,16 @@
 # Release History
 
+### 0.6.48 (2020-03-20)
+----------------------------
+**Implementations**
+- Support Elasticsearch v7.x in es_migration
+- Resume break-point when restart in es_migration
+- Report state logging into SLS for es_migration
+
+**Break Change**
+- Elasticsearch v6.x is no longer supported in es_migration
+
+
 ### 0.6.6 (2017-11-10)
 ----------------------------
 **Implementations**

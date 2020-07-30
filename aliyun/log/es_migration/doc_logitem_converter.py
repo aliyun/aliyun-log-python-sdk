@@ -39,13 +39,13 @@ class DocLogItemConverter(object):
     def _add_index(cls, doc, log_item):
         if cls.INDEX_FIELD not in doc:
             return
-        log_item.push_back("%s:%s" % (cls.TAG_PREFIX, cls.INDEX_FIELD), doc[cls.INDEX_FIELD])
+        log_item.push_back("__tag__:__es_index__", doc[cls.INDEX_FIELD])
 
     @classmethod
     def _add_type(cls, doc, log_item):
         if cls.TYPE_FIELD not in doc:
             return
-        log_item.push_back("%s:%s" % (cls.TAG_PREFIX, cls.TYPE_FIELD), doc[cls.TYPE_FIELD])
+        log_item.push_back("__tag__:__es_type__", doc[cls.TYPE_FIELD])
 
     @classmethod
     def _add_id(cls, doc, log_item):
