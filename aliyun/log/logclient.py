@@ -23,6 +23,7 @@ from .gethistogramsresponse import GetHistogramsResponse
 from .getlogsresponse import GetLogsResponse
 from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
+from .ingestion_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
@@ -2658,6 +2659,163 @@ class LogClient(object):
         resource = "/jobs/" + job_name
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return LogResponse(header)
+
+    def list_ingestion(self, project_name):
+        """ list ingestion
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :return: ListIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListIngestionResponse(resp, header)
+
+    def create_ingestion(self, project_name, ingestion_config):
+        """ create ingestion config
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_config: string
+        :param ingestion_config: the ingestion config
+
+        :return: CreateIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/jobs"
+        headers['Content-Type'] = 'application/json'
+        body = six.b(ingestion_config)
+        headers['x-log-bodyrawsize'] = str(len(body))
+
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateIngestionResponse(header, resp)
+
+    def update_ingestion(self, project_name, ingestion_name, ingestion_config):
+        """ update ingestion config
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :type ingestion_config: string
+        :param ingestion_config: the ingestion config
+
+        :return: UpdateIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/jobs/" + ingestion_name
+        headers['Content-Type'] = 'application/json'
+        body = six.b(ingestion_config)
+        headers['x-log-bodyrawsize'] = str(len(body))
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateIngestionResponse(header, resp)
+
+    def delete_ingestion(self, project_name, ingestion_name):
+        """ delete ingestion config
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: DeleteIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/jobs/" + ingestion_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteIngestionResponse(header, resp)
+
+    def get_ingestion(self, project_name, ingestion_name):
+        """ get ingestion config detail
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: GetIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/jobs/" + ingestion_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetIngestionResponse(resp, header)
+
+    def start_ingestion(self, project_name, ingestion_name):
+        """ start ingestion
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: StartIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {"action":"START"}
+        resource = "/jobs/" + ingestion_name
+
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return StartIngestionResponse(header, resp)
+
+    def stop_ingestion(self, project_name, ingestion_name):
+        """ stop ingestion
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: StopIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {"action":"STOP"}
+        resource = "/jobs/" + ingestion_name
+
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return StopIngestionResponse(header, resp)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
