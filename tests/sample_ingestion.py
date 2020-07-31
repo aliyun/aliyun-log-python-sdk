@@ -16,7 +16,7 @@ def main():
     res.log_print()
 
     res = client.list_ingestion(project)
-    res.get_ingestions()
+    res.log_print()
 
     res = client.get_ingestion(project, "ingest-1596087431-683089")
     res.log_print()
