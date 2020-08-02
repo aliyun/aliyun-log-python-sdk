@@ -635,16 +635,23 @@ class LogClient(object):
 
         :raise: LogException
         """
+        stats_query, query_size = is_stats_query(query), 100
         while True:
-            response = self.get_log(project, logstore, from_time, to_time, topic=topic,
-                                    query=query, reverse=reverse, offset=offset, size=100)
+            response = None
+            if stats_query:
+                limit_query = "%s limit %d,%d" % (query, offset, query_size)
+                response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=limit_query, reverse=reverse, size=query_size)
+            else:
+                response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=query, reverse=reverse, offset=offset, size=query_size)
 
             yield response
 
             count = response.get_count()
             offset += count
 
-            if count == 0 or is_stats_query(query):
+            if count == 0:
                 break
 
     def get_context_logs(self, project, logstore, pack_id, pack_meta, back_lines, forward_lines):
