@@ -192,6 +192,7 @@ class ConsumerWorker(Thread):
         consumer = ShardConsumerWorker(self.consumer_client, shard_id, self.option.consumer_name,
                                        processer,
                                        self.option.cursor_position, self.option.cursor_start_time,
+                                       max_fetch_log_group_size=self.option.max_fetch_log_group_size,
                                        executor=self._executor,
                                        cursor_end_time=self.option.cursor_end_time)
         self.shard_consumers[shard_id] = consumer
