@@ -61,6 +61,9 @@ class GetLogStoreResponse(LogResponse):
         self.auto_split = bool(resp["autoSplit"])
         self.max_split_shard = int(resp["maxSplitShard"])
         self.preserve_storage = self.ttl >= 3650
+        self.encrypt_conf = None
+        if 'encrypt_conf' in resp:
+            self.encrypt_conf = resp["encrypt_conf"]
 
     def get_shard_count(self):
         """
@@ -83,6 +86,13 @@ class GetLogStoreResponse(LogResponse):
         """
         return self.enable_tracking
 
+    def get_encrypt_conf(self):
+        """
+
+        :return:
+        """
+        return self.encrypt_conf
+
     def log_print(self):
         """
 
@@ -93,6 +103,8 @@ class GetLogStoreResponse(LogResponse):
         print('logstore_name:', self.logstore_name)
         print('shard_count:', str(self.shard_count))
         print('ttl:', str(self.ttl))
+        if self.encrypt_conf != None:
+            print('encrypt_conf:', str(self.encrypt_conf))
 
 
 class UpdateLogStoreResponse(LogResponse):

@@ -1019,7 +1019,8 @@ class LogClient(object):
                         append_meta=False,
                         auto_split=True,
                         max_split_shard=64,
-                        preserve_storage=False
+                        preserve_storage=False,
+                        encrypt_conf=None
                         ):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
@@ -1051,6 +1052,19 @@ class LogClient(object):
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
 
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
+        +       {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
+
         :return: CreateLogStoreResponse
         
         :raise: LogException
@@ -1069,6 +1083,8 @@ class LogClient(object):
                 "maxSplitShard": max_split_shard,
                 "appendMeta": append_meta
                 }
+        if encrypt_conf != None:
+            body["encrypt_conf"] = encrypt_conf
 
         body_str = six.b(json.dumps(body))
 
@@ -1133,7 +1149,8 @@ class LogClient(object):
                         append_meta=None,
                         auto_split=None,
                         max_split_shard=None,
-                        preserve_storage=None
+                        preserve_storage=None,
+                        encrypt_conf=None
                         ):
         """
         update the logstore meta info
@@ -1165,6 +1182,19 @@ class LogClient(object):
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
+
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
++                {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
 
         :return: UpdateLogStoreResponse
         
@@ -1202,6 +1232,8 @@ class LogClient(object):
             "maxSplitShard": max_split_shard,
             "appendMeta": append_meta
         }
+        if encrypt_conf != None:
+            body["encrypt_conf"] = encrypt_conf
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
