@@ -97,10 +97,6 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             except LogException as ex:
                 if ex.get_error_code() == 'IndexConfigNotExist':
                     pass
-                elif ex.get_error_code() == 'IndexAlreadyExist':
-                    # target already has index, overwrite it
-                    ret2 = to_client.update_index(to_project, logstore_name, ret.get_index_config())
-                    pass
                 else:
                     raise
 
@@ -113,7 +109,9 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
                         if ex.get_error_code().lower() == "logstorenotexist" and x < 59:
                             time.sleep(1)
                             continue
-                        if ex.get_error_code().lower() == "indexconfigalreadyexist":
+                        if ex.get_error_code().lower() == "indexalreadyexist":
+                            # target already has index, overwrite it
+                            ret2 = to_client.update_index(to_project, logstore_name, index_config)
                             break
                         raise ex
 
@@ -162,7 +160,7 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             try:
                 ret = to_client.create_machine_group(to_project, ret.get_machine_group())
             except LogException as ex:
-                if ex.get_error_code() == 'GroupAlreadyExist':
+                if ex.get_error_code() == 'MachineGroupAlreadyExist':
                     pass
                 else:
                     raise ex
@@ -255,7 +253,7 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
                                         max_split_shard=ret.max_split_shard,
                                         preserve_storage=ret.preserve_storage)
     except LogException as ex:
-        if ex.get_error_code() == 'LogStoreAlreadyExist':
+        if ex.get_error_code().lower() == "logstorealreadyexist":
             # update logstore's settings
             ret = to_client.update_logstore(to_project, to_logstore,
                                             ttl=ret.get_ttl(),
