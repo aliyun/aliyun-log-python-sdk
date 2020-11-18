@@ -2692,7 +2692,7 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return LogResponse(header)
 
-    def list_ingestion(self, project_name):
+    def list_ingestion(self, project_name, logstore_name='', offset=0, size=100):
         """ list ingestion
         Unsuccessful opertaion will cause an LogException.
 
@@ -2706,6 +2706,10 @@ class LogClient(object):
 
         headers = {}
         params = {}
+        params['jobType'] = 'Ingestion'
+        params['logstore'] = logstore_name
+        params['offset'] = str(offset)
+        params['size'] = str(size)
         resource = '/jobs'
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListIngestionResponse(resp, header)
