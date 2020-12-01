@@ -63,7 +63,7 @@ class TestEtlCrud():
 
 
 if __name__ == '__main__':
-    endpoint = 'cn-chengdu.log.aliyuncs.com'  # 选择与上面步骤创建Project所属区域匹配的Endpoint
+    endpoint = ''  # 选择与上面步骤创建Project所属区域匹配的Endpoint
     accessKeyId = ''  # 使用你的阿里云访问密钥AccessKeyId
     accessKey = ''  # 使用你的阿里云访问密钥AccessKeySecret
     project = ''  # 项目名称
