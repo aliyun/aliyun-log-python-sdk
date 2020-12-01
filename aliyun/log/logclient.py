@@ -48,6 +48,7 @@ from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
 from copy import copy
+from .etl_config_response import *
 
 logger = logging.getLogger(__name__)
 
@@ -2853,6 +2854,160 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return StopIngestionResponse(header, resp)
 
+    def create_etl(self, project_name, name, configuration, schedule, display_name, description=None):
+        """ create etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :type configuration: dict
+        :param configuration: the ETLConfiguration
+        :type schedule: dict
+        :param schedule: the JobSchedule
+        :type display_name: string
+        :param display_name: the etl display name
+        :type description: string
+        :param description: the etl description
+        :return: CreateEtlResponse
+        :raise: LogException
+        """
+        params = {}
+        resource = "/jobs"
+        body = {
+            'name': name,
+            'configuration': configuration,
+            'schedule': schedule,
+            'description': description,
+            'displayName': display_name,
+            'type': 'ETL'
+        }
+        body_str = six.b(json.dumps(body))
+        headers = {"x-log-bodyrawsize": str(len(body_str)), "Content-Type": "application/json"}
+        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+        return CreateEtlResponse(header, resp)
+
+    def get_etl(self, project_name, name):
+        """ get etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :return: GetEtlResponse
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetEtlResponse(header, resp)
+
+    def update_etl(self, project_name, name, configuration, schedule, display_name, description=None):
+        """ update etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :type configuration: dict
+        :param configuration: the ETLConfiguration
+        :type schedule: dict
+        :param schedule: the JobSchedule
+        :type display_name: string
+        :param display_name: the etl display name
+        :type description: string
+        :param description: the etl description
+        :return: UpdateEtlResponse
+        :raise: LogException
+        """
+        params = {}
+        resource = "/jobs/" + name
+        body = {
+            'name': name,
+            'configuration': configuration,
+            'schedule': schedule,
+            'description': description,
+            'displayName': display_name,
+            'type': 'ETL'
+        }
+        body_str = six.b(json.dumps(body))
+        headers = {"x-log-bodyrawsize": str(len(body_str)), "Content-Type": "application/json"}
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateEtlResponse(header, resp)
+
+    def start_etl(self, project_name, name):
+        """ start etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :return: StartEtlResponse
+        :raise: LogException
+        """
+        headers = {}
+        params = {"action": "START"}
+        resource = "/jobs/" + name
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return StartEtlResponse(header, resp)
+
+    def stop_etl(self, project_name, name):
+        """ stop etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :return: StopEtlResponse
+        :raise: LogException
+        """
+        headers = {}
+        params = {"action": "STOP"}
+        resource = "/jobs/" + name
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return StopEtlResponse(header, resp)
+
+    def list_etls(self, project_name, offset=0, size=100):
+        """ list etls
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type offset: int
+        :param offset: line offset of return logs
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+        :return: ListEtlsResponse
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_etls, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name)
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        params['jobType'] = "ETL"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListEtlsResponse(resp, header)
+
+    def delete_etl(self, project_name, name):
+        """ delete etl
+        Unsuccessful opertaion will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type name: string
+        :param name: the etl name
+        :return: DeleteEtlResponse
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteEtlResponse(header, resp)
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
