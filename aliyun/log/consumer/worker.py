@@ -193,6 +193,7 @@ class ConsumerWorker(Thread):
                                        processer,
                                        self.option.cursor_position, self.option.cursor_start_time,
                                        executor=self._executor,
-                                       cursor_end_time=self.option.cursor_end_time)
+                                       cursor_end_time=self.option.cursor_end_time,
+                                       max_fetch_log_group_size=self.option.max_fetch_log_group_size)
         self.shard_consumers[shard_id] = consumer
         return consumer
