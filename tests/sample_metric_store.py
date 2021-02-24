@@ -6,14 +6,6 @@ import json
 from aliyun.log import *
 
 
-def create_metric_store(client, project_name, logstore_name, substore_name, ttl, keys):
-    res = client.create_logstore(project_name, logstore_name, ttl=ttl, telemetry_type='Metrics')
-    res.log_print()
-    res = client.create_substore(project_name, logstore_name, substore_name, ttl=ttl,
-                                 keys=keys, sorted_key_count=1, time_index=2)
-    res.log_print()
-
-
 def main():
     endpoint = 'cn-hangzhou.log.aliyuncs.com'
     access_key_id = ''
@@ -30,7 +22,8 @@ def main():
         {'name': '__value__', 'type': 'double'},
     ]
     client = LogClient(endpoint, access_key_id, access_key)
-    create_metric_store(client, project_name, logstore_name, substore_name, ttl, keys)
+    res = client.create_metric_store(project_name, logstore_name, ttl)
+    res.log_print()
 
     res = client.list_substore(project_name, logstore_name)
     res.log_print()

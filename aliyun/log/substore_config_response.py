@@ -5,7 +5,8 @@
 # All rights reserved.
 
 __all__ = ['CreateSubStoreResponse', 'DeleteSubStoreResponse', 'GetSubStoreResponse',
-           'UpdateSubStoreResponse', 'ListSubStoreResponse', 'GetSubStoreTTLResponse', 'UpdateSubStoreTTLResponse']
+           'UpdateSubStoreResponse', 'ListSubStoreResponse', 'GetSubStoreTTLResponse', 'UpdateSubStoreTTLResponse',
+           'CreateMetricsStoreResponse']
 
 from .util import Util
 from .logresponse import LogResponse
@@ -198,3 +199,35 @@ class UpdateSubStoreTTLResponse(LogResponse):
     def log_print(self):
         print('UpdateSubStoreTTLResponse:')
         print('headers:', self.get_all_headers())
+
+
+class CreateMetricsStoreResponse:
+    """ The response of the create_metric_store API from log.
+
+    :type header: dict
+    :param header: CreateMetricsStoreResponse HTTP response header
+    """
+
+    def __init__(self, logstore_response, substore_response):
+        self.logstore_response = logstore_response
+        self.substore_response = substore_response
+
+    def get_logstore_response(self):
+        """
+
+        :return:
+        """
+        return self.logstore_response
+
+    def get_substore_response(self):
+        """
+
+        :return:
+        """
+        return self.substore_response
+
+    def log_print(self):
+        print('CreateLogStoreResponse:')
+        print('headers:', self.logstore_response.get_all_headers())
+        print('CreateSubStoreResponse:')
+        print('headers:', self.substore_response.get_all_headers())

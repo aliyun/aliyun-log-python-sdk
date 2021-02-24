@@ -3221,6 +3221,84 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return UpdateSubStoreTTLResponse(header, resp)
 
+    def create_metric_store(self, project_name, logstore_name,
+                            ttl=30,
+                            shard_count=2,
+                            enable_tracking=False,
+                            append_meta=False,
+                            auto_split=True,
+                            max_split_shard=64,
+                            preserve_storage=False,
+                            encrypt_conf=None):
+
+        """ create metric store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type ttl: int
+        :param ttl: the life cycle of log in the logstore in days, default 30, up to 3650
+
+        :type shard_count: int
+        :param shard_count: the shard count of the logstore to create, default 2
+
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking, default is False
+
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
+
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
+        +       {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
+
+        :return: CreateMetricsStoreResponse
+
+        :raise: LogException
+        """
+
+        logstore_response = self.create_logstore(project_name, logstore_name, ttl=ttl,
+                                   shard_count=shard_count,
+                                   enable_tracking=enable_tracking,
+                                   append_meta=append_meta,
+                                   auto_split=auto_split,
+                                   max_split_shard=max_split_shard,
+                                   preserve_storage=preserve_storage,
+                                   encrypt_conf=encrypt_conf,
+                                   telemetry_type='Metrics')
+        keys = [
+            {'name': '__name__', 'type': 'text'},
+            {'name': '__labels__', 'type': 'text'},
+            {'name': '__time_nano__', 'type': 'long'},
+            {'name': '__value__', 'type': 'double'},
+        ]
+        substore_response = self.create_substore(project_name, logstore_name, 'prom', ttl=ttl,
+                                   keys=keys, sorted_key_count=2, time_index=2)
+        return CreateMetricsStoreResponse(logstore_response, substore_response)
+
+
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
 make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
