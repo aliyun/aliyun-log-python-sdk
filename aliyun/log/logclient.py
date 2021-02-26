@@ -31,6 +31,7 @@ from .logclient_operator import copy_project, list_more, query_more, pull_log_du
     get_resource_usage, arrange_shard, transform_data
 from .logexception import LogException
 from .logstore_config_response import *
+from .substore_config_response import *
 from .logtail_config_response import *
 from .machinegroup_response import *
 from .project_response import *
@@ -1021,7 +1022,8 @@ class LogClient(object):
                         auto_split=True,
                         max_split_shard=64,
                         preserve_storage=False,
-                        encrypt_conf=None
+                        encrypt_conf=None,
+                        telemetry_type=''
                         ):
         """ create log store 
         Unsuccessful opertaion will cause an LogException.
@@ -1065,6 +1067,8 @@ class LogClient(object):
 +                        "region_id" :                   # the region id of cmk_key_id
 +                    }
 +                }
+        :type telemetry_type: string
+        :param telemetry_type: the Telemetry type
 
         :return: CreateLogStoreResponse
         
@@ -1082,7 +1086,8 @@ class LogClient(object):
                 "enable_tracking": enable_tracking,
                 "autoSplit": auto_split,
                 "maxSplitShard": max_split_shard,
-                "appendMeta": append_meta
+                "appendMeta": append_meta,
+                "telemetryType": telemetry_type
                 }
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
@@ -3008,6 +3013,291 @@ class LogClient(object):
         resource = "/jobs/" + name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteEtlResponse(header, resp)
+
+    def create_substore(self, project_name, logstore_name, substore_name, keys,
+                        ttl,
+                        sorted_key_count,
+                        time_index
+                        ):
+        """ create sub store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type substore_name: string
+        :param substore_name: the substore name
+
+        :type keys: list
+        :param keys: the keys
+
+        :type ttl: int
+        :param ttl: the ttl
+
+        :type sorted_key_count: int
+        :param sorted_key_count: the sorted key count of the logstore to create
+
+        :type time_Index: int
+        :param time_Index: the time index of the logstore to create
+
+        :return: CreateSubStoreResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
+
+        body = {"name": substore_name, "ttl": int(ttl),
+                "sortedKeyCount": int(sorted_key_count),
+                "timeIndex": int(time_index),
+                "keys": keys
+                }
+        body_str = six.b(json.dumps(body))
+        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+        return CreateSubStoreResponse(header, resp)
+
+    def delete_substore(self, project_name, logstore_name, substore_name):
+        """ delete sub store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type substore_name: string
+        :param substore_name: the substore name
+
+        :return: DeleteSubStoreResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores/" + substore_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteSubStoreResponse(header, resp)
+
+    def get_substore(self, project_name, logstore_name, substore_name):
+        """ get the substore meta info
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type substore_name: string
+        :param substore_name: the substore name
+
+        :return: GetSubStoreResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores/" + substore_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetSubStoreResponse(resp, header)
+
+    def update_substore(self, project_name, logstore_name, substore_name, keys,
+                        ttl,
+                        sorted_key_count,
+                        time_index
+                        ):
+        """ update sub store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type substore_name: string
+        :param substore_name: the substore name
+
+        :type keys: list
+        :param keys: the keys
+
+        :type ttl: int
+        :param ttl: the ttl
+
+        :type sorted_key_count: int
+        :param sorted_key_count: the sorted key count of the logstore to create
+
+        :type time_Index: int
+        :param time_Index: the time index of the logstore to create
+
+        :return: UpdateSubStoreResponse
+
+        :raise: LogException
+        """
+
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores/" + substore_name
+        body = {"name": substore_name, "ttl": int(ttl),
+                "sortedKeyCount": int(sorted_key_count),
+                "timeIndex": int(time_index),
+                "keys": keys
+                }
+        body_str = six.b(json.dumps(body))
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+
+        return UpdateSubStoreResponse(header, resp)
+
+    def list_substore(self, project_name, logstore_name):
+        """ list the substore
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the Logstore name
+
+        :return: ListSubStoreResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListSubStoreResponse(resp, header)
+
+    def get_substore_ttl(self, project_name, logstore_name):
+        """ get the substore ttl
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetSubStoreTTLResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores/storage/ttl"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetSubStoreTTLResponse(resp, header)
+
+    def update_substore_ttl(self, project_name, logstore_name, ttl):
+        """ update the substore ttl
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type ttl: int
+        :param ttl: the ttl
+
+        :return: GetSubStoreTTLResponse
+
+        :raise: LogException
+        """
+
+        headers = {"x-log-bodyrawsize": "0"}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/substores/storage/ttl?ttl=" + str(ttl)
+        (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
+        return UpdateSubStoreTTLResponse(header, resp)
+
+    def create_metric_store(self, project_name, logstore_name,
+                            ttl=30,
+                            shard_count=2,
+                            enable_tracking=False,
+                            append_meta=False,
+                            auto_split=True,
+                            max_split_shard=64,
+                            preserve_storage=False,
+                            encrypt_conf=None):
+
+        """ create metric store
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type ttl: int
+        :param ttl: the life cycle of log in the logstore in days, default 30, up to 3650
+
+        :type shard_count: int
+        :param shard_count: the shard count of the logstore to create, default 2
+
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking, default is False
+
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
+
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
+        +       {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
+
+        :return: CreateMetricsStoreResponse
+
+        :raise: LogException
+        """
+
+        logstore_response = self.create_logstore(project_name, logstore_name, ttl=ttl,
+                                   shard_count=shard_count,
+                                   enable_tracking=enable_tracking,
+                                   append_meta=append_meta,
+                                   auto_split=auto_split,
+                                   max_split_shard=max_split_shard,
+                                   preserve_storage=preserve_storage,
+                                   encrypt_conf=encrypt_conf,
+                                   telemetry_type='Metrics')
+        keys = [
+            {'name': '__name__', 'type': 'text'},
+            {'name': '__labels__', 'type': 'text'},
+            {'name': '__time_nano__', 'type': 'long'},
+            {'name': '__value__', 'type': 'double'},
+        ]
+        substore_response = self.create_substore(project_name, logstore_name, 'prom', ttl=ttl,
+                                   keys=keys, sorted_key_count=2, time_index=2)
+        return CreateMetricsStoreResponse(logstore_response, substore_response)
+
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
