@@ -920,6 +920,7 @@ OSS以JSON格式投递（注意storage.detail.columns为空是必须的，这个
     "roleArn": "acs:ram::1234:role/aliyunlogdefaultrole",
     "storage": {
       "detail": {
+        "enableTag": true,
         "columns": [
         ]
       },
@@ -933,7 +934,7 @@ OSS以JSON格式投递（注意storage.detail.columns为空是必须的，这个
 
 - 获取配置
 
-  通过`get_shipper_config`获取一个投递配置的具体信息.
+  通过`get_shipper`获取一个投递配置的具体信息.
 
 - 更新配置
 
