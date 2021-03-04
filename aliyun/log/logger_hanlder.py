@@ -440,7 +440,7 @@ class QueuedLogHandler(SimpleLogHandler):
             self.handleError(record)
 
     def _get_batch_requests(self, timeout=None):
-        """try to get request as fast as possible, once empty and stop falg or time-out, just return Empty"""
+        """try to get request as fast as possible, once empty and stop flag or time-out, just return Empty"""
         reqs = []
         s = time()
         while len(reqs) < self.batch_size and (time() - s) < timeout:
