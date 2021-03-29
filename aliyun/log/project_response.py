@@ -8,7 +8,11 @@
 from .logresponse import LogResponse
 from .util import Util
 
-__all__ = ['CreateProjectResponse', 'DeleteProjectResponse', 'GetProjectResponse', 'ListProjectResponse']
+__all__ = [
+    'CreateProjectResponse', 'DeleteProjectResponse',
+    'GetProjectResponse', 'ListProjectResponse',
+    'GetProjectTagsResponse',
+]
 
 
 class CreateProjectResponse(LogResponse):
@@ -115,3 +119,17 @@ class ListProjectResponse(LogResponse):
         }
 
         return self
+
+
+class GetProjectTagsResponse(LogResponse):
+    def __init__(self, header, resp):
+        LogResponse.__init__(self, header, resp)
+        self._next_token = resp["nextToken"]
+        self._tags = {tag["tagKey"]: tag["tagValue"] for tag in resp["tagResources"]}
+
+    def get_tags(self):
+        return self._tags
+
+    @property
+    def next_token(self):
+        return self._next_token
