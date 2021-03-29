@@ -2122,6 +2122,47 @@ class LogClient(object):
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteProjectResponse(header, resp)
 
+    def tag_project(self, project_name, **tags):
+        print(tags)
+        resource = "/tag"
+        body = {
+            "resourceType": "project",
+            "resourceId": [project_name],
+            "tags": [{"key": str(k), "value": str(v)} for k, v in tags.items()],
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", None, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def untag_project(self, project_name, *tag_keys):
+        resource = "/untag"
+        body = {
+            "resourceType": "project",
+            "resourceId": [project_name],
+            "tags": tag_keys,
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", None, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def get_project_tags(self, project_name, **filer_tags):
+        resource = "/tags"
+        filer_tags = [{"key": str(k), "value": str(v)} for k, v in filer_tags.items()]
+        params = {
+            "resourceType": "project",
+            "resourceId": json.dumps([project_name]),
+            "tags": json.dumps(filer_tags),
+            "nextToken": "",
+        }
+        while True:
+            resp, header = self._send("GET", None, None, resource, params, {})
+            resp = GetProjectTagsResponse(header, resp)
+            yield resp
+
+            if resp.next_token == "":
+                break
+            params["nextToken"] = resp.next_token
+
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
         """ create consumer group
 
