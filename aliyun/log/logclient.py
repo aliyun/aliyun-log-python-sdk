@@ -80,6 +80,22 @@ MAX_GET_LOG_PAGING_SIZE = 100
 DEFAULT_QUERY_RETRY_COUNT = 5
 DEFAULT_QUERY_RETRY_INTERVAL = 0.5
 
+DEFAULT_REFRESH_RETRY_COUNT = 5
+DEFAULT_REFRESH_RETRY_DELAY = 30
+MIN_REFRESH_INTERVAL = 300
+
+_auth_code_set = {"Unauthorized", "InvalidAccessKeyId.NotFound", 'SecurityToken.Expired', "InvalidAccessKeyId", 'SecurityTokenExpired'}
+_auth_partial_code_set = {"Unauthorized", "InvalidAccessKeyId", "SecurityToken"}
+
+
+def _is_auth_err(status, code, msg):
+    if code in _auth_code_set:
+        return True
+    for m in _auth_partial_code_set:
+        if m in code or m in msg:
+            return True
+    return False
+
 
 def _apply_cn_keys_patch():
     """
@@ -142,6 +158,30 @@ class LogClient(object):
         self._securityToken = securityToken
 
         self._user_agent = USER_AGENT
+        self._credentials_auto_refresher = None
+        self._last_refresh = 0
+
+    def _replace_credentials(self):
+        delta = time.time() - self._last_refresh
+        if delta < MIN_REFRESH_INTERVAL:
+            logger.warning("refresh credentials wait, because of too frequent refresh")
+            time.sleep(MIN_REFRESH_INTERVAL - delta)
+
+        logger.info("refresh credentials, start")
+        self._last_refresh = time.time()
+        for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
+            try:
+                self._accessKeyId, self._accessKey, self._securityToken = self._credentials_auto_refresher()
+            except Exception as ex:
+                logger.error(
+                    "failed to call _credentials_auto_refresher to refresh credentials, details: {0}".format(str(ex)))
+                time.sleep(DEFAULT_REFRESH_RETRY_DELAY)
+            else:
+                logger.info("call _credentials_auto_refresher to auto refresh credentials successfully.")
+                return
+
+    def set_credentials_auto_refresher(self, refresher):
+        self._credentials_auto_refresher = refresher
 
     @property
     def timeout(self):
@@ -290,6 +330,15 @@ class LogClient(object):
                         or (ex.get_error_code() == 'LogRequestError'
                             and 'httpconnectionpool' in ex.get_error_message().lower()):
                     time.sleep(1)
+                    continue
+                elif self._credentials_auto_refresher and _is_auth_err(ex.resp_status, ex.get_error_code(), ex.get_error_message()):
+                    if ex.get_error_code() not in ("SecurityToken.Expired", "SecurityTokenExpired"):
+                        logger.warning(
+                            "request with authentication error",
+                            exc_info=True,
+                            extra={"error_code": "AuthenticationError"},
+                        )
+                    self._replace_credentials()
                     continue
                 else:
                     sig_retry += 1

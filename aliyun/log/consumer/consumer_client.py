@@ -20,12 +20,14 @@ class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
 
 class ConsumerClient(object):
     def __init__(self, endpoint, access_key_id, access_key, project,
-                 logstore, consumer_group, consumer, security_token=None):
+                 logstore, consumer_group, consumer, security_token=None, credentials_refresher=None):
 
         from .. import LogClient
 
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token)
         self.mclient.set_user_agent('%s-consumergroup-%s' % (USER_AGENT, consumer_group))
+        if credentials_refresher is not None:
+            self.mclient.set_credentials_auto_refresher(credentials_refresher)
         self.mproject = project
         self.mlogstore = logstore
         self.mconsumer_group = consumer_group
