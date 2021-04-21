@@ -1156,7 +1156,8 @@ class LogClient(object):
                         auto_split=None,
                         max_split_shard=None,
                         preserve_storage=None,
-                        encrypt_conf=None
+                        encrypt_conf=None,
+                        telemetry_type=''
                         ):
         """
         update the logstore meta info
@@ -1201,6 +1202,8 @@ class LogClient(object):
 +                        "region_id" :                   # the region id of cmk_key_id
 +                    }
 +                }
+        :type telemetry_type: string
+        :param telemetry_type: the Telemetry type
 
         :return: UpdateLogStoreResponse
         
@@ -1236,7 +1239,8 @@ class LogClient(object):
             "shardCount": shard_count,
             "autoSplit": auto_split,
             "maxSplitShard": max_split_shard,
-            "appendMeta": append_meta
+            "appendMeta": append_meta,
+            "telemetryType": telemetry_type
         }
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
