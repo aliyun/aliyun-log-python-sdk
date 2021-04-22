@@ -63,12 +63,13 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
     # list logstore and copy them
     offset, size = 0, default_fetch_size
-    source_logstores = set()
+    source_logstores, all_source_logstores = set(), set()
     while True:
         ret = from_client.list_logstore(from_project, offset=offset, size=size)
         count = ret.get_logstores_count()
         total = ret.get_logstores_total()
         source_logstores = set(ret.get_logstores())
+        all_source_logstores = all_source_logstores.union(source_logstores)
         for logstore_name in source_logstores:
             # copy logstore
             ret = from_client.get_logstore(from_project, logstore_name)
@@ -129,7 +130,7 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
         for config_name in ret.get_configs():
             ret = from_client.get_logtail_config(from_project, config_name)
-            if ret.logtail_config.logstore_name not in source_logstores:
+            if ret.logtail_config.logstore_name not in all_source_logstores:
                 continue
 
             source_configs.add(config_name)

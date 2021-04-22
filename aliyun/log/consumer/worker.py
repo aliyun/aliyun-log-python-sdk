@@ -34,7 +34,8 @@ class ConsumerWorker(Thread):
         self.consumer_client = \
             ConsumerClient(consumer_option.endpoint, consumer_option.accessKeyId, consumer_option.accessKey,
                            consumer_option.project, consumer_option.logstore, consumer_option.consumer_group_name,
-                           consumer_option.consumer_name, consumer_option.securityToken)
+                           consumer_option.consumer_name, consumer_option.securityToken,
+                           credentials_refresher=consumer_option.credentials_refresher)
         self.shut_down_flag = False
         self.logger = ConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"consumer_worker": self})
