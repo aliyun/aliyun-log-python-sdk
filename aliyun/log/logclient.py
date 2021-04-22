@@ -1157,7 +1157,7 @@ class LogClient(object):
                         max_split_shard=None,
                         preserve_storage=None,
                         encrypt_conf=None,
-                        telemetry_type=''
+                        telemetry_type=None
                         ):
         """
         update the logstore meta info
@@ -1240,8 +1240,9 @@ class LogClient(object):
             "autoSplit": auto_split,
             "maxSplitShard": max_split_shard,
             "appendMeta": append_meta,
-            "telemetryType": telemetry_type
         }
+        if telemetry_type != None:
+            body["telemetry_type"] = telemetry_type
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
         body_str = six.b(json.dumps(body))
@@ -3265,6 +3266,72 @@ class LogClient(object):
         resource = "/logstores/" + logstore_name + "/substores/storage/ttl?ttl=" + str(ttl)
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return UpdateSubStoreTTLResponse(header, resp)
+
+    def update_metric_store(self, project_name, logstore_name, ttl=None, enable_tracking=None, shard_count=None,
+                        append_meta=None,
+                        auto_split=None,
+                        max_split_shard=None,
+                        preserve_storage=None,
+                        encrypt_conf=None
+                        ):
+        """
+        update the metricstore meta info
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type ttl: int
+        :param ttl: the life cycle of log in the logstore in days
+
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking
+
+        :type shard_count: int
+        :param shard_count: deprecated, the shard count could only be updated by split & merge
+
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
+
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
++                {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
+        :type telemetry_type: string
+        :param telemetry_type: the Telemetry type
+
+        :return: UpdateLogStoreResponse
+
+        :raise: LogException
+        """
+
+        return self.update_logstore(project_name, logstore_name, ttl=ttl, enable_tracking=enable_tracking, shard_count=shard_count,
+                        append_meta=append_meta,
+                        auto_split=auto_split,
+                        max_split_shard=max_split_shard,
+                        preserve_storage=preserve_storage,
+                        encrypt_conf=encrypt_conf,
+                        telemetry_type='Metrics')
 
     def create_metric_store(self, project_name, logstore_name,
                             ttl=30,
