@@ -307,7 +307,6 @@ class LogClient(object):
         retry_times = range(10) if 'log-cli-v-' not in self._user_agent else cycle(range(10))
         last_err = None
         url = url + resource
-        sig_retry = 0
         for _ in retry_times:
             try:
                 headers2 = copy(headers)
@@ -340,13 +339,7 @@ class LogClient(object):
                         )
                     self._replace_credentials()
                     continue
-                else:
-                    sig_retry += 1
-                    if sig_retry >= 10:
-                        raise
-                    else:
-                        time.sleep(1)
-                        continue
+                raise
 
         raise last_err
 
