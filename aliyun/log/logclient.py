@@ -1295,46 +1295,45 @@ class LogClient(object):
 
                 (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
             else:
-                def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
-                    """ list the logstore in a projectListLogStoreResponse
-                    Unsuccessful opertaion will cause an LogException.
-
-                    :type project_name: string
-                    :param project_name: the Project name
-
-                    :type logstore_name_pattern: string
-                    :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names contain this sub name
-
-                    :type offset: int
-                    :param offset: the offset of all the matched names
-
-                    :type size: int
-                    :param size: the max return names count, -1 means all
-
-                    :return: ListLogStoreResponse
-
-                    :raise: LogException
-                    """
-
-                    # need to use extended method to get more
-                    if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
-                        return list_more(self.list_logstore, int(offset), int(size), MAX_LIST_PAGING_SIZE,
-                                         project_name, logstore_name_pattern)
-
-                    headers = {}
-                    params = {}
-                    resource = "/logstores"
-                    if logstore_name_pattern is not None:
-                        params['logstoreName'] = logstore_name_pattern
-                    params['offset'] = str(offset)
-                    params['size'] = str(size)
-                    (resp, header) = self._send("GET", project_name, None, resource, params, headers)
-                    return ListLogStoreResponse(resp, header)
-
                 raise
 
         return UpdateLogStoreResponse(header, resp)
 
+    def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
+        """ list the logstore in a projectListLogStoreResponse
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name_pattern: string
+        :param logstore_name_pattern: the sub name logstore, used for the server to return logstore names contain this sub name
+
+        :type offset: int
+        :param offset: the offset of all the matched names
+
+        :type size: int
+        :param size: the max return names count, -1 means all
+
+        :return: ListLogStoreResponse
+
+        :raise: LogException
+        """
+
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logstore, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, logstore_name_pattern)
+
+        headers = {}
+        params = {}
+        resource = "/logstores"
+        if logstore_name_pattern is not None:
+            params['logstoreName'] = logstore_name_pattern
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListLogStoreResponse(resp, header)
 
     def create_external_store(self, project_name, config):
         """ create log store 
@@ -2491,7 +2490,7 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, project_name_pattern = None, offset=0, size=100):
+    def list_project(self, project_name_pattern=None, offset=0, size=100):
         """ list the project
         Unsuccessful opertaion will cause an LogException.
 
