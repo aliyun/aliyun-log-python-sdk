@@ -2490,7 +2490,7 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, project_name_pattern=None, offset=0, size=100):
+    def list_project(self, offset=0, size=100, project_name_pattern=None):
         """ list the project
         Unsuccessful opertaion will cause an LogException.
 
