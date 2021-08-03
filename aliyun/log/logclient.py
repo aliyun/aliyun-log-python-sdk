@@ -2490,9 +2490,12 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, offset=0, size=100):
+    def list_project(self, offset=0, size=100, project_name_pattern=None):
         """ list the project
         Unsuccessful opertaion will cause an LogException.
+
+        :type project_name_pattern: string
+        :param project_name_pattern: the sub name project, used for the server to return project names contain this sub name
 
         :type offset: int
         :param offset: the offset of all the matched names
@@ -2512,6 +2515,8 @@ class LogClient(object):
         headers = {}
         params = {}
         resource = "/"
+        if project_name_pattern is not None:
+            params['projectName'] = project_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
