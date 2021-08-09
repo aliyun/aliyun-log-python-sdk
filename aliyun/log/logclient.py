@@ -2048,10 +2048,10 @@ class LogClient(object):
         :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
 
         :type offset: int
-        :param offset: the begin task offset, -1 means all
+        :param offset: the begin task offset
 
         :type size: int
-        :param size: the needed tasks count
+        :param size: the needed tasks count, -1 means all
 
         :return: GetShipperTasksResponse
         

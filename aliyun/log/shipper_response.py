@@ -247,16 +247,10 @@ class GetShipperTasksResponse(LogResponse):
 
         self.count += response.get_count()
         self.total = response.get_total()  # use the latest total count
-        self.running_count += response.get_running_task_ids()
+        self.running_count += response.get_running_task_count()
         self.success_count += response.get_success_task_count()
         self.fail_count += response.get_fail_task_count()
         self.tasks.extend(response.get_tasks())
-
-        for task_res in response['tasks']:
-            task = ShipperTask(task_res['id'], task_res['taskStatus'], task_res['taskMessage'],
-                               task_res['taskCreateTime'],
-                               task_res['taskLastDataReceiveTime'], task_res['taskFinishTime'])
-            self.tasks.append(task)
 
         # update body
         self.body['count'] = self.count
