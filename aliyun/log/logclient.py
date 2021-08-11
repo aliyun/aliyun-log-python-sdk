@@ -645,7 +645,7 @@ class LogClient(object):
                             query, reverse, offset, size)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
-                    query=None, reverse=False, offset=0):
+                    query=None, reverse=False, offset=0, page_size=5000):
         """ Get logs from log service. will retry when incomplete.
         Unsuccessful opertaion will cause an LogException. different with `get_log` with size=-1,
         It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
@@ -679,16 +679,23 @@ class LogClient(object):
 
         :raise: LogException
         """
+        stats_query = is_stats_query(query)
         while True:
-            response = self.get_log(project, logstore, from_time, to_time, topic=topic,
-                                    query=query, reverse=reverse, offset=offset, size=100)
+            response = None
+            if stats_query:
+                limit_query = "%s limit %d,%d" % (query, offset, page_size)
+                response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=limit_query, reverse=reverse, size=page_size)
+            else:
+                response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=query, reverse=reverse, offset=offset, size=page_size)
 
             yield response
 
             count = response.get_count()
             offset += count
 
-            if count == 0 or is_stats_query(query):
+            if count == 0:
                 break
 
     def get_context_logs(self, project, logstore, pack_id, pack_meta, back_lines, forward_lines):
