@@ -36,10 +36,13 @@ class GetLogsRequest(LogRequest):
     
     :type reverse: bool
     :param reverse: if reverse is set to true, the query will return the latest logs first
+
+    :type power_sql: bool
+    :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=100, offset=0, reverse=False):
+                 query=None, line=100, offset=0, reverse=False, power_sql=False):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime
@@ -49,6 +52,7 @@ class GetLogsRequest(LogRequest):
         self.line = line
         self.offset = offset
         self.reverse = reverse
+        self.power_sql = power_sql
 
     def get_logstore(self):
         """ Get logstore name
@@ -170,6 +174,21 @@ class GetLogsRequest(LogRequest):
         """
         self.reverse = reverse
 
+    def get_power_sql(self):
+        """ Get request power_sql flag
+
+        :return: bool, power_sql flag
+        """
+        return self.power_sql
+
+    def set_power_sql(self, power_sql):
+        """ Set request power_sql flag
+
+        :type power_sql: bool
+        :param power_sql: power_sql flag
+        """
+        self.power_sql = power_sql
+
 
 class GetProjectLogsRequest(LogRequest):
     """ The request used to get logs by a query from log cross multiple logstores.
@@ -179,11 +198,15 @@ class GetProjectLogsRequest(LogRequest):
 
     :type query: string
     :param query: user defined query
+
+    :type power_sql: bool
+    :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
     """
 
-    def __init__(self, project=None, query=None):
+    def __init__(self, project=None, query=None, power_sql=False):
         LogRequest.__init__(self, project)
         self.query = query
+        self.power_sql = power_sql
 
     def get_query(self):
         """ Get user defined query
@@ -199,3 +222,18 @@ class GetProjectLogsRequest(LogRequest):
         :param query: user defined query
         """
         self.query = query
+
+    def get_power_sql(self):
+        """ Get request power_sql flag
+
+        :return: bool, power_sql flag
+        """
+        return self.power_sql
+
+    def set_power_sql(self, power_sql):
+        """ Set request power_sql flag
+
+        :type power_sql: bool
+        :param power_sql: power_sql flag
+        """
+        self.power_sql = power_sql
