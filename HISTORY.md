@@ -1,5 +1,16 @@
 # Release History
 
+### 0.6.57 (2020-09-09)
+----------------------------
+**Implementations**
+- Add executeSQl apis
+- Add extra parameter power_sql in get_log/get_logs/get_log_all
+- Add SQL related headers(x-log-**) on GetLogResponse
+
+**Fixing**
+- fix typo
+
+
 ### 0.6.48 (2020-03-20)
 ----------------------------
 **Implementations**
