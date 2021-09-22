@@ -2,9 +2,35 @@
 
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
+import logging
+from .logexception import LogException
+
+logger = logging.getLogger(__name__)
+
+class ExternalStoreConfigBase(object):
+    def __init__(self, externalStoreName, storeType):
+        pass
+
+    def to_json(self):
+        pass
+
+    @staticmethod
+    def from_json(json_value):
+        storeType = json_value["storeType"]
+        if storeType == 'rds-vpc':
+            return ExternalStoreConfig.from_json(json_value)
+        elif storeType == 'oss':
+            return ExternalStoreOssConfig.from_json(json_value)
+        elif storeType == 'csv':
+            return ExternalStoreCsvConfig.from_json(json_value)
+        else:
+            raise LogException("Unknown storeType", "please contact support")
+
+    def log_print(self):
+        pass
 
 
-class ExternalStoreConfig(object):
+class ExternalStoreConfig(ExternalStoreConfigBase):
     """
 
     """
@@ -42,8 +68,8 @@ class ExternalStoreConfig(object):
 
     @staticmethod
     def from_json(json_value):
-        externalStoreName = json_value["externalStoreName"]
         storeType = json_value["storeType"]
+        externalStoreName = json_value["externalStoreName"]
         vpcId = json_value["parameter"].get("vpc-id", "")
         instanceId = json_value["parameter"].get("instance-id", "")
         host = json_value["parameter"].get("host", "")
@@ -68,3 +94,112 @@ class ExternalStoreConfig(object):
         print("password", self.password)
         print("db", self.database)
         print("table", self.table)
+
+
+class ExternalStoreOssConfig(ExternalStoreConfigBase):
+    """
+
+    """
+
+    def __init__(self, externalStoreName, objects, columns, endpoint, bucket, accessid, accesskey):
+        self.externalStoreName = externalStoreName
+        self.storeType = 'oss'
+        self.objects = objects
+        self.columns = columns
+        self.bucket = bucket
+        self.accessid = accessid
+        self.accesskey = accesskey
+        self.endpoint = endpoint
+
+    def to_json(self):
+        json_value = {}
+        json_value["externalStoreName"] = self.externalStoreName
+        json_value["storeType"] = self.storeType
+        param = {}
+        param["endpoint"] = self.endpoint
+        param["bucket"] = self.bucket
+        param["accessid"] = self.accessid
+        param["accesskey"] = self.accesskey
+        param["columns"] = self.columns
+        param["objects"] = self.objects
+        json_value["parameter"] = param
+        return json_value
+
+    @staticmethod
+    def from_json(json_value):
+        externalStoreName = json_value["externalStoreName"]
+        storeType = json_value["storeType"]
+        endpoint = json_value["parameter"]["endpoint"]
+        bucket = json_value["parameter"]["bucket"]
+        accessid = json_value["parameter"]["accessid"]
+        accesskey = json_value["parameter"]["accesskey"]
+        columns = json_value["parameter"]["columns"]
+        objects = json_value["parameter"]["objects"]
+
+        return ExternalStoreOssConfig(externalStoreName, objects, columns,
+                                      endpoint, bucket, accessid, accesskey)
+
+    def log_print(self):
+        print("externalStoreName", self.externalStoreName)
+        print ("storeType", self.storeType)
+        print("endpoint", self.endpoint)
+        print("bucket", self.bucket)
+        print("accessid", self.accessid)
+        print("accesskey", self.accesskey)
+        print("columns", self.columns)
+        print("objects", self.objects)
+
+class ExternalStoreCsvConfig(ExternalStoreConfigBase):
+    def __init__(self, externalStoreName, externalStoreCsvFile, columns, resp = False):
+        import zlib
+        import base64
+        self.externalStoreName = externalStoreName
+        self.columns = columns
+        self.objects = [externalStoreCsvFile,]
+        self.storeType = 'csv'
+        if not resp:
+            externalStoreCsvFh = open(externalStoreCsvFile, 'rb')
+            externalStoreCsv = externalStoreCsvFh.read()
+            externalStoreCsvFh.close()
+            self.externalStoreCsvSize = len(externalStoreCsv)
+            maxOriSize = 50 * 1000 * 1000
+            maxSize = 10 * 1000 * 1000  - 10 * 1000
+            if self.externalStoreCsvSize > maxOriSize:
+                # too large
+                raise LogException("ExternalStoreCsvConfig", "csv file size too large, max " + str(maxOriSize))
+            externalStoreCsvCompressed = zlib.compress(externalStoreCsv)
+            self.externalStoreCsvCompressedBase64 = base64.standard_b64encode(externalStoreCsvCompressed).decode()
+            if len(self.externalStoreCsvCompressedBase64) > maxSize:
+                raise LogException("ExternalStoreCsvConfig",
+                                   "size of csv file after compressed too large, max " + str(maxSize)
+                                   + "now size: " + str(len(self.externalStoreCsvCompressedBase64)))
+
+    def to_json(self):
+        json_value = {}
+        json_value["externalStoreName"] = self.externalStoreName
+        json_value["storeType"] = self.storeType
+        param = {}
+        param["columns"] = self.columns
+        param["objects"] = self.objects
+        param["externalStoreCsv"] = self.externalStoreCsvCompressedBase64
+        param["externalStoreCsvSize"] = self.externalStoreCsvSize
+        json_value["parameter"] = param
+        return json_value
+
+    @staticmethod
+    def from_json(json_value):
+        externalStoreName = json_value["externalStoreName"]
+        storeType = json_value["storeType"]
+        endpoint = json_value["parameter"]["endpoint"]
+        columns = json_value["parameter"]["columns"]
+        objects = json_value["parameter"]["objects"]
+
+        return ExternalStoreCsvConfig(externalStoreName, objects, columns, True)
+
+    def log_print(self):
+        print("externalStoreName", self.externalStoreName)
+        print("storeType", self.storeType)
+        print("columns", self.columns)
+        #print("objects", self.objects)
+
+

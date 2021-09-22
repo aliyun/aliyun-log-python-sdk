@@ -8,7 +8,7 @@ __all__ = ['CreateExternalStoreResponse', 'DeleteExternalStoreResponse', 'GetExt
 
 from .util import Util
 from .logresponse import LogResponse
-from .external_store_config import ExternalStoreConfig
+from .external_store_config import ExternalStoreConfigBase
 
 
 class CreateExternalStoreResponse(LogResponse):
@@ -53,7 +53,7 @@ class GetExternalStoreResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.externalStoreConfig = ExternalStoreConfig.from_json(resp)
+        self.externalStoreConfig = ExternalStoreConfigBase.from_json(resp)
 
     def get_external_store_config(self):
         """

@@ -122,6 +122,48 @@ def main():
     res = client.delete_external_store(project, "rds_store")
     res.log_print()
 
+    # 创建oss外部数据源
+    res = client.create_external_store(project,
+                                       ExternalStoreOssConfig("oss_store", ["user.csv"],
+                                                              [
+                                                                  {"name" : "userid", "type" : "bigint"},
+                                                                  {"name" : "nick", "type" : "varchar"},
+                                                                  {"name" : "gender", "type" : "varchar"},
+                                                                  {"name" : "province", "type" : "varchar"},
+                                                                  {"name" : "age", "type" : "bigint"}
+                                                              ],
+                                                              "oss-cn-hangzhou-internal.aliyuncs.com",
+                                                              "testoss******",
+                                                              "ak***********",
+                                                              "ak***********"))
+
+    res.log_print()
+    res = client.get_external_store(project, "oss_store")
+    res.log_print()
+    res = client.list_external_store(project, "")
+    res.log_print()
+    res = client.delete_external_store(project, "oss_store")
+    res.log_print()
+
+    # 通过本地文件创建oss外部数据源
+    res = client.create_external_store(project,
+                                       ExternalStoreCsvConfig("oss_store_local", "user.csv",
+                                                              [
+                                                                  {"name" : "userid", "type" : "bigint"},
+                                                                  {"name" : "nick", "type" : "varchar"},
+                                                                  {"name" : "gender", "type" : "varchar"},
+                                                                  {"name" : "province", "type" : "varchar"},
+                                                                  {"name" : "age", "type" : "bigint"}
+                                                              ]))
+
+    res.log_print()
+    res = client.get_external_store(project, "oss_store_local")
+    res.log_print()
+    res = client.list_external_store(project, "")
+    res.log_print()
+    res = client.delete_external_store(project, "oss_store_local")
+    res.log_print()
+
     # 使用python sdk进行查询分析
     req4 = GetLogsRequest(project, logstore, From, To, topic, "* | select count(1)", 10, 0, False)
     res = client.get_logs(req4)
