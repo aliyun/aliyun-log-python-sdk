@@ -25,13 +25,13 @@ class GetLogsResponse(LogResponse):
         LogResponse.__init__(self, header, resp)
         try:
             self.progress = Util.h_v_t(header, 'x-log-progress')
-            self.processed_rows = Util.h_v_t(header, 'x-log-processed-rows')
-            self.elapsed_mills = Util.h_v_t(header, 'x-log-elapsed-millisecond')
-            self.has_sql = Util.h_v_t(header, 'x-log-has-sql')
-            self.where_query = Util.h_v_t(header, 'x-log-where-query')
-            self.agg_query = Util.h_v_t(header, 'x-log-agg-query')
-            self.cpu_sec = Util.h_v_t(header, 'x-log-cpu-sec')
-            self.cpu_cores = Util.h_v_t(header, 'x-log-cpu-cores')
+            self.processed_rows = Util.h_v_td(header, 'x-log-processed-rows', 0)
+            self.elapsed_mills = Util.h_v_td(header, 'x-log-elapsed-millisecond', 0)
+            self.has_sql = Util.h_v_td(header, 'x-log-has-sql', False)
+            self.where_query = Util.h_v_td(header, 'x-log-where-query', '')
+            self.agg_query = Util.h_v_td(header, 'x-log-agg-query', '')
+            self.cpu_sec = Util.h_v_td(header, 'x-log-cpu-sec', 0)
+            self.cpu_cores = Util.h_v_td(header, 'x-log-cpu-cores', 0)
             self.logs = []
             for data in resp:
                 contents = {}
@@ -110,7 +110,7 @@ class GetLogsResponse(LogResponse):
     def get_cpu_sec(self):
         """ Get cpu seconds used from the response
 
-        :return: cpu_sec, long
+        :return: cpu_sec, float
         """
         return self.cpu_sec
 
