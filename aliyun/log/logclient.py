@@ -41,6 +41,8 @@ from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
 from .shipper_response import *
+from .resource_response import *
+from .resource_params import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -3511,6 +3513,296 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListSqlInstanceResponse(header, resp)
 
+    def create_resource(self, resource):
+        """create resource
+        Unsuccessful operation will cause an LogException.
+        resource options: resource_name resource_type  [schema:List[ResourceSchemaItem],description,ext_info]
+
+        :type resource: instance:Resource
+        :param resource: resource obj
+        """
+        if not isinstance(resource, Resource):
+            raise TypeError("record must be instance of Resource ")
+        params = {}
+        resource.check_for_create()
+        body = {
+            "name": resource.get_resource_name(),
+            "type": resource.get_resource_type(),
+        }
+        description = resource.get_description()
+        schema_list = resource.get_schema()
+        acl = resource.get_acl()
+        ext_info = resource.get_ext_info()
+        if description:
+            body["description"] = description
+        if schema_list:
+            body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
+        if acl:
+            body["acl"] = json.dumps(acl)
+        if ext_info:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateResourceResponse(header, resp)
+
+    def delete_resource(self, resource_name):
+        """delete resource
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be %s" % str)
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteResourceResponse(header, resp)
+
+    def update_resource(self, resource):
+        """update resource
+        Unsuccessful operation will cause an LogException.
+        resource options: resource_name [schema,description,ext_info]
+
+        :type resource: Resource
+        :param resource: resource
+        """
+        if not isinstance(resource, Resource):
+            raise TypeError("resource type must be Resource instance")
+        params = {}
+        body = {}
+        resource.check_for_update()
+        description = resource.get_description()
+        schema_list = resource.get_schema()
+        ext_info = resource.get_ext_info()
+        if schema_list is not None:
+            body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
+        if description is not None:
+            body["description"] = description
+        if ext_info is not None:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource.get_resource_name()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateResourceResponse(header, resp)
+
+    def get_resource(self, resource_name):
+        """get resource
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be %s" % str)
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetResourceResponse(header, resp)
+
+    def list_resources(self, offset=0, size=100, resource_type=None, resource_names=None):
+        """ list resources
+        Unsuccessful operation will cause an LogException.
+
+        :type offset: int
+        :param offset: line offset of return resources
+
+        :type size: int
+        :param size: max line number of return resources
+
+        :type resource_type: string
+        :param resource_type: resource type
+
+        :type resource_names: list
+        :param resource_names: resource names witch need to be listed
+
+        :return: ListResourcesResponse
+        :raise: LogException
+        """
+        if resource_type and not isinstance(resource_type, str):
+            raise TypeError("resource_type type must be str")
+        if resource_names and not isinstance(resource_names, list):
+            raise TypeError("resource_names type must be list")
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if resource_names:
+            params["names"] = ",".join(resource_names)
+        if resource_type:
+            params["type"] = resource_type
+        resource = "/resources"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListResourcesResponse(resp, header)
+
+    def create_resource_record(self, resource_name, record):
+        """create resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record: ResourceRecord
+        :param record: record options: value,[record_id,tag]
+        """
+        if not isinstance(record, ResourceRecord):
+            raise TypeError("resource type must be ResourceRecord instance")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        params = {}
+        resource = "/resources/" + resource_name + "/records"
+        record.check_value()
+        body = {"value": json.dumps(record.get_value())}
+        record_id = record.get_record_id()
+        tag = record.get_tag()
+        if record_id:
+            body["id"] = record_id
+        if tag:
+            body["tag"] = tag
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateRecordResponse(header, resp)
+
+    def delete_resource_record(self, resource_name, record_ids):
+        """delete resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record_ids: list
+        :param record_ids: record id list which need to be deleted
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(record_ids, list):
+            raise TypeError("record_ids type must be list,element is record id which type is str")
+        headers = {}
+        params = {"ids": ",".join(record_ids)}
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteRecordResponse(header, resp)
+
+    def update_resource_record(self, resource_name, record):
+        """update resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record: ResourceRecord
+        :param record: record options: value,record_id,[tag]
+
+        """
+        if not isinstance(record, ResourceRecord):
+            raise TypeError("resource type must be instance of ResourceRecord")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        params = {}
+        record.check_for_update()
+        body = {"value": json.dumps(record.get_value())}
+        record_id = record.get_record_id()
+        tag = record.get_tag()
+        if tag is not None:
+            body["tag"] = tag
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource_name + "/records/" + record_id
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateRecordResponse(header, resp)
+
+    def upsert_resource_record(self, resource_name, records):
+        """upsert resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type records: list[ResourceRecord]
+        :param records: if record is exist,doUpdate,else doInsert
+        """
+        if not isinstance(records, list):
+            raise TypeError("resource type must be list ,element is instance of ResourceRecord")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not records:
+            raise ValueError("records is not be empty or None")
+        record_list = []
+        for record in records:
+            record.check_value()
+            record_dict = record.to_dict()
+            record_dict["value"] = json.dumps(record_dict.get("value"))
+            record_list.append(record_dict)
+        params = {}
+        body = {"records": record_list}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertRecordResponse(header, resp)
+
+    def get_resource_record(self, resource_name, record_id):
+        """get resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record_id: string
+        :param record_id: record id
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(record_id, str):
+            raise TypeError("record_id type must be str")
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name + "/records/" + record_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetRecordResponse(header, resp)
+
+    def list_resource_records(self, resource_name, tag=None, record_ids=None, offset=0, size=100):
+        """list resource records
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type tag: string
+        :param tag: record tag
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max records for each page
+
+        :type record_ids: list
+        :param record_ids: record id list witch need to be listed
+        """
+        if tag and not isinstance(tag, str):
+            raise TypeError("tag type must be str")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+        if record_ids and not isinstance(record_ids, list):
+            raise TypeError("record_ids type must be list,element is record id which type is str")
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if tag is not None:
+            params["tag"] = tag
+        if record_ids:
+            params["ids"] = ','.join(record_ids)
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListRecordResponse(resp, header)
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
