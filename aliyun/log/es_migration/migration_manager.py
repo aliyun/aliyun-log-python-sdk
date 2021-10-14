@@ -90,6 +90,7 @@ class MigrationConfig(object):
             hosts=None,
             indexes=None,
             query=None,
+            scroll="1d",
             time_reference=None,
             logstore_index_mappings=None,
             source=None,
@@ -114,6 +115,7 @@ class MigrationConfig(object):
                 'hosts': hosts,
                 'indexes': indexes,
                 'query': query,
+                'scroll': scroll,
                 'logstore_index_mappings': logstore_index_mappings,
                 'source': source,
                 'topic': topic,
@@ -138,6 +140,7 @@ class MigrationConfig(object):
                 'hosts': hosts,
                 'indexes': indexes,
                 'query': query,
+                'scroll': scroll,
                 'time_reference': time_reference,
                 'logstore_index_mappings': logstore_index_mappings,
                 'source': source,
@@ -420,7 +423,7 @@ def _migration_worker(config, task, shutdown_flag, es_version):
         'es_shard': task['es_shard'],
         'logstore': task['logstore'],
     }
-    print('migrate:', json.dumps(extra))
+    print('migrate:' + json.dumps(extra))
     logger = PrefixLoggerAdapter('', extra, _logger, {})
     logger.info('Migration worker starts')
     try:
@@ -450,6 +453,8 @@ def _migration_worker(config, task, shutdown_flag, es_version):
             batch_size=config.get('batch_size'),
             logger=logger,
             es_version=es_version,
+            es_query=config.get('query'),
+            es_scroll=config.get('scroll'),
         )
         return task.run()
     except BaseException:
