@@ -42,7 +42,7 @@ class Checkpoint(object):
             'progress': 0,
             'checkpoint': {
                 '_id': None,
-                'offset': {},
+                'offset': None,
             },
         }
         self._load()
@@ -71,7 +71,7 @@ class Checkpoint(object):
             self._content['checkpoint']['_id'] = _id
         self._content['progress'] += count
         if offset:
-            self._content['checkpoint']['offset'].update(offset)
+            self._content['checkpoint']['offset'] = offset
         ckpt_bak = self._ckpt_file + '.bak'
         try:
             os.rename(self._ckpt_file, ckpt_bak)
@@ -110,19 +110,17 @@ class Checkpoint(object):
 
 class MigrationTask(object):
 
-    scroll = '10m'
-
     def __init__(
             self, _id, es_client, es_index, es_shard,
             logstore, ckpt_path, batch_size, logger,
-            es_version, es_query=None, time_reference=None,
+            es_version, es_query=None, es_scroll="1d", time_reference=None,
     ):
         self._id = _id
         self._es_client = es_client
         self._es_index = es_index
         self._es_shard = es_shard
         self._es_query = es_query or {}
-        self._es_scroll_id = None
+        self._es_scroll = es_scroll
         self._logstore = logstore
         self._time_reference = time_reference
         self._batch_size = batch_size
@@ -136,23 +134,8 @@ class MigrationTask(object):
             self._time_reference,
             self._logger,
         )
-
-        id_key = '_id' if es_version >= 7 else '_uid'
-        if self._time_reference:
-            es_sort = [{self._time_reference: 'asc'}, {id_key: 'asc'}]
-        else:
-            es_sort = [{id_key: 'asc'}]
-        self._es_query['sort'] = es_sort
-        if self._time_reference in self._ckpt.offset:
-            self._es_query['query'] = {
-                'range': {
-                    self._time_reference: {
-                        'gte': self._ckpt.offset[self._time_reference],
-                        'format': 'strict_date_optional_time',
-                    }
-                }
-            }
         self._es_params = {'preference': '_shards:{:d}'.format(self._es_shard)}
+        self._es_scroll_id = self._ckpt.offset
 
     def run(self):
         # already finished
@@ -178,15 +161,6 @@ class MigrationTask(object):
             )
             self._ckpt.update(status=Checkpoint.failed)
 
-        try:
-            # clear active scroll
-            if self._es_scroll_id:
-                self._es_client.clear_scroll(
-                    body={'scroll_id': [self._es_scroll_id]},
-                    ignore=(404,)
-                )
-        except:
-            pass
         self._logger.info('Migration task exits', extra=self._ckpt.content)
         return self._ckpt.status
 
@@ -203,43 +177,29 @@ class MigrationTask(object):
         if checking:
             self._logger.info('Scanning migrated documents starts')
 
-        # initial search
-        resp = self._es_client.search(
-            index=self._es_index,
-            body=self._es_query,
-            scroll=self.scroll,
-            size=self._batch_size,
-            params=self._es_params,
-        )
-        self._es_scroll_id = resp.get('_scroll_id')
         rnd = 0
         while True:
-            if rnd > 0:
+            if self._es_scroll_id is None:
+                # initial search
+                resp = self._es_client.search(
+                    index=self._es_index,
+                    body=self._es_query,
+                    scroll=self._es_scroll,
+                    size=self._batch_size,
+                    params=self._es_params,
+                )
+            else:
                 resp = self._es_client.scroll(
                     scroll_id=self._es_scroll_id,
-                    scroll=self.scroll,
+                    scroll=self._es_scroll,
                 )
 
             hits = resp['hits']['hits']
-            empty = len(hits) <= 0
-            if checking and not empty:
-                # check the last document
-                if self._pending_doc(hits[-1], _id, offset):
-                    hits = filter(
-                        lambda h: self._pending_doc(h, _id, offset),
-                        hits,
-                    )
-                    hits = list(hits)
-                    checking = False
-                    self._logger.info('Scanning migrated documents ends')
-                else:
-                    hits = []
-            count = len(hits)
-            self._update_ckpt(self._put_docs(hits), count)
+            self._update_ckpt(self._put_docs(hits), len(hits))
 
             self._es_scroll_id = resp.get('_scroll_id')
             # end of scroll
-            if self._es_scroll_id is None or empty:
+            if self._es_scroll_id is None or len(hits) <= 0:
                 self._ckpt.update(status=Checkpoint.finished)
                 self._logger.info('Finished')
                 break
@@ -261,12 +221,9 @@ class MigrationTask(object):
         return is_new or doc['_id'] > _id
 
     def _update_ckpt(self, doc, count):
-        if not doc:
+        if doc is None:
             return
-        offset = {}
-        if self._time_reference:
-            offset = {self._time_reference: doc['_source'][self._time_reference]}
-        self._ckpt.update(count=count, _id=doc['_id'], offset=offset)
+        self._ckpt.update(count=count, _id=doc.get('_id'), offset=self._es_scroll_id)
 
     def _put_docs(self, docs):
         if len(docs) <= 0:
