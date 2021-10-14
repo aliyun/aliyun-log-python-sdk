@@ -2603,6 +2603,7 @@ class LogClient(object):
             wait_time_in_secs=None,
             auto_creation=True,
             retries_failed=None,
+            cache_duration="1d",
     ):
         """
         Migrate data from elasticsearch to aliyun log service (SLS)
@@ -2649,6 +2650,9 @@ class LogClient(object):
         :type retries_failed: int
         :param retries_failed: specify retrying times for failed tasks. e.g. 10
 
+        :type cache_duration: str
+        :param cache_duration: the max duration of non-updating cache, which is based on scroll of elasticsearch. Max duration is "1d". Default is "1d"
+
         :return: LogResponse
 
         :raise: Exception
@@ -2660,6 +2664,7 @@ class LogClient(object):
             hosts=hosts,
             indexes=indexes,
             query=query,
+            scroll=cache_duration,
             project_name=project_name,
             logstore_index_mappings=logstore_index_mappings,
             pool_size=pool_size,
