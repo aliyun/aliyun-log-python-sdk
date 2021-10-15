@@ -287,10 +287,11 @@ class MigrationManager(object):
             os.unlink(self._shutdown_flag)
 
         def _handle_term_sig(signum, frame):
-            # Raise Ctrl+C
+            msg = "termination signal received, exiting..."
+            print(msg)
+            _logger.info(msg)
             with open(self._shutdown_flag, 'w') as f:
                 f.write('')
-            raise KeyboardInterrupt()
 
         signal.signal(signal.SIGINT, _handle_term_sig)
         signal.signal(signal.SIGTERM, _handle_term_sig)
@@ -456,7 +457,7 @@ def _migration_worker(config, task, shutdown_flag, es_version):
             es_query=config.get('query'),
             es_scroll=config.get('scroll'),
         )
-        return task.run()
+        return task.run(shutdown_flag)
     except BaseException:
         logger.error(
             'Exception in migration worker',
