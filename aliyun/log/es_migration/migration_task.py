@@ -42,7 +42,7 @@ class Checkpoint(object):
             'progress': 0,
             'checkpoint': {
                 '_id': None,
-                'offset': None,
+                'scroll_id': None,
             },
         }
         self._load()
@@ -52,8 +52,8 @@ class Checkpoint(object):
         return self._content['checkpoint']['_id']
 
     @property
-    def offset(self):
-        return self._content['checkpoint']['offset']
+    def scroll_id(self):
+        return self._content['checkpoint']['scroll_id']
 
     @property
     def status(self):
@@ -63,15 +63,15 @@ class Checkpoint(object):
     def content(self):
         return self._content
 
-    def update(self, status=processing, count=0, _id=None, offset=None):
+    def update(self, status=processing, count=0, _id=None, scroll_id=None):
         now = datetime.now()
         self._content['update_time'] = now.isoformat(timespec='seconds')
         self._content['status'] = status
         if _id:
             self._content['checkpoint']['_id'] = _id
         self._content['progress'] += count
-        if offset:
-            self._content['checkpoint']['offset'] = offset
+        if scroll_id:
+            self._content['checkpoint']['scroll_id'] = scroll_id
         ckpt_bak = self._ckpt_file + '.bak'
         try:
             os.rename(self._ckpt_file, ckpt_bak)
@@ -135,16 +135,18 @@ class MigrationTask(object):
             self._logger,
         )
         self._es_params = {'preference': '_shards:{:d}'.format(self._es_shard)}
-        self._es_scroll_id = self._ckpt.offset
+        self._es_scroll_id = self._ckpt.scroll_id
+        self._status = self._ckpt.status
+        self._cnt, self._last = 0, None
 
-    def run(self):
+    def run(self, shutdown_flag):
         # already finished
         if self._ckpt.status == Checkpoint.finished:
             self._logger.info('Already finished. Ignore it.')
             return Checkpoint.finished
         self._logger.info('Migration task starts', extra=self._ckpt.content)
         try:
-            self._run()
+            self._run(shutdown_flag)
         except NotFoundError:
             self._ckpt.update(status=Checkpoint.dropped)
             self._logger.info(
@@ -152,33 +154,28 @@ class MigrationTask(object):
                 extra={'traceback': traceback.format_exc()},
             )
         except KeyboardInterrupt:
-            self._logger.info('Interrupted')
-            self._ckpt.update(status=Checkpoint.interrupted)
+            self._logger.info('Migration interrupted')
+            self._status = Checkpoint.interrupted
         except BaseException:
             self._logger.error(
                 'Exception',
                 extra={'traceback': traceback.format_exc()},
             )
-            self._ckpt.update(status=Checkpoint.failed)
+            self._status = Checkpoint.failed
+        finally:
+            self._ckpt.update(
+                status=self._status,
+                count=self._cnt,
+                _id=None if self._last is None else self._last.get('_id'),
+                scroll_id=self._es_scroll_id,
+            )
 
         self._logger.info('Migration task exits', extra=self._ckpt.content)
         return self._ckpt.status
 
-    def _run(self):
-        # check if document been processed before
-        checking, offset, _id = False, None, None
-        if self._time_reference and self._ckpt.offset:
-            offset = self._ckpt.offset.get(self._time_reference)
-            if offset:
-                checking = True
-        if self._ckpt.id:
-            _id = self._ckpt.id
-            checking = True
-        if checking:
-            self._logger.info('Scanning migrated documents starts')
-
+    def _run(self, shutdown_flag):
         rnd = 0
-        while True:
+        while not op.exists(shutdown_flag):
             if self._es_scroll_id is None:
                 # initial search
                 resp = self._es_client.search(
@@ -189,51 +186,44 @@ class MigrationTask(object):
                     params=self._es_params,
                 )
             else:
-                resp = self._es_client.scroll(
-                    scroll_id=self._es_scroll_id,
-                    scroll=self._es_scroll,
-                )
+                try:
+                    resp = self._es_client.scroll(
+                        scroll_id=self._es_scroll_id,
+                        scroll=self._es_scroll,
+                    )
+                except NotFoundError:
+                    msg = f"cache is expired, which is with duration {self._es_scroll}"
+                    self._logger.error(msg, exc_info=True)
+                    raise Exception(msg)
 
-            hits = resp['hits']['hits']
-            self._update_ckpt(self._put_docs(hits), len(hits))
+            scroll_id, hits = resp.get('_scroll_id'), resp['hits']['hits']
+            if len(hits) > 0:
+                self._put_docs(hits)
+                self._cnt += len(hits)
+                self._last = hits[-1]
 
-            self._es_scroll_id = resp.get('_scroll_id')
             # end of scroll
-            if self._es_scroll_id is None or len(hits) <= 0:
-                self._ckpt.update(status=Checkpoint.finished)
-                self._logger.info('Finished')
+            if scroll_id is None or len(hits) <= 0:
+                self._status = Checkpoint.finished
+                self._logger.info('Migration finished')
                 break
 
+            self._es_scroll_id = scroll_id
             rnd += 1
-            if rnd % 100 == 0:
-                if checking:
-                    self._logger.info('Scanning migrated documents')
-                else:
-                    self._logger.info(
-                        'Migration progress',
-                        extra=self._ckpt.content,
-                    )
-
-    def _pending_doc(self, doc, _id, offset):
-        is_new = False
-        if self._time_reference:
-            is_new = doc['_source'][self._time_reference] > offset
-        return is_new or doc['_id'] > _id
-
-    def _update_ckpt(self, doc, count):
-        if doc is None:
-            return
-        self._ckpt.update(count=count, _id=doc.get('_id'), offset=self._es_scroll_id)
+            if rnd % 100 == 0 or rnd == 1:
+                _id = self._last.get('_id')
+                self._ckpt.update(count=self._cnt, _id=_id, scroll_id=scroll_id)
+                self._cnt = 0
+                self._logger.info('Migration progress', extra=self._ckpt.content)
 
     def _put_docs(self, docs):
         if len(docs) <= 0:
-            return None
+            return
         logitems = [
             DocLogItemConverter.to_log_item(doc, self._time_reference)
             for doc in docs
         ]
         self._logstore.put_logs(logitems)
-        return docs[-1]
 
 
 class MigrationLogstore(object):
