@@ -11,6 +11,7 @@ MigrationManager 内部使用 [Scroll API](https://www.elastic.co/guide/en/elast
 | 参数 | 必选 | 说明 | 样例 |
 | -------- | -------- | -------- | -------- |
 | cache_path | yes | 用于缓存迁移进度的本地文件位置，实现断点续传。当存在迁移缓存的时候，以下参数中`time_reference`更改无效。对新的迁移任务，请确认指定路径为空文件夹，以防迁移任务受干扰。 | /path/to/cache |
+| cache_duration | no | 缓存有效时间，基于 elasticsearch scroll 实现。当前一次迁移操作退出时间长度超过该时间段时，缓存失效，不能继续使用于断点续传。默认值是 1d。 | 1d<br>20h |
 | hosts | yes | elasticsearch 数据源地址列表，多个 host 之间用逗号分隔。 | "127.0.0.1:9200"<br>"localhost:9200,other_host:9200"<br>"user:secret@localhost:9200" |
 | indexes | no | elasticsearch index 列表，多个 index 之间用逗号分隔，支持通配符(*)。<br>默认抓取目标 es 中所有 index 的数据。 | "index1"<br>"my_index*,other_index" |
 | query | no | 用于过滤文档，使用该参数您可以指定需要迁移的文档。<br>默认不会对文档进行过滤。 | '{"query": {"match": {"title": "python"}}}' |
