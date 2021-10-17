@@ -5,7 +5,7 @@
 **Implementations**
 - Add resources api
 - Update elasticsearch migration to use scroll
-- fix version of protobuf as 3.17.3 to keep compatible with Python 2
+- fix version of dependencies  to keep compatible with Python 2: protobuf<=3.17.3, dateparser<=0.7.6
 
 
 ### 0.6.57 (2021-09-09)
