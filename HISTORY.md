@@ -1,6 +1,14 @@
 # Release History
 
-### 0.6.57 (2020-09-09)
+### 0.7.0 (2021-10-17)
+----------------------------
+**Implementations**
+- Add resources api
+- Update elasticsearch migration to use scroll
+- fix version of protobuf as 3.17.3 to keep compatible with Python 2
+
+
+### 0.6.57 (2021-09-09)
 ----------------------------
 **Implementations**
 - Add executeSQl apis
