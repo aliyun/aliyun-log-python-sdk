@@ -139,7 +139,7 @@ class ResourceSchemaItem:
     }
 
     def __init__(self, column=None, ext_info=None, schema_type=None):
-        check_type_for_init(column=column, ext_info=ext_info, schema_type=schema_type, instance=self)
+        check_type_for_init(column=column ,schema_type=schema_type, instance=self)
         self.column = column
         self.ext_info = ext_info
         self.type = schema_type
@@ -154,7 +154,6 @@ class ResourceSchemaItem:
     def get_ext_info(self):
         return self.ext_info
 
-    @check_params("ext_info", str)
     def set_ext_info(self, ext_info):
         self.ext_info = ext_info
 
@@ -170,7 +169,7 @@ class ResourceSchemaItem:
         if self.get_column():
             schema_dict["column"] = self.get_column()
         if self.get_ext_info():
-            schema_dict["ext_info"] = self.get_column()
+            schema_dict["ext_info"] = self.get_ext_info()
         if self.get_schema_type():
             schema_dict["type"] = self.get_schema_type()
         return schema_dict
@@ -315,9 +314,10 @@ class Resource:
     def from_dict(cls, dict_data):
         schema_list = Util.convert_unicode_to_str(json.loads(dict_data.get("schema"))).get("schema")
         schema_instance_list = []
-        for schema in schema_list:
-            schema_instance_list.append(ResourceSchemaItem(column=schema.get("column"), schema_type=schema.get("type"),
-                                                           ext_info=schema.get("ext_info")))
+        if schema_list:
+            for schema in schema_list:
+                schema_instance_list.append(ResourceSchemaItem(column=schema.get("column"), schema_type=schema.get("type"),
+                                                               ext_info=schema.get("ext_info")))
         resource = Resource()
         resource.set_resource_name(dict_data.get("name"))
         resource.set_description(dict_data.get('description'))
