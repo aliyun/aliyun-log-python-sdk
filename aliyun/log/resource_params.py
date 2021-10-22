@@ -296,8 +296,6 @@ class Resource:
             result["create_time"] = self.create_time
         if self.last_modify_time:
             result["last_modify_time"] = self.last_modify_time
-        if self.last_modify_time:
-            result["last_modify_time"] = self.last_modify_time
         if self.resource_name:
             result["resource_name"] = self.resource_name
         if self.resource_type:
