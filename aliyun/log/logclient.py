@@ -3523,8 +3523,8 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
         resource options: resource_name resource_type  [schema:List[ResourceSchemaItem],description,ext_info]
 
-        :type resource: instance:Resource
-        :param resource: resource obj
+        :type resource: Resource
+        :param resource: instance of Resource
         """
         if not isinstance(resource, Resource):
             raise TypeError("record must be instance of Resource ")
@@ -3560,7 +3560,7 @@ class LogClient(object):
         :param resource_name: resource name
         """
         if not isinstance(resource_name, str):
-            raise TypeError("resource_name type must be %s" % str)
+            raise TypeError("resource_name type must be str")
         headers = {}
         params = {}
         resource = "/resources/" + resource_name
@@ -3573,7 +3573,7 @@ class LogClient(object):
         resource options: resource_name [schema,description,ext_info]
 
         :type resource: Resource
-        :param resource: resource
+        :param resource: instance of Resource
         """
         if not isinstance(resource, Resource):
             raise TypeError("resource type must be Resource instance")
@@ -3603,7 +3603,7 @@ class LogClient(object):
         :param resource_name: resource name
         """
         if not isinstance(resource_name, str):
-            raise TypeError("resource_name type must be %s" % str)
+            raise TypeError("resource_name type must be str")
         headers = {}
         params = {}
         resource = "/resources/" + resource_name
