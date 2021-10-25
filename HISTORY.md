@@ -1,5 +1,12 @@
 # Release History
 
+### 0.7.2 (2021-10-25)
+----------------------------
+**Fixing**
+- fix job type in list alert
+- fix ext_info in resource apis
+
+
 ### 0.7.0 (2021-10-17)
 ----------------------------
 **Implementations**
