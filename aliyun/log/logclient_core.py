@@ -168,13 +168,15 @@ def delete_entity(entity_name, logstore_level=None, root_resource=None):
     return fn
 
 
-def list_entity(entity_name, logstore_level=None, root_resource=None, max_batch_size=DEFAULT_MAX_LIST_PAGING_SIZE, entities_key=None, raw_resource_name=None):
+def list_entity(entity_name, logstore_level=None, root_resource=None, max_batch_size=DEFAULT_MAX_LIST_PAGING_SIZE, entities_key=None, raw_resource_name=None, job_type=None):
     def do_list(self, project, resource_path, offset=0, size=100):
         headers = {}
         params = {}
         resource_name = raw_resource_name if raw_resource_name else pluralize(entity_name)
         params['offset'] = str(offset)
         params['size'] = str(size)
+        if root_resource == '/jobs' and job_type:
+            params['jobType'] = str(job_type)
         (resp, header) = self._send("GET", project, None, resource_path, params, headers)
         return ListEntityResponse(header, resp, resource_name=resource_name, entities_key=entities_key)
 
@@ -315,8 +317,8 @@ def update_entity(entity_name, logstore_level=None, name_field=None, root_resour
     return fn
 
 
-def make_lcrud_methods(obj, entity_name, logstore_level=None, name_field=None, root_resource=None, entities_key=None, raw_resource_name=None):
-    setattr(obj, 'list_' + entity_name, list_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource, entities_key=entities_key, raw_resource_name=raw_resource_name))
+def make_lcrud_methods(obj, entity_name, logstore_level=None, name_field=None, root_resource=None, entities_key=None, raw_resource_name=None, job_type=None):
+    setattr(obj, 'list_' + entity_name, list_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource, entities_key=entities_key, raw_resource_name=raw_resource_name, job_type=job_type))
     setattr(obj, 'get_' + entity_name, get_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource))
     setattr(obj, 'delete_' + entity_name, delete_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource))
     setattr(obj, 'update_' + entity_name, update_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource, name_field=name_field))

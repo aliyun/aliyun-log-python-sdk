@@ -3809,7 +3809,8 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListRecordResponse(resp, header)
 
+
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
-make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
+make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
 make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
