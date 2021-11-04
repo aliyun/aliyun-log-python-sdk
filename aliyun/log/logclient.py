@@ -1265,7 +1265,8 @@ class LogClient(object):
                         auto_split=None,
                         max_split_shard=None,
                         preserve_storage=None,
-                        encrypt_conf=None
+                        encrypt_conf=None,
+                        hot_ttl=-1
                         ):
         """
         update the logstore meta info
@@ -1279,6 +1280,9 @@ class LogClient(object):
 
         :type ttl: int
         :param ttl: the life cycle of log in the logstore in days
+
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
 
         :type enable_tracking: bool
         :param enable_tracking: enable web tracking
@@ -1347,6 +1351,8 @@ class LogClient(object):
             "maxSplitShard": max_split_shard,
             "appendMeta": append_meta
         }
+        if hot_ttl !=-1:
+            body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
         body_str = six.b(json.dumps(body))
