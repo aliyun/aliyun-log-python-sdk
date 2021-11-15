@@ -29,9 +29,9 @@ install_requires_common = ['requests', 'six', 'python-dateutil', 'elasticsearch'
 install_requires = []
 
 if sys.version_info[:2] == (2, 6):
-    install_requires = [ 'protobuf <= 3.4.0', 'enum34', 'futures' ]
+    install_requires = ['protobuf <= 3.4.0', 'enum34', 'futures']
 elif sys.version_info[0] == 2:
-    install_requires = ['protobuf>=3.4.0', 'enum34', 'futures', 'dateparser']
+    install_requires = ['protobuf <= 3.17.3', 'enum34', 'futures', 'dateparser <= 0.7.6']
 elif sys.version_info[:2] == (3, 3):
     install_requires = ['protobuf>=3.4.0', 'enum34',  'dateparser']
 elif sys.version_info[0] == 3:

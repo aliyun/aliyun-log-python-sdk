@@ -17,6 +17,7 @@ from itertools import cycle
 from .acl_response import *
 from .consumer_group_request import *
 from .consumer_group_response import *
+from .getlogsrequest import *
 from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
@@ -24,6 +25,7 @@ from .getlogsresponse import GetLogsResponse
 from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
 from .ingestion_response import *
+from .sql_instance_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_core import make_lcrud_methods
@@ -39,6 +41,8 @@ from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
 from .shipper_response import *
+from .resource_response import *
+from .resource_params import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -79,6 +83,22 @@ MAX_GET_LOG_PAGING_SIZE = 100
 
 DEFAULT_QUERY_RETRY_COUNT = 5
 DEFAULT_QUERY_RETRY_INTERVAL = 0.5
+
+DEFAULT_REFRESH_RETRY_COUNT = 5
+DEFAULT_REFRESH_RETRY_DELAY = 30
+MIN_REFRESH_INTERVAL = 300
+
+_auth_code_set = {"Unauthorized", "InvalidAccessKeyId.NotFound", 'SecurityToken.Expired', "InvalidAccessKeyId", 'SecurityTokenExpired'}
+_auth_partial_code_set = {"Unauthorized", "InvalidAccessKeyId", "SecurityToken"}
+
+
+def _is_auth_err(status, code, msg):
+    if code in _auth_code_set:
+        return True
+    for m in _auth_partial_code_set:
+        if m in code or m in msg:
+            return True
+    return False
 
 
 def _apply_cn_keys_patch():
@@ -142,6 +162,30 @@ class LogClient(object):
         self._securityToken = securityToken
 
         self._user_agent = USER_AGENT
+        self._credentials_auto_refresher = None
+        self._last_refresh = 0
+
+    def _replace_credentials(self):
+        delta = time.time() - self._last_refresh
+        if delta < MIN_REFRESH_INTERVAL:
+            logger.warning("refresh credentials wait, because of too frequent refresh")
+            time.sleep(MIN_REFRESH_INTERVAL - delta)
+
+        logger.info("refresh credentials, start")
+        self._last_refresh = time.time()
+        for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
+            try:
+                self._accessKeyId, self._accessKey, self._securityToken = self._credentials_auto_refresher()
+            except Exception as ex:
+                logger.error(
+                    "failed to call _credentials_auto_refresher to refresh credentials, details: {0}".format(str(ex)))
+                time.sleep(DEFAULT_REFRESH_RETRY_DELAY)
+            else:
+                logger.info("call _credentials_auto_refresher to auto refresh credentials successfully.")
+                return
+
+    def set_credentials_auto_refresher(self, refresher):
+        self._credentials_auto_refresher = refresher
 
     @property
     def timeout(self):
@@ -267,7 +311,6 @@ class LogClient(object):
         retry_times = range(10) if 'log-cli-v-' not in self._user_agent else cycle(range(10))
         last_err = None
         url = url + resource
-        sig_retry = 0
         for _ in retry_times:
             try:
                 headers2 = copy(headers)
@@ -291,13 +334,16 @@ class LogClient(object):
                             and 'httpconnectionpool' in ex.get_error_message().lower()):
                     time.sleep(1)
                     continue
-                else:
-                    sig_retry += 1
-                    if sig_retry >= 10:
-                        raise
-                    else:
-                        time.sleep(1)
-                        continue
+                elif self._credentials_auto_refresher and _is_auth_err(ex.resp_status, ex.get_error_code(), ex.get_error_message()):
+                    if ex.get_error_code() not in ("SecurityToken.Expired", "SecurityTokenExpired"):
+                        logger.warning(
+                            "request with authentication error",
+                            exc_info=True,
+                            extra={"error_code": "AuthenticationError"},
+                        )
+                    self._replace_credentials()
+                    continue
+                raise
 
         raise last_err
 
@@ -367,7 +413,7 @@ class LogClient(object):
 
     def put_logs(self, request):
         """ Put logs to log service. up to 512000 logs up to 10MB size
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         
         :type request: PutLogsRequest
         :param request: the PutLogs request parameters class
@@ -439,7 +485,7 @@ class LogClient(object):
 
     def list_logstores(self, request):
         """ List all logstores of requested project.
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         
         :type request: ListLogstoresRequest
         :param request: the ListLogstores request parameters class.
@@ -457,7 +503,7 @@ class LogClient(object):
 
     def list_topics(self, request):
         """ List all topics in a logstore.
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         
         :type request: ListTopicsRequest
         :param request: the ListTopics request parameters class.
@@ -482,7 +528,7 @@ class LogClient(object):
 
     def get_histograms(self, request):
         """ Get histograms of requested query from log service.
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         
         :type request: GetHistogramsRequest
         :param request: the GetHistograms request parameters class.
@@ -509,9 +555,10 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100):
-        """ Get logs from log service. will retry when incomplete.
-        Unsuccessful opertaion will cause an LogException.
+                query=None, reverse=False, offset=0, size=100, power_sql=False):
+        """ Get logs from log service.
+        will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
+        Unsuccessful operation will cause an LogException.
         Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
 
         :type project: string
@@ -541,6 +588,9 @@ class LogClient(object):
         :type size: int
         :param size: max line number of return logs, -1 means get all
 
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
         :return: GetLogsResponse
 
         :raise: LogException
@@ -560,7 +610,8 @@ class LogClient(object):
                       'type': 'log',
                       'line': size,
                       'offset': offset,
-                      'reverse': 'true' if reverse else 'false'}
+                      'reverse': 'true' if reverse else 'false',
+                      'powerSql': power_sql}
 
             if topic:
                 params['topic'] = topic
@@ -579,7 +630,8 @@ class LogClient(object):
 
     def get_logs(self, request):
         """ Get logs from log service.
-        Unsuccessful opertaion will cause an LogException.
+        will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
+        Unsuccessful operation will cause an LogException.
         Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
 
         :type request: GetLogsRequest
@@ -598,14 +650,15 @@ class LogClient(object):
         reverse = request.get_reverse()
         offset = request.get_offset()
         size = request.get_line()
+        power_sql = request.get_power_sql()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size)
+                            query, reverse, offset, size, power_sql)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
-                    query=None, reverse=False, offset=0):
+                    query=None, reverse=False, offset=0, power_sql=False):
         """ Get logs from log service. will retry when incomplete.
-        Unsuccessful opertaion will cause an LogException. different with `get_log` with size=-1,
+        Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
         It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
         each batch and make it possible to fetch larger volume of data.
 
@@ -633,13 +686,16 @@ class LogClient(object):
         :type offset: int
         :param offset: offset to start, by default is 0
 
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
         :return: GetLogsResponse iterator
 
         :raise: LogException
         """
         while True:
             response = self.get_log(project, logstore, from_time, to_time, topic=topic,
-                                    query=query, reverse=reverse, offset=offset, size=100)
+                                    query=query, reverse=reverse, offset=offset, size=100, power_sql=power_sql)
 
             yield response
 
@@ -648,6 +704,59 @@ class LogClient(object):
 
             if count == 0 or is_stats_query(query):
                 break
+
+    def execute_logstore_sql(self, project, logstore, from_time, to_time, sql, power_sql):
+        """ Execute SQL from log service.
+        will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
+        Unsuccessful operation will cause an LogException.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_time: int/string
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type sql: string
+        :param sql: user defined sql, must follow "Search|Analysis" syntax, refer to https://help.aliyun.com/document_detail/43772.html
+
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+        :return: GetLogsResponse
+
+        :raise: LogException
+        """
+        if not is_stats_query(sql):
+            raise LogException("parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
+                               "https://help.aliyun.com/document_detail/43772.html")
+        return self.get_log(project, logstore, from_time, to_time, topic=None,
+                            query=sql, reverse=False, offset=0, size=100, power_sql=power_sql)
+
+    def execute_project_sql(self, project, sql, power_sql):
+        """ Execute SQL from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type project: string
+        :param project: project name
+
+        :type sql: string
+        :param sql: user defined sql, must follow SQL syntax, refer to https://help.aliyun.com/document_detail/63443.html
+
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+        :return: GetLogsResponse
+
+        :raise: LogException
+        """
+        request = GetProjectLogsRequest(project, sql, power_sql)
+        return self.get_project_logs(request)
 
     def get_context_logs(self, project, logstore, pack_id, pack_meta, back_lines, forward_lines):
         """ Get context logs of specified log from log service.
@@ -694,7 +803,7 @@ class LogClient(object):
 
     def get_project_logs(self, request):
         """ Get logs from log service.
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         
         :type request: GetProjectLogsRequest
         :param request: the GetProjectLogs request parameters class.
@@ -714,7 +823,7 @@ class LogClient(object):
 
     def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -743,7 +852,7 @@ class LogClient(object):
 
     def get_cursor_time(self, project_name, logstore_name, shard_id, cursor):
         """ Get cursor time from log service
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -776,7 +885,7 @@ class LogClient(object):
     def get_previous_cursor_time(self, project_name, logstore_name, shard_id, cursor, normalize=True):
         """ Get previous cursor time from log service.
         Note: normalize = true: if the cursor is out of range, it will be nornalized to nearest cursor
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -824,7 +933,7 @@ class LogClient(object):
 
     def get_begin_cursor(self, project_name, logstore_name, shard_id):
         """ Get begin cursor from log service for batch pull logs
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -843,7 +952,7 @@ class LogClient(object):
 
     def get_end_cursor(self, project_name, logstore_name, shard_id):
         """ Get end cursor from log service for batch pull logs
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -862,7 +971,7 @@ class LogClient(object):
 
     def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None):
         """ batch pull log data from log service
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -928,7 +1037,7 @@ class LogClient(object):
 
     def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None):
         """ batch pull log data from log service using time-range
-        Unsuccessful opertaion will cause an LogException. the time parameter means the time when server receives the logs
+        Unsuccessful operation will cause an LogException. the time parameter means the time when server receives the logs
 
         :type project_name: string
         :param project_name: the Project name
@@ -1026,7 +1135,7 @@ class LogClient(object):
                         telemetry_type=''
                         ):
         """ create log store 
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1112,7 +1221,7 @@ class LogClient(object):
 
     def delete_logstore(self, project_name, logstore_name):
         """ delete log store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1132,7 +1241,7 @@ class LogClient(object):
 
     def get_logstore(self, project_name, logstore_name):
         """ get the logstore meta info
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1157,11 +1266,12 @@ class LogClient(object):
                         max_split_shard=None,
                         preserve_storage=None,
                         encrypt_conf=None,
-                        telemetry_type=None
+                        telemetry_type=None,
+                        hot_ttl=-1
                         ):
         """
         update the logstore meta info
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1171,6 +1281,9 @@ class LogClient(object):
 
         :type ttl: int
         :param ttl: the life cycle of log in the logstore in days
+
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
 
         :type enable_tracking: bool
         :param enable_tracking: enable web tracking
@@ -1243,6 +1356,8 @@ class LogClient(object):
         }
         if telemetry_type != None:
             body["telemetry_type"] = telemetry_type
+        if hot_ttl !=-1:
+            body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
         body_str = six.b(json.dumps(body))
@@ -1264,7 +1379,7 @@ class LogClient(object):
 
     def list_logstore(self, project_name, logstore_name_pattern=None, offset=0, size=100):
         """ list the logstore in a projectListLogStoreResponse
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -1300,7 +1415,7 @@ class LogClient(object):
 
     def create_external_store(self, project_name, config):
         """ create log store 
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1324,7 +1439,7 @@ class LogClient(object):
 
     def delete_external_store(self, project_name, store_name):
         """ delete log store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1344,7 +1459,7 @@ class LogClient(object):
 
     def get_external_store(self, project_name, store_name):
         """ get the logstore meta info
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1371,7 +1486,7 @@ class LogClient(object):
     def update_external_store(self, project_name, config):
         """ 
         update the logstore meta info
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type config: ExternalStoreConfig
         :param config : external store config
@@ -1390,7 +1505,7 @@ class LogClient(object):
 
     def list_external_store(self, project_name, external_store_name_pattern=None, offset=0, size=100):
         """ list the logstore in a projectListLogStoreResponse
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -1426,7 +1541,7 @@ class LogClient(object):
 
     def list_shards(self, project_name, logstore_name):
         """ list the shard meta of a logstore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1446,7 +1561,7 @@ class LogClient(object):
 
     def split_shard(self, project_name, logstore_name, shardId, split_hash):
         """ split a  readwrite shard into two shards
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1473,7 +1588,7 @@ class LogClient(object):
 
     def merge_shard(self, project_name, logstore_name, shardId):
         """ split two adjacent  readwrite hards into one shards
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1496,7 +1611,7 @@ class LogClient(object):
 
     def delete_shard(self, project_name, logstore_name, shardId):
         """ delete a readonly shard 
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1519,7 +1634,7 @@ class LogClient(object):
 
     def create_index(self, project_name, logstore_name, index_detail):
         """ create index for a logstore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1546,7 +1661,7 @@ class LogClient(object):
 
     def update_index(self, project_name, logstore_name, index_detail):
         """ update index for a logstore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1574,7 +1689,7 @@ class LogClient(object):
 
     def delete_index(self, project_name, logstore_name):
         """ delete index of a logstore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1595,7 +1710,7 @@ class LogClient(object):
 
     def get_index_config(self, project_name, logstore_name):
         """ get index config detail of a logstore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -1616,7 +1731,7 @@ class LogClient(object):
 
     def create_logtail_config(self, project_name, config_detail):
         """ create logtail config in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1644,7 +1759,7 @@ class LogClient(object):
 
     def update_logtail_config(self, project_name, config_detail):
         """ update logtail config in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1668,7 +1783,7 @@ class LogClient(object):
 
     def delete_logtail_config(self, project_name, config_name):
         """ delete logtail config in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1689,7 +1804,7 @@ class LogClient(object):
 
     def get_logtail_config(self, project_name, config_name):
         """ get logtail config in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1709,7 +1824,7 @@ class LogClient(object):
 
     def list_logtail_config(self, project_name, offset=0, size=100, logstore=None, config=None):
         """ list logtail config name in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1748,7 +1863,7 @@ class LogClient(object):
 
     def create_machine_group(self, project_name, group_detail):
         """ create machine group in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1772,7 +1887,7 @@ class LogClient(object):
 
     def delete_machine_group(self, project_name, group_name):
         """ delete machine group in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1793,7 +1908,7 @@ class LogClient(object):
 
     def update_machine_group(self, project_name, group_detail):
         """ update machine group in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1817,7 +1932,7 @@ class LogClient(object):
 
     def get_machine_group(self, project_name, group_name):
         """ get machine group in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1838,7 +1953,7 @@ class LogClient(object):
 
     def list_machine_group(self, project_name, offset=0, size=100):
         """ list machine group names in a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1868,7 +1983,7 @@ class LogClient(object):
 
     def list_machines(self, project_name, group_name, offset=0, size=100):
         """ list machines in a machine group
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1901,7 +2016,7 @@ class LogClient(object):
 
     def apply_config_to_machine_group(self, project_name, config_name, group_name):
         """ apply a logtail config to a machine group
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1924,7 +2039,7 @@ class LogClient(object):
 
     def remove_config_to_machine_group(self, project_name, config_name, group_name):
         """ remove a logtail config to a machine group
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1947,7 +2062,7 @@ class LogClient(object):
 
     def get_machine_group_applied_configs(self, project_name, group_name):
         """ get the logtail config names applied in a machine group
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1968,7 +2083,7 @@ class LogClient(object):
 
     def get_config_applied_machine_groups(self, project_name, config_name):
         """ get machine group names where the logtail config applies to
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -1990,7 +2105,7 @@ class LogClient(object):
     def get_shipper_tasks(self, project_name, logstore_name, shipper_name, start_time, end_time, status_type='',
                           offset=0, size=100):
         """ get  odps/oss shipper tasks in a certain time range
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -2011,10 +2126,10 @@ class LogClient(object):
         :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
 
         :type offset: int
-        :param offset: the begin task offset, -1 means all
+        :param offset: the begin task offset
 
         :type size: int
-        :param size: the needed tasks count
+        :param size: the needed tasks count, -1 means all
 
         :return: GetShipperTasksResponse
         
@@ -2038,7 +2153,7 @@ class LogClient(object):
 
     def retry_shipper_tasks(self, project_name, logstore_name, shipper_name, task_list):
         """ retry failed tasks , only the failed task can be retried
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -2068,7 +2183,7 @@ class LogClient(object):
 
     def create_project(self, project_name, project_des):
         """ Create a project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -2093,7 +2208,7 @@ class LogClient(object):
 
     def get_project(self, project_name):
         """ get project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -2111,7 +2226,7 @@ class LogClient(object):
 
     def delete_project(self, project_name):
         """ delete project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
@@ -2453,9 +2568,12 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, offset=0, size=100):
+    def list_project(self, offset=0, size=100, project_name_pattern=None):
         """ list the project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name_pattern: string
+        :param project_name_pattern: the sub name project, used for the server to return project names contain this sub name
 
         :type offset: int
         :param offset: the offset of all the matched names
@@ -2475,6 +2593,8 @@ class LogClient(object):
         headers = {}
         params = {}
         resource = "/"
+        if project_name_pattern is not None:
+            params['projectName'] = project_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
@@ -2496,6 +2616,7 @@ class LogClient(object):
             wait_time_in_secs=None,
             auto_creation=True,
             retries_failed=None,
+            cache_duration="1d",
     ):
         """
         Migrate data from elasticsearch to aliyun log service (SLS)
@@ -2542,6 +2663,9 @@ class LogClient(object):
         :type retries_failed: int
         :param retries_failed: specify retrying times for failed tasks. e.g. 10
 
+        :type cache_duration: str
+        :param cache_duration: the max duration of non-updating cache, which is based on scroll of elasticsearch. Max duration is "1d". Default is "1d"
+
         :return: LogResponse
 
         :raise: Exception
@@ -2553,6 +2677,7 @@ class LogClient(object):
             hosts=hosts,
             indexes=indexes,
             query=query,
+            scroll=cache_duration,
             project_name=project_name,
             logstore_index_mappings=logstore_index_mappings,
             pool_size=pool_size,
@@ -2701,7 +2826,7 @@ class LogClient(object):
 
     def get_resource_usage(self, project):
         """ get resource usage ist the project
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type client: string
         :param client: project name
@@ -2746,7 +2871,7 @@ class LogClient(object):
 
     def list_ingestion(self, project_name, logstore_name='', offset=0, size=100):
         """ list ingestion
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2768,7 +2893,7 @@ class LogClient(object):
 
     def create_ingestion(self, project_name, ingestion_config):
         """ create ingestion config
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2793,7 +2918,7 @@ class LogClient(object):
 
     def update_ingestion(self, project_name, ingestion_name, ingestion_config):
         """ update ingestion config
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2821,7 +2946,7 @@ class LogClient(object):
 
     def delete_ingestion(self, project_name, ingestion_name):
         """ delete ingestion config
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2842,7 +2967,7 @@ class LogClient(object):
 
     def get_ingestion(self, project_name, ingestion_name):
         """ get ingestion config detail
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2863,7 +2988,7 @@ class LogClient(object):
 
     def start_ingestion(self, project_name, ingestion_name):
         """ start ingestion
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2885,7 +3010,7 @@ class LogClient(object):
 
     def stop_ingestion(self, project_name, ingestion_name):
         """ stop ingestion
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -2907,7 +3032,7 @@ class LogClient(object):
 
     def create_etl(self, project_name, name, configuration, schedule, display_name, description=None):
         """ create etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -2940,7 +3065,7 @@ class LogClient(object):
 
     def get_etl(self, project_name, name):
         """ get etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -2956,7 +3081,7 @@ class LogClient(object):
 
     def update_etl(self, project_name, name, configuration, schedule, display_name, description=None):
         """ update etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -2989,7 +3114,7 @@ class LogClient(object):
 
     def start_etl(self, project_name, name):
         """ start etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -3005,7 +3130,7 @@ class LogClient(object):
 
     def stop_etl(self, project_name, name):
         """ stop etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -3021,7 +3146,7 @@ class LogClient(object):
 
     def list_etls(self, project_name, offset=0, size=100):
         """ list etls
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type offset: int
@@ -3046,7 +3171,7 @@ class LogClient(object):
 
     def delete_etl(self, project_name, name):
         """ delete etl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
         :type project_name: string
         :param project_name: the Project name
         :type name: string
@@ -3066,7 +3191,7 @@ class LogClient(object):
                         time_index
                         ):
         """ create sub store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3109,7 +3234,7 @@ class LogClient(object):
 
     def delete_substore(self, project_name, logstore_name, substore_name):
         """ delete sub store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3132,7 +3257,7 @@ class LogClient(object):
 
     def get_substore(self, project_name, logstore_name, substore_name):
         """ get the substore meta info
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3160,7 +3285,7 @@ class LogClient(object):
                         time_index
                         ):
         """ update sub store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3203,7 +3328,7 @@ class LogClient(object):
 
     def list_substore(self, project_name, logstore_name):
         """ list the substore
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3224,7 +3349,7 @@ class LogClient(object):
 
     def get_substore_ttl(self, project_name, logstore_name):
         """ get the substore ttl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3245,7 +3370,7 @@ class LogClient(object):
 
     def update_substore_ttl(self, project_name, logstore_name, ttl):
         """ update the substore ttl
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3344,7 +3469,7 @@ class LogClient(object):
                             encrypt_conf=None):
 
         """ create metric store
-        Unsuccessful opertaion will cause an LogException.
+        Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name
@@ -3410,8 +3535,359 @@ class LogClient(object):
                                    keys=keys, sorted_key_count=2, time_index=2)
         return CreateMetricsStoreResponse(logstore_response, substore_response)
 
+    def create_sql_instance(self, project_name, sql_instance):
+        """ create sql instance config
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type sql_instance: long
+        :param sql_instance: the sql instance config
+
+        :return: CreateSqlInstanceResponse
+
+        :raise: LogException
+        """
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
+        params = {}
+        resource = "/sqlinstance"
+        body = six.b(json.dumps({"cu":sql_instance}))
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateSqlInstanceResponse(header, resp)
+
+    def update_sql_instance(self, project_name, sql_instance):
+        """ update sql instance config
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type sql_instance: long
+        :param sql_instance: the sql instance config
+
+        :return: CreateSqlInstanceResponse
+
+        :raise: LogException
+        """
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
+        params = {}
+        resource = "/sqlinstance"
+        body = six.b(json.dumps({"cu": sql_instance}))
+        # headers["Host"] = "ali-cn-hangzhou-sls-admin.cn-hangzhou.log.aliyuncs.com"
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateSqlInstanceResponse(header, resp)
+
+    def list_sql_instance(self, project_name):
+        """ list the sql instance config
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :return: ListSqlInstanceResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/sqlinstance"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListSqlInstanceResponse(header, resp)
+
+    def create_resource(self, resource):
+        """create resource
+        Unsuccessful operation will cause an LogException.
+        resource options: resource_name resource_type  [schema:List[ResourceSchemaItem],description,ext_info]
+
+        :type resource: Resource
+        :param resource: instance of Resource
+        """
+        if not isinstance(resource, Resource):
+            raise TypeError("record must be instance of Resource ")
+        params = {}
+        resource.check_for_create()
+        body = {
+            "name": resource.get_resource_name(),
+            "type": resource.get_resource_type(),
+        }
+        description = resource.get_description()
+        schema_list = resource.get_schema()
+        acl = resource.get_acl()
+        ext_info = resource.get_ext_info()
+        if description:
+            body["description"] = description
+        if schema_list:
+            body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
+        if acl:
+            body["acl"] = json.dumps(acl)
+        if ext_info:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateResourceResponse(header, resp)
+
+    def delete_resource(self, resource_name):
+        """delete resource
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteResourceResponse(header, resp)
+
+    def update_resource(self, resource):
+        """update resource
+        Unsuccessful operation will cause an LogException.
+        resource options: resource_name [schema,description,ext_info]
+
+        :type resource: Resource
+        :param resource: instance of Resource
+        """
+        if not isinstance(resource, Resource):
+            raise TypeError("resource type must be Resource instance")
+        params = {}
+        body = {}
+        resource.check_for_update()
+        description = resource.get_description()
+        schema_list = resource.get_schema()
+        ext_info = resource.get_ext_info()
+        if schema_list is not None:
+            body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
+        if description is not None:
+            body["description"] = description
+        if ext_info is not None:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource.get_resource_name()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateResourceResponse(header, resp)
+
+    def get_resource(self, resource_name):
+        """get resource
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetResourceResponse(header, resp)
+
+    def list_resources(self, offset=0, size=100, resource_type=None, resource_names=None):
+        """ list resources
+        Unsuccessful operation will cause an LogException.
+
+        :type offset: int
+        :param offset: line offset of return resources
+
+        :type size: int
+        :param size: max line number of return resources
+
+        :type resource_type: string
+        :param resource_type: resource type
+
+        :type resource_names: list
+        :param resource_names: resource names witch need to be listed
+
+        :return: ListResourcesResponse
+        :raise: LogException
+        """
+        if resource_type and not isinstance(resource_type, str):
+            raise TypeError("resource_type type must be str")
+        if resource_names and not isinstance(resource_names, list):
+            raise TypeError("resource_names type must be list")
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if resource_names:
+            params["names"] = ",".join(resource_names)
+        if resource_type:
+            params["type"] = resource_type
+        resource = "/resources"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListResourcesResponse(resp, header)
+
+    def create_resource_record(self, resource_name, record):
+        """create resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record: ResourceRecord
+        :param record: record options: value,[record_id,tag]
+        """
+        if not isinstance(record, ResourceRecord):
+            raise TypeError("resource type must be ResourceRecord instance")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        params = {}
+        resource = "/resources/" + resource_name + "/records"
+        record.check_value()
+        body = {"value": json.dumps(record.get_value())}
+        record_id = record.get_record_id()
+        tag = record.get_tag()
+        if record_id:
+            body["id"] = record_id
+        if tag:
+            body["tag"] = tag
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateRecordResponse(header, resp)
+
+    def delete_resource_record(self, resource_name, record_ids):
+        """delete resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record_ids: list
+        :param record_ids: record id list which need to be deleted
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(record_ids, list):
+            raise TypeError("record_ids type must be list,element is record id which type is str")
+        headers = {}
+        params = {"ids": ",".join(record_ids)}
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteRecordResponse(header, resp)
+
+    def update_resource_record(self, resource_name, record):
+        """update resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record: ResourceRecord
+        :param record: record options: value,record_id,[tag]
+
+        """
+        if not isinstance(record, ResourceRecord):
+            raise TypeError("resource type must be instance of ResourceRecord")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        params = {}
+        record.check_for_update()
+        body = {"value": json.dumps(record.get_value())}
+        record_id = record.get_record_id()
+        tag = record.get_tag()
+        if tag is not None:
+            body["tag"] = tag
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource_name + "/records/" + record_id
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateRecordResponse(header, resp)
+
+    def upsert_resource_record(self, resource_name, records):
+        """upsert resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type records: list[ResourceRecord]
+        :param records: if record is exist,doUpdate,else doInsert
+        """
+        if not isinstance(records, list):
+            raise TypeError("resource type must be list ,element is instance of ResourceRecord")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not records:
+            raise ValueError("records is not be empty or None")
+        record_list = []
+        for record in records:
+            record.check_value()
+            record_dict = record.to_dict()
+            record_dict["value"] = json.dumps(record_dict.get("value"))
+            record_list.append(record_dict)
+        params = {}
+        body = {"records": record_list}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertRecordResponse(header, resp)
+
+    def get_resource_record(self, resource_name, record_id):
+        """get resource record
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type record_id: string
+        :param record_id: record id
+        """
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(record_id, str):
+            raise TypeError("record_id type must be str")
+        headers = {}
+        params = {}
+        resource = "/resources/" + resource_name + "/records/" + record_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetRecordResponse(header, resp)
+
+    def list_resource_records(self, resource_name, tag=None, record_ids=None, offset=0, size=100):
+        """list resource records
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_name: string
+        :param resource_name: resource name
+
+        :type tag: string
+        :param tag: record tag
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max records for each page
+
+        :type record_ids: list
+        :param record_ids: record id list witch need to be listed
+        """
+        if tag and not isinstance(tag, str):
+            raise TypeError("tag type must be str")
+        if not isinstance(resource_name, str):
+            raise TypeError("resource_name type must be str")
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+        if record_ids and not isinstance(record_ids, list):
+            raise TypeError("record_ids type must be list,element is record id which type is str")
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if tag is not None:
+            params["tag"] = tag
+        if record_ids:
+            params["ids"] = ','.join(record_ids)
+        resource = "/resources/" + resource_name + "/records"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListRecordResponse(resp, header)
+
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
-make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results')
+make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
 make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')

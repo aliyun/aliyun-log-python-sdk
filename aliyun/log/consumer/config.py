@@ -22,7 +22,7 @@ class LogHubConfig(object):
                  consumer_group_name, consumer_name,
                  cursor_position=None, heartbeat_interval=None, data_fetch_interval=None, in_order=False,
                  cursor_start_time=None, security_token=None, max_fetch_log_group_size=None, worker_pool_size=None, shared_executor=None,
-                 cursor_end_time=None):
+                 cursor_end_time=None, credentials_refresher=None):
         """
 
         :param endpoint:
@@ -61,3 +61,4 @@ class LogHubConfig(object):
         self.shared_executor = shared_executor
         self.consumer_group_time_out = self.heartbeat_interval * 2
         self.cursor_end_time = cursor_end_time or None  # default to None
+        self.credentials_refresher = credentials_refresher

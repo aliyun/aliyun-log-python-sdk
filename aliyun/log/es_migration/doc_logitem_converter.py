@@ -60,7 +60,6 @@ class DocLogItemConverter(object):
         for k, v in doc[cls.SOURCE_FIELD].items():
             if k == time_reference:
                 log_item.set_time(parse_timestamp(v))
-                continue
             if isinstance(v, dict):
                 log_item.push_back(k, json.dumps(v))
             else:

@@ -25,6 +25,13 @@ class GetLogsResponse(LogResponse):
         LogResponse.__init__(self, header, resp)
         try:
             self.progress = Util.h_v_t(header, 'x-log-progress')
+            self.processed_rows = Util.h_v_td(header, 'x-log-processed-rows', '0')
+            self.elapsed_mills = Util.h_v_td(header, 'x-log-elapsed-millisecond', '0')
+            self.has_sql = Util.h_v_td(header, 'x-log-has-sql', 'False')
+            self.where_query = Util.h_v_td(header, 'x-log-where-query', '')
+            self.agg_query = Util.h_v_td(header, 'x-log-agg-query', '')
+            self.cpu_sec = Util.h_v_td(header, 'x-log-cpu-sec', '0')
+            self.cpu_cores = Util.h_v_td(header, 'x-log-cpu-cores', '0')
             self.logs = []
             for data in resp:
                 contents = {}
@@ -64,6 +71,55 @@ class GetLogsResponse(LogResponse):
         :return: QueriedLog list, all log data
         """
         return self.logs
+
+    def get_processed_rows(self):
+        """ Get processed rows from the response
+
+        :return: processed_rows
+        """
+        return self.processed_rows
+
+    def get_elapsed_mills(self):
+        """ Get elapsed mills from the response
+
+        :return: elapsed_mills
+        """
+        return self.elapsed_mills
+
+    def get_has_sql(self):
+        """ Get whether has sql from the response
+
+        :return: has_sql, boolean
+        """
+        return self.has_sql
+
+    def get_where_query(self):
+        """ Get the Search part of "Search|Analysis"
+
+        :return: where_query
+        """
+        return self.where_query
+
+    def get_agg_query(self):
+        """ Get the Analysis part of "Search|Analysis"
+
+        :return: agg_query
+        """
+        return self.agg_query
+
+    def get_cpu_sec(self):
+        """ Get cpu seconds used from the response
+
+        :return: cpu_sec
+        """
+        return self.cpu_sec
+
+    def get_cpu_cores(self):
+        """ Get cpu cores used from the response
+
+        :return: cpu_cores
+        """
+        return self.cpu_cores
 
     def log_print(self):
         print('GetLogsResponse:')

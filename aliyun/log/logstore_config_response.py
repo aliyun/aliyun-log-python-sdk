@@ -62,6 +62,9 @@ class GetLogStoreResponse(LogResponse):
         self.max_split_shard = int(resp["maxSplitShard"])
         self.preserve_storage = self.ttl >= 3650
         self.encrypt_conf = None
+        self.hot_ttl=-1;
+        if 'hot_ttl' in resp:
+            self.hot_ttl= int(resp['hot_ttl'])
         if 'encrypt_conf' in resp:
             self.encrypt_conf = resp["encrypt_conf"]
 
@@ -78,7 +81,11 @@ class GetLogStoreResponse(LogResponse):
         :return:
         """
         return self.ttl
-
+    def get_hot_ttl(self):
+        """
+        :return:
+        """
+        return self.hot_ttl
     def get_enable_tracking(self):
         """
 

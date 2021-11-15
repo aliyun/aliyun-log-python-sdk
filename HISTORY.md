@@ -1,5 +1,31 @@
 # Release History
 
+### 0.7.2 (2021-10-25)
+----------------------------
+**Fixing**
+- fix job type in list alert
+- fix ext_info in resource apis
+
+
+### 0.7.0 (2021-10-17)
+----------------------------
+**Implementations**
+- Add resources api
+- Update elasticsearch migration to use scroll
+- fix version of dependencies  to keep compatible with Python 2: protobuf<=3.17.3, dateparser<=0.7.6
+
+
+### 0.6.57 (2021-09-09)
+----------------------------
+**Implementations**
+- Add executeSQl apis
+- Add extra parameter power_sql in get_log/get_logs/get_log_all
+- Add SQL related headers(x-log-**) on GetLogResponse
+
+**Fixing**
+- fix typo
+
+
 ### 0.6.48 (2020-03-20)
 ----------------------------
 **Implementations**
