@@ -730,10 +730,19 @@ res.log_print();
 新版告警配置结构示例：
 ```json
 {
+  "name": "alert-test-1",
+  "state": "Enabled",
+  "type": "Alert",
+  "displayName": "Nginx 5xx错误监控",
+  "description": "",
+  "schedule": {
+    "interval": "1m",
+    "type": "FixedRate"
+  },
   "configuration": {
-    "threshold": 1,
     "type": "default",
     "version": "2.0",
+    "threshold": 1,
     "queryList": [
       {
         "end": "absolute",
@@ -818,23 +827,14 @@ res.log_print();
         "severity": 6
       }
     ]
-  },
-  "description": "",
-  "displayName": "Nginx 5xx错误监控",
-  "name": "alert-test-1",
-  "schedule": {
-    "interval": "1m",
-    "type": "FixedRate"
-  },
-  "state": "Enabled",
-  "type": "Alert"
+  }
 }
 ```
 
 旧版结构：
 ```json
 {
-    "name": 'alert_1',
+    "name": "alert_1",
     "displayName": "Alert for testing",
     "description": "",
     "type": "Alert",
