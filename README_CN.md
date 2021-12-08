@@ -724,9 +724,117 @@ res.log_print();
 
   通过`create_alert`创建一个报警. 传入的结构是一个字典对象，如下：
 
-```python
+
+新版告警配置结构字段参考[文章](https://developer.aliyun.com/article/789819?spm=a2c6h.14164896.0.0.326f2adcf0cuO2#slide-27)
+
+新版告警配置结构示例：
+```json
 {
-    "name": 'alert_1',
+  "name": "alert-test-1",
+  "state": "Enabled",
+  "type": "Alert",
+  "displayName": "Nginx 5xx错误监控",
+  "description": "",
+  "schedule": {
+    "interval": "1m",
+    "type": "FixedRate"
+  },
+  "configuration": {
+    "type": "default",
+    "version": "2.0",
+    "threshold": 1,
+    "queryList": [
+      {
+        "end": "absolute",
+        "project": "test-alert-chengdu",
+        "query": "status >= 500 | SELECT host, count(1) as err_count GROUP BY host",
+        "region": "cn-chengdu",
+        "roleArn": "",
+        "start": "-15m",
+        "store": "nginx-access-etl-log",
+        "storeType": "log",
+        "timeSpanType": "Truncated"
+      },
+      {
+        "dashboardId": "",
+        "end": "absolute",
+        "project": "test-alert-chengdu",
+        "start": "-1m",
+        "store": "user.demo_test_nginx_domain",
+        "storeType": "meta",
+        "timeSpanType": "Custom"
+      }
+    ],
+    "labels": [
+      {
+        "key": "env",
+        "value": "test"
+      }
+    ],
+    "annotations": [
+      {
+        "key": "title",
+        "value": "${alert_name}告警触发"
+      },
+      {
+        "key": "desc",
+        "value": "域名${host}发生错误次数为：${err_count}"
+      }
+    ],
+    "autoAnnotation": false,
+    "dashboard": "internal-alert-analysis",
+    "groupConfiguration": {
+      "fields": [
+        "host"
+      ],
+      "type": "custom"
+    },
+    "joinConfigurations": [
+      {
+        "condition": "$0.host == $1.host",
+        "type": "left_exclude"
+      }
+    ],
+    "noDataFire": false,
+    "noDataSeverity": 6,
+    "policyConfiguration": {
+      "actionPolicyId": "demo.nginx.action_policy",
+      "alertPolicyId": "sls.builtin.dynamic",
+      "repeatInterval": "1m",
+      "useDefault": false
+    },
+    "sendResolved": false,
+    "severityConfigurations": [
+      {
+        "evalCondition": {
+          "condition": "err_count > 20",
+          "countCondition": ""
+        },
+        "severity": 10
+      },
+      {
+        "evalCondition": {
+          "condition": "err_count > 10",
+          "countCondition": ""
+        },
+        "severity": 8
+      },
+      {
+        "evalCondition": {
+          "condition": "err_count > 0",
+          "countCondition": ""
+        },
+        "severity": 6
+      }
+    ]
+  }
+}
+```
+
+旧版结构：
+```json
+{
+    "name": "alert_1",
     "displayName": "Alert for testing",
     "description": "",
     "type": "Alert",
