@@ -85,6 +85,7 @@ class UpdateExternalStoreResponse(LogResponse):
     def log_print(self):
         print('UpdateExternalStoreResponse:')
         print('headers:', self.get_all_headers())
+        print('body:', self.get_body())
 
 
 class ListExternalStoreResponse(LogResponse):
