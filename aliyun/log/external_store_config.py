@@ -36,7 +36,7 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
     """
 
     def __init__(self, externalStoreName, region, storeType, vpcId, instanceId, host, port, username, password,
-                 database, table):
+                 database, table, timezone=""):
         self.externalStoreName = externalStoreName
         self.storeType = storeType
         self.vpcId = vpcId
@@ -48,6 +48,7 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
         self.database = database
         self.table = table
         self.region = region
+        self.timezone = timezone
 
     def to_json(self):
         json_value = {}
@@ -63,6 +64,7 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
         param["db"] = self.database
         param["table"] = self.table
         param["region"] = self.region
+        param["timezone"] = self.timezone
         json_value["parameter"] = param
         return json_value
 
@@ -79,9 +81,10 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
         database = json_value["parameter"]["db"]
         table = json_value["parameter"]["table"]
         region = json_value["parameter"]["region"]
+        timezone = json_value["parameter"].get("timezone", "")
 
         return ExternalStoreConfig(externalStoreName, region, storeType, vpcId, instanceId,
-                                   host, port, username, password, database, table)
+                                   host, port, username, password, database, table, timezone)
 
     def log_print(self):
         print("region", self.region)
@@ -94,6 +97,7 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
         print("password", self.password)
         print("db", self.database)
         print("table", self.table)
+        print("timezone", self.timezone)
 
 
 class ExternalStoreOssConfig(ExternalStoreConfigBase):
