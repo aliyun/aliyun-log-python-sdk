@@ -2243,7 +2243,16 @@ class LogClient(object):
         return DeleteProjectResponse(header, resp)
 
     def tag_project(self, project_name, **tags):
-        print(tags)
+        """ tag project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :return: LogResponse 
+
+        :raise: LogException
+        """
         resource = "/tag"
         body = {
             "resourceType": "project",
@@ -2255,6 +2264,16 @@ class LogClient(object):
         return LogResponse(header, resp)
 
     def untag_project(self, project_name, *tag_keys):
+        """ untag project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :return: LogResponse 
+        
+        :raise: LogException
+        """
         resource = "/untag"
         body = {
             "resourceType": "project",
@@ -2266,6 +2285,16 @@ class LogClient(object):
         return LogResponse(header, resp)
 
     def get_project_tags(self, project_name, **filer_tags):
+        """ get project tags
+        Unsuccessful operation will cause an LogException.
+        
+        :type project_name: string
+        :param project_name: the Project name 
+
+        :return: GetProjectTagsResponse 
+
+        :raise: LogException
+        """
         resource = "/tags"
         filer_tags = [{"key": str(k), "value": str(v)} for k, v in filer_tags.items()]
         params = {
@@ -2856,6 +2885,19 @@ class LogClient(object):
         return arrange_shard(self, project, logstore, count)
 
     def enable_alert(self, project_name, job_name):
+        """ enable apert
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the Alert Job name
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
         headers = {}
         params = {"action": "enable"}
         resource = "/jobs/" + job_name
@@ -2863,6 +2905,19 @@ class LogClient(object):
         return LogResponse(header)
 
     def disable_alert(self, project_name, job_name):
+        """ disable apert
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the Alert Job name
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
         headers = {}
         params = {"action": "disable"}
         resource = "/jobs/" + job_name
