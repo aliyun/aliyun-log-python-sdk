@@ -816,6 +816,8 @@ class LogClient(object):
         params = {}
         if request.get_query() is not None:
             params['query'] = request.get_query()
+        if request.get_power_sql() is not None:
+            params['powerSql'] = request.get_power_sql()
         project = request.get_project()
         resource = "/logs"
         (resp, header) = self._send("GET", project, None, resource, params, headers)
@@ -1132,7 +1134,8 @@ class LogClient(object):
                         max_split_shard=64,
                         preserve_storage=False,
                         encrypt_conf=None,
-                        telemetry_type=''
+                        telemetry_type='',
+                        hot_ttl=-1
                         ):
         """ create log store 
         Unsuccessful operation will cause an LogException.
@@ -1198,6 +1201,8 @@ class LogClient(object):
                 "appendMeta": append_meta,
                 "telemetryType": telemetry_type
                 }
+        if hot_ttl !=-1:
+            body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
 
@@ -3464,7 +3469,7 @@ class LogClient(object):
                                    keys=keys, sorted_key_count=2, time_index=2)
         return CreateMetricsStoreResponse(logstore_response, substore_response)
 
-    def create_sql_instance(self, project_name, sql_instance):
+    def create_sql_instance(self, project_name, sql_instance,useAsDefault):
         """ create sql instance config
         Unsuccessful operation will cause an LogException.
 
@@ -3481,11 +3486,11 @@ class LogClient(object):
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
         params = {}
         resource = "/sqlinstance"
-        body = six.b(json.dumps({"cu":sql_instance}))
+        body = six.b(json.dumps({"cu":sql_instance,'useAsDefault':useAsDefault}))
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
         return CreateSqlInstanceResponse(header, resp)
 
-    def update_sql_instance(self, project_name, sql_instance):
+    def update_sql_instance(self, project_name, sql_instance,useAsDefault):
         """ update sql instance config
         Unsuccessful operation will cause an LogException.
 
@@ -3502,7 +3507,7 @@ class LogClient(object):
         headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json", "Accept-Encoding": "deflate"}
         params = {}
         resource = "/sqlinstance"
-        body = six.b(json.dumps({"cu": sql_instance}))
+        body = six.b(json.dumps({"cu": sql_instance,'useAsDefault':useAsDefault}))
         # headers["Host"] = "ali-cn-hangzhou-sls-admin.cn-hangzhou.log.aliyuncs.com"
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return UpdateSqlInstanceResponse(header, resp)
