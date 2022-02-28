@@ -1135,7 +1135,8 @@ class LogClient(object):
                         preserve_storage=False,
                         encrypt_conf=None,
                         telemetry_type='',
-                        hot_ttl=-1
+                        hot_ttl=-1,
+                        mode = None
                         ):
         """ create log store 
         Unsuccessful operation will cause an LogException.
@@ -1182,6 +1183,9 @@ class LogClient(object):
         :type telemetry_type: string
         :param telemetry_type: the Telemetry type
 
+        :type mode: string
+        :param mode: type of logstore, can be choose between lite and standard, default value standard
+
         :return: CreateLogStoreResponse
         
         :raise: LogException
@@ -1205,6 +1209,8 @@ class LogClient(object):
             body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
+        if mode != None:
+            body["mode"] = mode
 
         body_str = six.b(json.dumps(body))
 
@@ -1271,7 +1277,8 @@ class LogClient(object):
                         max_split_shard=None,
                         preserve_storage=None,
                         encrypt_conf=None,
-                        hot_ttl=-1
+                        hot_ttl=-1,
+                        mode = None
                         ):
         """
         update the logstore meta info
@@ -1320,6 +1327,9 @@ class LogClient(object):
 +                    }
 +                }
 
+        :type mode: string
+        :param mode: type of logstore, can be choose between lite and standard, default value standard
+
         :return: UpdateLogStoreResponse
         
         :raise: LogException
@@ -1360,6 +1370,8 @@ class LogClient(object):
             body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
             body["encrypt_conf"] = encrypt_conf
+        if mode != None:
+            body['mode'] = mode
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
