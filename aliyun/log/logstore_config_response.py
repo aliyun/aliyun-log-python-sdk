@@ -62,11 +62,14 @@ class GetLogStoreResponse(LogResponse):
         self.max_split_shard = int(resp["maxSplitShard"])
         self.preserve_storage = self.ttl >= 3650
         self.encrypt_conf = None
+        self.mode = None
         self.hot_ttl=-1;
         if 'hot_ttl' in resp:
             self.hot_ttl= int(resp['hot_ttl'])
         if 'encrypt_conf' in resp:
             self.encrypt_conf = resp["encrypt_conf"]
+        if 'mode' in resp:
+            self.mode = resp["mode"]
 
     def get_shard_count(self):
         """
@@ -112,6 +115,8 @@ class GetLogStoreResponse(LogResponse):
         print('ttl:', str(self.ttl))
         if self.encrypt_conf != None:
             print('encrypt_conf:', str(self.encrypt_conf))
+        if hasattr(self, 'mode') and self.mode != None:
+            print('mode:', str(self.mode))
 
 
 class UpdateLogStoreResponse(LogResponse):
