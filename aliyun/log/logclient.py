@@ -3074,6 +3074,31 @@ class LogClient(object):
 
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return StartIngestionResponse(header, resp)
+    
+    def restart_ingestion(self, project_name, ingestion_name, ingestion_config):
+        """ restart ingestion
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: RestartIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {"action":"RESTART"}
+        resource = "/jobs/" + ingestion_name
+        headers['Content-Type'] = 'application/json'
+        body = six.b(ingestion_config)
+        headers['x-log-bodyrawsize'] = str(len(body))
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return RestartIngestionResponse(header, resp)
 
     def stop_ingestion(self, project_name, ingestion_name):
         """ stop ingestion
