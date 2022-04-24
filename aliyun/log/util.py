@@ -15,6 +15,7 @@ from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
 import re
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -280,3 +281,46 @@ class PrefixLoggerAdapter(logging.LoggerAdapter):
         kwargs['extra'].update(self._extra)
 
         return "{0}{1}".format(self._prefix, msg), kwargs
+
+
+def maxcompute_sink_deserialize(obj):
+    return obj.getParams()
+
+
+def oss_sink_deserialize(obj):
+    return {
+        "type": obj.getType(),
+        "roleArn": obj.getRoleArn(),
+        "bucket": obj.getBucket(),
+        "prefix": obj.getPrefix(),
+        "suffix": obj.getSuffix(),
+        "pathFormat": obj.getPathFormat(),
+        "pathFormatType": obj.getPathFormatType(),
+        "bufferSize": obj.getBufferSize(),
+        "bufferInterval": obj.getBufferInterval(),
+        "timeZone": obj.getTimeZone(),
+        "contentType": obj.getContentType(),
+        "compressionType": obj.getCompressionType(),
+        "contentDetail": obj.getContentDetail(),
+    }
+
+
+def export_deserialize(obj, sink):
+    return json.dumps({
+        "configuration": {
+            "fromTime": obj.getConfiguration().getFromTime(),
+            "logstore": obj.getConfiguration().getLogstore(),
+            "roleArn": obj.getConfiguration().getRoleArn(),
+            "sink": sink,
+            "toTime": obj.getConfiguration().getToTime(),
+            "version": obj.getConfiguration().getVersion(),
+        },
+        "displayName": obj.getDisplayName(),
+        "name": obj.getName(),
+        "recyclable": obj.getRecyclable(),
+        "schedule": {
+            "runImmediately": obj.getSchedule().isRunImmediately(),
+            "type": obj.getSchedule().getType(),
+        },
+        "type": obj.getType(),
+    })

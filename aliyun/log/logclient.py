@@ -44,7 +44,7 @@ from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
-from .util import base64_encodestring as e64, base64_decodestring as d64
+from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
 from .version import API_VERSION, USER_AGENT
 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
@@ -54,6 +54,7 @@ import struct
 from .logresponse import LogResponse
 from copy import copy
 from .etl_config_response import *
+from .export_response import *
 
 logger = logging.getLogger(__name__)
 
@@ -3911,6 +3912,97 @@ class LogClient(object):
         resource = "/resources/" + resource_name + "/records"
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListRecordResponse(resp, header)
+    
+    def create_export(self, project_name, export):
+        """ Create an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type export: string
+        :param export: the export job configuration
+        """
+        params = {}
+        export_sink_config = export.getConfiguration().getSink()
+        export_type = export_sink_config.getType()
+        if export_type not in ["AliyunODPS", "AliyunOSS"]:
+            raise TypeError("export job type must in AliyunODPS or AliyunOSS, not %s" % export_type)
+        if export_type == "AliyunODPS":
+            sink = maxcompute_sink_deserialize(export_sink_config)
+        elif export_type == "AliyunOSS":
+            sink = oss_sink_deserialize(export_sink_config)
+        export = export_deserialize(export, sink)
+        body = six.b(export)
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateExportResponse(header, resp)
+
+    def delete_export(self, project_name, job_name):
+        """ Create an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the job name of export job
+        """
+        params = {}
+        headers = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteExportResponse(header, resp)
+
+    def get_export(self, project_name, job_name):
+        """ get export
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type name: string
+        :param name: the export name
+
+        :return: GetExportResponse
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetExportResponse(header, resp)
+
+    def list_export(self, project_name, offset=0, size=100):
+        """ list exports
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Pqroject name
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :return: ListExportsResponse
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_export, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name)
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        params['jobType'] = "Export"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListExportResponse(resp, header)
+
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
