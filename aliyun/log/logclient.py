@@ -1377,7 +1377,7 @@ class LogClient(object):
         if mode != None:
             body['mode'] = mode
         if telemetry_type != None:
-            body["telemetry_type"] = telemetry_type
+            body["telemetryType"] = telemetry_type
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
