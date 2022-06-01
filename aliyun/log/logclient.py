@@ -1279,7 +1279,8 @@ class LogClient(object):
                         preserve_storage=None,
                         encrypt_conf=None,
                         hot_ttl=-1,
-                        mode = None
+                        mode = None,
+                        telemetry_type=None
                         ):
         """
         update the logstore meta info
@@ -1330,6 +1331,8 @@ class LogClient(object):
 
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
+        :type telemetry_type: string
+        :param telemetry_type: the Telemetry type
 
         :return: UpdateLogStoreResponse
         
@@ -1373,6 +1376,8 @@ class LogClient(object):
             body["encrypt_conf"] = encrypt_conf
         if mode != None:
             body['mode'] = mode
+        if telemetry_type != None:
+            body["telemetry_type"] = telemetry_type
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
