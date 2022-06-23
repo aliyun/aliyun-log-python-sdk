@@ -3080,7 +3080,7 @@ class LogClient(object):
 
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return StartIngestionResponse(header, resp)
-    
+
     def restart_ingestion(self, project_name, ingestion_name, ingestion_config):
         """ restart ingestion
         Unsuccessful operation will cause an LogException.
@@ -3498,7 +3498,10 @@ class LogClient(object):
                             auto_split=True,
                             max_split_shard=64,
                             preserve_storage=False,
-                            encrypt_conf=None):
+                            encrypt_conf=None,
+                            hot_ttl=-1,
+                            mode=None
+                            ):
 
         """ create metric store
         Unsuccessful operation will cause an LogException.
@@ -3511,6 +3514,9 @@ class LogClient(object):
 
         :type ttl: int
         :param ttl: the life cycle of log in the logstore in days, default 30, up to 3650
+
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
 
         :type shard_count: int
         :param shard_count: the shard count of the logstore to create, default 2
@@ -3543,20 +3549,26 @@ class LogClient(object):
 +                    }
 +                }
 
+        :type mode: string
+        :param mode: type of logstore, can be choose between lite and standard, default value standard
+
         :return: CreateMetricsStoreResponse
 
         :raise: LogException
         """
 
         logstore_response = self.create_logstore(project_name, logstore_name, ttl=ttl,
-                                   shard_count=shard_count,
-                                   enable_tracking=enable_tracking,
-                                   append_meta=append_meta,
-                                   auto_split=auto_split,
-                                   max_split_shard=max_split_shard,
-                                   preserve_storage=preserve_storage,
-                                   encrypt_conf=encrypt_conf,
-                                   telemetry_type='Metrics')
+                                                 shard_count=shard_count,
+                                                 enable_tracking=enable_tracking,
+                                                 append_meta=append_meta,
+                                                 auto_split=auto_split,
+                                                 max_split_shard=max_split_shard,
+                                                 preserve_storage=preserve_storage,
+                                                 encrypt_conf=encrypt_conf,
+                                                 telemetry_type='Metrics',
+                                                 hot_ttl=hot_ttl,
+                                                 mode=mode)
+
         time.sleep(1)
         keys = [
             {'name': '__name__', 'type': 'text'},
@@ -3565,7 +3577,7 @@ class LogClient(object):
             {'name': '__value__', 'type': 'double'},
         ]
         substore_response = self.create_substore(project_name, logstore_name, 'prom', ttl=ttl,
-                                   keys=keys, sorted_key_count=2, time_index=2)
+                                                 keys=keys, sorted_key_count=2, time_index=2)
         return CreateMetricsStoreResponse(logstore_response, substore_response)
 
     def delete_metric_store(self, project_name, logstore_name):
@@ -4029,7 +4041,7 @@ class LogClient(object):
         resource = "/resources/" + resource_name + "/records"
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListRecordResponse(resp, header)
-    
+
     def create_export(self, project_name, export):
         """ Create an export job
         Unsuccessful opertaion will cause an LogException.
