@@ -70,6 +70,8 @@ class GetLogStoreResponse(LogResponse):
             self.encrypt_conf = resp["encrypt_conf"]
         if 'mode' in resp:
             self.mode = resp["mode"]
+        if 'telemetryType' in resp:
+            self.telemetry_type = resp["telemetryType"]
 
     def get_shard_count(self):
         """
