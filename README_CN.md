@@ -61,7 +61,7 @@ pip install -U aliyun-log-python-sdk
 pip install -U aliyun-log-python-sdk -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-如果存在安装Regex失败的错误, 可以参考使用`yun`/`apt-get`或者手动安装一下python-devel
+如果存在安装Regex失败的错误, 可以参考使用`yum`/`apt-get`或者手动安装一下python-devel
 https://rpmfind.net/linux/rpm2html/search.php?query=python-devel
 
 
