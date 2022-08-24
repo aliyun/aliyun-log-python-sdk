@@ -536,9 +536,7 @@ for res in it:
     res.log_print()
 
 # 或者大并发直接下载在本地
-it = client.pull_log('project1', 'logstore1', from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", file_path="/data/dump_{}.data")
-for res in it:
-    res.log_print()
+it = client.pull_log_dump('project1', 'logstore1',from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", file_path="./data/dump_{}.data")
 ```
 
 **注意：** 默认获取1000条, 可以通过参数`count`来调节. 也可以通过参数`end_cursor`来设定设定一个结束的游标.
