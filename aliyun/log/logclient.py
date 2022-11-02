@@ -321,7 +321,7 @@ class LogClient(object):
                     headers2["x-acs-security-token"] = self._securityToken
 
                 region = Util.extract_region(self._endpoint)
-                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, region, "v4")
+                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, region, "v1")
                 # for key, value in headers2.items():
                 #     print(key + " : "  + value)
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)

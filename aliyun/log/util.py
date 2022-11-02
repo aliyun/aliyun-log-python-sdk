@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-import collections
 import sys
 import base64
 try:
@@ -125,7 +124,7 @@ class Util(object):
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         if body:
             headers['Content-MD5'] = Util.cal_md5(body)
-        if not key:
+        if not access_key:
             signature = six.b('')
             headers['Authorization'] = "LOG " + access_id + ':' + str(signature)
             return
@@ -140,7 +139,6 @@ class Util(object):
         content += Util.canonicalized_log_headers(headers)
         content += Util.canonicalized_resource(resource, params)
         signature = Util.hmac_sha1(content, access_key)
-        print(signature)
         headers['Authorization'] = "LOG " + access_id + ':' + signature
 
     @staticmethod
@@ -152,7 +150,7 @@ class Util(object):
             content_sha256 = sha256(str(body).encode('utf-8')).hexdigest()
         headers["x-log-content-sha256"] = content_sha256
         # set Authorization
-        canonical_headers = collections.OrderedDict()
+        canonical_headers = {}
         signed_headers = ""
         for original_key, value in headers.items():
             key = original_key.lower()
