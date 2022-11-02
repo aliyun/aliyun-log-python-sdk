@@ -317,7 +317,6 @@ class LogClient(object):
                 version = "v1"
                 if version == "v1":
                     headers2['Date'] = self._getGMT()
-                    headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
                 else:
                     date = datetime.utcnow()
                     headers2['Date'] = date.strftime("%Y%m%d")
@@ -327,8 +326,6 @@ class LogClient(object):
 
                 region = Util.extract_region(self._endpoint)
                 Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, region, version)
-                for key, value in headers2.items():
-                    print(key + " " + value)
 
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
