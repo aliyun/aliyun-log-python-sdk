@@ -292,13 +292,11 @@ class LogClient(object):
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))
-            headers['Content-MD5'] = Util.cal_md5(body)
         else:
             headers['Content-Length'] = '0'
             headers["x-log-bodyrawsize"] = '0'
 
         headers['x-log-apiversion'] = API_VERSION
-        headers['x-log-signaturemethod'] = 'hmac-sha1'
         if self._isRowIp or not project:
             url = self.http_type + self._endpoint
         else:
@@ -316,17 +314,16 @@ class LogClient(object):
             try:
                 headers2 = copy(headers)
                 params2 = copy(params)
-                headers2['Date'] = self._getGMT()
-
+                date = datetime.utcnow()
+                headers2['Date'] = date.strftime("%Y%m%d")      #date.strftime('%a, %d %b %Y %H:%M:%S GMT')
+                headers2['x-log-date'] = date.strftime("%Y%m%dT%H%M%SZ")
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
 
-                signature = Util.get_request_authorization(method, resource,
-                                                           self._accessKey, params2, headers2)
-
-                headers2['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
-                headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
-
+                region = Util.extract_region(self._endpoint)
+                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, region, "v4")
+                # for key, value in headers2.items():
+                #     print(key + " : "  + value)
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
                 last_err = ex
