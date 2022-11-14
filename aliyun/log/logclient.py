@@ -165,6 +165,8 @@ class LogClient(object):
         self._user_agent = USER_AGENT
         self._credentials_auto_refresher = None
         self._last_refresh = 0
+        self._sign_version = 'v1'
+        self._region = ""
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -289,6 +291,10 @@ class LogClient(object):
                                'Request is failed. Http code is ' + str(resp_status) + exJson, requestId,
                                resp_status, resp_header, resp_body)
 
+    def use_v4_sign(self, region):
+        self._sign_version = "v4"
+        self._region = region
+
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))
@@ -314,8 +320,7 @@ class LogClient(object):
             try:
                 headers2 = copy(headers)
                 params2 = copy(params)
-                version = "v1"
-                if version == "v1":
+                if self._sign_version == "v1":
                     headers2['Date'] = self._getGMT()
                 else:
                     date = datetime.utcnow()
@@ -324,8 +329,8 @@ class LogClient(object):
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
 
-                region = Util.extract_region(self._endpoint)
-                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, region, version)
+                # region = Util.extract_region(self._endpoint)
+                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, self._region, self._sign_version)
 
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
