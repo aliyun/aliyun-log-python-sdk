@@ -148,7 +148,7 @@ class Util(object):
         # set x-log-content-sha256
         content_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         if body:
-            content_sha256 = sha256(str(body).encode('utf-8')).hexdigest()
+            content_sha256 = sha256(body).hexdigest()
         headers["x-log-content-sha256"] = content_sha256
         # set Authorization
         canonical_headers = {}
