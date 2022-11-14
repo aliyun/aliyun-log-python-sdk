@@ -291,8 +291,12 @@ class LogClient(object):
                                'Request is failed. Http code is ' + str(resp_status) + exJson, requestId,
                                resp_status, resp_header, resp_body)
 
-    def use_v4_sign(self, region):
-        self._sign_version = "v4"
+    def set_sign_version(self, sign_version, region=''):
+        if sign_version != "v4" and sign_version != "v1":
+            raise LogException("ParameterInvalid", "{} are not supported, signature only support v1 and v4".format(sign_version))
+        self._sign_version = sign_version
+        if sign_version == "v4" and region == "":
+            raise LogException('ParameterMissing', 'The region should not be None in signature version 4')
         self._region = region
 
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
@@ -329,7 +333,6 @@ class LogClient(object):
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
 
-                # region = Util.extract_region(self._endpoint)
                 Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, self._region, self._sign_version)
 
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
