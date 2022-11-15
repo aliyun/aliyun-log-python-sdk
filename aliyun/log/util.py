@@ -17,6 +17,7 @@ import re
 import logging
 import json
 from hashlib import sha256
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -179,29 +180,29 @@ class Util(object):
     def build_canonical_request(method, resource, params, canonical_headers, signed_headers, hashed_payload):
         canonical_string = method + "\n" + resource + "\n"
         order_map = {}
-        for key, value in sorted(params.items()):
-            if isinstance(value, six.text_type) and isinstance(key, six.text_type):
-                order_map[key.encode('utf-8')] = value.encode('utf-8')
+        if params:
+            for key, value in params.items():
+                order_map[Util.url_encode(key)] = Util.url_encode(value)
+
         separator = ""
-        canoical_part = ""
-        for key, value in order_map.items():
-            canoical_part += separator + key
+        canonical_part = ""
+        for key, value in sorted(order_map.items()):
+            canonical_part += separator + key
             if value:
-                canoical_part += "=" + value
+                canonical_part += "=" + value
             separator = "&"
-        canonical_string += canoical_part + "\n"
+        canonical_string += canonical_part + "\n"
         canonical_string += canonical_headers + "\n"
         canonical_string += signed_headers + "\n"
         canonical_string += hashed_payload
         return canonical_string
 
     @staticmethod
-    def extract_region(endpoint):
-        region = endpoint.split(".")[0]
-        for s in {"-intranet", "-share"}:
-            if region.endswith(s):
-                region = region[:len(region) - len(s)]
-        return region
+    def url_encode(value):
+        if len(str(value)) == 0:
+            return ""
+        encoded = urllib.parse.quote_plus(str(value))
+        return encoded.replace("+", "%20").replace("*", "%2A").replace("~", "%7E").replace("/", "%2F")
 
     @staticmethod
     def build_string_key(key, region, date, string_to_sign):
