@@ -22,12 +22,11 @@ class MachineGroupDetail(object):
     :param machine_list: the list of machine ips or machine userdefined, e.g ["127.0.0.1", "127.0.0.2"]
 
     :type group_type: string
-    :param group_type: the machine group type, "" or "Armory"
+    :param group_type: the machine group type, keep the default value as ""
 
     :type group_attribute: dict
-    :param group_attribute: the attributes in group, it contains two optional key :
-            1. "externalName": only used if the group_type is "Armory", its the Armory name
-            2. "groupTopic": group topic value
+    :param group_attribute: the attributes in group, it contains one optional key :
+            1. "groupTopic": group topic value
     """
 
     def __init__(self, group_name=None, machine_type=None, machine_list=None, group_type="", group_attribute=None):
