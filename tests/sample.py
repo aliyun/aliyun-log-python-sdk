@@ -111,7 +111,7 @@ def sample_get_histograms(client, project, logstore):
 def sample_machine_group(client, project, logstore):
     group_name = logstore + "-sample-group"
 
-    machine_group = MachineGroupDetail(group_name, "ip", ["127.0.0.1", "127.0.0.2"], "Armory",
+    machine_group = MachineGroupDetail(group_name, "ip", ["127.0.0.1", "127.0.0.2"], "",
                                        {"externalName": "test-1", "groupTopic": "yyy"})
 
     res = client.create_machine_group(project, machine_group)
