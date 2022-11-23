@@ -311,9 +311,8 @@ config_detail_json = {
       "machine2"
     ],
     "machine_type": "userdefined",
-    "group_type": "Armory",
+    "group_type": "",
     "group_attribute": {
-      "externalName": "ex name",
       "groupTopic": "topic x"
     }
   }
