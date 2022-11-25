@@ -313,7 +313,6 @@ config_detail_json = {
       "192.168.XX.X2"
     ],
     "machine_type": "ip",
-    "group_type": "",
     "group_attribute": {}
   }
 request = MachineGroupDetail()
@@ -332,7 +331,6 @@ config_detail_json = {
       "user_define_id_XX",
     ],
     "machine_type": "userdefined",
-    "group_type": "",
     "group_attribute": {}
   }
 request = MachineGroupDetail()
