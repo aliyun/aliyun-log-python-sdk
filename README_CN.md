@@ -300,29 +300,47 @@ res.log_print()
 
 - 创建
 
-  创建一个机器组:
+机器组分为IP型机器组和标识型机器组，二选一
 
+IP型机器组创建:
 ```python
 from aliyun.log import MachineGroupDetail
+// IP型机器组
 config_detail_json = {
     "group_name": "group_name1",
     "machine_list": [
-      "machine1",
-      "machine2"
+      "192.168.XX.X1",
+      "192.168.XX.X2"
     ],
-    "machine_type": "userdefined",
+    "machine_type": "ip",
     "group_type": "",
-    "group_attribute": {
-      "groupTopic": "topic x"
-    }
+    "group_attribute": {}
   }
-
 request = MachineGroupDetail()
 request.from_json(config_detail_json)
 res = client.create_machine_group('project1', request)
 res.log_print()
 ```
 
+标识型机器组创建:
+```python
+from aliyun.log import MachineGroupDetail
+// IP型机器组
+config_detail_json = {
+    "group_name": "group_name1",
+    "machine_list": [
+      "user_define_id_XX",
+    ],
+    "machine_type": "userdefined",
+    "group_type": "",
+    "group_attribute": {}
+  }
+request = MachineGroupDetail()
+request.from_json(config_detail_json)
+res = client.create_machine_group('project1', request)
+res.log_print()
+
+```
   **注意：**
   - 创建的机器组的名字`group_name`是放在传入的`request`中.
   - 创建的机器组还没有应用到任何一个Logtail配置, 需要调用后面的API`apply_config_to_machine_group`来进行配置.
