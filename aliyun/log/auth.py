@@ -25,7 +25,7 @@ class ProviderAuth():
             headers['Content-MD5'] = Util.cal_md5(body)
         if not access_key:
             signature = six.b('')
-            headers['Authorization'] = "LOG " + access_id + ':' + str(signature)
+            headers['Authorization'] = 'LOG ' + access_id + ':' + str(signature)
             return
         content = method + '\n'
         if 'Content-MD5' in headers:

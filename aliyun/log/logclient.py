@@ -317,7 +317,7 @@ class LogClient(object):
             try:
                 headers2 = copy(headers)
                 params2 = copy(params)
-                if self._sign_version == "v1":
+                if self._sign_version == 'v1':
                     headers2['Date'] = self._getGMT()
                 else:
                     headers2['x-log-date'] = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
