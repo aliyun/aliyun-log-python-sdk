@@ -27,7 +27,7 @@ class ProviderAuth():
             signature = six.b('')
             headers['Authorization'] = "LOG " + access_id + ':' + str(signature)
             return
-        content = method + "\n"
+        content = method + '\n'
         if 'Content-MD5' in headers:
             content += headers['Content-MD5']
         content += '\n'
@@ -59,8 +59,7 @@ class ProviderAuth():
                 signed_headers += ';'
             signed_headers += key
             headers_to_string += key + ':' + value.strip() + '\n'
-        canonical_request = ProviderAuth.build_canonical_request(method, resource, params, headers_to_string, signed_headers,
-                                                         content_sha256)
+        canonical_request = ProviderAuth.build_canonical_request(method, resource, params, headers_to_string, signed_headers, content_sha256)
         scope = headers['Date'] + '/' + region + '/sls/aliyun_v4_request'
 
         string_to_sign = 'SLS4-HMAC-SHA256\n' \

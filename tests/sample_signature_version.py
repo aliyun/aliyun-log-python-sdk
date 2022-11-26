@@ -6,8 +6,8 @@ from aliyun.log import *
 
 def operate(client, project ,logstore):
     # 创建project、logstore
-    # client.create_project(project, '')
-    # client.create_logstore(project, logstore)
+    client.create_project(project, '')
+    client.create_logstore(project, logstore)
 
     # logstore信息查询
     response = client.list_logstores(ListLogstoresRequest(project))
@@ -15,7 +15,7 @@ def operate(client, project ,logstore):
     print('count: ' + str(response.get_count()))
     for name in response.get_logstores():
         print('logstore name: ' + name)
-    # sleep(60)
+    sleep(60)
 
     # 数据发送，读取
     log_item_list = []
@@ -42,8 +42,8 @@ def operate(client, project ,logstore):
         response5.log_print()
 
     # 删除project、logstore
-    # client.delete_logstore(project, logstore)
-    # client.delete_project(project)
+    client.delete_logstore(project, logstore)
+    client.delete_project(project)
 
 def main():
     endpoint = os.environ.get('ALIYUN_LOG_SAMPLE_ENDPOINT', '')
