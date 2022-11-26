@@ -55,6 +55,7 @@ from .logresponse import LogResponse
 from copy import copy
 from .etl_config_response import *
 from .export_response import *
+from .auth import *
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +151,7 @@ class LogClient(object):
     __version__ = API_VERSION
     Version = __version__
 
-    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
+    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None, sign_version=AUTH_VERSION_1, region=''):
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -165,8 +166,8 @@ class LogClient(object):
         self._user_agent = USER_AGENT
         self._credentials_auto_refresher = None
         self._last_refresh = 0
-        self._sign_version = 'v1'
-        self._region = ""
+        self._sign_version = sign_version
+        self._region = region
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -292,11 +293,9 @@ class LogClient(object):
                                resp_status, resp_header, resp_body)
 
     def set_sign_version(self, sign_version, region=''):
-        if sign_version != "v4" and sign_version != "v1":
-            raise LogException("ParameterInvalid", "{} are not supported, signature only support v1 and v4".format(sign_version))
+
         self._sign_version = sign_version
-        if sign_version == "v4" and region == "":
-            raise LogException('ParameterMissing', 'The region should not be None in signature version 4')
+
         self._region = region
 
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
@@ -327,13 +326,16 @@ class LogClient(object):
                 if self._sign_version == "v1":
                     headers2['Date'] = self._getGMT()
                 else:
-                    date = datetime.utcnow()
-                    headers2['Date'] = date.strftime("%Y%m%d")
-                    headers2['x-log-date'] = date.strftime("%Y%m%dT%H%M%SZ")
+                    headers2['x-log-date'] = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+                    headers2['Date'] = headers2['x-log-date'][:8]
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
 
-                Util.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, self._region, self._sign_version)
+                if self._sign_version != AUTH_VERSION_1 and self._sign_version != AUTH_VERSION_4:
+                    raise LogException("ParameterInvalid", "{} are not supported, signature only support v1 and v4".format(self._sign_version))
+                if self._sign_version == AUTH_VERSION_4 and not self._region:
+                    raise LogException('ParameterMissing', 'The region should not be None in signature version 4')
+                ProviderAuth.sign(method, resource, self._accessKeyId, self._accessKey, params2, headers2, body, self._region, self._sign_version)
 
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
