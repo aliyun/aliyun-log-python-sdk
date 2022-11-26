@@ -292,12 +292,6 @@ class LogClient(object):
                                'Request is failed. Http code is ' + str(resp_status) + exJson, requestId,
                                resp_status, resp_header, resp_body)
 
-    def set_sign_version(self, sign_version, region=''):
-
-        self._sign_version = sign_version
-
-        self._region = region
-
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))

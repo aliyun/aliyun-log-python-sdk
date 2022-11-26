@@ -12,7 +12,7 @@ class ProviderAuth():
     @staticmethod
     def sign(method, resource, access_id, access_key, params, headers, body, region, sign_version):
         """ :return bytes (PY2) or string (PY2) """
-        if sign_version == 'v4':
+        if sign_version == AUTH_VERSION_4:
             ProviderAuth.v4_sign(method, resource, access_id, access_key, params, headers, body, region)
         else:
             ProviderAuth.v1_sign(method, resource, access_id, access_key, params, headers, body)
@@ -44,8 +44,7 @@ class ProviderAuth():
     def v4_sign(method, resource, access_id, access_key, params, headers, body, region):
         """ :return bytes (PY2) or string (PY2) """
         # set x-log-content-sha256
-        content_sha256 = sha256 \
-            (body).hexdigest() if body else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+        content_sha256 = sha256(body).hexdigest() if body else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         headers['x-log-content-sha256'] = content_sha256
         # set Authorization
         canonical_headers = {}
@@ -94,7 +93,7 @@ class ProviderAuth():
 
     @staticmethod
     def url_encode(value):
-        if len(str(value)) == 0:
+        if not value:
             return ''
         encoded = urllib.parse.quote_plus(str(value))
         return encoded.replace('+', '%20').replace('*', '%2A').replace('~', '%7E').replace('/', '%2F')

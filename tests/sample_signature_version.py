@@ -54,7 +54,7 @@ def main():
     logstore = os.environ.get('ALIYUN_LOG_SAMPLE_LOGSTORE', '')
 
     # 构建一个client
-    client = LogClient(endpoint, access_key_id, access_key, None, None, 'v4', region)
+    client = LogClient(endpoint, access_key_id, access_key, None, None, auth.AUTH_VERSION_4, region)
 
     # 使用v4签名进行操作
     operate(client, project, logstore)
