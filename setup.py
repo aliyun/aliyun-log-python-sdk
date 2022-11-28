@@ -32,7 +32,7 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>=3.4.0,<=3.20.1',
+    'protobuf>=3.4.0,<4.0.0',
 ]
 requirements_py2 = [
     'six==1.14.0',
