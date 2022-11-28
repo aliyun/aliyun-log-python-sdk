@@ -112,7 +112,7 @@ def sample_machine_group(client, project, logstore):
     group_name = logstore + "-sample-group"
 
     machine_group = MachineGroupDetail(group_name, "ip", ["127.0.0.1", "127.0.0.2"], "",
-                                       {"groupTopic": "yyy"})
+                                       {})
 
     res = client.create_machine_group(project, machine_group)
     res.log_print()
