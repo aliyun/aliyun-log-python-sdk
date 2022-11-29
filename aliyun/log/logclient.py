@@ -53,8 +53,10 @@ from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
 from copy import copy
+from .pluralize import pluralize
 from .etl_config_response import *
 from .export_response import *
+from .common_response import *
 
 logger = logging.getLogger(__name__)
 
@@ -4132,9 +4134,593 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExportResponse(resp, header)
 
+    def list_alert(self, project, offset=0, size=100):
+        """list alerts
+        Unsuccessful opertaion will cause an LogException.
 
+        :type project: string
+        :param project: the project name
 
-make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
-make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
-make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
-make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
+        :type offset: int
+        :param offset: the offset of all the matched alerts
+
+        :type size: int
+        :param size: the max return alert count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_alert, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {}
+        resource = "/jobs"
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        params['jobType'] = "Alert"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="alerts", entities_key="results")
+
+    def get_alert(self, project, entity):
+        """get alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the alert name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_alert(self, project, entity):
+        """delte alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the alert name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_alert(self, project, detail):
+        """update alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of alert config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        alert_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            alert_name = detail.get("name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            alert_name = detail.get("name", "")
+
+        if alert_name is None:
+            alert_name = json.loads(body_str).get("name", "")
+
+        assert alert_name, LogException(
+            "InvalidParameter",
+            'unknown alert name in "{0}"'.format(detail),
+        )
+
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/jobs/" + alert_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_alert(self, project, detail):
+        """create alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of alert config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_dashboard(self, project, offset=0, size=100):
+        """list the dashboards
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type offset: int
+        :param offset: the offset of all the matched dashboards
+
+        :type size: int
+        :param size: the max return dashboard count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_dashboard, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard")
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="dashboards", entities_key="dashboards")
+
+    def get_dashboard(self, project, entity):
+        """get dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the dashabord name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard") + "/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_dashboard(self, project, entity):
+        """delete dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the dashabord name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard") + "/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_dashboard(self, project, detail):
+        """update dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of dashboard config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        dashabord_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            dashabord_name = detail.get("dashboardName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            dashabord_name = detail.get("dashboardName" or "name", "")
+
+        if dashabord_name is None:
+            dashabord_name = json.loads(body_str).get("dashboardName", "")
+
+        assert dashabord_name, LogException(
+            "InvalidParameter",
+            'unknown dashabord name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/" + pluralize("dashboard") + "/" + dashabord_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_dashboard(self, project, detail):
+        """create dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of dashboard config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/" + pluralize("dashboard")
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_savedsearch(self, project, offset=0, size=100):
+        """list savedsearches
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type offset: int
+        :param offset: the offset of all the matched savedsearches
+
+        :type size: int
+        :param size: the max return savedsearch count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_savedsearch, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch")
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="savedsearches", entities_key="savedsearches")
+
+    def get_savedsearch(self, project, entity):
+        """get savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the savedsearch name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch") + "/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_savedsearch(self, project, entity):
+        """delete savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the savedsearch name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch") + "/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_savedsearch(self, project, detail):
+        """update savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of savedsearch config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        savedsearch_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            savedsearch_name = detail.get("savedsearchName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            savedsearch_name = detail.get("savedsearchName" or "name", "")
+
+        if savedsearch_name is None:
+            savedsearch_name = json.loads(body_str).get("savedsearchName", "")
+
+        assert savedsearch_name, LogException(
+            "InvalidParameter",
+            'unknown savedsearch name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/" + pluralize("savedsearch") + "/" + savedsearch_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_savedsearch(self, project, detail):
+        """create savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of savedsearch config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/" + pluralize("savedsearch")
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_shipper(self, project, logstore, offset=0, size=100):
+        """list shippers
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type offset: int
+        :param offset: the offset of all the matched shippers
+
+        :type size: int
+        :param size: the max return shipper count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_shipper, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project, logstore)
+
+        headers = {}
+        params = {}
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        resource = "/logstores/" + logstore + "/shipper"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="shipper", entities_key="shipper")
+
+    def get_shipper(self, project, logstore, entity):
+        """get shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type entity: string
+        :param entity: the shipper name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore + "/shipper/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_shipper(self, project, logstore, entity):
+        """delete shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type entity: string
+        :param entity: the shipper name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore + "/shipper/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_shipper(self, project, logstore, detail):
+        """update shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type detail: dict/string
+        :param detail: json string of shipper config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        shipper_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            shipper_name = detail.get("shipperName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            shipper_name = detail.get("shipperName" or "name", "")
+
+        if shipper_name is None:
+            shipper_name = json.loads(body_str).get("shipperName", "")
+
+        assert shipper_name, LogException(
+            "InvalidParameter",
+            'unknown shipper name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/logstores/" + logstore + "/shipper/" + shipper_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_shipper(self, project, logstore, detail):
+        """create shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type detail: dict/string
+        :param detail: json string of shipper config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+        resource = "/logstores/" + logstore + "/shipper"
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+# make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
+# make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
+# make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
+# make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
