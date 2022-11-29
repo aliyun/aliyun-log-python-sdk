@@ -10,7 +10,9 @@ import requests
 import six
 import time
 import zlib
+from datetime import datetime
 import logging
+import locale
 from itertools import cycle
 from .acl_response import *
 from .consumer_group_request import *
@@ -44,7 +46,6 @@ from .resource_params import *
 from .topostore_response import *
 from .topostore_params import *
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
-from .util import base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
 from .version import API_VERSION, USER_AGENT
 
