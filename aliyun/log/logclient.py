@@ -43,6 +43,8 @@ from .shard_response import *
 from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
+from .topostore_response import *
+from .topostore_params import*
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -3886,6 +3888,565 @@ class LogClient(object):
         resource = "/resources/" + resource_name + "/records"
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListRecordResponse(resp, header)
+
+    def create_topostore(self, topostore):
+        """create topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore: Topostore
+        :param topostore: instance of Topostore
+        """
+        if not isinstance(topostore, Topostore):
+            raise TypeError("topostore must be instance of Topostore ")
+        params = {}
+        topostore.check_for_create()
+        body = {
+            "name": topostore.get_name(),
+        }
+        tag = topostore.get_tag()
+        description = topostore.get_description()
+        schema = topostore.get_schema()
+        acl = topostore.get_acl()
+        ext_info = topostore.get_ext_info()
+        if description:
+            body["description"] = description
+
+        if schema:
+            body["schema"] = json.dumps(schema)
+
+        if tag:
+            body["tag"] = json.dumps(tag)
+
+        if acl:
+            body["acl"] = json.dumps(acl)
+
+        if ext_info:
+            body["extInfo"] = ext_info
+
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreResponse(header, resp)
+
+    def update_topostore(self, topostore):
+        """update topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore: Topostore
+        :param topostore: instance of Topostore
+        """
+        if not isinstance(topostore, Topostore):
+            raise TypeError("topostore must be instance of Topostore ")
+        params = {}
+        topostore.check_for_create()
+        body = {
+            "name": topostore.get_name(),
+        }
+        tag = topostore.get_tag()
+        description = topostore.get_description()
+        schema = topostore.get_schema()
+        acl = topostore.get_acl()
+        ext_info = topostore.get_ext_info()
+        if description:
+            body["description"] = description
+        if schema:
+            body["schema"] = json.dumps(schema)
+        if tag:
+            body["tag"] = json.dumps(tag)
+        if acl:
+            body["acl"] = json.dumps(acl)
+        if ext_info:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore.get_name()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreResponse(header, resp)
+
+    def delete_topostore(self, topostore_name):
+        """delete topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: resource name
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteTopostoreResponse(header, resp)
+
+    def get_topostore(self, topostore_name):
+        """get topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreResponse(header, resp)
+
+    def list_topostores(self, names=None, tag_key=None, tag_value=None, offset=0, size=100):
+        """ list topostores
+        Unsuccessful operation will cause an LogException.
+
+        :type offset: int
+        :param offset: line offset of return topostores
+
+        :type size: int
+        :param size: max line number of return topostores
+
+        :type tag_key: string
+        :param tag_key: topostore tag key
+
+        :type tag_value: string
+        :param tag_value: topostore tag value
+
+        :type names: list
+        :param names: topostore names witch need to be listed
+
+        :return: ListTopostoresResponse
+        :raise: LogException
+        """
+        if names and not isinstance(names, list):
+            raise TypeError("topostore_names type must be list")
+
+        if tag_key and not isinstance(tag_key, str):
+            raise TypeError("tag_key type must be str")
+
+        if tag_value and not isinstance(tag_value, str):
+            raise TypeError("tag_value type must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if names:
+            params["names"] = ",".join(names)
+        if tag_key:
+            params["tagKey"] = tag_key
+        if tag_value:
+            params["tagValue"] = tag_value
+        resource = "/topostores"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoresResponse(resp, header)
+
+    def create_topostore_node(self, topostore_name, node):
+        """create topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type node: TopostoreNode
+        :param node: instance of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(node, TopostoreNode):
+            raise TypeError("node must be instance of TopostoreNode ")
+        params = {}
+        node.check_for_create()
+        body = node.to_dict()
+        property = node.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreNodeResponse(header, resp)
+
+    def upsert_topostore_node(self, topostore_name, nodes):
+        """upsert topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type nodes: list of TopostoreNode
+        :param nodes: list of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(nodes, list):
+            raise TypeError("nodes must be instance of list ")
+
+        nodes_list = []
+        if len(nodes) > 100:
+            raise Exception("nodes count should less than 100")
+
+        for node in nodes:
+            if not isinstance(node, TopostoreNode):
+                raise TypeError("node item  must be instance of TopostoreNode ")
+            node.check_for_create()
+            node_dict = node.to_dict()
+            property = node.get_property()
+            if property:
+                node_dict['property'] = json.dumps(property)
+            nodes_list.append(node_dict)
+        params = {}
+        body = {"nodes" :nodes_list }
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertTopostoreNodeResponse(header, resp)
+
+    def update_topostore_node(self, topostore_name, node):
+        """update topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type node: TopostoreNode
+        :param node: instance of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(node, TopostoreNode):
+            raise TypeError("node must be instance of TopostoreNode ")
+        params = {}
+        node.check_for_create()
+        body = node.to_dict()
+        property = node.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/"  + topostore_name + "/nodes/" + node.get_node_id()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreNodeResponse(header, resp)
+
+    def delete_topostore_node(self, topostore_name, node_ids):
+        """delete topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type node_ids: list
+        :param node_ids: topostore node id list, id should be str
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(node_ids, list):
+            raise TypeError("node_ids type must be list of str")
+
+        for node_id in node_ids:
+            if not isinstance(node_id, str):
+                raise TypeError("node_id type must be str")
+        params = {"nodeIds" : ",".join(node_ids)}
+        body = {}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("DELETE", None, body_str, resource, params, headers)
+        return DeleteTopostoreNodeResponse(header, resp)
+
+    def get_topostore_node(self, topostore_name, node_id):
+        """get topsotore node
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type node_id: string
+        :param node_id: topostore node id
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(node_id, str):
+            raise TypeError("node_id type must be str, got %s" % type(node_id))
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name + "/nodes/" + node_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreNodeResponse(header, resp)
+
+    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None, 
+                property_value=None, offset=0, size=100):
+        """list Topostore nodes
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+
+        :type node_ids: list of string
+        :param node_ids: topostore node ids
+
+        :type node_types: list of string
+        :param node_types: list of node id(which is str)
+
+        :type property_key: string
+        :param property_key: property_key of node id property
+
+        :type property_value: string
+        :param property_value: property_value of node id property
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max nodes for each page
+
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+
+        if node_ids and not isinstance(node_ids, list):
+            raise TypeError("node_ids type must be list,element is node id which type is str")
+
+        if node_types and not isinstance(node_types, list):
+            raise TypeError("node_types must be list of string")
+
+        if node_types and isinstance(node_types, list):
+            for node_type in node_types:
+                if not isinstance(node_type, str):
+                    raise TypeError("node_types must be list of string")
+            
+        if property_key and not isinstance(property_key, str):
+            raise TypeError("property_key must be str")
+
+        if property_value and not isinstance(property_value, str):
+            raise TypeError("property_value must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if node_types is not None:
+            params["nodeTypes"] = ','.join(node_types)
+        if property_key is not None:
+            params["propertyKey"] = property_key
+        if property_value is not None:
+            params["propertyValue"] = property_value
+        if node_ids is not None:
+            params["nodeIds"] = ','.join(node_ids)
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoreNodesResponse(resp, header)
+
+    def create_topostore_relation(self, topostore_name, relation):
+        """create topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relation: TopostoreRelation
+        :param relation: instance of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation, TopostoreRelation):
+            raise TypeError("relation must be instance of TopostoreRelation ")
+        params = {}
+        relation.check_for_create()
+        body = relation.to_dict()
+        property = relation.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreRelationResponse(header, resp)
+
+    def upsert_topostore_relation(self, topostore_name, relations):
+        """upsert topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relations: list of TopostoreRelation
+        :param relations: list of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relations, list):
+            raise TypeError("relations must be instance of list ")
+
+        relation_list = []
+        if len(relations) > 100:
+            raise Exception("relations count should less than 100")
+
+        for relation in relations:
+            if not isinstance(relation, TopostoreRelation):
+                raise TypeError("node item  must be instance of TopostoreRelation ")
+            relation.check_for_create()
+            relation_dict = relation.to_dict()
+            property = relation.get_property()
+            if property:
+                relation_dict['property'] = json.dumps(property)
+            relation_list.append(relation_dict)
+        params = {}
+        body = {"relations" :relation_list }
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertTopostoreRelationResponse(header, resp)
+
+    def update_topostore_relation(self, topostore_name, relation):
+        """update topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relation: TopostoreRelation
+        :param relation: instance of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation, TopostoreRelation):
+            raise TypeError("relation must be instance of TopostoreRelation ")
+        params = {}
+        relation.check_for_create()
+        body = relation.to_dict()
+        property = relation.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations/" + relation.get_relation_id()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreRelationResponse(header, resp)
+
+    def delete_topostore_relation(self, topostore_name, relation_ids):
+        """delete topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type relation_ids: list of string
+        :param relation_ids: topostore relation ids
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(relation_ids, list):
+            raise TypeError("relation_ids type must be str")
+        for relation_id in relation_ids:
+            if not isinstance(relation_id, str):
+                raise TypeError("relation_id type must be str")
+        params = {"relationIds" :  ",".join(relation_ids)}
+        body = {}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("DELETE", None, body_str, resource, params, headers)
+        return DeleteTopostoreRelationResponse(header, resp)
+
+    def get_topostore_relation(self, topostore_name, relation_id):
+        """get topsotore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type relation_id: string
+        :param relation_id: topostore relation id
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation_id, str):
+            raise TypeError("relation_id type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name + "/relations/" + relation_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreRelationResponse(header, resp)
+
+    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None, 
+            src_node_ids=None, dst_node_ids=None,
+            property_key=None, property_value=None, offset=0, size=100):
+        """list Topostore relationss
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+
+        :type relation_ids: list of string
+        :param relation_ids: topostore relation ids (which is str)
+
+        :type relation_types: list of string
+        :param relation_types: list of relation id (which is str)
+
+        :type src_node_ids: list of string
+        :param src_node_ids: list of src_node_id (which is str)
+
+        :type dst_node_ids: list of string
+        :param dst_node_ids: list of dst_node_id (which is str)
+
+        :type property_key: string
+        :param property_key: property_key of relation id property
+
+        :type property_value: string
+        :param property_value: property_value of relation id property
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max relations for each page
+
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+
+        if relation_ids and not isinstance(relation_ids, list):
+            raise TypeError("relation_ids type must be list,element is relation id which type is str")
+
+        if relation_types and not isinstance(relation_types, list):
+            raise TypeError("relation_types must be list of string")
+        
+        if relation_types and isinstance(relation_types, list):
+            for relation_type in relation_types:
+                if not isinstance(relation_type, str):
+                    raise TypeError("relation_types must be list of string")
+
+        if src_node_ids and not isinstance(src_node_ids, list):
+            raise TypeError("src_node_ids must be list of string")
+        if src_node_ids and isinstance(src_node_ids, list):
+            for src_node_id in src_node_ids:
+                if not isinstance(src_node_id, str):
+                    raise TypeError("src_node_ids must be list of string")
+
+        if dst_node_ids and not isinstance(dst_node_ids, list):
+            raise TypeError("dst_node_id must be str")
+        if dst_node_ids and isinstance(dst_node_ids, list):
+            for dst_node_id in dst_node_ids:
+                if not isinstance(dst_node_id, str):
+                    raise TypeError("dst_node_ids must be list of string")
+
+        if property_key and not isinstance(property_key, str):
+            raise TypeError("property_key must be str")
+
+        if property_value and not isinstance(property_value, str):
+            raise TypeError("property_value must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if relation_ids is not None:
+            params["relationIds"] = ','.join(relation_ids)
+
+        if relation_types is not None:
+            params["relationTypes"] = ",".join(relation_types)
+    
+        if src_node_ids is not None:
+            params["srcNodeIds"] = ",".join(src_node_ids)
+
+        if dst_node_ids is not None:
+            params["dstNodeIds"] = ",".join(dst_node_ids)
+
+        if property_key is not None:
+            params["propertyKey"] = property_key
+
+        if property_value is not None:
+            params["propertyValue"] = property_value
+
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoreRelationsResponse(resp, header)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
