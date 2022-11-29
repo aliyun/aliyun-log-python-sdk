@@ -61,7 +61,7 @@ pip install -U aliyun-log-python-sdk
 pip install -U aliyun-log-python-sdk -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-如果存在安装Regex失败的错误, 可以参考使用`yun`/`apt-get`或者手动安装一下python-devel
+如果存在安装Regex失败的错误, 可以参考使用`yum`/`apt-get`或者手动安装一下python-devel
 https://rpmfind.net/linux/rpm2html/search.php?query=python-devel
 
 
@@ -300,30 +300,45 @@ res.log_print()
 
 - 创建
 
-  创建一个机器组:
+机器组分为IP型机器组和标识型机器组，二选一
 
+IP型机器组创建:
 ```python
 from aliyun.log import MachineGroupDetail
+// IP型机器组
 config_detail_json = {
     "group_name": "group_name1",
     "machine_list": [
-      "machine1",
-      "machine2"
+      "192.168.XX.X1",
+      "192.168.XX.X2"
     ],
-    "machine_type": "userdefined",
-    "group_type": "Armory",
-    "group_attribute": {
-      "externalName": "ex name",
-      "groupTopic": "topic x"
-    }
+    "machine_type": "ip",
+    "group_attribute": {}
   }
-
 request = MachineGroupDetail()
 request.from_json(config_detail_json)
 res = client.create_machine_group('project1', request)
 res.log_print()
 ```
 
+标识型机器组创建:
+```python
+from aliyun.log import MachineGroupDetail
+// IP型机器组
+config_detail_json = {
+    "group_name": "group_name1",
+    "machine_list": [
+      "user_define_id_XX",
+    ],
+    "machine_type": "userdefined",
+    "group_attribute": {}
+  }
+request = MachineGroupDetail()
+request.from_json(config_detail_json)
+res = client.create_machine_group('project1', request)
+res.log_print()
+
+```
   **注意：**
   - 创建的机器组的名字`group_name`是放在传入的`request`中.
   - 创建的机器组还没有应用到任何一个Logtail配置, 需要调用后面的API`apply_config_to_machine_group`来进行配置.
@@ -536,9 +551,7 @@ for res in it:
     res.log_print()
 
 # 或者大并发直接下载在本地
-it = client.pull_log('project1', 'logstore1', from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", file_path="/data/dump_{}.data")
-for res in it:
-    res.log_print()
+it = client.pull_log_dump('project1', 'logstore1',from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", file_path="./data/dump_{}.data")
 ```
 
 **注意：** 默认获取1000条, 可以通过参数`count`来调节. 也可以通过参数`end_cursor`来设定设定一个结束的游标.

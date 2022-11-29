@@ -8,7 +8,7 @@ import json
 from .logresponse import LogResponse
 
 __all__ = ['ListIngestionResponse', 'CreateIngestionResponse', 'UpdateIngestionResponse', 'DeleteIngestionResponse', 'GetIngestionResponse',
-           'StartIngestionResponse', 'StopIngestionResponse']
+           'StartIngestionResponse', 'StopIngestionResponse', 'RestartIngestionResponse']
 
 
 class ListIngestionResponse(LogResponse):
@@ -166,4 +166,21 @@ class StopIngestionResponse(LogResponse):
 
     def log_print(self):
         print('StopIngestionResponse:')
+        print('headers:', self.get_all_headers())
+
+class RestartIngestionResponse(LogResponse):
+    """ The response of the RestartIngestion API from log.
+
+    :type resp: dict
+    :param resp: RestartIngestionResponse HTTP response body
+
+    :type header: dict
+    :param header: RestartIngestionResponse HTTP response header
+    """
+
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
+
+    def log_print(self):
+        print('RestartIngestionResponse:')
         print('headers:', self.get_all_headers())

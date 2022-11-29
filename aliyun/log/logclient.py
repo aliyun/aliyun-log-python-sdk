@@ -46,7 +46,7 @@ from .resource_params import *
 from .topostore_response import *
 from .topostore_params import*
 from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
-from .util import base64_encodestring as e64, base64_decodestring as d64
+from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
 from .version import API_VERSION, USER_AGENT
 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
@@ -56,6 +56,7 @@ import struct
 from .logresponse import LogResponse
 from copy import copy
 from .etl_config_response import *
+from .export_response import *
 
 logger = logging.getLogger(__name__)
 
@@ -1280,7 +1281,8 @@ class LogClient(object):
                         preserve_storage=None,
                         encrypt_conf=None,
                         hot_ttl=-1,
-                        mode = None
+                        mode = None,
+                        telemetry_type=None
                         ):
         """
         update the logstore meta info
@@ -1331,6 +1333,8 @@ class LogClient(object):
 
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
+        :type telemetry_type: string
+        :param telemetry_type: the Telemetry type
 
         :return: UpdateLogStoreResponse
         
@@ -1374,6 +1378,8 @@ class LogClient(object):
             body["encrypt_conf"] = encrypt_conf
         if mode != None:
             body['mode'] = mode
+        if telemetry_type != None:
+            body["telemetryType"] = telemetry_type
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
@@ -3077,6 +3083,31 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return StartIngestionResponse(header, resp)
 
+    def restart_ingestion(self, project_name, ingestion_name, ingestion_config):
+        """ restart ingestion
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type ingestion_name: string
+        :param ingestion_name: the ingestion name
+
+        :return: RestartIngestionResponse
+
+        :raise: LogException
+        """
+
+        headers = {}
+        params = {"action":"RESTART"}
+        resource = "/jobs/" + ingestion_name
+        headers['Content-Type'] = 'application/json'
+        body = six.b(ingestion_config)
+        headers['x-log-bodyrawsize'] = str(len(body))
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return RestartIngestionResponse(header, resp)
+
     def stop_ingestion(self, project_name, ingestion_name):
         """ stop ingestion
         Unsuccessful operation will cause an LogException.
@@ -3469,7 +3500,10 @@ class LogClient(object):
                             auto_split=True,
                             max_split_shard=64,
                             preserve_storage=False,
-                            encrypt_conf=None):
+                            encrypt_conf=None,
+                            hot_ttl=-1,
+                            mode=None
+                            ):
 
         """ create metric store
         Unsuccessful operation will cause an LogException.
@@ -3482,6 +3516,9 @@ class LogClient(object):
 
         :type ttl: int
         :param ttl: the life cycle of log in the logstore in days, default 30, up to 3650
+
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
 
         :type shard_count: int
         :param shard_count: the shard count of the logstore to create, default 2
@@ -3514,20 +3551,27 @@ class LogClient(object):
 +                    }
 +                }
 
+        :type mode: string
+        :param mode: type of logstore, can be choose between lite and standard, default value standard
+
         :return: CreateMetricsStoreResponse
 
         :raise: LogException
         """
 
         logstore_response = self.create_logstore(project_name, logstore_name, ttl=ttl,
-                                   shard_count=shard_count,
-                                   enable_tracking=enable_tracking,
-                                   append_meta=append_meta,
-                                   auto_split=auto_split,
-                                   max_split_shard=max_split_shard,
-                                   preserve_storage=preserve_storage,
-                                   encrypt_conf=encrypt_conf,
-                                   telemetry_type='Metrics')
+                                                 shard_count=shard_count,
+                                                 enable_tracking=enable_tracking,
+                                                 append_meta=append_meta,
+                                                 auto_split=auto_split,
+                                                 max_split_shard=max_split_shard,
+                                                 preserve_storage=preserve_storage,
+                                                 encrypt_conf=encrypt_conf,
+                                                 telemetry_type='Metrics',
+                                                 hot_ttl=hot_ttl,
+                                                 mode=mode)
+
+        time.sleep(1)
         keys = [
             {'name': '__name__', 'type': 'text'},
             {'name': '__labels__', 'type': 'text'},
@@ -3535,8 +3579,119 @@ class LogClient(object):
             {'name': '__value__', 'type': 'double'},
         ]
         substore_response = self.create_substore(project_name, logstore_name, 'prom', ttl=ttl,
-                                   keys=keys, sorted_key_count=2, time_index=2)
+                                                 keys=keys, sorted_key_count=2, time_index=2)
         return CreateMetricsStoreResponse(logstore_response, substore_response)
+
+    def delete_metric_store(self, project_name, logstore_name):
+        """ delete metric store
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: DeleteLogStoreResponse
+
+        :raise: LogException
+        """
+        return self.delete_logstore(project_name, logstore_name)
+
+    def get_metric_store(self, project_name, logstore_name):
+        """ get the metric store meta info
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetLogStoreResponse
+
+        :raise: LogException
+        """
+
+        return self.get_logstore(project_name, logstore_name)
+
+    def update_metric_store(self, project_name, logstore_name, ttl=None, enable_tracking=None, shard_count=None,
+                            append_meta=None,
+                            auto_split=None,
+                            max_split_shard=None,
+                            preserve_storage=None,
+                            encrypt_conf=None,
+                            hot_ttl=-1,
+                            mode=None,
+                            ):
+        """
+        update metric store meta info
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type ttl: int
+        :param ttl: the life cycle of log in the logstore in days
+
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
+
+        :type enable_tracking: bool
+        :param enable_tracking: enable web tracking
+
+        :type shard_count: int
+        :param shard_count: deprecated, the shard count could only be updated by split & merge
+
+        :type append_meta: bool
+        :param append_meta: allow to append meta info (server received time and IP for external IP to each received log)
+
+        :type auto_split: bool
+        :param auto_split: auto split shard, max_split_shard will be 64 by default is True
+
+        :type max_split_shard: int
+        :param max_split_shard: max shard to split, up to 64
+
+        :type preserve_storage: bool
+        :param preserve_storage: if always persist data, TTL will be ignored.
+
+        :type encrypt_conf: dict
+        :param encrypt_conf :  following is a sample
++                {
++                    "enable" : True/False,              # required
++                    "encrypt_type" : "default",         # required, default encrypt alogrithm only currently
++                    "user_cmk_info" :                   # optional, if 'user_cmk_info' is set, use byok cmk key, otherwise use sls system cmk key
++                    {
++                        "cmk_key_id" :                  # the cmk key used to generate data encrypt key
++                        "arn" :                         # arn to grant sls service to get/generate data encrypt key in kms
++                        "region_id" :                   # the region id of cmk_key_id
++                    }
++                }
+
+        :type mode: string
+        :param mode: type of logstore, can be choose between lite and standard, default value standard
+
+        :return: UpdateLogStoreResponse
+
+        :raise: LogException
+        """
+        self.update_substore_ttl(project_name, logstore_name, ttl)
+        return self.update_logstore(project_name, logstore_name,
+                                    ttl=ttl,
+                                    enable_tracking=enable_tracking,
+                                    shard_count=shard_count,
+                                    append_meta=append_meta,
+                                    auto_split=auto_split,
+                                    max_split_shard=max_split_shard,
+                                    preserve_storage=preserve_storage,
+                                    encrypt_conf=encrypt_conf,
+                                    hot_ttl=hot_ttl,
+                                    mode=mode,
+                                    telemetry_type='Metrics'
+                                    )
 
     def create_sql_instance(self, project_name, sql_instance,useAsDefault):
         """ create sql instance config
@@ -4447,6 +4602,96 @@ class LogClient(object):
         resource = "/topostores/" + topostore_name + "/relations"
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListTopostoreRelationsResponse(resp, header)
+
+    def create_export(self, project_name, export):
+        """ Create an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type export: string
+        :param export: the export job configuration
+        """
+        params = {}
+        export_sink_config = export.getConfiguration().getSink()
+        export_type = export_sink_config.getType()
+        if export_type not in ["AliyunODPS", "AliyunOSS"]:
+            raise TypeError("export job type must in AliyunODPS or AliyunOSS, not %s" % export_type)
+        if export_type == "AliyunODPS":
+            sink = maxcompute_sink_deserialize(export_sink_config)
+        elif export_type == "AliyunOSS":
+            sink = oss_sink_deserialize(export_sink_config)
+        export = export_deserialize(export, sink)
+        body = six.b(export)
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateExportResponse(header, resp)
+
+    def delete_export(self, project_name, job_name):
+        """ Create an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the job name of export job
+        """
+        params = {}
+        headers = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteExportResponse(header, resp)
+
+    def get_export(self, project_name, job_name):
+        """ get export
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type name: string
+        :param name: the export name
+
+        :return: GetExportResponse
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetExportResponse(header, resp)
+
+    def list_export(self, project_name, offset=0, size=100):
+        """ list exports
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Pqroject name
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :return: ListExportsResponse
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_export, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name)
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        params['jobType'] = "Export"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListExportResponse(resp, header)
 
 
 make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
