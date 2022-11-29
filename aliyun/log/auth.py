@@ -63,6 +63,7 @@ class AuthV1(AuthBase):
         content += Util.canonicalized_resource(resource, params)
         signature = Util.hmac_sha1(content, self.access_key_secret)
         headers['Authorization'] = 'LOG ' + self.access_key_id + ':' + signature
+        headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
 
 
 class AuthV4(AuthBase):
