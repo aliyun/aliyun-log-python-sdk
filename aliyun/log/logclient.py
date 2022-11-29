@@ -10,9 +10,7 @@ import requests
 import six
 import time
 import zlib
-from datetime import datetime
 import logging
-import locale
 from itertools import cycle
 from .acl_response import *
 from .consumer_group_request import *
@@ -43,7 +41,7 @@ from .shard_response import *
 from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
-from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
+from .util import base64_encodestring as b64e, is_stats_query
 from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
 from .version import API_VERSION, USER_AGENT
 
@@ -55,6 +53,7 @@ from .logresponse import LogResponse
 from copy import copy
 from .etl_config_response import *
 from .export_response import *
+from .auth import *
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +149,8 @@ class LogClient(object):
     __version__ = API_VERSION
     Version = __version__
 
-    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
+    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None,
+                 auth_version=AUTH_VERSION_1, region=''):
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -165,6 +165,9 @@ class LogClient(object):
         self._user_agent = USER_AGENT
         self._credentials_auto_refresher = None
         self._last_refresh = 0
+        self._auth_version = auth_version
+        self._region = region
+        self._auth = make_auth(accessKeyId, accessKey, auth_version, region)
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -177,6 +180,7 @@ class LogClient(object):
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
                 self._accessKeyId, self._accessKey, self._securityToken = self._credentials_auto_refresher()
+                self._auth = make_auth(self._accessKeyId, self._accessKey, self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
                     "failed to call _credentials_auto_refresher to refresh credentials, details: {0}".format(str(ex)))
@@ -232,14 +236,6 @@ class LogClient(object):
         self._endpoint = endpoint + ':' + str(self._port)
 
     @staticmethod
-    def _getGMT():
-        try:
-            locale.setlocale(locale.LC_TIME, "C")
-        except Exception as ex:
-            logger.warning("failed to set locale time to C. skip it: {0}".format(ex))
-        return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-    @staticmethod
     def _loadJson(resp_status, resp_header, resp_body, requestId):
         if not resp_body:
             return None
@@ -292,13 +288,11 @@ class LogClient(object):
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))
-            headers['Content-MD5'] = Util.cal_md5(body)
         else:
             headers['Content-Length'] = '0'
             headers["x-log-bodyrawsize"] = '0'
 
         headers['x-log-apiversion'] = API_VERSION
-        headers['x-log-signaturemethod'] = 'hmac-sha1'
         if self._isRowIp or not project:
             url = self.http_type + self._endpoint
         else:
@@ -316,17 +310,9 @@ class LogClient(object):
             try:
                 headers2 = copy(headers)
                 params2 = copy(params)
-                headers2['Date'] = self._getGMT()
-
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
-
-                signature = Util.get_request_authorization(method, resource,
-                                                           self._accessKey, params2, headers2)
-
-                headers2['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
-                headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
-
+                self._auth.sign_request(method, resource, params2, headers2, body)
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
                 last_err = ex
@@ -3485,8 +3471,10 @@ class LogClient(object):
         """
 
         headers = {"x-log-bodyrawsize": "0"}
-        params = {}
-        resource = "/logstores/" + logstore_name + "/substores/storage/ttl?ttl=" + str(ttl)
+        params = {
+            "ttl": ttl,
+        }
+        resource = "/logstores/" + logstore_name + "/substores/storage/ttl"
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return UpdateSubStoreTTLResponse(header, resp)
 
