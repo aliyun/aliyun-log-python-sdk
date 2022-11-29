@@ -119,23 +119,6 @@ class Util(object):
         return resource
 
     @staticmethod
-    def get_request_authorization(method, resource, key, params, headers):
-        """ :return bytes (PY2) or string (PY2) """
-        if not key:
-            return six.b('')
-        content = method + "\n"
-        if 'Content-MD5' in headers:
-            content += headers['Content-MD5']
-        content += '\n'
-        if 'Content-Type' in headers:
-            content += headers['Content-Type']
-        content += "\n"
-        content += headers['Date'] + "\n"
-        content += Util.canonicalized_log_headers(headers)
-        content += Util.canonicalized_resource(resource, params)
-        return Util.hmac_sha1(content, key)
-
-    @staticmethod
     def to_ansi(data):
         pass
 
