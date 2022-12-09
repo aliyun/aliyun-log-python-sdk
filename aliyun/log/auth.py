@@ -5,10 +5,28 @@
 # All rights reserved.
 
 import locale
-import urllib
 from hashlib import sha256
 
 from .util import *
+
+is_py2 = (sys.version_info[0] == 2)
+is_py3 = (sys.version_info[0] == 3)
+
+if is_py2:
+    def to_bytes(data):
+        """若输入为unicode， 则转为utf-8编码的bytes；其他则原样返回。"""
+        if isinstance(data, unicode):
+            return data.encode('utf-8')
+        else:
+            return data
+elif is_py3:
+
+    def to_bytes(data):
+        """若输入为str（即unicode），则转为utf-8编码的bytes；其他则原样返回"""
+        if isinstance(data, str):
+            return data.encode(encoding='utf-8')
+        else:
+            return data
 
 AUTH_VERSION_1 = 'v1'
 AUTH_VERSION_4 = 'v4'
@@ -33,7 +51,7 @@ class AuthBase(object):
 class AuthV1(AuthBase):
 
     def __init__(self, access_key_id, access_key_secret):
-        super().__init__(access_key_id, access_key_secret)
+        AuthBase.__init__(self, access_key_id, access_key_secret)
 
     @staticmethod
     def _getGMT():
@@ -68,16 +86,19 @@ class AuthV1(AuthBase):
 
 class AuthV4(AuthBase):
     def __init__(self, access_key_id, access_key_secret, region):
-        super().__init__(access_key_id, access_key_secret)
+        AuthBase.__init__(self, access_key_id, access_key_secret)
         self._region = region
 
     def sign_request(self, method, resource, params, headers, body):
+        current_time = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time)
+
+    def _do_sign_request(self, method, resource, params, headers, body, current_time):
         content_sha256 = sha256(body).hexdigest() \
             if body else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         headers['x-log-content-sha256'] = content_sha256
-        current_datetime = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-        headers['x-log-date'] = current_datetime
-        current_date = current_datetime[:8]
+        headers['x-log-date'] = current_time
+        current_date = current_time[:8]
         canonical_headers = {}
         signed_headers = ''
         for original_key, value in headers.items():
@@ -95,13 +116,11 @@ class AuthV4(AuthBase):
         scope = current_date + '/' + self._region + '/sls/aliyun_v4_request'
 
         string_to_sign = 'SLS4-HMAC-SHA256\n' \
-                         + current_datetime + '\n' \
+                         + current_time + '\n' \
                          + scope + '\n' \
                          + sha256(canonical_request.encode('utf-8')).hexdigest()
         signature = self.build_sign_key(self.access_key_secret, self._region, current_date, string_to_sign)
-        authorization = 'SLS4-HMAC-SHA256 ' + 'Credential=' \
-                        + self.access_key_id + '/' + scope + ',Signature=' + signature
-        headers['Authorization'] = authorization
+        return 'SLS4-HMAC-SHA256 Credential=%s/%s,Signature=%s' % (self.access_key_id, scope, signature)
 
     @staticmethod
     def build_canonical_request(method, resource, params, canonical_headers, signed_headers, hashed_payload):
@@ -109,7 +128,7 @@ class AuthV4(AuthBase):
         order_map = {}
         if params:
             for key, value in params.items():
-                order_map[AuthV4.url_encode(key)] = AuthV4.url_encode(value)
+                order_map[key] = AuthV4._v4_uri_encode(value)
         separator = ''
         canonical_part = ''
         for key, value in sorted(order_map.items()):
@@ -124,11 +143,21 @@ class AuthV4(AuthBase):
         return canonical_string
 
     @staticmethod
-    def url_encode(value):
-        if not value:
-            return ''
-        encoded = urllib.parse.quote_plus(str(value))
-        return encoded.replace('+', '%20').replace('*', '%2A').replace('~', '%7E').replace('/', '%2F')
+    def _v4_uri_encode(raw_text):
+        raw_text = to_bytes(raw_text)
+
+        res = ''
+        for b in raw_text:
+            if isinstance(b, int):
+                c = chr(b)
+            else:
+                c = b
+            if ('A' <= c <= 'Z') or ('a' <= c <= 'z') \
+                    or ('0' <= c <= '9') or c in ['_', '-', '~', '.']:
+                res += c
+            else:
+                res += "%{0:02X}".format(ord(c))
+        return res
 
     @staticmethod
     def build_sign_key(key, region, date, string_to_sign):
