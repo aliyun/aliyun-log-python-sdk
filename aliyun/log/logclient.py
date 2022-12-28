@@ -1832,18 +1832,12 @@ class LogClient(object):
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogtailConfigResponse(resp, headers)
 
-    def list_logtail_config(self, project_name, offset=0, size=100, logstore=None, config=None):
+    def list_logtail_config(self, project_name, logstore=None, config=None, offset=0, size=100):
         """ list logtail config name in a project
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
-
-        :type offset: int
-        :param offset: the offset of all config names
-
-        :type size: int
-        :param size: the max return names count, -1 means all
 
         :type logstore: string
         :param logstore: logstore name to filter related config
@@ -1851,13 +1845,19 @@ class LogClient(object):
         :type config: string
         :param config: config name to filter related config
 
+        :type offset: int
+        :param offset: the offset of all config names
+
+        :type size: int
+        :param size: the max return names count, -1 means all
+
         :return: ListLogtailConfigResponse
         
         :raise: LogException
         """
         # need to use extended method to get more
         if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
-            return list_more(self.list_logtail_config, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name)
+            return list_more(self.list_logtail_config, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name, logstore, config)
 
         headers = {}
         params = {}
