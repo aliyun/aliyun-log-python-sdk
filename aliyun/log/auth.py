@@ -144,7 +144,7 @@ class AuthV4(AuthBase):
 
     @staticmethod
     def _v4_uri_encode(raw_text):
-        raw_text = to_bytes(raw_text)
+        raw_text = str(raw_text)
 
         res = ''
         for b in raw_text:
