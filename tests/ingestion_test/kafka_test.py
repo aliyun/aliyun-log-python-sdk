@@ -1,8 +1,8 @@
 # encoding: utf-8
 import json
 import os
+import time
 
-from pytz import timezone
 from aliyun.log import *
 
 # basic settings
@@ -13,14 +13,6 @@ project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
 vpc_id = os.environ.get('ALIYUN_KAFKA_VPC_ID', '')
 
 client = LogClient(endpoint, access_key_id, access_key_secret)
-
-
-class VpcInfo(object):
-    """ alinyun vpc info """
-
-    def __init__(self, vpc_id, broker_list):
-        self.vpc_id = vpc_id
-        self.broker_list = broker_list
 
 
 class TimeFieldInfo(object):
@@ -35,41 +27,25 @@ class TimeFieldInfo(object):
         self.default_time_source = default_time_source
 
 
-def get_vpc_prop(kind, index):
-    return 'config.vpc.{}.v{}'.format(kind, index+1)
-
-
 def create_job_definition(job_name, logstore, bootstrap_server_list, topic_list,
-                          time_field_info=None, consumer_group=None, vpc_info=None):
-    additionalProps = {}
-
-    # consumer group MUST be explicitly created if you're using
-    # aliyun kafka product.
-    if consumer_group is not None:
-        additionalProps['group.id'] = consumer_group
-
-    # for kafka cluster created using aliyun ECS or aliyun kafka product,
-    # vpc info needs to be provoided.
-    if vpc_info is not None:
-        for idx in range(len(vpc_info.broker_list)):
-            additionalProps[get_vpc_prop('vpc_id', idx)] = vpc_info.vpc_id
-
-            seps = vpc_info.broker_list[idx].split(':', 1)
-            additionalProps[get_vpc_prop('instance_ip', idx)] = seps[0]
-
-            port = "9092"
-            if len(seps) == 2:
-                port = seps[1]
-            additionalProps[get_vpc_prop('instance_port', idx)] = port
-
+                          time_field_info=None, consumer_group=None, vpc_id=None):
     source = {
-        "additionalProps": additionalProps,
         "bootstrapServers": ','.join(bootstrap_server_list),
         "fromPosition": "LATEST",
         "topics": ','.join(topic_list),
         "type": "Kafka",
         "valueType": "JSON"
     }
+
+    # consumer group MUST be explicitly created if you're using
+    # aliyun kafka product.
+    if consumer_group is not None:
+        source['consumerGroup'] = consumer_group
+
+    # for kafka cluster created using aliyun ECS or aliyun kafka product,
+    # vpc info needs to be provoided.
+    if vpc_id is not None:
+        source['vpcId'] = vpc_id
 
     if time_field_info is not None:
         source['timeField'] = time_field_info.time_field
@@ -98,27 +74,22 @@ def create_job_definition(job_name, logstore, bootstrap_server_list, topic_list,
 
 
 def get_sample_job_config(job_name, time_field_info=None):
-    vpc_info = VpcInfo(
-        vpc_id=vpc_id,
-        broker_list=[
-            '192.168.26.34:9092',
-            '192.168.26.35:9092',
-            '192.168.26.36:9092'
-        ]
-    )
     job = create_job_definition(
         job_name=job_name,
-        logstore='ingestion-kafka',
+        logstore='kafka-ingestion',
         bootstrap_server_list=['192.168.26.34:9092'],
-        topic_list=['test-topic'],
+        topic_list=['^test-.*', 'your-topic'],
         consumer_group="will-test",
-        vpc_info=vpc_info,
+        vpc_id=vpc_id,
         time_field_info=time_field_info
     )
     return json.dumps(job)
 
 
 def create_job(job_name):
+    if not job_name:
+        job_name = "ingest-kafka-%d-0228" % int(time.time())
+
     job_config = get_sample_job_config(job_name)
     print("job config: ", job_config)
 
@@ -140,4 +111,5 @@ def restart_job(job_name):
 
 
 if __name__ == '__main__':
-    restart_job('ingest-kafka-1649253497-0406')
+    create_job(job_name="")
+    # restart_job(job_name="ingest-kafka-1677575759-0228")
