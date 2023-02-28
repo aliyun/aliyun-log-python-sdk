@@ -76,7 +76,7 @@ def create_job_definition(job_name, logstore, bootstrap_server_list, topic_list,
 def get_sample_job_config(job_name, time_field_info=None):
     job = create_job_definition(
         job_name=job_name,
-        logstore='kafka-ingestion',
+        logstore='ingestion-kafka',
         bootstrap_server_list=['192.168.26.34:9092'],
         topic_list=['^test-.*', 'your-topic'],
         consumer_group="will-test",
