@@ -6,6 +6,7 @@ from .exceptions import CheckPointException
 from .exceptions import ClientWorkerException
 from ..logexception import LogException
 from ..version import USER_AGENT
+from ..auth import *
 
 
 class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
@@ -20,11 +21,12 @@ class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
 
 class ConsumerClient(object):
     def __init__(self, endpoint, access_key_id, access_key, project,
-                 logstore, consumer_group, consumer, security_token=None, credentials_refresher=None):
+                 logstore, consumer_group, consumer, security_token=None, credentials_refresher=None,
+                 auth_version=AUTH_VERSION_1, region=''):
 
         from .. import LogClient
 
-        self.mclient = LogClient(endpoint, access_key_id, access_key, security_token)
+        self.mclient = LogClient(endpoint, access_key_id, access_key, security_token, auth_version=auth_version, region=region)
         self.mclient.set_user_agent('%s-consumergroup-%s' % (USER_AGENT, consumer_group))
         if credentials_refresher is not None:
             self.mclient.set_credentials_auto_refresher(credentials_refresher)
