@@ -1,5 +1,4 @@
 import logging
-
 from .logclient import LogClient
 from .logitem import LogItem
 from .putlogsrequest import PutLogsRequest
