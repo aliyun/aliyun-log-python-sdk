@@ -1,4 +1,5 @@
 import logging
+
 from .logclient import LogClient
 from .logitem import LogItem
 from .putlogsrequest import PutLogsRequest
@@ -7,6 +8,7 @@ import atexit
 from time import time, sleep
 from enum import Enum
 from .version import LOGGING_HANDLER_USER_AGENT
+from .auth import *
 import six
 try:
     from collections.abc import Callable	
@@ -104,6 +106,10 @@ class SimpleLogHandler(logging.Handler, object):
 
     :param extra: if show extra info, default True to show all. default is True. Note: the extra field will also be handled with buildin_fields_prefix/suffix
 
+    :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4 currently
+
+    :param region: the region of project
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
@@ -114,6 +120,7 @@ class SimpleLogHandler(logging.Handler, object):
                  extract_kv=None, extract_kv_drop_message=None,
                  extract_kv_prefix=None, extract_kv_suffix=None,
                  extract_kv_sep=None, extra=None,
+                 auth_version=AUTH_VERSION_1, region='',
                  **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.end_point = end_point
@@ -124,6 +131,8 @@ class SimpleLogHandler(logging.Handler, object):
         self.client = None
         self.topic = topic
         self.fields = DEFAULT_RECORD_LOG_FIELDS if fields is None else set(fields)
+        self.auth_version = auth_version
+        self.region = region
 
         self.extract_json = False if extract_json is None else extract_json
         self.extract_json_prefix = "" if extract_json_prefix is None else extract_json_prefix
@@ -180,7 +189,7 @@ class SimpleLogHandler(logging.Handler, object):
         self._source = value
 
     def create_client(self):
-        self.client = LogClient(self.end_point, self.access_key_id, self.access_key)
+        self.client = LogClient(self.end_point, self.access_key_id, self.access_key, auth_version=self.auth_version, region=self.region)
         self.client.set_user_agent(LOGGING_HANDLER_USER_AGENT)
 
     def send(self, req):
@@ -378,6 +387,10 @@ class QueuedLogHandler(SimpleLogHandler):
 
     :param extra: if show extra info, default True to show all. default is True
 
+    :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4 currently
+
+    :param region: the region of project
+
     :param kwargs: other parameters  passed to logging.Handler
     """
 
@@ -390,6 +403,7 @@ class QueuedLogHandler(SimpleLogHandler):
                  extract_kv_prefix=None, extract_kv_suffix=None,
                  extract_kv_sep=None,
                  extra=None,
+                 auth_version=AUTH_VERSION_1, region='',
                  **kwargs):
         super(QueuedLogHandler, self).__init__(end_point, access_key_id, access_key, project, log_store,
                                                topic=topic, fields=fields,
@@ -405,6 +419,7 @@ class QueuedLogHandler(SimpleLogHandler):
                                                extract_kv_suffix=extract_kv_suffix,
                                                extract_kv_sep=extract_kv_sep,
                                                extra=extra,
+                                               auth_version=auth_version, region=region,
                                                **kwargs)
         self.stop_flag = False
         self.stop_time = None
@@ -535,6 +550,10 @@ class UwsgiQueuedLogHandler(QueuedLogHandler):
     :param extract_kv_sep: separator for KV case, defualt is '=', e.g. k1=v1
 
     :param extra: if show extra info, default True to show all. default is True
+
+    :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4 currently
+
+    :param region: the region of project
 
     :param kwargs: other parameters  passed to logging.Handler
     """
