@@ -1430,7 +1430,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config : ExternalStoreConfig
+        :type config : ExternalStoreConfigBase
         :param config :external store config
 
 
@@ -1498,7 +1498,7 @@ class LogClient(object):
         update the logstore meta info
         Unsuccessful operation will cause an LogException.
 
-        :type config: ExternalStoreConfig
+        :type config: ExternalStoreConfigBase
         :param config : external store config
 
         :return: UpdateExternalStoreResponse
