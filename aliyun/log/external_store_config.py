@@ -164,8 +164,10 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
         self.storeType = 'csv'
         if type(externalStoreCsvFile) == str:
             resp = False
+            if externalStoreCsvFile.startswith("file://"):
+                externalStoreCsvFile = externalStoreCsvFile.replace("file://", "")
             if not os.path.exists(externalStoreCsvFile):
-                raise LogException("The file path is not exist")
+                raise LogException("ExternalStoreCsvConfig", "The file path is not exist")
         if not resp:
             externalStoreCsvFh = open(externalStoreCsvFile, 'rb')
             externalStoreCsv = externalStoreCsvFh.read()
