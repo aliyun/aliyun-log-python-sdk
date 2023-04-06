@@ -1156,7 +1156,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1183,8 +1183,6 @@ class LogClient(object):
         
         :raise: LogException
         """
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -1303,7 +1301,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1347,8 +1345,6 @@ class LogClient(object):
         if max_split_shard is None:
             max_split_shard = res.max_split_shard
 
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -3525,7 +3521,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -3645,7 +3641,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
