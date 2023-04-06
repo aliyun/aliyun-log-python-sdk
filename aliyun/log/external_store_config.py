@@ -163,10 +163,9 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
         self.objects = [externalStoreCsvFile,]
         self.storeType = 'csv'
         if type(externalStoreCsvFile) == str:
+            resp = False
             if not os.path.exists(externalStoreCsvFile):
                 raise LogException("The file path is not exist")
-            else:
-                resp = False
         if not resp:
             externalStoreCsvFh = open(externalStoreCsvFile, 'rb')
             externalStoreCsv = externalStoreCsvFh.read()
