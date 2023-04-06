@@ -4,6 +4,7 @@
 # All rights reserved.
 import logging
 from .logexception import LogException
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +162,11 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
         self.columns = columns
         self.objects = [externalStoreCsvFile,]
         self.storeType = 'csv'
+        if type(externalStoreCsvFile) == str:
+            if not os.path.exists(externalStoreCsvFile):
+                raise LogException("The file path is not exist")
+            else:
+                resp = False
         if not resp:
             externalStoreCsvFh = open(externalStoreCsvFile, 'rb')
             externalStoreCsv = externalStoreCsvFh.read()
