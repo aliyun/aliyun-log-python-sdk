@@ -193,8 +193,6 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
     @staticmethod
     def from_json(json_value):
         externalStoreName = json_value["externalStoreName"]
-        storeType = json_value["storeType"]
-        endpoint = json_value["parameter"]["endpoint"]
         columns = json_value["parameter"]["columns"]
         objects = json_value["parameter"]["objects"]
 
