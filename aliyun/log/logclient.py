@@ -1156,7 +1156,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1183,8 +1183,6 @@ class LogClient(object):
         
         :raise: LogException
         """
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -1303,7 +1301,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1347,8 +1345,6 @@ class LogClient(object):
         if max_split_shard is None:
             max_split_shard = res.max_split_shard
 
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -1430,7 +1426,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config : ExternalStoreConfig
+        :type config : ExternalStoreConfigBase
         :param config :external store config
 
 
@@ -1498,7 +1494,7 @@ class LogClient(object):
         update the logstore meta info
         Unsuccessful operation will cause an LogException.
 
-        :type config: ExternalStoreConfig
+        :type config: ExternalStoreConfigBase
         :param config : external store config
 
         :return: UpdateExternalStoreResponse
@@ -3525,7 +3521,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -3645,7 +3641,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.

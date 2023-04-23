@@ -2,6 +2,8 @@
 
 from enum import Enum
 
+from aliyun.log.auth import *
+
 
 class CursorPosition(Enum):
     BEGIN_CURSOR = 'BEGIN_CURSOR'
@@ -22,7 +24,8 @@ class LogHubConfig(object):
                  consumer_group_name, consumer_name,
                  cursor_position=None, heartbeat_interval=None, data_fetch_interval=None, in_order=False,
                  cursor_start_time=None, security_token=None, max_fetch_log_group_size=None, worker_pool_size=None, shared_executor=None,
-                 cursor_end_time=None, credentials_refresher=None):
+                 cursor_end_time=None, credentials_refresher=None,
+                 auth_version=AUTH_VERSION_1, region=''):
         """
 
         :param endpoint:
@@ -42,6 +45,8 @@ class LogHubConfig(object):
         :param worker_pool_size: default 2. suggest keep the default size (2), use multiple process instead, when you need to have more concurrent processing, launch this consumer for mulitple times and give them different consuer name in same consumer group. will be ignored when shared_executor is passed.
         :param shared_executor: shared executor, if not None, worker_pool_size will be ignored
         :param cursor_end_time: cursor end time, default is None (never stop processing). could setting it as ISO time-format, when setting it as "end", it means process all logs received from start to the time when the consumer is started.
+        :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4
+        :param region: region of project
         """
         self.endpoint = endpoint
         self.accessKeyId = access_key_id
@@ -62,3 +67,5 @@ class LogHubConfig(object):
         self.consumer_group_time_out = self.heartbeat_interval * 2
         self.cursor_end_time = cursor_end_time or None  # default to None
         self.credentials_refresher = credentials_refresher
+        self.auth_version = auth_version
+        self.region = region
