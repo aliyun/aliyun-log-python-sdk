@@ -12,9 +12,7 @@ import time
 import zlib
 from datetime import datetime
 import logging
-import locale
 from itertools import cycle
-from .acl_response import *
 from .consumer_group_request import *
 from .consumer_group_response import *
 from .getlogsrequest import *
@@ -28,7 +26,6 @@ from .ingestion_response import *
 from .sql_instance_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
-from .logclient_core import make_lcrud_methods
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
     get_resource_usage, arrange_shard, transform_data
 from .logexception import LogException
@@ -45,12 +42,11 @@ from .resource_response import *
 from .resource_params import *
 from .topostore_response import *
 from .topostore_params import *
-from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
-from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
+from .util import base64_encodestring as b64e
+from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
-from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
@@ -589,11 +585,23 @@ class LogClient(object):
         :raise: LogException
         """
 
-        # need to use extended method to get more when: it's not select query, and size > default page size
-        if not is_stats_query(query) and (int(size) == -1 or int(size) > MAX_GET_LOG_PAGING_SIZE):
-            return query_more(self.get_log, int(offset), int(size), MAX_GET_LOG_PAGING_SIZE,
-                              project, logstore, from_time, to_time, topic,
-                              query, reverse)
+        # need to use extended method to get more when:
+        # it's not select query, and size > default page size
+        size, offset = int(size), int(offset)
+        if not is_stats_query(query) and (size == -1 or size > MAX_GET_LOG_PAGING_SIZE):
+            return query_more(
+                self.get_log,
+                offset=offset,
+                size=size,
+                batch_size=MAX_GET_LOG_PAGING_SIZE,
+                project=project,
+                logstore=logstore,
+                from_time=from_time,
+                to_time=to_time,
+                topic=topic,
+                query=query,
+                reverse=reverse,
+            )
 
         ret = None
         for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
