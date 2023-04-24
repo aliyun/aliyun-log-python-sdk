@@ -10,9 +10,9 @@ import requests
 import six
 import time
 import zlib
-from itertools import cycle
 from datetime import datetime
 import logging
+from itertools import cycle
 from .consumer_group_request import *
 from .consumer_group_response import *
 from .getlogsrequest import *
