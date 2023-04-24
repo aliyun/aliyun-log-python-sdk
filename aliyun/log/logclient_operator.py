@@ -339,7 +339,7 @@ def list_more(fn, offset, size, batch_size, *args):
     return response
 
 
-def query_more(fn, offset, size, batch_size, *args):
+def query_more(fn, offset=0, size=100, batch_size=100, **kwargs):
     """list all data using the fn
     """
     if size < 0:
@@ -350,9 +350,8 @@ def query_more(fn, offset, size, batch_size, *args):
 
     response = None
     total_count_got = 0
-    complete = False
     while True:
-        ret = fn(*args, offset=offset, size=batch_size)
+        ret = fn(offset=offset, size=batch_size, **kwargs)
 
         if response is None:
             response = ret
