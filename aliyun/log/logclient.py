@@ -536,6 +536,8 @@ class LogClient(object):
             params['to'] = request.get_to()
         if request.get_query() is not None:
             params['query'] = request.get_query()
+
+        params['accurate'] = request.get_accurate_query()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
         project = request.get_project()
@@ -544,7 +546,7 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, accurate_query=False):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -580,6 +582,9 @@ class LogClient(object):
         :type power_sql: bool
         :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
 
+        :type accurate_query: bool
+        :param accurate_query: if accurate_query is set to true, the query will global ordered time second mode
+
         :return: GetLogsResponse
 
         :raise: LogException
@@ -601,6 +606,7 @@ class LogClient(object):
                 topic=topic,
                 query=query,
                 reverse=reverse,
+		accurate_query=accurate_query
             )
 
         ret = None
@@ -612,7 +618,8 @@ class LogClient(object):
                       'line': size,
                       'offset': offset,
                       'reverse': 'true' if reverse else 'false',
-                      'powerSql': power_sql}
+                      'powerSql': power_sql,
+                      'accurate': accurate_query}
 
             if topic:
                 params['topic'] = topic
@@ -652,12 +659,13 @@ class LogClient(object):
         offset = request.get_offset()
         size = request.get_line()
         power_sql = request.get_power_sql()
+        accurate_query = request.get_accurate_query()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql)
+                            query, reverse, offset, size, power_sql, accurate_query)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
-                    query=None, reverse=False, offset=0, power_sql=False):
+                    query=None, reverse=False, offset=0, power_sql=False, accurate_query=False):
         """ Get logs from log service. will retry when incomplete.
         Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
         It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
@@ -690,13 +698,16 @@ class LogClient(object):
         :type power_sql: bool
         :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
 
+        :type accurate_query: bool
+        :param accurate_query: if accurate_query is set to true, the query will global ordered time second mode
+
         :return: GetLogsResponse iterator
 
         :raise: LogException
         """
         while True:
             response = self.get_log(project, logstore, from_time, to_time, topic=topic,
-                                    query=query, reverse=reverse, offset=offset, size=100, power_sql=power_sql)
+                                    query=query, reverse=reverse, offset=offset, size=100, power_sql=power_sql, accurate_query=accurate_query)
 
             yield response
 
