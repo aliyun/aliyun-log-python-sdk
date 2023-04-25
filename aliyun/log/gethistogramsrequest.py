@@ -29,13 +29,14 @@ class GetHistogramsRequest(LogRequest):
     :param query: user defined query
     """
 
-    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None):
+    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=False):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = parse_timestamp(fromTime)
         self.toTime = parse_timestamp(toTime)
         self.topic = topic
         self.query = query
+        self.accurate_query = accurate_query
 
     def get_logstore(self):
         """ Get logstore name
@@ -111,3 +112,16 @@ class GetHistogramsRequest(LogRequest):
         :param query: user defined query
         """
         self.query = query
+
+    def get_accurate_query(self):
+        """ Get user defined accurate_query
+        :return: string, user defined accurate_query
+        """
+        return self.accurate_query
+
+    def set_accurate_query(self, accurate_query):
+        """ Set user defined accurate_query
+        :type accurate_query: string
+        :param accurate_query: user defined accurate_query
+        """
+        self.accurate_query = accurate_query
