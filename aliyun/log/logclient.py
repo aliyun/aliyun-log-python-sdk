@@ -42,7 +42,6 @@ from .resource_response import *
 from .resource_params import *
 from .topostore_response import *
 from .topostore_params import *
-from .resource_group_response import *
 from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -2283,7 +2282,7 @@ class LogClient(object):
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body_str))}
         resource = "/resourcegroup"
         (resp, header) = self._send("PUT", resource_id, body_str, resource, params, headers)
-        return ChangeResourceGroupResponse(header, resp)
+        return LogResponse(header, resp)
 
     def tag_project(self, project_name, **tags):
         """ tag project
