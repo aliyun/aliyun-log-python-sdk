@@ -2273,7 +2273,7 @@ class LogClient(object):
         :type resource_type: string
         :param resource_type: the resource type (now only support PROJECT)
 
-        :return: DeleteProjectResponse
+        :return: ChangeResourceGroupResponse
 
         :raise: LogException
         """
@@ -2672,7 +2672,7 @@ class LogClient(object):
             params['projectName'] = project_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
-        params['resourceGroupId'] = str(resource_group_id)
+        params['resourceGroupId'] = resource_group_id
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
