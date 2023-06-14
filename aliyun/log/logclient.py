@@ -42,6 +42,7 @@ from .resource_response import *
 from .resource_params import *
 from .topostore_response import *
 from .topostore_params import *
+from .resource_group_response import *
 from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -2195,7 +2196,7 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return RetryShipperTasksResponse(header, resp)
 
-    def create_project(self, project_name, project_des):
+    def create_project(self, project_name, project_des, resource_group_id=''):
         """ Create a project
         Unsuccessful operation will cause an LogException.
 
@@ -2205,13 +2206,16 @@ class LogClient(object):
         :type project_des: string
         :param project_des: the description of a project
 
+        type resource_group_id: string
+        :type resource_group_id: the resource group id, the project created will put in the resource group
+
         :return: CreateProjectResponse 
 
         :raise: LogException
         """
 
         params = {}
-        body = {"projectName": project_name, "description": project_des}
+        body = {"projectName": project_name, "description": project_des, "resourceGroupId": resource_group_id}
 
         body = six.b(json.dumps(body))
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
@@ -2255,6 +2259,31 @@ class LogClient(object):
 
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteProjectResponse(header, resp)
+
+    def change_resource_group(self, resource_id, resource_group_id, resource_type="PROJECT"):
+        """
+        Update the resource group of project
+
+        :type resource_id: string
+        :param resource_id: resource id
+
+        :type resource_group_id: string
+        :param resource_group_id: the resource group
+
+        :type resource_type: string
+        :param resource_type: the resource type (now only support PROJECT)
+
+        :return: DeleteProjectResponse
+
+        :raise: LogException
+        """
+        params = {}
+        body = {'resourceId':resource_id, 'resourceGroupId':resource_group_id, 'resourceType':resource_type}
+        body_str = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resourcegroup"
+        (resp, header) = self._send("PUT", resource_id, body_str, resource, params, headers)
+        return ChangeResourceGroupResponse(header, resp)
 
     def tag_project(self, project_name, **tags):
         """ tag project
@@ -2611,7 +2640,7 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, offset=0, size=100, project_name_pattern=None):
+    def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
         Unsuccessful operation will cause an LogException.
 
@@ -2623,6 +2652,9 @@ class LogClient(object):
 
         :type size: int
         :param size: the max return names count, -1 means return all data
+
+        :type resource_group_id: string
+        :type resource_group_id: the resource group id, used for the server to return project in resource group
 
         :return: ListProjectResponse
 
@@ -2640,6 +2672,7 @@ class LogClient(object):
             params['projectName'] = project_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
+        params['resourceGroupId'] = str(resource_group_id)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
