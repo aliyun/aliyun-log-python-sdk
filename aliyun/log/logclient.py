@@ -2345,15 +2345,15 @@ class LogClient(object):
         if resource_type == "project":
             project_name = resource_id
         else:
-            posistion = resource_id.find("#")
-            if posistion == -1:
+            position = resource_id.find("#")
+            if position == -1:
                 raise ValueError("Incorrect resource id: " + resource_id)
-            project_name = resource_id[:posistion]
+            project_name = resource_id[:position]
         resource = "/tag"
         body = {
             'resourceType': resource_type,
             'resourceId': [resource_id],
-            'tags': [{"key": str(k), "value": str(v)} for k, v in tags.items()],
+            'tags': [{'key': str(k), 'value': str(v)} for k, v in tags.items()],
         }
         body = json.dumps(body).encode()
         resp, header = self._send("POST", project_name, body, resource, {}, {})
@@ -2377,10 +2377,10 @@ class LogClient(object):
         if resource_type == "project":
             project_name = resource_id
         else:
-            posistion = resource_id.find("#")
-            if posistion == -1:
+            position = resource_id.find("#")
+            if position == -1:
                 raise ValueError("Incorrect resource id: " + resource_id)
-            project_name = resource_id[:posistion]
+            project_name = resource_id[:position]
         resource = "/untag"
         body = {
             'resourceType': resource_type,
@@ -2418,10 +2418,10 @@ class LogClient(object):
             if resource_type == "project":
                 project_name = resource_id
             else:
-                posistion = resource_id.find("#")
-                if posistion == -1:
+                position = resource_id.find("#")
+                if position == -1:
                     raise ValueError("Incorrect resource id: " + resource_id)
-                project_name = resource_id[:posistion]
+                project_name = resource_id[:position]
         while True:
             resp, header = self._send("GET", project_name, None, resource, params, {})
             resp = GetResourceTagsResponse(header, resp)

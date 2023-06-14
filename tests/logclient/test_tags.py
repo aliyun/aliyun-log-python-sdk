@@ -6,7 +6,7 @@ from aliyun.log import LogClient
 def print_tag(client, resource_type, resource_id):
     for res in client.list_tag_resources(resource_type, resource_id):
         for tag in res.get_tags():
-            print(tag.get_resource_id(), "  ", tag.get_tag_key(), " : ", tag.get_tag_value())
+            print(tag.get_resource_id(), '  ', tag.get_tag_key(), ' : ', tag.get_tag_value())
 
 def tag_project(client, project):
     tags = {'key1': 'value1', 'key2': 'value2'}
