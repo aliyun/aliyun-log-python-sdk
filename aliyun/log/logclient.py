@@ -2207,7 +2207,7 @@ class LogClient(object):
         :param project_des: the description of a project
 
         type resource_group_id: string
-        :type resource_group_id: the resource group id, the project created will put in the resource group
+        :param resource_group_id: the resource group id, the project created will put in the resource group
 
         :return: CreateProjectResponse 
 
@@ -2654,7 +2654,7 @@ class LogClient(object):
         :param size: the max return names count, -1 means return all data
 
         :type resource_group_id: string
-        :type resource_group_id: the resource group id, used for the server to return project in resource group
+        :param resource_group_id: the resource group id, used for the server to return project in resource group
 
         :return: ListProjectResponse
 
