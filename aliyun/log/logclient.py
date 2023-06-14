@@ -40,6 +40,7 @@ from .shard_response import *
 from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
+from .tag_response import GetResourceTagsResponse
 from .topostore_response import *
 from .topostore_params import *
 from .util import base64_encodestring as b64e
@@ -2325,6 +2326,111 @@ class LogClient(object):
             if resp.next_token == "":
                 break
             params["nextToken"] = resp.next_token
+
+    def tag_resources(self, resource_type, resource_id, **tags):
+        """ tag resources
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        project_name = None
+        if resource_type == "project":
+            project_name = resource_id
+        else:
+            posistion = resource_id.find("#")
+            if posistion == -1:
+                raise ValueError("Incorrect resource id: " + resource_id)
+            project_name = resource_id[:posistion]
+        resource = "/tag"
+        body = {
+            'resourceType': resource_type,
+            'resourceId': [resource_id],
+            'tags': [{"key": str(k), "value": str(v)} for k, v in tags.items()],
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def untag_resources(self, resource_type, resource_id, *tag_keys):
+        """ untag resources
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        project_name = None
+        if resource_type == "project":
+            project_name = resource_id
+        else:
+            posistion = resource_id.find("#")
+            if posistion == -1:
+                raise ValueError("Incorrect resource id: " + resource_id)
+            project_name = resource_id[:posistion]
+        resource = "/untag"
+        body = {
+            'resourceType': resource_type,
+            'resourceId': [resource_id],
+            'tags': tag_keys,
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def list_tag_resources(self, resource_type, resource_id, **filer_tags):
+        """ list resource tags
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        resource = "/tags"
+        filer_tags = [{"key": str(k), "value": str(v)} for k, v in filer_tags.items()]
+        params = {
+            'resourceType': resource_type,
+            'tags': json.dumps(filer_tags),
+            'nextToken': "",
+        }
+        project_name = None
+        if resource_id is not None and resource_id != "":
+            params['resourceId'] = json.dumps([resource_id])
+            if resource_type == "project":
+                project_name = resource_id
+            else:
+                posistion = resource_id.find("#")
+                if posistion == -1:
+                    raise ValueError("Incorrect resource id: " + resource_id)
+                project_name = resource_id[:posistion]
+        while True:
+            resp, header = self._send("GET", project_name, None, resource, params, {})
+            resp = GetResourceTagsResponse(header, resp)
+            yield resp
+
+            if resp.next_token == "":
+                break
+            params["nextToken"] = resp.next_token
+
 
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
         """ create consumer group
