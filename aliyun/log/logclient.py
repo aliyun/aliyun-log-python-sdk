@@ -2342,7 +2342,7 @@ class LogClient(object):
         :raise: LogException
         """
         project_name = None
-        if resource_type == "project":
+        if resource_type.lower() == "project":
             project_name = resource_id
         else:
             position = resource_id.find("#")
@@ -2374,7 +2374,7 @@ class LogClient(object):
         :raise: LogException
         """
         project_name = None
-        if resource_type == "project":
+        if resource_type.lower() == "project":
             project_name = resource_id
         else:
             position = resource_id.find("#")
@@ -2415,7 +2415,7 @@ class LogClient(object):
         project_name = None
         if resource_id is not None and resource_id != "":
             params['resourceId'] = json.dumps([resource_id])
-            if resource_type == "project":
+            if resource_type.lower() == "project":
                 project_name = resource_id
             else:
                 position = resource_id.find("#")
