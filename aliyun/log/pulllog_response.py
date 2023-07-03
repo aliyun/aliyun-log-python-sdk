@@ -111,6 +111,7 @@ class PullLogResponse(LogResponse):
 
             for log in logGroup.Logs:
                 item = {'@lh_time': log.Time}
+                item['@time_ns'] = log.Time_ns
                 for content in log.Contents:
                     item[content.Key] = content.Value
                 items.append(item)
