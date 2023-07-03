@@ -131,6 +131,11 @@ class GetLogsResponse(LogResponse):
             log.log_print()
             print('\n')
 
+    def get_log_list(self):
+        print('count:', self.get_count())
+        print('progress:', self.progress)
+        return self.logs
+
     def merge(self, response):
         if not isinstance(response, GetLogsResponse):
             raise ValueError("passed response is not a GetLogsResponse: " + str(type(response)))

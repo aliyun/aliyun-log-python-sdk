@@ -27,15 +27,24 @@ class GetHistogramsRequest(LogRequest):
     
     :type query: string
     :param query: user defined query
+
+    :type begin_nano: int
+    :param begin_nano: nano part of query begin time
+
+    :type end_nano: int
+    :param end_nano: nano part of query end time
     """
 
-    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None):
+    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=False, begin_nano=0 ,end_nano=0):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = parse_timestamp(fromTime)
         self.toTime = parse_timestamp(toTime)
         self.topic = topic
         self.query = query
+        self.accurate_query = accurate_query
+        self.begin_nano = begin_nano
+        self.end_nano = end_nano
 
     def get_logstore(self):
         """ Get logstore name
@@ -111,3 +120,46 @@ class GetHistogramsRequest(LogRequest):
         :param query: user defined query
         """
         self.query = query
+
+    def get_accurate_query(self):
+        """ Get user defined accurate_query
+        :return: string, user defined accurate_query
+        """
+        return self.accurate_query
+
+    def set_accurate_query(self, accurate_query):
+        """ Set user defined accurate_query
+        :type accurate_query: string
+        :param accurate_query: user defined accurate_query
+        """
+        self.accurate_query = accurate_query
+
+    def get_begin_nano(self):
+        """ Get request begin_nano
+
+        :return: int, begin_nano
+        """
+        return self.begin_nano
+
+    def set_begin_nano(self, begin_nano):
+        """ Set request begin_nano
+
+        :type begin_nano: int
+        :param begin_nano: begin_nano part of query begin time
+        """
+        self.begin_nano = begin_nano
+
+    def get_end_nano(self):
+        """ Get request end_nano
+
+        :return: int, end_nano
+        """
+        return self.end_nano
+
+    def set_end_nano(self, end_nano):
+        """ Set request end_nano
+
+        :type end_nano: int
+        :param end_nano: end_nano part of query end time
+        """
+        self.end_nano = end_nano
