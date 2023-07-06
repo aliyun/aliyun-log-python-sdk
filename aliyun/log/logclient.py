@@ -152,7 +152,7 @@ class LogClient(object):
     Version = __version__
 
     def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None,
-                 auth_version=AUTH_VERSION_1, region=''):
+                 auth_version=AUTH_VERSION_1, region='', session=None):
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -170,6 +170,7 @@ class LogClient(object):
         self._auth_version = auth_version
         self._region = region
         self._auth = make_auth(accessKeyId, accessKey, auth_version, region)
+        self._session = session
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -254,7 +255,17 @@ class LogClient(object):
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            if self._session is not None:
+                r = self._session.do_request(
+                    method.lower(),
+                    url=url,
+                    params=params,
+                    data=body,
+                    headers=headers,
+                    timeout=self._timeout)
+            else:
+                r = getattr(requests, method.lower())(url, params=params, data=body,
+                                                      headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
