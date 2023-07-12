@@ -972,7 +972,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None):
         """ batch pull log data from log service
         Unsuccessful operation will cause an LogException.
 
@@ -1019,6 +1019,9 @@ class LogClient(object):
         params['cursor'] = cursor
         count = count or 1000
         params['count'] = str(count)
+        params['pullMode'] = "scan_on_stream"
+        params['responseWithMeta'] = "true"
+        params['query'] = query
         if end_cursor:
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
