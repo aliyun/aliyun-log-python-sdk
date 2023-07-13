@@ -539,8 +539,8 @@ class LogClient(object):
             params['query'] = request.get_query()
 
         params['accurate'] = request.get_accurate_query()
-        params['fromNs'] = request.get_begin_nano()
-        params['toNs'] = request.get_end_nano()
+        params['fromNs'] = request.get_from_nano()
+        params['toNs'] = request.get_to_nano()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
         project = request.get_project()
@@ -549,7 +549,7 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False, accurate_query=False, begin_nano=0 ,end_nano=0):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, accurate_query=False, from_nano=0 ,to_nano=0):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -609,8 +609,8 @@ class LogClient(object):
                 query=query,
                 reverse=reverse,
                 accurate_query=accurate_query,
-                begin_nano=begin_nano,
-                end_nano=end_nano
+                from_nano=from_nano,
+                to_nano=to_nano
             )
 
         ret = None
@@ -624,8 +624,8 @@ class LogClient(object):
                       'reverse': 'true' if reverse else 'false',
                       'powerSql': power_sql,
                       'accurate': accurate_query,
-                      'fromNs': begin_nano,
-                      'toNs': end_nano
+                      'fromNs': from_nano,
+                      'toNs': to_nano
                       }
 
             if topic:
@@ -667,11 +667,11 @@ class LogClient(object):
         size = request.get_line()
         power_sql = request.get_power_sql()
         accurate_query = request.get_accurate_query()
-        begin_nano = request.get_begin_nano()
-        end_nano = request.get_end_nano()
+        from_nano = request.get_from_nano()
+        to_nano = request.get_to_nano()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql, accurate_query, begin_nano, end_nano)
+                            query, reverse, offset, size, power_sql, accurate_query, from_nano, to_nano)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
                     query=None, reverse=False, offset=0, power_sql=False, accurate_query=False):

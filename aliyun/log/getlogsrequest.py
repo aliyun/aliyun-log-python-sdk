@@ -43,15 +43,15 @@ class GetLogsRequest(LogRequest):
     :type accurate_query: bool
     :param accurate_query: if accurate_query is set to true, the query will run global ordered time mode
 
-    :type begin_nano: int
-    :param begin_nano: nano part of query begin time
+    :type from_nano: int
+    :param from_nano: nano part of query begin time
 
-    :type end_nano: int
-    :param end_nano: nano part of query end time
+    :type to_nano: int
+    :param to_nano: nano part of query end time
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=100, offset=0, reverse=False, power_sql=False, accurate_query=False, begin_nano=0, end_nano=0):
+                 query=None, line=100, offset=0, reverse=False, power_sql=False, accurate_query=False, from_nano=0, to_nano=0):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime
@@ -63,8 +63,8 @@ class GetLogsRequest(LogRequest):
         self.reverse = reverse
         self.power_sql = power_sql
         self.accurate_query = accurate_query
-        self.begin_nano = begin_nano
-        self.end_nano = end_nano
+        self.from_nano = from_nano
+        self.to_nano = to_nano
 
     def get_logstore(self):
         """ Get logstore name
@@ -216,35 +216,35 @@ class GetLogsRequest(LogRequest):
         """
         self.accurate_query = accurate_query
 
-    def get_begin_nano(self):
-        """ Get request begin_nano
+    def get_from_nano(self):
+        """ Get request from_nano
 
-        :return: int, begin_nano
+        :return: int, from_nano
         """
-        return self.begin_nano
+        return self.from_nano
 
-    def set_begin_nano(self, begin_nano):
-        """ Set request begin_nano
+    def set_from_nano(self, from_nano):
+        """ Set request from_nano
 
-        :type begin_nano: int
-        :param begin_nano: begin_nano part of query begin time
+        :type from_nano: int
+        :param from_nano: from_nano part of query begin time
         """
-        self.begin_nano = begin_nano
+        self.from_nano = from_nano
 
-    def get_end_nano(self):
-        """ Get request end_nano
+    def get_to_nano(self):
+        """ Get request to_nano
 
-        :return: int, end_nano
+        :return: int, to_nano
         """
-        return self.end_nano
+        return self.to_nano
 
-    def set_end_nano(self, end_nano):
-        """ Set request end_nano
+    def set_to_nano(self, to_nano):
+        """ Set request to_nano
 
-        :type end_nano: int
-        :param end_nano: end_nano part of query end time
+        :type to_nano: int
+        :param to_nano: to_nano part of query end time
         """
-        self.end_nano = end_nano
+        self.to_nano = to_nano
 
 class GetProjectLogsRequest(LogRequest):
     """ The request used to get logs by a query from log cross multiple logstores.
