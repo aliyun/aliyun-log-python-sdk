@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto2',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x12log_logs_raw.proto\"\x81\x01\n\x06LogRaw\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12!\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0f.LogRaw.Content\x12\x0e\n\x06values\x18\x03 \x03(\t\x12\x0f\n\x07Time_ns\x18\x04 \x01(\x07\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\x0c\"\'\n\tLogTagRaw\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"\x87\x01\n\x0bLogGroupRaw\x12\x15\n\x04Logs\x18\x01 \x03(\x0b\x32\x07.LogRaw\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\x12\x13\n\x0bMachineUUID\x18\x05 \x01(\t\x12\x1b\n\x07LogTags\x18\x06 \x03(\x0b\x32\n.LogTagRaw\"2\n\x0fLogGroupListRaw\x12\x1f\n\tLogGroups\x18\x01 \x03(\x0b\x32\x0c.LogGroupRaw'
+  serialized_pb=b'\n\x12log_logs_raw.proto\"q\n\x06LogRaw\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12!\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0f.LogRaw.Content\x12\x0f\n\x07Time_ns\x18\x04 \x01(\x07\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\x0c\"\'\n\tLogTagRaw\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"\x87\x01\n\x0bLogGroupRaw\x12\x15\n\x04Logs\x18\x01 \x03(\x0b\x32\x07.LogRaw\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\x12\x13\n\x0bMachineUUID\x18\x05 \x01(\t\x12\x1b\n\x07LogTags\x18\x06 \x03(\x0b\x32\n.LogTagRaw\"2\n\x0fLogGroupListRaw\x12\x1f\n\tLogGroups\x18\x01 \x03(\x0b\x32\x0c.LogGroupRaw'
 )
 
 
@@ -59,8 +59,8 @@ _LOGRAW_CONTENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=115,
-  serialized_end=152,
+  serialized_start=98,
+  serialized_end=135,
 )
 
 _LOGRAW = _descriptor.Descriptor(
@@ -86,14 +86,7 @@ _LOGRAW = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='values', full_name='LogRaw.values', index=2,
-      number=3, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Time_ns', full_name='LogRaw.Time_ns', index=3,
+      name='Time_ns', full_name='LogRaw.Time_ns', index=2,
       number=4, type=7, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -111,8 +104,8 @@ _LOGRAW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=23,
-  serialized_end=152,
+  serialized_start=22,
+  serialized_end=135,
 )
 
 
@@ -150,8 +143,8 @@ _LOGTAGRAW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=154,
-  serialized_end=193,
+  serialized_start=137,
+  serialized_end=176,
 )
 
 
@@ -217,8 +210,8 @@ _LOGGROUPRAW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=196,
-  serialized_end=331,
+  serialized_start=179,
+  serialized_end=314,
 )
 
 
@@ -249,8 +242,8 @@ _LOGGROUPLISTRAW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=333,
-  serialized_end=383,
+  serialized_start=316,
+  serialized_end=366,
 )
 
 _LOGRAW_CONTENT.containing_type = _LOGRAW

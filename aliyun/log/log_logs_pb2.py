@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto2',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0elog_logs.proto\"{\n\x03Log\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12\x1e\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0c.Log.Content\x12\x0e\n\x06values\x18\x03 \x03(\t\x12\x0f\n\x07Time_ns\x18\x04 \x01(\x07\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"$\n\x06LogTag\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"~\n\x08LogGroup\x12\x12\n\x04Logs\x18\x01 \x03(\x0b\x32\x04.Log\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\x12\x13\n\x0bMachineUUID\x18\x05 \x01(\t\x12\x18\n\x07LogTags\x18\x06 \x03(\x0b\x32\x07.LogTag\",\n\x0cLogGroupList\x12\x1c\n\tLogGroups\x18\x01 \x03(\x0b\x32\t.LogGroup'
+  serialized_pb=b'\n\x0elog_logs.proto\"k\n\x03Log\x12\x0c\n\x04Time\x18\x01 \x02(\r\x12\x1e\n\x08\x43ontents\x18\x02 \x03(\x0b\x32\x0c.Log.Content\x12\x0f\n\x07Time_ns\x18\x04 \x01(\x07\x1a%\n\x07\x43ontent\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"$\n\x06LogTag\x12\x0b\n\x03Key\x18\x01 \x02(\t\x12\r\n\x05Value\x18\x02 \x02(\t\"~\n\x08LogGroup\x12\x12\n\x04Logs\x18\x01 \x03(\x0b\x32\x04.Log\x12\x10\n\x08Reserved\x18\x02 \x01(\t\x12\r\n\x05Topic\x18\x03 \x01(\t\x12\x0e\n\x06Source\x18\x04 \x01(\t\x12\x13\n\x0bMachineUUID\x18\x05 \x01(\t\x12\x18\n\x07LogTags\x18\x06 \x03(\x0b\x32\x07.LogTag\",\n\x0cLogGroupList\x12\x1c\n\tLogGroups\x18\x01 \x03(\x0b\x32\t.LogGroup'
 )
 
 
@@ -59,8 +59,8 @@ _LOG_CONTENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=104,
-  serialized_end=141,
+  serialized_start=88,
+  serialized_end=125,
 )
 
 _LOG = _descriptor.Descriptor(
@@ -86,14 +86,7 @@ _LOG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='values', full_name='Log.values', index=2,
-      number=3, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='Time_ns', full_name='Log.Time_ns', index=3,
+      name='Time_ns', full_name='Log.Time_ns', index=2,
       number=4, type=7, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -112,7 +105,7 @@ _LOG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=18,
-  serialized_end=141,
+  serialized_end=125,
 )
 
 
@@ -150,8 +143,8 @@ _LOGTAG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=179,
+  serialized_start=127,
+  serialized_end=163,
 )
 
 
@@ -217,8 +210,8 @@ _LOGGROUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=181,
-  serialized_end=307,
+  serialized_start=165,
+  serialized_end=291,
 )
 
 
@@ -249,8 +242,8 @@ _LOGGROUPLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=309,
-  serialized_end=353,
+  serialized_start=293,
+  serialized_end=337,
 )
 
 _LOG_CONTENT.containing_type = _LOG
