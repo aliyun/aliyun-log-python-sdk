@@ -39,10 +39,16 @@ class GetLogsRequest(LogRequest):
 
     :type power_sql: bool
     :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+    :type scan: bool
+    :param scan: if scan is set to true, the query will use scan mode
+
+    :type forward: bool
+    :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=100, offset=0, reverse=False, power_sql=False):
+                 query=None, line=100, offset=0, reverse=False, power_sql=False, scan=False, forward=True):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime
@@ -53,6 +59,8 @@ class GetLogsRequest(LogRequest):
         self.offset = offset
         self.reverse = reverse
         self.power_sql = power_sql
+        self.scan = scan
+        self.forward = forward
 
     def get_logstore(self):
         """ Get logstore name
@@ -189,6 +197,35 @@ class GetLogsRequest(LogRequest):
         """
         self.power_sql = power_sql
 
+    def get_scan(self):
+        """ Get request scan flag
+
+        :return: bool, scan flag
+        """
+        return self.scan
+
+    def set_scan(self, scan):
+        """ Set request scan flag
+
+        :type scan: bool
+        :param scan: scan flag
+        """
+        self.scan = scan
+
+    def get_forward(self):
+        """ Get request forward flag
+
+        :return: bool, forward flag
+        """
+        return self.forward
+
+    def set_forward(self, forward):
+        """ Set request forward flag
+
+        :type forward: bool
+        :param forward: scan flag
+        """
+        self.forward = forward
 
 class GetProjectLogsRequest(LogRequest):
     """ The request used to get logs by a query from log cross multiple logstores.

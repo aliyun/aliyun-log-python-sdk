@@ -544,7 +544,7 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -579,6 +579,12 @@ class LogClient(object):
 
         :type power_sql: bool
         :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+        :type scan: bool
+        :param scan: if scan is set to true, the query will use scan mode
+
+        :type forward: bool
+        :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
 
         :return: GetLogsResponse
 
@@ -618,6 +624,9 @@ class LogClient(object):
                 params['topic'] = topic
             if query:
                 params['query'] = query
+            if scan:
+                params['session'] = 'mode=scan'
+                params['forward'] = 'true' if forward else 'false'
 
             resource = "/logstores/" + logstore
             (resp, header) = self._send("GET", project, None, resource, params, headers)
@@ -652,9 +661,11 @@ class LogClient(object):
         offset = request.get_offset()
         size = request.get_line()
         power_sql = request.get_power_sql()
+        scan = request.get_scan()
+        forward = request.get_forward()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql)
+                            query, reverse, offset, size, power_sql, scan, forward)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
                     query=None, reverse=False, offset=0, power_sql=False):
@@ -704,6 +715,73 @@ class LogClient(object):
             offset += count
 
             if count == 0 or is_stats_query(query):
+                break
+
+    def get_log_all_v2(self, project, logstore, from_time, to_time, topic=None,
+                    query=None, reverse=False, offset=0, power_sql=False, scan=False, forward=True):
+        """ FOR PHRASE AND SCAN WHERE.
+                Get logs from log service. will retry when incomplete.
+                Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
+                It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
+                each batch and make it possible to fetch larger volume of data.
+
+                :type project: string
+                :param project: project name
+
+                :type logstore: string
+                :param logstore: logstore name
+
+                :type from_time: int/string
+                :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type to_time: int/string
+                :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type topic: string
+                :param topic: topic name of logs, could be None
+
+                :type query: string
+                :param query: user defined query, could be None
+
+                :type reverse: bool
+                :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+                :type offset: int
+                :param offset: offset to start, by default is 0
+
+                :type power_sql: bool
+                :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+                :type scan: bool
+                :param scan: if scan is set to true, the query will use scan mode
+
+                :type forward: bool
+                :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
+                :return: GetLogsResponse iterator
+
+                :raise: LogException
+                """
+        while True:
+            response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=query, reverse=reverse, offset=offset, size=100, power_sql=power_sql,
+                                    scan=scan, forward=forward)
+
+            yield response
+
+            count = response.get_count()
+            query_mode = response.get_query_mode()
+            scan_all = False
+            if query_mode is GetLogsResponse.QueryMode.NORMAL or query_mode is GetLogsResponse.QueryMode.SCAN_SQL:
+                offset += count
+            else:
+                scan_all = (response.get_scan_all() == 'true')
+                if forward:
+                    offset = response.get_end_offset()
+                else:
+                    offset = response.get_begin_offset()
+
+            if count == 0 or is_stats_query(query) or scan_all:
                 break
 
     def execute_logstore_sql(self, project, logstore, from_time, to_time, sql, power_sql):
@@ -4316,7 +4394,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return GetTopostoreNodeResponse(header, resp)
 
-    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None, 
+    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None,
                 property_value=None, offset=0, size=100):
         """list Topostore nodes
         Unsuccessful operation will cause an LogException.
@@ -4356,7 +4434,7 @@ class LogClient(object):
             for node_type in node_types:
                 if not isinstance(node_type, str):
                     raise TypeError("node_types must be list of string")
-            
+
         if property_key and not isinstance(property_key, str):
             raise TypeError("property_key must be str")
 
@@ -4504,7 +4582,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return GetTopostoreRelationResponse(header, resp)
 
-    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None, 
+    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None,
             src_node_ids=None, dst_node_ids=None,
             property_key=None, property_value=None, offset=0, size=100):
         """list Topostore relationss
@@ -4546,7 +4624,7 @@ class LogClient(object):
 
         if relation_types and not isinstance(relation_types, list):
             raise TypeError("relation_types must be list of string")
-        
+
         if relation_types and isinstance(relation_types, list):
             for relation_type in relation_types:
                 if not isinstance(relation_type, str):
@@ -4582,7 +4660,7 @@ class LogClient(object):
 
         if relation_types is not None:
             params["relationTypes"] = ",".join(relation_types)
-    
+
         if src_node_ids is not None:
             params["srcNodeIds"] = ",".join(src_node_ids)
 
