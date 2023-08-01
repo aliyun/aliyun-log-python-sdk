@@ -2346,9 +2346,8 @@ class LogClient(object):
             project_name = resource_id
         else:
             position = resource_id.find("#")
-            if position == -1:
-                raise ValueError("Incorrect resource id: " + resource_id)
-            project_name = resource_id[:position]
+            if position != -1:
+                project_name = resource_id[:position]
         resource = "/tag"
         body = {
             'resourceType': resource_type,
@@ -2378,9 +2377,8 @@ class LogClient(object):
             project_name = resource_id
         else:
             position = resource_id.find("#")
-            if position == -1:
-                raise ValueError("Incorrect resource id: " + resource_id)
-            project_name = resource_id[:position]
+            if position != -1:
+                project_name = resource_id[:position]
         resource = "/untag"
         body = {
             'resourceType': resource_type,
@@ -2419,9 +2417,8 @@ class LogClient(object):
                 project_name = resource_id
             else:
                 position = resource_id.find("#")
-                if position == -1:
-                    raise ValueError("Incorrect resource id: " + resource_id)
-                project_name = resource_id[:position]
+                if position != -1:
+                    project_name = resource_id[:position]
         while True:
             resp, header = self._send("GET", project_name, None, resource, params, {})
             resp = GetResourceTagsResponse(header, resp)
