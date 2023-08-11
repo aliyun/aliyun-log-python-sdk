@@ -2,10 +2,11 @@ from aliyun.log.sink import DataSink, DataSinkType
 
 
 class AliyunOSSSink(DataSink):
-    def __init__(self, roleArn, bucket, prefix, suffix, pathFormat, pathFormatType, bufferSize, bufferInterval, timeZone, contentType, compressionType, contentDetail):
+    def __init__(self, roleArn, bucket, prefix, suffix, pathFormat, pathFormatType, bufferSize, bufferInterval, timeZone, contentType, compressionType, contentDetail, endpoint=None):
         super(AliyunOSSSink, self).__init__(DataSinkType.ALIYUN_OSS)
         self.__roleArn = roleArn
         self.__bucket = bucket
+        self.__endpoint = endpoint
         self.__prefix = prefix
         self.__suffix = suffix
         self.__pathFormat = pathFormat
@@ -88,3 +89,10 @@ class AliyunOSSSink(DataSink):
 
     def setContentDetail(self, contentDetail):
         self.__contentDetail = contentDetail
+
+    def getEndpoint(self):
+        return self._endpoint
+
+    def setEndpoint(self, endpoint):
+        if endpoint is not None:
+            self._endpoint = endpoint
