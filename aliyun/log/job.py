@@ -134,6 +134,30 @@ class AbstractJob(metaclass=abc.ABCMeta):
 
 
 class JobSchedule(object):
+    def __init__(self):
+        self.__id = None
+        self.__displayName = None
+        self.__jobName = None
+        self.__type = None
+        self.__interval = None
+        self.__cronExpression = None
+        self.__delay = None
+        self.__dayOfWeek = None
+        self.__hour = None
+
+    def jobScheduleToDict(self):
+        config = {
+            'id': self.getId(),
+            'displayName': self.getDisplayName(),
+            'jobName': self.getJobName(),
+            'type': self.getType(),
+            'interval': self.getInterval(),
+            'cronExpression': self.getCronExpression(),
+            'delay': self.getDelay(),
+            'dayOfWeek': self.getDayOfWeek(),
+            'hour': self.getHour()
+        }
+        return config
 
     def getId(self):
         return self.__id
@@ -151,7 +175,7 @@ class JobSchedule(object):
         return self.__jobName
 
     def setJobName(self, jobName):
-        self.jobName = jobName
+        self.__jobName = jobName
 
     def getType(self):
         return self.__type
@@ -251,6 +275,9 @@ class JobSchedule(object):
 
 
 class ScheduledJob(AbstractJob):
+    def __init__(self):
+        self.__status = None
+        self.__schedule = JobSchedule()
 
     def getStatus(self):
         return self.__status
@@ -267,6 +294,7 @@ class ScheduledJob(AbstractJob):
 
 class Export(ScheduledJob):
     def __init__(self):
+        self.configuration = None
         self.setType(JobType.EXPORT)
         schedule = JobSchedule()
         schedule.setType(JobScheduleType.RESIDENT)
