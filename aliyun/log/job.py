@@ -144,6 +144,7 @@ class JobSchedule(object):
         self.__delay = None
         self.__dayOfWeek = None
         self.__hour = None
+        self.__timeZone = None
 
     def jobScheduleToDict(self):
         config = {
@@ -155,7 +156,8 @@ class JobSchedule(object):
             'cronExpression': self.getCronExpression(),
             'delay': self.getDelay(),
             'dayOfWeek': self.getDayOfWeek(),
-            'hour': self.getHour()
+            'hour': self.getHour(),
+            'timeZone': self.getTimeZone()
         }
         return config
 

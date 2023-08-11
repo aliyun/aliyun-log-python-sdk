@@ -268,7 +268,7 @@ def create_schedule_sql_with_dict():
 
 def list_schedule_sql_instances():
     now = int(time.time())
-    begin_time = now - 30 * 60
+    begin_time = now - 360
     to_time = now + 30 * 60
 
     list_schedule_sql_instances_response = client.list_scheduled_sql_job_instance(project, job_name,
@@ -313,10 +313,14 @@ def update_schedule_sql():
     configuration['maxRetries'] = 25
 
     schedule['type'] = 'Cron'
+    schedule['timeZone'] = '+0800'
     schedule['interval'] = ''
     schedule['dayOfWeek'] = ''
     schedule['hour'] = ''
     schedule['cronExpression'] = '*/2 * * * *'
+
+    schedule = dict_to_schedule_rule(schedule)
+    configuration = dict_to_scheduled_sql_config(configuration)
 
     schedule_sql = ScheduledSQL()
     schedule_sql.setSchedule(schedule)
