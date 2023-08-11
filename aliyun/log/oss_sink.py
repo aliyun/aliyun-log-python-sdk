@@ -91,8 +91,8 @@ class AliyunOSSSink(DataSink):
         self.__contentDetail = contentDetail
 
     def getEndpoint(self):
-        return self._endpoint
+        return self.__endpoint
 
     def setEndpoint(self, endpoint):
         if endpoint is not None:
-            self._endpoint = endpoint
+            self.__endpoint = endpoint
