@@ -5677,7 +5677,7 @@ class LogClient(object):
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
 
-
+# make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
