@@ -4213,12 +4213,15 @@ class LogClient(object):
         description = resource.get_description()
         schema_list = resource.get_schema()
         ext_info = resource.get_ext_info()
+        acl = resource.get_acl()
         if schema_list is not None:
             body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
         if description is not None:
             body["description"] = description
         if ext_info is not None:
             body["extInfo"] = ext_info
+        if acl:
+            body["acl"] = json.dumps(acl)
         body_str = six.b(json.dumps(body))
         headers = {'x-log-bodyrawsize': str(len(body_str))}
         resource = "/resources/" + resource.get_resource_name()
