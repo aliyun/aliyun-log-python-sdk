@@ -12,6 +12,8 @@ import time
 import zlib
 from datetime import datetime
 import logging
+from .scheduled_sql import ScheduledSQLConfiguration
+from .scheduled_sql_response import *
 from itertools import cycle
 from .consumer_group_request import *
 from .consumer_group_response import *
@@ -2274,6 +2276,190 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return RetryShipperTasksResponse(header, resp)
 
+    def check_upsert_scheduled_sql(self, project_name, scheduled_sql, method, resource):
+        config = scheduled_sql.getConfiguration()
+        if not isinstance(config, ScheduledSQLConfiguration):
+            raise LogException('BadConfig', 'the scheduled sql config is not ScheduledSQLConfiguration type !')
+
+        from_time = config.getFromTime()
+        to_time = config.getToTime()
+
+        time_range = 1451577600 < from_time < to_time
+        sustained = from_time > 1451577600 and to_time == 0
+        if not time_range and not sustained:
+            raise LogException('BadParameters', 'Invalid fromTime: {} toTime: {}, please ensure fromTime more than '
+                                                '1451577600.'.format(from_time, to_time))
+
+        params = {}
+        body = six.b(json.dumps(scheduled_sql.scheduled_sql_to_dict()))
+        headers = {"x-log-bodyrawsize": str(len(body)), "Content-Type": "application/json"}
+        (resp, header) = self._send(method, project_name, body, resource, params, headers)
+        return resp, header
+
+    def create_scheduled_sql(self, project_name, scheduled_sql):
+        """ Create an scheduled sql job
+        Unsuccessful operation will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type scheduled_sql: ScheduledSQL
+        :param scheduled_sql: the scheduled sql job configuration
+        :return:
+        """
+        resource = "/jobs"
+        resp, header = self.check_upsert_scheduled_sql(project_name, scheduled_sql, "POST", resource)
+        return CreateScheduledSQLResponse(header, resp)
+
+    def update_scheduled_sql(self, project_name, scheduled_sql):
+        """ Update an existing scheduled sql job
+          Unsuccessful operation will cause an LogException.
+          :type project_name: string
+          :param project_name: the Project name
+          :type scheduled_sql: ScheduledSQL
+          :param scheduled_sql: the scheduled sql job configuration
+          :return:
+          """
+        name = scheduled_sql.getName()
+        resource = "/jobs/" + name
+        resp, header = self.check_upsert_scheduled_sql(project_name, scheduled_sql, "PUT", resource)
+        return UpdateScheduledSQLResponse(header, resp)
+
+    def delete_scheduled_sql(self, project_name, job_name):
+        """ Delete an existing scheduled sql job
+         Unsuccessful operation will cause an LogException.
+         :type project_name: string
+         :param project_name: the Project name
+         :type job_name: string
+         :param job_name: the name of the scheduled sql job to delete
+         :return:
+         """
+        resource = "/jobs/" + job_name
+        params = {}
+        headers = {}
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteScheduledSQLResponse(header, resp)
+
+    def get_scheduled_sql(self, project_name, job_name):
+        """ Get an existing scheduled sql job
+          Unsuccessful operation will cause an LogException.
+          :type project_name: string
+          :param project_name: the Project name
+          :type job_name: string
+          :param job_name: the name of the scheduled sql job to get
+          :return:
+          """
+        resource = "/jobs/" + job_name
+        params = {}
+        headers = {}
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetScheduledSQLResponse(header, resp)
+
+    def list_scheduled_sql(self, project_name, offset=0, size=100):
+        """ List all scheduled sql jobs
+           Unsuccessful operation will cause an LogException.
+           :type project_name: string
+           :param project_name: the Project name
+           :type offset: int
+           :param offset: the offset of the list
+           :type size: int
+           :param size: the size of the list
+           :return:
+           """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_scheduled_sql, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name)
+
+        resource = '/jobs'
+        headers = {}
+        params = {'offset': str(offset), 'size': str(size), 'jobType': "ScheduledSQL"}
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListScheduledSQLResponse(header, resp)
+
+    def list_scheduled_sql_job_instance(self, project, job_name, from_time, to_time, state=None, offset=0, size=100):
+        """
+        List scheduledSql instances.
+
+        Unsuccessful operation will cause a LogException.
+
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type state: string
+        :param state: instance state: SUCCEEDED, FAILED, RUNNING
+        :type from_time: int
+        :param from_time: the begin timestamp or time. Left closed right open, must be hour time
+        :type to_time: int
+        :param to_time: the end timestamp or time. Left closed right open, must be hour time
+        :type offset: int
+        :param offset: line offset of return logs
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+        :return: ListScheduledSqlJobInstanceResponse
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_scheduled_sql_job_instance, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {
+            'offset': str(offset),
+            'size': str(size),
+            'jobType': 'ScheduledSQL',
+            'start': parse_timestamp(from_time),
+            'end': parse_timestamp(to_time)
+        }
+        if state:
+            params['state'] = state
+        resource = '/jobs/' + job_name + '/jobinstances'
+        (resp, header) = self._send('GET', project, None, resource, params, headers)
+        return ListScheduledSqlJobInstancesResponse(header, resp)
+
+    def get_scheduled_sql_job_instance(self, project, job_name, instance_id, result=None):
+        """ get scheduledSqlInstance
+        Unsuccessful operation will cause an LogException.
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type instance_id: string
+        :param instance_id: the scheduledSqlInstance id
+        :type result: string
+        :param result: is need details   ex:true
+        :return: GetScheduledSqlJobResponse
+        :raise: LogException
+        """
+        resource = "/jobs/{}/jobinstances/{}".format(job_name, instance_id)
+        params = {}
+        if result:
+            params['result'] = result
+        headers = {}
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetScheduledSqlJobInstanceResponse(header, resp)
+
+    def modify_scheduled_sql_job_instance_state(self, project, job_name, instance_id, state):
+        """ get scheduledSqlInstance
+        Unsuccessful opertaion will cause an LogException.
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type instance_id: string
+        :param instance_id: the scheduledSqlInstance id
+        :type state: string
+        :param state: Modify instance state   state:FAILED、SUCCEEDED、RUNNING,only support to RUNNING
+        :return: ModifyScheduledSqlJobStateResponse
+        :raise: LogException
+        """
+        if state != "RUNNING":
+            raise LogException('BadParameters',
+                               "Invalid state: {}, state must be RUNNING.".format(state))
+        resource = "/jobs/{}/jobinstances/{}".format(job_name, instance_id)
+        params = {'state': state}
+        headers = {}
+        (resp, header) = self._send("PUT", project, None, resource, params, headers)
+        return ModifyScheduledSqlJobStateResponse(header, resp)
+
     def create_project(self, project_name, project_des, resource_group_id=''):
         """ Create a project
         Unsuccessful operation will cause an LogException.
@@ -4027,12 +4213,15 @@ class LogClient(object):
         description = resource.get_description()
         schema_list = resource.get_schema()
         ext_info = resource.get_ext_info()
+        acl = resource.get_acl()
         if schema_list is not None:
             body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
         if description is not None:
             body["description"] = description
         if ext_info is not None:
             body["extInfo"] = ext_info
+        if acl:
+            body["acl"] = json.dumps(acl)
         body_str = six.b(json.dumps(body))
         headers = {'x-log-bodyrawsize': str(len(body_str))}
         resource = "/resources/" + resource.get_resource_name()
@@ -5488,6 +5677,7 @@ class LogClient(object):
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
 
+# make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
