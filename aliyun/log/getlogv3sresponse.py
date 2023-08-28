@@ -60,11 +60,11 @@ class GetLogsV3Response(LogResponse):
 
         :return: bool, true if this logs query is completed
         """
-        return self.meta.is_completed()
+        return self.get_meta().is_completed()
 
     def to_dict(self):
         return {
-            'meta': self.meta.to_dict(),
+            'meta': self.get_meta().to_dict(),
             'data': [log.to_dict() for log in self.logs]
         }
 
@@ -80,7 +80,7 @@ class GetLogsV3Response(LogResponse):
                 "passed response is not a GetLogsV3Response: " + str(type(other)))
         if other is None:
             return self
-        self.meta.merge(other.meta)
+        self.meta.merge(other.get_meta())
         self.logs.extend(other.get_logs())
         return self
 

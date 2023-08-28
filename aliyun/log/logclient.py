@@ -696,7 +696,7 @@ class LogClient(object):
                 break
 
     def get_log_all_v2(self, project, logstore, from_time, to_time, topic=None,
-                       query=None, reverse=False, offset=0, power_sql=False, scan=False, forward=True):
+                    query=None, reverse=False, offset=0, power_sql=False, scan=False, forward=True):
         """ FOR PHRASE AND SCAN WHERE.
                 Get logs from log service. will retry when incomplete.
                 Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
@@ -869,9 +869,7 @@ class LogClient(object):
         merged_resp = None
         while True:
             request_size = min(left_size, MAX_GET_LOG_PAGING_SIZE)
-            v3_resp = self._get_log_v3_internal(
-                request, overwrite_offset=cur_offset, overwrite_size=request_size
-            )
+            v3_resp = self._get_log_v3_internal(request, cur_offset, request_size)
             
             count = v3_resp.meta.get_count()
             cur_offset += count

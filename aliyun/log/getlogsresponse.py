@@ -31,6 +31,19 @@ class GetLogsResponse(LogResponse):
         PHRASE = 1
         SCAN = 2
         SCAN_SQL = 3
+   
+    @classmethod
+    def from_v3_response(cls, v3_resp):
+        """ Instantiate from response of API GetLogsV3 
+        
+        :param:v3_resp type GetLogsV3Response
+         
+        :return GetLogsResponse
+        """
+        if not isinstance(v3_resp, GetLogsV3Response):
+            raise ValueError("passed response is not a GetLogsV3Response: " + str(type(v3_resp)))
+        logs = v3_resp.body.get("data")
+        return cls(logs, v3_resp.headers, v3_resp)
 
     def __init__(self, resp, header, v3_resp=None):
         """ Instantiate from response of get logs
@@ -39,8 +52,8 @@ class GetLogsResponse(LogResponse):
         :param:v3_resp type GetLogsV3Response
         :return GetLogsResponse
         """
-        LogResponse.__init__(self, header, resp)
 
+        LogResponse.__init__(self, header, resp)
         try:
             if v3_resp is not None:
                 self._init_from_v3_response(v3_resp)
@@ -82,20 +95,6 @@ class GetLogsResponse(LogResponse):
                                + str(resp) + " \nOther: " + str(ex),
                                resp_header=header,
                                resp_body=resp)
-
-    @classmethod
-    def from_v3_response(cls, v3_resp):
-        """ Instantiate from response of API GetLogsV3 
-        
-        :param:v3_resp type GetLogsV3Response
-        :param:resp type Dict, response of API GetLogsV3 
-        :param:header type Dict, response header of API GetLogsV3 
-        :return GetLogsResponse
-        """
-        if not isinstance(v3_resp, GetLogsV3Response):
-            raise ValueError("passed response is not a GetLogsV3Response: " + str(type(v3_resp)))
-        logs = v3_resp.body.get("data")
-        return cls(logs, v3_resp.headers, v3_resp)
 
     def _init_from_v3_response(self, v3_resp):
         """
