@@ -144,18 +144,20 @@ class TestDict(unittest.TestCase):
             for j in range(55):
                 contents = [('index', str(i * 100 + j))]
                 logItem = LogItem()
-                logItem.set_time(int(time.time()))
+                logItem.set_time(time.time())
                 logItem.set_contents(contents)
                 logitemList.append(logItem)
             req2 = PutLogsRequest(
                 self.project, self.logstore, '', None, logitemList)
             self.client.put_logs(req2)
-
+            
+        time.sleep(10)
+        end = int(time.time())
+        begin = end - 30
         request = GetLogsRequest(self.project, self.logstore,
-                                 fromTime=int(time.time()) - 900,
-                                 toTime=int(time.time()),
+                                 fromTime=begin,
+                                 toTime=end,
                                  query=None, line=100, offset=0)
-        time.sleep(3)
         # get logs
         response = self.client.get_logs(request)
         self.assertTrue(response.is_completed())
@@ -163,15 +165,15 @@ class TestDict(unittest.TestCase):
 
         # get log
         response = self.client.get_log(self.project, self.logstore,
-                                       int(time.time() - 900),
-                                       int(time.time()),
+                                       begin,
+                                       end,
                                        topic='', query=None, size=100)
         self.assertTrue(response.is_completed())
         self.assertGreaterEqual(response.get_count(), 10)
         # get log all
         all_logs = self.client.get_log_all(self.project, self.logstore,
-                                           int(time.time() - 900),
-                                           int(time.time()))
+                                           begin,
+                                           end)
         count = 0
         print('get_log_all')
         for logs in all_logs:
@@ -182,8 +184,8 @@ class TestDict(unittest.TestCase):
         self.assertGreaterEqual(count, 110)
         # get log all v2
         all_logs = self.client.get_log_all_v2(self.project, self.logstore,
-                                              int(time.time() - 900),
-                                              int(time.time()))
+                                              begin,
+                                              end)
         count = 0
         print('get_log_all_v2')
         for logs in all_logs:
@@ -195,8 +197,8 @@ class TestDict(unittest.TestCase):
 
         # get log v3
         all_logs = self.client.get_log_all_v3(self.project, self.logstore,
-                                              int(time.time() - 900),
-                                              int(time.time()))
+                                              begin,
+                                              end)
         count = 0
         print('get_log_all_v3')
         for logs in all_logs:
@@ -209,7 +211,7 @@ class TestDict(unittest.TestCase):
         request.set_line(200)
         response = self.client.get_log_v3(request=request)
         self.assertTrue(response.is_completed())
-        self.assertGreater(response.get_meta().get_count(), 100)
+        self.assertGreater(response.get_count(), 100)
 
 
 if __name__ == '__main__':
