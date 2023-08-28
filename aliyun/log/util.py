@@ -53,7 +53,7 @@ def base64_decodestring(s):
             s = s.encode('utf8')
         return base64.decodebytes(s).decode('utf8')
     
-def value_or_default(v, default:None):
+def value_or_default(v, default=None):
     """ returns default value if v is None
         else return v
     """

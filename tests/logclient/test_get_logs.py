@@ -6,6 +6,7 @@ from aliyun.log import LogClient, GetLogsV3Response, GetLogsResponse, GetLogsReq
 import six
 import time
 
+
 class TestDict(unittest.TestCase):
 
     def setUp(self):
@@ -14,8 +15,9 @@ class TestDict(unittest.TestCase):
         self.access_key_id = os.environ.get('TEST_ACCESS_KEY_ID')
         self.access_key_secret = os.environ.get('TEST_ACCESS_KEY_SECRET')
         self.endpoint = os.environ.get('TEST_ENDPOINT')
-        self.client = LogClient(self.endpoint, self.access_key_id, self.access_key_secret)
-    
+        self.client = LogClient(
+            self.endpoint, self.access_key_id, self.access_key_secret)
+
     def tearDown(self):
         pass
 
@@ -121,7 +123,7 @@ class TestDict(unittest.TestCase):
         self.assertEqual(1, len(logs))
         self.assertEqual(True, meta.is_completed())
         d = v3_resp.to_dict()
-        
+
         # skip cmp None from dict d and data
         for key in six.iterkeys(d["meta"]):
             if d["meta"][key] is None and key not in data["meta"]:
@@ -132,11 +134,10 @@ class TestDict(unittest.TestCase):
                 d["meta"][key] = None
 
         self.assertDictEqual(d, data)
-        
-        v2_resp = GetLogsResponse.from_v3_response(v3_resp=v3_resp)
-    
 
-    def test_get_logs(self): 
+        v2_resp = GetLogsResponse.from_v3_response(v3_resp=v3_resp)
+
+    def test_get_logs(self):
         # send logs
         for i in range(2):
             logitemList = []  # LogItem list
@@ -146,14 +147,14 @@ class TestDict(unittest.TestCase):
                 logItem.set_time(int(time.time()))
                 logItem.set_contents(contents)
                 logitemList.append(logItem)
-            req2 = PutLogsRequest(self.project, self.logstore, '', None, logitemList)
+            req2 = PutLogsRequest(
+                self.project, self.logstore, '', None, logitemList)
             self.client.put_logs(req2)
 
-            
         request = GetLogsRequest(self.project, self.logstore,
-                                 fromTime=int(time.time()) - 900, 
+                                 fromTime=int(time.time()) - 900,
                                  toTime=int(time.time()),
-                                 query=None, line=100, offset=0)   
+                                 query=None, line=100, offset=0)
         time.sleep(3)
         # get logs
         response = self.client.get_logs(request)
@@ -161,54 +162,55 @@ class TestDict(unittest.TestCase):
         self.assertGreaterEqual(response.get_count(), 10)
 
         # get log
-        response = self.client.get_log(self.project, self.logstore, 
+        response = self.client.get_log(self.project, self.logstore,
                                        int(time.time() - 900),
-                                       int(time.time()), 
-                                       topic='', query=None, size = 100)
+                                       int(time.time()),
+                                       topic='', query=None, size=100)
         self.assertTrue(response.is_completed())
         self.assertGreaterEqual(response.get_count(), 10)
         # get log all
-        all_logs = self.client.get_log_all(self.project, self.logstore, 
-                                       int(time.time() - 900),
-                                       int(time.time()))
+        all_logs = self.client.get_log_all(self.project, self.logstore,
+                                           int(time.time() - 900),
+                                           int(time.time()))
         count = 0
+        print('get_log_all')
         for logs in all_logs:
             count += logs.get_count()
             print('get logs: ', count)
             self.assertTrue(logs.is_completed())
 
-        self.assertGreaterEqual(count, 110)    
+        self.assertGreaterEqual(count, 110)
         # get log all v2
-        all_logs = self.client.get_log_all_v2(self.project, self.logstore, 
-                                       int(time.time() - 900),
-                                       int(time.time()))
+        all_logs = self.client.get_log_all_v2(self.project, self.logstore,
+                                              int(time.time() - 900),
+                                              int(time.time()))
         count = 0
+        print('get_log_all_v2')
         for logs in all_logs:
             count += logs.get_count()
             print('get logs: ', count)
             self.assertTrue(logs.is_completed())
 
-        self.assertGreaterEqual(count, 110) 
-        
+        self.assertGreaterEqual(count, 110)
+
         # get log v3
-        
-        all_logs = self.client.get_log_all_v3(self.project, self.logstore, 
-                                       int(time.time() - 900),
-                                       int(time.time()))
+        all_logs = self.client.get_log_all_v3(self.project, self.logstore,
+                                              int(time.time() - 900),
+                                              int(time.time()))
         count = 0
+        print('get_log_all_v3')
         for logs in all_logs:
             count += logs.get_meta().get_count()
             print('get logs: ', count)
             self.assertTrue(logs.is_completed())
-        self.assertGreaterEqual(count, 110) 
+        self.assertGreaterEqual(count, 110)
+
         # get log v3
         request.set_line(200)
         response = self.client.get_log_v3(request=request)
         self.assertTrue(response.is_completed())
         self.assertGreater(response.get_meta().get_count(), 100)
-        
 
-        
 
 if __name__ == '__main__':
     unittest.main()

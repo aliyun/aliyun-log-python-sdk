@@ -9,7 +9,6 @@ from .queriedlog import QueriedLog
 from .logexception import LogException
 from .util import value_or_default
 from enum import Enum
-import six
 
 class GetLogsV3Response(LogResponse):
     """ The response of the GetLog API from log.
@@ -20,21 +19,23 @@ class GetLogsV3Response(LogResponse):
     :type header: dict
     :param header: GetLogsV3Response HTTP response header
     """
+
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         try:
-            self.meta = GetLogsV3Response.GetLogsV3ResponseMeta(resp.get("meta"))
+            self.meta = GetLogsV3Response.GetLogsV3ResponseMeta(
+                resp.get("meta"))
             self.logs = []
             for log in resp["data"]:
                 self.logs.append(QueriedLog.from_dict(log))
 
         except Exception as ex:
             raise LogException("InvalidResponse",
-                                "Failed to parse GetLogV3Response, \nheader: "
-                                + str(header) + " \nBody:"
-                                + str(resp) + " \nOther: " + str(ex),
-                                resp_header=header,
-                                resp_body=resp) from ex
+                               "Failed to parse GetLogV3Response, \nheader: "
+                               + str(header) + " \nBody:"
+                               + str(resp) + " \nOther: " + str(ex),
+                               resp_header=header,
+                               resp_body=resp)
 
     def get_meta(self):
         """ Get meta from the response
@@ -48,12 +49,12 @@ class GetLogsV3Response(LogResponse):
         :return: logs, [QueriedLog]
         """
         return self.logs
-    
+
     def get_count(self):
         """ Get number of logs of response
         """
         return self.get_meta().get_count()
-    
+
     def is_completed(self):
         """ Check if the get logs query is completed
 
@@ -83,16 +84,16 @@ class GetLogsV3Response(LogResponse):
         self.logs.extend(other.get_logs())
         return self
 
-
-
     class GetLogsV3ResponseMeta():
         """ The meta info of get logs response
-        
+
         """
+
         def __init__(self, meta):
             self.count = value_or_default(meta.get("count"), 0)
             self.progress = meta.get("progress")
-            self.processed_rows = value_or_default(meta.get("processedRows"), 0)
+            self.processed_rows = value_or_default(
+                meta.get("processedRows"), 0)
             self.elapsed_millisecond = meta.get("elapsedMillisecond")
             self.has_sql = meta.get("hasSQL")
             self.where_query = meta.get("whereQuery")
@@ -103,7 +104,7 @@ class GetLogsV3Response(LogResponse):
             self.scan_bytes = meta.get("scanBytes")
             self.limited = meta.get("limited")
             self.processed_bytes = meta.get("processedBytes")
-            self.telemetry_type = meta.get("telementryType") # not typo
+            self.telemetry_type = meta.get("telementryType")  # not typo
             self.power_sql = value_or_default(meta.get("powerSql"), False)
             self.inserted_sql = meta.get("insertedSQL")
             self.keys = meta.get("keys")
@@ -115,7 +116,8 @@ class GetLogsV3Response(LogResponse):
 
             phrase_query_info = meta.get("phraseQueryInfo")
             if phrase_query_info is not None:
-                self.phrase_query_info = GetLogsV3Response.PhraseQueryInfo(phrase_query_info)
+                self.phrase_query_info = GetLogsV3Response.PhraseQueryInfo(
+                    phrase_query_info)
             else:
                 self.phrase_query_info = None
 
@@ -124,12 +126,14 @@ class GetLogsV3Response(LogResponse):
                 self.terms.append(GetLogsV3Response.Term.from_dict(term))
 
         def to_dict(self):
+            """ to Dict
+            """
             phrase_query_info = None
             if self.phrase_query_info is not None:
                 phrase_query_info = self.phrase_query_info.to_dict()
 
             terms = [term.to_dict() for term in self.terms]
-                
+
             return {
                 'count': self.count,
                 'progress': self.progress,
@@ -144,7 +148,7 @@ class GetLogsV3Response(LogResponse):
                 'scanBytes': self.scan_bytes,
                 'limited': self.limited,
                 'processedBytes': self.processed_bytes,
-                'telementryType': self.telemetry_type, # not typo
+                'telementryType': self.telemetry_type,  # not typo
                 'powerSql': self.power_sql,
                 'insertedSQL': self.inserted_sql,
                 'keys': self.keys,
@@ -171,7 +175,6 @@ class GetLogsV3Response(LogResponse):
             self.processed_rows += other.processed_rows
             return self
 
-
         def get_count(self):
             """ Get log number from the response
 
@@ -181,7 +184,7 @@ class GetLogsV3Response(LogResponse):
 
         def get_progress(self):
             """ Progress of get logs, returns 'Complete' if completed
-            
+
             :return: str
             """
             return self.progress
@@ -351,6 +354,7 @@ class GetLogsV3Response(LogResponse):
     class Term():
         """ terms of query, field key/term
         """
+
         def __init__(self, key, term):
             self.key = key
             self.term = term
@@ -374,6 +378,8 @@ class GetLogsV3Response(LogResponse):
             return self.term
 
         def to_dict(self):
+            """ to Dict
+            """
             return {
                 "key": self.key,
                 "term": self.term
@@ -386,8 +392,9 @@ class GetLogsV3Response(LogResponse):
 
     class PhraseQueryInfo():
         """ query info of phrase, includes beginOffset/endOffset/scanAll/endTime
-        
+
         """
+
         def __init__(self, pharse_query_info):
             self.begin_offset = pharse_query_info.get("beginOffset")
             self.end_offset = pharse_query_info.get("endOffset")
@@ -423,6 +430,8 @@ class GetLogsV3Response(LogResponse):
             return self.end_time
 
         def to_dict(self):
+            """ to Dict
+            """
             return {
                 "beginOffset": self.begin_offset,
                 "endOffset": self.end_offset,
@@ -432,6 +441,6 @@ class GetLogsV3Response(LogResponse):
 
         def log_print(self):
             """ print info
-            
+
             """
             print(self.to_dict())
