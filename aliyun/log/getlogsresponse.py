@@ -5,8 +5,10 @@
 # All rights reserved.
 
 from .logresponse import LogResponse
+from .getlogv3sresponse import GetLogsV3Response
 from .queriedlog import QueriedLog
 from .logexception import LogException
+from .util import value_or_default
 import six
 from .util import Util
 from enum import Enum
@@ -30,27 +32,38 @@ class GetLogsResponse(LogResponse):
         SCAN = 2
         SCAN_SQL = 3
 
-    def __init__(self, resp, header):
+    def __init__(self, resp, header, v3_resp=None):
+        """ Instantiate from response of get logs
+        If v3_resp is not None, uses v3_resp for initialization
+        
+        :param:v3_resp type GetLogsV3Response
+        :return GetLogsResponse
+        """
         LogResponse.__init__(self, header, resp)
+
         try:
+            if v3_resp is not None:
+                self._init_from_v3_response(v3_resp)
+                return
+
             self.progress = Util.h_v_t(header, 'x-log-progress')
-            self.processed_rows = Util.h_v_td(header, 'x-log-processed-rows', '0')
-            self.elapsed_mills = Util.h_v_td(header, 'x-log-elapsed-millisecond', '0')
-            self.has_sql = Util.h_v_td(header, 'x-log-has-sql', 'False')
+            self.processed_rows = int(Util.h_v_td(header, 'x-log-processed-rows', '0'))
+            self.elapsed_mills = float(Util.h_v_td(header, 'x-log-elapsed-millisecond', '0'))
+            self.has_sql = Util.h_v_td(header, 'x-log-has-sql', 'false') == 'true'
             self.where_query = Util.h_v_td(header, 'x-log-where-query', '')
             self.agg_query = Util.h_v_td(header, 'x-log-agg-query', '')
-            self.cpu_sec = Util.h_v_td(header, 'x-log-cpu-sec', '0')
-            self.cpu_cores = Util.h_v_td(header, 'x-log-cpu-cores', '0')
+            self.cpu_sec = float(Util.h_v_td(header, 'x-log-cpu-sec', '0'))
+            self.cpu_cores = float(Util.h_v_td(header, 'x-log-cpu-cores', '0'))
             query_info_str = Util.h_v_td(header, 'x-log-query-info', '')
             query_info = json.loads(query_info_str)
-            self.query_mode = GetLogsResponse.QueryMode(Util.h_v_td(query_info, 'mode', 0))
+            self.query_mode = GetLogsResponse.QueryMode(int(Util.h_v_td(query_info, 'mode', '0')))
             if self.query_mode is GetLogsResponse.QueryMode.SCAN or self.query_mode is GetLogsResponse.QueryMode.SCAN_SQL:
-                self.scan_bytes = Util.h_v_td(query_info, 'scanBytes', 0)
+                self.scan_bytes = int(Util.h_v_td(query_info, 'scanBytes', '0'))
             if self.query_mode is GetLogsResponse.QueryMode.PHRASE or self.query_mode is GetLogsResponse.QueryMode.SCAN:
                 scan_query_info = Util.h_v_td(query_info, 'phraseQueryInfo', dict())
-                self.scan_all = Util.h_v_td(scan_query_info, 'scanAll', 'false')
-                self.begin_offset = Util.h_v_td(scan_query_info, 'beginOffset', '0')
-                self.end_offset = Util.h_v_td(scan_query_info, 'endOffset', '0')
+                self.scan_all = Util.h_v_td(scan_query_info, 'scanAll', 'false') == 'true'
+                self.begin_offset = int(Util.h_v_td(scan_query_info, 'beginOffset', '0'))
+                self.end_offset = int(Util.h_v_td(scan_query_info, 'endOffset', '0'))
             self.logs = []
             for data in resp:
                 contents = {}
@@ -69,6 +82,45 @@ class GetLogsResponse(LogResponse):
                                + str(resp) + " \nOther: " + str(ex),
                                resp_header=header,
                                resp_body=resp)
+
+    @classmethod
+    def from_v3_response(cls, v3_resp):
+        """ Instantiate from response of API GetLogsV3 
+        
+        :param:v3_resp type GetLogsV3Response
+        :param:resp type Dict, response of API GetLogsV3 
+        :param:header type Dict, response header of API GetLogsV3 
+        :return GetLogsResponse
+        """
+        if not isinstance(v3_resp, GetLogsV3Response):
+            raise ValueError("passed response is not a GetLogsV3Response: " + str(type(v3_resp)))
+        logs = v3_resp.body.get("data")
+        return cls(logs, v3_resp.headers, v3_resp)
+
+    def _init_from_v3_response(self, v3_resp):
+        """
+        :param: v3_resp, GetLogsV3Response
+        """
+        self.logs = v3_resp.get_logs()
+        meta = v3_resp.get_meta()
+
+        self.progress = meta.get_progress()
+        self.processed_rows = value_or_default(meta.get_processed_rows(), 0)
+        self.elapsed_mills = value_or_default(meta.get_elapsed_millisecond(), 0)
+        self.has_sql = value_or_default(meta.get_has_sql(), False)
+        self.where_query = value_or_default(meta.get_where_query(), '')
+        self.agg_query = value_or_default(meta.get_agg_query(), '')
+        self.cpu_sec = value_or_default(meta.get_cpu_sec(), 0)
+        self.cpu_cores = value_or_default(meta.get_cpu_cores(), 0)
+        mode = value_or_default(meta.get_mode(), 0)
+        self.query_mode = GetLogsResponse.QueryMode(mode)
+        self.scan_bytes = value_or_default(meta.get_scan_bytes(), 0)
+
+        if meta.get_phrase_query_info() is not None:
+            phrase_query_info = meta.get_phrase_query_info()
+            self.scan_all = value_or_default(phrase_query_info.get_scan_all(), False)
+            self.begin_offset = value_or_default(phrase_query_info.get_begin_offset(), 0)
+            self.end_offset = value_or_default(phrase_query_info.get_end_offset(), 0)
 
     def get_count(self):
         """ Get log number from the response

@@ -12,6 +12,8 @@ import time
 import zlib
 from datetime import datetime
 import logging
+
+from .getlogv3sresponse import GetLogsV3Response
 from .scheduled_sql import ScheduledSQLConfiguration
 from .scheduled_sql_response import *
 from itertools import cycle
@@ -596,50 +598,25 @@ class LogClient(object):
 
         # need to use extended method to get more when:
         # it's not select query, and size > default page size
-        size, offset = int(size), int(offset)
-        if not is_stats_query(query) and (size == -1 or size > MAX_GET_LOG_PAGING_SIZE):
-            return query_more(
-                self.get_log,
-                offset=offset,
-                size=size,
-                batch_size=MAX_GET_LOG_PAGING_SIZE,
-                project=project,
-                logstore=logstore,
-                from_time=from_time,
-                to_time=to_time,
-                topic=topic,
-                query=query,
-                reverse=reverse,
-            )
 
-        ret = None
-        for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
-            headers = {}
-            params = {'from': parse_timestamp(from_time),
-                      'to': parse_timestamp(to_time),
-                      'type': 'log',
-                      'line': size,
-                      'offset': offset,
-                      'reverse': 'true' if reverse else 'false',
-                      'powerSql': power_sql}
+        request = GetLogsRequest(
+            project=project,
+            logstore=logstore,
+            fromTime=from_time,
+            toTime=to_time,
+            topic=topic,
+            query=query,
+            line=size,
+            offset=offset,
+            reverse=reverse,
+            power_sql=power_sql,
+            scan=scan,
+            forward=forward,
+        )
 
-            if topic:
-                params['topic'] = topic
-            if query:
-                params['query'] = query
-            if scan:
-                params['session'] = 'mode=scan'
-                params['forward'] = 'true' if forward else 'false'
+        merged_v3_resp = self.get_log_v3(request)
+        return GetLogsResponse.from_v3_response(merged_v3_resp)
 
-            resource = "/logstores/" + logstore
-            (resp, header) = self._send("GET", project, None, resource, params, headers)
-            ret = GetLogsResponse(resp, header)
-            if ret.is_completed():
-                break
-
-            time.sleep(DEFAULT_QUERY_RETRY_INTERVAL)
-
-        return ret
 
     def get_logs(self, request):
         """ Get logs from log service.
@@ -787,6 +764,193 @@ class LogClient(object):
             if count == 0 or is_stats_query(query) or scan_all:
                 break
 
+    def get_log_all_v3(self, project, logstore, from_time, to_time, topic=None,
+                    query=None, reverse=False, offset=0, power_sql=False, scan=False, forward=True):
+        """Get logs from log service.
+        It will try to iteratively fetch all data every 100 items and yield them,
+        in CLI, it could apply jmes filter to each batch and make it possible to fetch 
+        larger volume of data.
+        Unsuccessful operation will cause an LogException.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_time: int/string
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type topic: string
+        :param topic: topic name of logs, could be None
+
+        :type query: string
+        :param query: user defined query, could be None
+
+        :type reverse: bool
+        :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+        :type offset: int
+        :param offset: offset to start, by default is 0
+
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+        :type scan: bool
+        :param scan: if scan is set to true, the query will use scan mode
+
+        :type forward: bool
+        :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
+        :return: GetLogsV3Response iterator
+
+        :raise: LogException
+        """
+        request = GetLogsRequest(
+            project=project,
+            logstore=logstore,
+            fromTime=from_time,
+            toTime=to_time,
+            topic=topic,
+            query=query,
+            line=100,
+            offset=offset,
+            reverse=reverse,
+            power_sql=power_sql,
+            scan=scan,
+            forward=forward,
+        )
+        while True:
+            response= self._get_log_v3_internal(
+                request, overwrite_offset=offset, overwrite_size=100
+            )
+            
+            count = response.get_count()
+            query_mode = response.get_meta().get_query_mode()
+            phrase = response.get_meta().get_phrase_query_info()
+            
+            # get next offset
+            if query_mode is GetLogsV3Response.QueryMode.NORMAL or query_mode is GetLogsV3Response.QueryMode.SCAN_SQL:
+                offset += count
+            else:
+                offset = phrase.get_end_offset() if forward else phrase.get_begin_offset()
+
+            # check if should break
+            scan_all = False
+            if phrase is not None and phrase.get_scan_all() is not None:
+                scan_all = phrase.get_scan_all()
+            
+            if count == 0 or is_stats_query(query) or scan_all:
+                break
+
+            yield response
+
+    def get_log_v3(self, request):
+        """Get logs from log service using API GetLogsV3(HTTP POST).
+        Unsuccessful operation will cause an LogException.
+        Will fetch all logs in batches(100 per batch) and return the merged results.
+        Note: for larger volume of data (e.g. > 1 million logs), use get_log_all_v3
+
+        :type request: GetLogsRequest
+        :param request: the GetLogs request parameters class.
+
+        :return: GetLogsV3Response
+
+        :raise: LogException 
+        """
+        cur_offset = request.get_offset()
+        left_size = request.get_line()
+
+        if not LogClient._should_split_batches(left_size, request.get_query()):
+            return self._get_log_v3_internal(request)
+
+        # fetch in batches, each batch get 100 logs
+        merged_resp = None
+        while True:
+            request_size = min(left_size, MAX_GET_LOG_PAGING_SIZE)
+            v3_resp = self._get_log_v3_internal(
+                request, overwrite_offset=cur_offset, overwrite_size=request_size
+            )
+            # merge result
+            if merged_resp is None:
+                merged_resp = v3_resp
+            else:
+                merged_resp.merge(v3_resp)
+
+            # check if complete
+            if not v3_resp.is_completed():
+                break
+
+            count = v3_resp.meta.get_count()
+            cur_offset += count
+            left_size -= count
+            # check if no more logs
+            if left_size <= 0 or count == 0:
+                break
+
+        return merged_resp
+
+    @staticmethod
+    def _should_split_batches(size, query):
+        return not is_stats_query(query) and (
+            size == -1 or size > MAX_GET_LOG_PAGING_SIZE
+        )
+
+    def _get_log_v3_internal(self, request, overwrite_offset=None, overwrite_size=None):
+        """get logs with size(requestLines) <= MAX_GET_LOG_PAGING_SIZE
+
+        :return: v3Resp, GetLogsV3Response
+        """
+        offset = (
+            overwrite_offset if overwrite_offset is not None else request.get_offset()
+        )
+        size = overwrite_size if overwrite_size is not None else request.get_line()
+        project = request.get_project()
+        logstore = request.get_logstore()
+        from_time = parse_timestamp(request.get_from())
+        to_time = parse_timestamp(request.get_to())
+        topic = request.get_topic()
+        query = request.get_query()
+        reverse = request.get_reverse()
+        power_sql = request.get_power_sql()
+        scan = request.get_scan()
+        forward = request.get_forward()
+
+        headers = {"x-log-bodyrawsize": '0', 
+                   "Content-Type": "application/json",
+                   "Accept-Encoding": "lz4"}
+        body = {
+            "offset": offset,
+            "line": size,
+            "type": "log",
+            "project": project,
+            "logstore": logstore,
+            "from": from_time,
+            "to": to_time,
+            "topic": topic,
+            "query": '' if query is None else query,
+            "reverse": reverse,
+            "powerSql": power_sql,
+            "scan": scan,
+            "forward": forward,
+        }
+        if request.get_scan():
+            body["session"] = "mode=scan"
+        resource = "/logstores/" + logstore + '/logs'
+        
+        body_str = six.b(json.dumps(body))
+        
+        (resp, resp_headers) = self._send("POST", project, body_str, resource, 
+                                          None, headers, respons_body_type='lz4')
+
+        request_id = Util.h_v_td(resp_headers, 'x-log-requestid', '')
+        raw_data = Util.check_and_decompress_lz4(resp, resp_headers, request_id)
+        decoded_dict = Util.to_json(raw_data, resp_headers, request_id)
+        return GetLogsV3Response(decoded_dict, resp_headers)
+
     def execute_logstore_sql(self, project, logstore, from_time, to_time, sql, power_sql):
         """ Execute SQL from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
@@ -815,7 +979,7 @@ class LogClient(object):
         :raise: LogException
         """
         if not is_stats_query(sql):
-            raise LogException("parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
+            raise LogException("InvalidParameter", "parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
                                "https://help.aliyun.com/document_detail/43772.html")
         return self.get_log(project, logstore, from_time, to_time, topic=None,
                             query=sql, reverse=False, offset=0, size=100, power_sql=power_sql)

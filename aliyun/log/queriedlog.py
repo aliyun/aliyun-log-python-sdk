@@ -4,7 +4,7 @@
 # Copyright (C) Alibaba Cloud Computing
 # All rights reserved.
 
-
+import six
 class QueriedLog(object):
     """ The QueriedLog is a log of the GetLogsResponse which obtained from the log.
 
@@ -22,6 +22,27 @@ class QueriedLog(object):
         self.timestamp = int(timestamp)
         self.source = source
         self.contents = contents
+
+    @staticmethod
+    def from_dict(data):
+        """ Initalize from dict
+        """
+        source = data.get("__source__", "")
+        time = data.get("__time__", '0')
+        contents = {}
+        for key in six.iterkeys(data):
+            if key not in ['__time__', '__source__']:
+                contents[key] = data[key]
+
+        return QueriedLog(time, source, contents)
+
+    def to_dict(self):
+        res = {
+            '__time__': str(self.timestamp),
+            '__source__': self.source,
+        }
+        res.update(self.contents)
+        return res
 
     def get_time(self):
         """ Get log time
