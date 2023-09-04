@@ -34,6 +34,7 @@ from .shipper_response import *
 from .common_response import *
 from .external_store_config_response import * 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .meteringmode_response import MeteringMode
 
 # logging handler
 from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler

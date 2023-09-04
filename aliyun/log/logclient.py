@@ -45,6 +45,7 @@ from .resource_params import *
 from .tag_response import GetResourceTagsResponse
 from .topostore_response import *
 from .topostore_params import *
+from .meteringmode_response import *
 from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
@@ -1508,6 +1509,29 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
 
+    def get_logstore_metering_mode(self, project_name, logstore_name):
+        """ Get metering mode of the logstore
+        """
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetLogstoreMeteringModeResponse(resp, header)
+
+    def update_logstore_metering_mode(self, project_name, logstore_name, metering_mode):
+        """ Update metering mode of the logstore
+        :param metering_mode, type MeteringMode or str
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        body = {
+            'meteringMode': str(metering_mode)
+        }
+        body_str = six.b(json.dumps(body))
+        (_, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateLogstoreMeteringModeResponse(header)
+    
     def create_external_store(self, project_name, config):
         """ create log store 
         Unsuccessful operation will cause an LogException.
