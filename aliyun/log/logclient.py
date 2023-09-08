@@ -1522,13 +1522,14 @@ class LogClient(object):
         """ Update metering mode of the logstore
         :param metering_mode, type MeteringMode or str
         """
-        headers = {}
         params = {}
         resource = "/logstores/" + logstore_name + "/meteringmode"
         body = {
             'meteringMode': str(metering_mode)
         }
         body_str = six.b(json.dumps(body))
+        headers = {"x-log-bodyrawsize": str(len(body_str)), "Content-Type": "application/json"}
+        
         (_, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogstoreMeteringModeResponse(header)
     
