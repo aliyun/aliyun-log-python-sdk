@@ -12,6 +12,8 @@ import time
 import zlib
 from datetime import datetime
 import logging
+from .scheduled_sql import ScheduledSQLConfiguration
+from .scheduled_sql_response import *
 from itertools import cycle
 from .consumer_group_request import *
 from .consumer_group_response import *
@@ -40,6 +42,7 @@ from .shard_response import *
 from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
+from .tag_response import GetResourceTagsResponse
 from .topostore_response import *
 from .topostore_params import *
 from .util import base64_encodestring as b64e
@@ -549,7 +552,7 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False, accurate_query=False, from_nano=0 ,to_nano=0):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=False, from_nano=0, to_nano=0):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -585,8 +588,20 @@ class LogClient(object):
         :type power_sql: bool
         :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
 
+        :type scan: bool
+        :param scan: if scan is set to true, the query will use scan mode
+
+        :type forward: bool
+        :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
         :type accurate_query: bool
         :param accurate_query: if accurate_query is set to true, the query will global ordered time second mode
+
+        :type from_nano: int
+        :param from_nano: nano part of query begin time
+
+        :type to_nano: int
+        :param to_nano: nano part of query end time
 
         :return: GetLogsResponse
 
@@ -632,6 +647,9 @@ class LogClient(object):
                 params['topic'] = topic
             if query:
                 params['query'] = query
+            if scan:
+                params['session'] = 'mode=scan'
+                params['forward'] = 'true' if forward else 'false'
 
             resource = "/logstores/" + logstore
             (resp, header) = self._send("GET", project, None, resource, params, headers)
@@ -666,12 +684,14 @@ class LogClient(object):
         offset = request.get_offset()
         size = request.get_line()
         power_sql = request.get_power_sql()
+        scan = request.get_scan()
+        forward = request.get_forward()
         accurate_query = request.get_accurate_query()
         from_nano = request.get_from_nano()
         to_nano = request.get_to_nano()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql, accurate_query, from_nano, to_nano)
+                            query, reverse, offset, size, power_sql, scan, forward, accurate_query, from_nano, to_nano)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
                     query=None, reverse=False, offset=0, power_sql=False, accurate_query=False):
@@ -724,6 +744,73 @@ class LogClient(object):
             offset += count
 
             if count == 0 or is_stats_query(query):
+                break
+
+    def get_log_all_v2(self, project, logstore, from_time, to_time, topic=None,
+                    query=None, reverse=False, offset=0, power_sql=False, scan=False, forward=True):
+        """ FOR PHRASE AND SCAN WHERE.
+                Get logs from log service. will retry when incomplete.
+                Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
+                It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
+                each batch and make it possible to fetch larger volume of data.
+
+                :type project: string
+                :param project: project name
+
+                :type logstore: string
+                :param logstore: logstore name
+
+                :type from_time: int/string
+                :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type to_time: int/string
+                :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type topic: string
+                :param topic: topic name of logs, could be None
+
+                :type query: string
+                :param query: user defined query, could be None
+
+                :type reverse: bool
+                :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+                :type offset: int
+                :param offset: offset to start, by default is 0
+
+                :type power_sql: bool
+                :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+                :type scan: bool
+                :param scan: if scan is set to true, the query will use scan mode
+
+                :type forward: bool
+                :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
+                :return: GetLogsResponse iterator
+
+                :raise: LogException
+                """
+        while True:
+            response = self.get_log(project, logstore, from_time, to_time, topic=topic,
+                                    query=query, reverse=reverse, offset=offset, size=100, power_sql=power_sql,
+                                    scan=scan, forward=forward)
+
+            yield response
+
+            count = response.get_count()
+            query_mode = response.get_query_mode()
+            scan_all = False
+            if query_mode is GetLogsResponse.QueryMode.NORMAL or query_mode is GetLogsResponse.QueryMode.SCAN_SQL:
+                offset += count
+            else:
+                scan_all = (response.get_scan_all() == 'true')
+                if forward:
+                    offset = response.get_end_offset()
+                else:
+                    offset = response.get_begin_offset()
+
+            if count == 0 or is_stats_query(query) or scan_all:
                 break
 
     def execute_logstore_sql(self, project, logstore, from_time, to_time, sql, power_sql):
@@ -2215,7 +2302,191 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
         return RetryShipperTasksResponse(header, resp)
 
-    def create_project(self, project_name, project_des):
+    def check_upsert_scheduled_sql(self, project_name, scheduled_sql, method, resource):
+        config = scheduled_sql.getConfiguration()
+        if not isinstance(config, ScheduledSQLConfiguration):
+            raise LogException('BadConfig', 'the scheduled sql config is not ScheduledSQLConfiguration type !')
+
+        from_time = config.getFromTime()
+        to_time = config.getToTime()
+
+        time_range = 1451577600 < from_time < to_time
+        sustained = from_time > 1451577600 and to_time == 0
+        if not time_range and not sustained:
+            raise LogException('BadParameters', 'Invalid fromTime: {} toTime: {}, please ensure fromTime more than '
+                                                '1451577600.'.format(from_time, to_time))
+
+        params = {}
+        body = six.b(json.dumps(scheduled_sql.scheduled_sql_to_dict()))
+        headers = {"x-log-bodyrawsize": str(len(body)), "Content-Type": "application/json"}
+        (resp, header) = self._send(method, project_name, body, resource, params, headers)
+        return resp, header
+
+    def create_scheduled_sql(self, project_name, scheduled_sql):
+        """ Create an scheduled sql job
+        Unsuccessful operation will cause an LogException.
+        :type project_name: string
+        :param project_name: the Project name
+        :type scheduled_sql: ScheduledSQL
+        :param scheduled_sql: the scheduled sql job configuration
+        :return:
+        """
+        resource = "/jobs"
+        resp, header = self.check_upsert_scheduled_sql(project_name, scheduled_sql, "POST", resource)
+        return CreateScheduledSQLResponse(header, resp)
+
+    def update_scheduled_sql(self, project_name, scheduled_sql):
+        """ Update an existing scheduled sql job
+          Unsuccessful operation will cause an LogException.
+          :type project_name: string
+          :param project_name: the Project name
+          :type scheduled_sql: ScheduledSQL
+          :param scheduled_sql: the scheduled sql job configuration
+          :return:
+          """
+        name = scheduled_sql.getName()
+        resource = "/jobs/" + name
+        resp, header = self.check_upsert_scheduled_sql(project_name, scheduled_sql, "PUT", resource)
+        return UpdateScheduledSQLResponse(header, resp)
+
+    def delete_scheduled_sql(self, project_name, job_name):
+        """ Delete an existing scheduled sql job
+         Unsuccessful operation will cause an LogException.
+         :type project_name: string
+         :param project_name: the Project name
+         :type job_name: string
+         :param job_name: the name of the scheduled sql job to delete
+         :return:
+         """
+        resource = "/jobs/" + job_name
+        params = {}
+        headers = {}
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteScheduledSQLResponse(header, resp)
+
+    def get_scheduled_sql(self, project_name, job_name):
+        """ Get an existing scheduled sql job
+          Unsuccessful operation will cause an LogException.
+          :type project_name: string
+          :param project_name: the Project name
+          :type job_name: string
+          :param job_name: the name of the scheduled sql job to get
+          :return:
+          """
+        resource = "/jobs/" + job_name
+        params = {}
+        headers = {}
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetScheduledSQLResponse(header, resp)
+
+    def list_scheduled_sql(self, project_name, offset=0, size=100):
+        """ List all scheduled sql jobs
+           Unsuccessful operation will cause an LogException.
+           :type project_name: string
+           :param project_name: the Project name
+           :type offset: int
+           :param offset: the offset of the list
+           :type size: int
+           :param size: the size of the list
+           :return:
+           """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_scheduled_sql, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name)
+
+        resource = '/jobs'
+        headers = {}
+        params = {'offset': str(offset), 'size': str(size), 'jobType': "ScheduledSQL"}
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListScheduledSQLResponse(header, resp)
+
+    def list_scheduled_sql_job_instance(self, project, job_name, from_time, to_time, state=None, offset=0, size=100):
+        """
+        List scheduledSql instances.
+
+        Unsuccessful operation will cause a LogException.
+
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type state: string
+        :param state: instance state: SUCCEEDED, FAILED, RUNNING
+        :type from_time: int
+        :param from_time: the begin timestamp or time. Left closed right open, must be hour time
+        :type to_time: int
+        :param to_time: the end timestamp or time. Left closed right open, must be hour time
+        :type offset: int
+        :param offset: line offset of return logs
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+        :return: ListScheduledSqlJobInstanceResponse
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_scheduled_sql_job_instance, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {
+            'offset': str(offset),
+            'size': str(size),
+            'jobType': 'ScheduledSQL',
+            'start': parse_timestamp(from_time),
+            'end': parse_timestamp(to_time)
+        }
+        if state:
+            params['state'] = state
+        resource = '/jobs/' + job_name + '/jobinstances'
+        (resp, header) = self._send('GET', project, None, resource, params, headers)
+        return ListScheduledSqlJobInstancesResponse(header, resp)
+
+    def get_scheduled_sql_job_instance(self, project, job_name, instance_id, result=None):
+        """ get scheduledSqlInstance
+        Unsuccessful operation will cause an LogException.
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type instance_id: string
+        :param instance_id: the scheduledSqlInstance id
+        :type result: string
+        :param result: is need details   ex:true
+        :return: GetScheduledSqlJobResponse
+        :raise: LogException
+        """
+        resource = "/jobs/{}/jobinstances/{}".format(job_name, instance_id)
+        params = {}
+        if result:
+            params['result'] = result
+        headers = {}
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetScheduledSqlJobInstanceResponse(header, resp)
+
+    def modify_scheduled_sql_job_instance_state(self, project, job_name, instance_id, state):
+        """ get scheduledSqlInstance
+        Unsuccessful opertaion will cause an LogException.
+        :type project: string
+        :param project: the Project name
+        :type job_name: string
+        :param job_name: the scheduledSql name
+        :type instance_id: string
+        :param instance_id: the scheduledSqlInstance id
+        :type state: string
+        :param state: Modify instance state   state:FAILED、SUCCEEDED、RUNNING,only support to RUNNING
+        :return: ModifyScheduledSqlJobStateResponse
+        :raise: LogException
+        """
+        if state != "RUNNING":
+            raise LogException('BadParameters',
+                               "Invalid state: {}, state must be RUNNING.".format(state))
+        resource = "/jobs/{}/jobinstances/{}".format(job_name, instance_id)
+        params = {'state': state}
+        headers = {}
+        (resp, header) = self._send("PUT", project, None, resource, params, headers)
+        return ModifyScheduledSqlJobStateResponse(header, resp)
+
+    def create_project(self, project_name, project_des, resource_group_id=''):
         """ Create a project
         Unsuccessful operation will cause an LogException.
 
@@ -2225,13 +2496,16 @@ class LogClient(object):
         :type project_des: string
         :param project_des: the description of a project
 
+        type resource_group_id: string
+        :param resource_group_id: the resource group id, the project created will put in the resource group
+
         :return: CreateProjectResponse 
 
         :raise: LogException
         """
 
         params = {}
-        body = {"projectName": project_name, "description": project_des}
+        body = {"projectName": project_name, "description": project_des, "resourceGroupId": resource_group_id}
 
         body = six.b(json.dumps(body))
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
@@ -2275,6 +2549,31 @@ class LogClient(object):
 
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteProjectResponse(header, resp)
+
+    def change_resource_group(self, resource_id, resource_group_id, resource_type="PROJECT"):
+        """
+        Update the resource group of project
+
+        :type resource_id: string
+        :param resource_id: resource id
+
+        :type resource_group_id: string
+        :param resource_group_id: the resource group
+
+        :type resource_type: string
+        :param resource_type: the resource type (now only support PROJECT)
+
+        :return: ChangeResourceGroupResponse
+
+        :raise: LogException
+        """
+        params = {}
+        body = {'resourceId':resource_id, 'resourceGroupId':resource_group_id, 'resourceType':resource_type}
+        body_str = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/resourcegroup"
+        (resp, header) = self._send("PUT", resource_id, body_str, resource, params, headers)
+        return LogResponse(header, resp)
 
     def tag_project(self, project_name, **tags):
         """ tag project
@@ -2345,6 +2644,108 @@ class LogClient(object):
             if resp.next_token == "":
                 break
             params["nextToken"] = resp.next_token
+
+    def tag_resources(self, resource_type, resource_id, **tags):
+        """ tag resources
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        project_name = None
+        if resource_type.lower() == "project":
+            project_name = resource_id
+        else:
+            position = resource_id.find("#")
+            if position != -1:
+                project_name = resource_id[:position]
+        resource = "/tag"
+        body = {
+            'resourceType': resource_type,
+            'resourceId': [resource_id],
+            'tags': [{'key': str(k), 'value': str(v)} for k, v in tags.items()],
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def untag_resources(self, resource_type, resource_id, *tag_keys):
+        """ untag resources
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        project_name = None
+        if resource_type.lower() == "project":
+            project_name = resource_id
+        else:
+            position = resource_id.find("#")
+            if position != -1:
+                project_name = resource_id[:position]
+        resource = "/untag"
+        body = {
+            'resourceType': resource_type,
+            'resourceId': [resource_id],
+            'tags': tag_keys,
+        }
+        body = json.dumps(body).encode()
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
+        return LogResponse(header, resp)
+
+    def list_tag_resources(self, resource_type, resource_id, **filer_tags):
+        """ list resource tags
+        Unsuccessful operation will cause an LogException.
+
+        :type resource_type: string
+        :param resource_type: the resource type, currently only support project, logstore, dashboard, machine_group, logtail_config
+
+        :type resource_id: string
+        :param resource_id: the resource id, if resource_type equals project resource_id equals project_name, else resource_id equals project_name + # + subResourceId
+
+        :return: LogResponse
+
+        :raise: LogException
+        """
+        resource = "/tags"
+        filer_tags = [{"key": str(k), "value": str(v)} for k, v in filer_tags.items()]
+        params = {
+            'resourceType': resource_type,
+            'tags': json.dumps(filer_tags),
+            'nextToken': "",
+        }
+        project_name = None
+        if resource_id is not None and resource_id != "":
+            params['resourceId'] = json.dumps([resource_id])
+            if resource_type.lower() == "project":
+                project_name = resource_id
+            else:
+                position = resource_id.find("#")
+                if position != -1:
+                    project_name = resource_id[:position]
+        while True:
+            resp, header = self._send("GET", project_name, None, resource, params, {})
+            resp = GetResourceTagsResponse(header, resp)
+            yield resp
+
+            if resp.next_token == "":
+                break
+            params["nextToken"] = resp.next_token
+
 
     def create_consumer_group(self, project, logstore, consumer_group, timeout, in_order=False):
         """ create consumer group
@@ -2631,7 +3032,7 @@ class LogClient(object):
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, offset=0, size=100, project_name_pattern=None):
+    def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
         Unsuccessful operation will cause an LogException.
 
@@ -2643,6 +3044,9 @@ class LogClient(object):
 
         :type size: int
         :param size: the max return names count, -1 means return all data
+
+        :type resource_group_id: string
+        :param resource_group_id: the resource group id, used for the server to return project in resource group
 
         :return: ListProjectResponse
 
@@ -2660,6 +3064,7 @@ class LogClient(object):
             params['projectName'] = project_name_pattern
         params['offset'] = str(offset)
         params['size'] = str(size)
+        params['resourceGroupId'] = resource_group_id
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
@@ -3834,12 +4239,15 @@ class LogClient(object):
         description = resource.get_description()
         schema_list = resource.get_schema()
         ext_info = resource.get_ext_info()
+        acl = resource.get_acl()
         if schema_list is not None:
             body["schema"] = json.dumps({"schema": [schema.to_dict() for schema in schema_list]})
         if description is not None:
             body["description"] = description
         if ext_info is not None:
             body["extInfo"] = ext_info
+        if acl:
+            body["acl"] = json.dumps(acl)
         body_str = six.b(json.dumps(body))
         headers = {'x-log-bodyrawsize': str(len(body_str))}
         resource = "/resources/" + resource.get_resource_name()
@@ -4336,7 +4744,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return GetTopostoreNodeResponse(header, resp)
 
-    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None, 
+    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None,
                 property_value=None, offset=0, size=100):
         """list Topostore nodes
         Unsuccessful operation will cause an LogException.
@@ -4376,7 +4784,7 @@ class LogClient(object):
             for node_type in node_types:
                 if not isinstance(node_type, str):
                     raise TypeError("node_types must be list of string")
-            
+
         if property_key and not isinstance(property_key, str):
             raise TypeError("property_key must be str")
 
@@ -4524,7 +4932,7 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return GetTopostoreRelationResponse(header, resp)
 
-    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None, 
+    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None,
             src_node_ids=None, dst_node_ids=None,
             property_key=None, property_value=None, offset=0, size=100):
         """list Topostore relationss
@@ -4566,7 +4974,7 @@ class LogClient(object):
 
         if relation_types and not isinstance(relation_types, list):
             raise TypeError("relation_types must be list of string")
-        
+
         if relation_types and isinstance(relation_types, list):
             for relation_type in relation_types:
                 if not isinstance(relation_type, str):
@@ -4602,7 +5010,7 @@ class LogClient(object):
 
         if relation_types is not None:
             params["relationTypes"] = ",".join(relation_types)
-    
+
         if src_node_ids is not None:
             params["srcNodeIds"] = ",".join(src_node_ids)
 
@@ -5295,6 +5703,7 @@ class LogClient(object):
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
 
+# make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')

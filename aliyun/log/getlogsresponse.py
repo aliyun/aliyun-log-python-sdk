@@ -9,6 +9,8 @@ from .queriedlog import QueriedLog
 from .logexception import LogException
 import six
 from .util import Util
+from enum import Enum
+import json
 
 
 class GetLogsResponse(LogResponse):
@@ -21,6 +23,13 @@ class GetLogsResponse(LogResponse):
     :param header: GetLogsResponse HTTP response header
     """
 
+    class QueryMode(Enum):
+        """ The enum of query type"""
+        NORMAL = 0
+        PHRASE = 1
+        SCAN = 2
+        SCAN_SQL = 3
+
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         try:
@@ -32,6 +41,16 @@ class GetLogsResponse(LogResponse):
             self.agg_query = Util.h_v_td(header, 'x-log-agg-query', '')
             self.cpu_sec = Util.h_v_td(header, 'x-log-cpu-sec', '0')
             self.cpu_cores = Util.h_v_td(header, 'x-log-cpu-cores', '0')
+            query_info_str = Util.h_v_td(header, 'x-log-query-info', '')
+            query_info = json.loads(query_info_str)
+            self.query_mode = GetLogsResponse.QueryMode(Util.h_v_td(query_info, 'mode', 0))
+            if self.query_mode is GetLogsResponse.QueryMode.SCAN or self.query_mode is GetLogsResponse.QueryMode.SCAN_SQL:
+                self.scan_bytes = Util.h_v_td(query_info, 'scanBytes', 0)
+            if self.query_mode is GetLogsResponse.QueryMode.PHRASE or self.query_mode is GetLogsResponse.QueryMode.SCAN:
+                scan_query_info = Util.h_v_td(query_info, 'phraseQueryInfo', dict())
+                self.scan_all = Util.h_v_td(scan_query_info, 'scanAll', 'false')
+                self.begin_offset = Util.h_v_td(scan_query_info, 'beginOffset', '0')
+                self.end_offset = Util.h_v_td(scan_query_info, 'endOffset', '0')
             self.logs = []
             for data in resp:
                 contents = {}
@@ -120,6 +139,41 @@ class GetLogsResponse(LogResponse):
         :return: cpu_cores
         """
         return self.cpu_cores
+
+    def get_query_mode(self):
+        """ Get query_mode from the response
+
+        :return: query_mode
+        """
+        return self.query_mode
+
+    def get_scan_bytes(self):
+        """ Get scan_bytes from the response
+
+        :return: scan_bytes
+        """
+        return self.scan_bytes
+
+    def get_begin_offset(self):
+        """ Get begin_offset from the response
+
+        :return: begin_offset
+        """
+        return self.begin_offset
+
+    def get_end_offset(self):
+        """ Get end_offset from the response
+
+        :return: end_offset
+        """
+        return self.end_offset
+
+    def get_scan_all(self):
+        """ Get scan_all from the response
+
+        :return: scan_all
+        """
+        return self.scan_all
 
     def log_print(self):
         print('GetLogsResponse:')
