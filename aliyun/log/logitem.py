@@ -19,8 +19,10 @@ class LogItem(object):
     :param contents: the data of the log item, including many (key,value) pairs. 
     """
 
-    def __init__(self, timestamp=None, contents=None):
-        self.timestamp = int(timestamp) if timestamp else int(time.time())
+    def __init__(self, timestamp=None, time_nano_part=None, contents=None):
+        nano_time = int(time.time()* 10**9)
+        self.timestamp = int(timestamp) if timestamp else int(nano_time / 1000000000)
+        self.time_nano_part= int(time_nano_part) if time_nano_part else int(nano_time%1000000000)
         self.contents = copy.deepcopy(contents) if contents else []
 
     def push_back(self, key, value):
@@ -56,6 +58,12 @@ class LogItem(object):
         """
         return self.timestamp
 
+    def get_time_nano_part(self):
+        """ Get log time nano part
+        :return: int, log time
+        """
+        return self.time_nano_part
+
     def set_time(self, timestamp):
         """ Set log time
         
@@ -63,6 +71,13 @@ class LogItem(object):
         :param timestamp: log time
         """
         self.timestamp = int(timestamp)
+
+    def set_time_nano_part(self, time_nano_part):
+        """ Set log time nano part
+        :type time_nano_part: int
+        :param time_nano_part: log time nano part
+        """
+        self.time_nano_part = int(time_nano_part)
 
     def log_print(self):
         print('time', self.timestamp)

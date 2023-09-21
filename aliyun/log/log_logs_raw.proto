@@ -9,6 +9,7 @@ message LogRaw
         required bytes Value = 2;
     }
     repeated Content Contents= 2;
+    optional fixed32 Time_ns = 4;
 }
 
 message LogTagRaw
