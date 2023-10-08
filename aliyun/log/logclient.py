@@ -542,8 +542,8 @@ class LogClient(object):
             params['query'] = request.get_query()
 
         params['accurate'] = request.get_accurate_query()
-        params['fromNs'] = request.get_from_nano()
-        params['toNs'] = request.get_to_nano()
+        params['fromNs'] = request.get_from_time_nano_part()
+        params['toNs'] = request.get_to_time_nano_part()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
         project = request.get_project()
@@ -552,7 +552,7 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=False, from_nano=0, to_nano=0):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=False, from_time_nano_part=0, to_time_nano_part=0):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -597,11 +597,11 @@ class LogClient(object):
         :type accurate_query: bool
         :param accurate_query: if accurate_query is set to true, the query will global ordered time second mode
 
-        :type from_nano: int
-        :param from_nano: nano part of query begin time
+        :type from_time_nano_part: int
+        :param from_time_nano_part: nano part of query begin time
 
-        :type to_nano: int
-        :param to_nano: nano part of query end time
+        :type to_time_nano_part: int
+        :param to_time_nano_part: nano part of query end time
 
         :return: GetLogsResponse
 
@@ -624,8 +624,8 @@ class LogClient(object):
                 query=query,
                 reverse=reverse,
                 accurate_query=accurate_query,
-                from_nano=from_nano,
-                to_nano=to_nano
+                from_time_nano_part=from_time_nano_part,
+                to_time_nano_part=to_time_nano_part
             )
 
         ret = None
@@ -639,8 +639,8 @@ class LogClient(object):
                       'reverse': 'true' if reverse else 'false',
                       'powerSql': power_sql,
                       'accurate': accurate_query,
-                      'fromNs': from_nano,
-                      'toNs': to_nano
+                      'fromNs': from_time_nano_part,
+                      'toNs': to_time_nano_part
                       }
 
             if topic:
@@ -687,11 +687,11 @@ class LogClient(object):
         scan = request.get_scan()
         forward = request.get_forward()
         accurate_query = request.get_accurate_query()
-        from_nano = request.get_from_nano()
-        to_nano = request.get_to_nano()
+        from_time_nano_part = request.get_from_time_nano_part()
+        to_time_nano_part = request.get_to_time_nano_part()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql, scan, forward, accurate_query, from_nano, to_nano)
+                            query, reverse, offset, size, power_sql, scan, forward, accurate_query, from_time_nano_part, to_time_nano_part)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
                     query=None, reverse=False, offset=0, power_sql=False, accurate_query=False):
