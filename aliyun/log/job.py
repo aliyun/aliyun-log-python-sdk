@@ -78,7 +78,7 @@ class ExportConfiguration(object):
     def getSink(self):
         return self.__sink
 
-    def setSink(self, sink: DataSink):
+    def setSink(self, sink):
         self.__sink = sink
 
     def getParameters(self):
@@ -88,7 +88,7 @@ class ExportConfiguration(object):
         self.__parameters = parameters
 
 
-class AbstractJob(metaclass=abc.ABCMeta):
+class AbstractJob(object):
 
     def getName(self):
         return self.__name
