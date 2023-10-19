@@ -1294,6 +1294,9 @@ class LogClient(object):
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
 
+        :type hot_ttl: int
+        :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
+        
         :return: CreateLogStoreResponse
         
         :raise: LogException
