@@ -157,6 +157,7 @@ class ConsumerWorker(Thread):
                 break   # all are shutdown, exit look
 
         self.shard_consumers.clear()
+        self.heart_beat.shutdown()
 
     def clean_shard_consumer(self, owned_shards):
         remove_shards = []
@@ -176,7 +177,6 @@ class ConsumerWorker(Thread):
 
     def shutdown(self):
         self.shut_down_flag = True
-        self.heart_beat.shutdown()
         self.logger.info('get stop signal, start to stop consumer worker "{0}"'.format(self.option.consumer_name))
 
     def _get_shard_consumer(self, shard_id):
