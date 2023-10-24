@@ -1244,7 +1244,8 @@ class LogClient(object):
                         encrypt_conf=None,
                         telemetry_type='',
                         hot_ttl=-1,
-                        mode = None
+                        mode = None,
+                        infrequent_access_ttl=-1
                         ):
         """ create log store 
         Unsuccessful operation will cause an LogException.
@@ -1294,6 +1295,9 @@ class LogClient(object):
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
 
+        :type infrequent_access_ttl: int
+        :param infrequent_access_ttl: infrequent access storage time
+
         :return: CreateLogStoreResponse
         
         :raise: LogException
@@ -1317,6 +1321,8 @@ class LogClient(object):
             body["encrypt_conf"] = encrypt_conf
         if mode != None:
             body["mode"] = mode
+        if infrequent_access_ttl >= 0:
+            body["infrequentAccessTTL"] = infrequent_access_ttl
 
         body_str = six.b(json.dumps(body))
 
@@ -1385,7 +1391,8 @@ class LogClient(object):
                         encrypt_conf=None,
                         hot_ttl=-1,
                         mode = None,
-                        telemetry_type=None
+                        telemetry_type=None,
+                        infrequent_access_ttl=-1
                         ):
         """
         update the logstore meta info
@@ -1439,6 +1446,9 @@ class LogClient(object):
         :type telemetry_type: string
         :param telemetry_type: the Telemetry type
 
+        :type infrequent_access_ttl: int
+        :param infrequent_access_ttl: infrequent access storage time
+
         :return: UpdateLogStoreResponse
         
         :raise: LogException
@@ -1481,6 +1491,8 @@ class LogClient(object):
             body['mode'] = mode
         if telemetry_type != None:
             body["telemetryType"] = telemetry_type
+        if infrequent_access_ttl >= 0:
+            body["infrequentAccessTTL"] = infrequent_access_ttl
         body_str = six.b(json.dumps(body))
         try:
             (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
