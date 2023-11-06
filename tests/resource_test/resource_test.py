@@ -55,9 +55,11 @@ class TestResourceCurd(unittest.TestCase):
     def test_update_resource(self):
         update_schema = [ResourceSchemaItem("updateName", "long", "")]
         resource = Resource(resource_name=self.resource_name, schema_list=update_schema, description="updateTest")
+        resource.set_acl(self.acl)
         self.client.update_resource(resource)
         res = self.get_resource(self.resource_name)
         self.assertEqual(res.get_resource().get_schema()[0].get_column(), "updateName")
+        self.assertEqual(res.get_resource().get_acl(), self.acl)
 
     def test_list_resources(self):
         res = self.client.list_resources(resource_type=self.resource_type, resource_names=[self.resource_name])

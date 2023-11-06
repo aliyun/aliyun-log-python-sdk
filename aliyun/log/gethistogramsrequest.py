@@ -27,15 +27,24 @@ class GetHistogramsRequest(LogRequest):
     
     :type query: string
     :param query: user defined query
+
+    :type from_time_nano_part: int
+    :param from_time_nano_part: nano part of query begin time
+
+    :type to_time_nano_part: int
+    :param to_time_nano_part: nano part of query end time
     """
 
-    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None):
+    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=False, from_time_nano_part=0 ,to_time_nano_part=0):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = parse_timestamp(fromTime)
         self.toTime = parse_timestamp(toTime)
         self.topic = topic
         self.query = query
+        self.accurate_query = accurate_query
+        self.from_time_nano_part = from_time_nano_part
+        self.to_time_nano_part = to_time_nano_part
 
     def get_logstore(self):
         """ Get logstore name
@@ -111,3 +120,46 @@ class GetHistogramsRequest(LogRequest):
         :param query: user defined query
         """
         self.query = query
+
+    def get_accurate_query(self):
+        """ Get user defined accurate_query
+        :return: string, user defined accurate_query
+        """
+        return self.accurate_query
+
+    def set_accurate_query(self, accurate_query):
+        """ Set user defined accurate_query
+        :type accurate_query: string
+        :param accurate_query: user defined accurate_query
+        """
+        self.accurate_query = accurate_query
+
+    def get_from_time_nano_part(self):
+        """ Get request from_time_nano_part
+
+        :return: int, from_time_nano_part
+        """
+        return self.from_time_nano_part
+
+    def set_from_time_nano_part(self, from_time_nano_part):
+        """ Set request from_time_nano_part
+
+        :type from_time_nano_part: int
+        :param from_time_nano_part: from_time_nano_part part of query begin time
+        """
+        self.from_time_nano_part = from_time_nano_part
+
+    def get_to_time_nano_part(self):
+        """ Get request to_time_nano_part
+
+        :return: int, to_time_nano_part
+        """
+        return self.to_time_nano_part
+
+    def set_to_time_nano_part(self, to_time_nano_part):
+        """ Set request to_time_nano_part
+
+        :type to_time_nano_part: int
+        :param to_time_nano_part: to_time_nano_part part of query end time
+        """
+        self.to_time_nano_part = to_time_nano_part

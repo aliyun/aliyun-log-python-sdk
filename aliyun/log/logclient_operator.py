@@ -20,7 +20,7 @@ from .util import base64_encodestring as b64e
 import copy
 
 
-MAX_INIT_SHARD_COUNT = 200
+MAX_INIT_SHARD_COUNT = 100
 
 logger = logging.getLogger(__name__)
 
