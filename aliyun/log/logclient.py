@@ -12,9 +12,7 @@ import time
 import zlib
 from datetime import datetime
 import logging
-import locale
 from itertools import cycle
-from .acl_response import *
 from .consumer_group_request import *
 from .consumer_group_response import *
 from .getlogsrequest import *
@@ -28,7 +26,6 @@ from .ingestion_response import *
 from .sql_instance_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
-from .logclient_core import make_lcrud_methods
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
     get_resource_usage, arrange_shard, transform_data
 from .logexception import LogException
@@ -43,18 +40,22 @@ from .shard_response import *
 from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
-from .util import Util, parse_timestamp, base64_encodestring as b64e, is_stats_query
-from .util import base64_encodestring as e64, base64_decodestring as d64, oss_sink_deserialize, maxcompute_sink_deserialize, export_deserialize
+from .topostore_response import *
+from .topostore_params import *
+from .util import base64_encodestring as b64e
+from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 
 from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
-from .external_store_config import ExternalStoreConfig
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
 from copy import copy
+from .pluralize import pluralize
 from .etl_config_response import *
 from .export_response import *
+from .common_response import *
+from .auth import *
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +151,8 @@ class LogClient(object):
     __version__ = API_VERSION
     Version = __version__
 
-    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None):
+    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None,
+                 auth_version=AUTH_VERSION_1, region=''):
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -165,6 +167,9 @@ class LogClient(object):
         self._user_agent = USER_AGENT
         self._credentials_auto_refresher = None
         self._last_refresh = 0
+        self._auth_version = auth_version
+        self._region = region
+        self._auth = make_auth(accessKeyId, accessKey, auth_version, region)
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -177,6 +182,7 @@ class LogClient(object):
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
                 self._accessKeyId, self._accessKey, self._securityToken = self._credentials_auto_refresher()
+                self._auth = make_auth(self._accessKeyId, self._accessKey, self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
                     "failed to call _credentials_auto_refresher to refresh credentials, details: {0}".format(str(ex)))
@@ -232,14 +238,6 @@ class LogClient(object):
         self._endpoint = endpoint + ':' + str(self._port)
 
     @staticmethod
-    def _getGMT():
-        try:
-            locale.setlocale(locale.LC_TIME, "C")
-        except Exception as ex:
-            logger.warning("failed to set locale time to C. skip it: {0}".format(ex))
-        return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-    @staticmethod
     def _loadJson(resp_status, resp_header, resp_body, requestId):
         if not resp_body:
             return None
@@ -292,13 +290,11 @@ class LogClient(object):
     def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
         if body:
             headers['Content-Length'] = str(len(body))
-            headers['Content-MD5'] = Util.cal_md5(body)
         else:
             headers['Content-Length'] = '0'
             headers["x-log-bodyrawsize"] = '0'
 
         headers['x-log-apiversion'] = API_VERSION
-        headers['x-log-signaturemethod'] = 'hmac-sha1'
         if self._isRowIp or not project:
             url = self.http_type + self._endpoint
         else:
@@ -316,17 +312,9 @@ class LogClient(object):
             try:
                 headers2 = copy(headers)
                 params2 = copy(params)
-                headers2['Date'] = self._getGMT()
-
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
-
-                signature = Util.get_request_authorization(method, resource,
-                                                           self._accessKey, params2, headers2)
-
-                headers2['Authorization'] = "LOG " + self._accessKeyId + ':' + signature
-                headers2['x-log-date'] = headers2['Date']  # bypass some proxy doesn't allow "Date" in header issue.
-
+                self._auth.sign_request(method, resource, params2, headers2, body)
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
                 last_err = ex
@@ -597,11 +585,23 @@ class LogClient(object):
         :raise: LogException
         """
 
-        # need to use extended method to get more when: it's not select query, and size > default page size
-        if not is_stats_query(query) and (int(size) == -1 or int(size) > MAX_GET_LOG_PAGING_SIZE):
-            return query_more(self.get_log, int(offset), int(size), MAX_GET_LOG_PAGING_SIZE,
-                              project, logstore, from_time, to_time, topic,
-                              query, reverse)
+        # need to use extended method to get more when:
+        # it's not select query, and size > default page size
+        size, offset = int(size), int(offset)
+        if not is_stats_query(query) and (size == -1 or size > MAX_GET_LOG_PAGING_SIZE):
+            return query_more(
+                self.get_log,
+                offset=offset,
+                size=size,
+                batch_size=MAX_GET_LOG_PAGING_SIZE,
+                project=project,
+                logstore=logstore,
+                from_time=from_time,
+                to_time=to_time,
+                topic=topic,
+                query=query,
+                reverse=reverse,
+            )
 
         ret = None
         for _c in xrange(DEFAULT_QUERY_RETRY_COUNT):
@@ -1164,7 +1164,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1191,8 +1191,6 @@ class LogClient(object):
         
         :raise: LogException
         """
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -1311,7 +1309,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -1355,8 +1353,6 @@ class LogClient(object):
         if max_split_shard is None:
             max_split_shard = res.max_split_shard
 
-        if auto_split and (max_split_shard <= 0 or max_split_shard >= 64):
-            max_split_shard = 64
         if preserve_storage:
             ttl = 3650
 
@@ -1438,7 +1434,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name 
 
-        :type config : ExternalStoreConfig
+        :type config : ExternalStoreConfigBase
         :param config :external store config
 
 
@@ -1506,7 +1502,7 @@ class LogClient(object):
         update the logstore meta info
         Unsuccessful operation will cause an LogException.
 
-        :type config: ExternalStoreConfig
+        :type config: ExternalStoreConfigBase
         :param config : external store config
 
         :return: UpdateExternalStoreResponse
@@ -1840,18 +1836,12 @@ class LogClient(object):
         (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
         return GetLogtailConfigResponse(resp, headers)
 
-    def list_logtail_config(self, project_name, offset=0, size=100, logstore=None, config=None):
+    def list_logtail_config(self, project_name, logstore=None, config=None, offset=0, size=100):
         """ list logtail config name in a project
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Project name 
-
-        :type offset: int
-        :param offset: the offset of all config names
-
-        :type size: int
-        :param size: the max return names count, -1 means all
 
         :type logstore: string
         :param logstore: logstore name to filter related config
@@ -1859,13 +1849,19 @@ class LogClient(object):
         :type config: string
         :param config: config name to filter related config
 
+        :type offset: int
+        :param offset: the offset of all config names
+
+        :type size: int
+        :param size: the max return names count, -1 means all
+
         :return: ListLogtailConfigResponse
         
         :raise: LogException
         """
         # need to use extended method to get more
         if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
-            return list_more(self.list_logtail_config, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name)
+            return list_more(self.list_logtail_config, int(offset), int(size), MAX_LIST_PAGING_SIZE, project_name, logstore, config)
 
         headers = {}
         params = {}
@@ -3485,8 +3481,10 @@ class LogClient(object):
         """
 
         headers = {"x-log-bodyrawsize": "0"}
-        params = {}
-        resource = "/logstores/" + logstore_name + "/substores/storage/ttl?ttl=" + str(ttl)
+        params = {
+            "ttl": ttl,
+        }
+        resource = "/logstores/" + logstore_name + "/substores/storage/ttl"
         (resp, header) = self._send("PUT", project_name, None, resource, params, headers)
         return UpdateSubStoreTTLResponse(header, resp)
 
@@ -3531,7 +3529,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -3651,7 +3649,7 @@ class LogClient(object):
         :param auto_split: auto split shard, max_split_shard will be 64 by default is True
 
         :type max_split_shard: int
-        :param max_split_shard: max shard to split, up to 64
+        :param max_split_shard: max shard to split, up to 256
 
         :type preserve_storage: bool
         :param preserve_storage: if always persist data, TTL will be ignored.
@@ -4042,6 +4040,565 @@ class LogClient(object):
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListRecordResponse(resp, header)
 
+    def create_topostore(self, topostore):
+        """create topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore: Topostore
+        :param topostore: instance of Topostore
+        """
+        if not isinstance(topostore, Topostore):
+            raise TypeError("topostore must be instance of Topostore ")
+        params = {}
+        topostore.check_for_create()
+        body = {
+            "name": topostore.get_name(),
+        }
+        tag = topostore.get_tag()
+        description = topostore.get_description()
+        schema = topostore.get_schema()
+        acl = topostore.get_acl()
+        ext_info = topostore.get_ext_info()
+        if description:
+            body["description"] = description
+
+        if schema:
+            body["schema"] = json.dumps(schema)
+
+        if tag:
+            body["tag"] = json.dumps(tag)
+
+        if acl:
+            body["acl"] = json.dumps(acl)
+
+        if ext_info:
+            body["extInfo"] = ext_info
+
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreResponse(header, resp)
+
+    def update_topostore(self, topostore):
+        """update topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore: Topostore
+        :param topostore: instance of Topostore
+        """
+        if not isinstance(topostore, Topostore):
+            raise TypeError("topostore must be instance of Topostore ")
+        params = {}
+        topostore.check_for_create()
+        body = {
+            "name": topostore.get_name(),
+        }
+        tag = topostore.get_tag()
+        description = topostore.get_description()
+        schema = topostore.get_schema()
+        acl = topostore.get_acl()
+        ext_info = topostore.get_ext_info()
+        if description:
+            body["description"] = description
+        if schema:
+            body["schema"] = json.dumps(schema)
+        if tag:
+            body["tag"] = json.dumps(tag)
+        if acl:
+            body["acl"] = json.dumps(acl)
+        if ext_info:
+            body["extInfo"] = ext_info
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore.get_name()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreResponse(header, resp)
+
+    def delete_topostore(self, topostore_name):
+        """delete topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: resource name
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name
+        (resp, header) = self._send("DELETE", None, None, resource, params, headers)
+        return DeleteTopostoreResponse(header, resp)
+
+    def get_topostore(self, topostore_name):
+        """get topostore
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreResponse(header, resp)
+
+    def list_topostores(self, names=None, tag_key=None, tag_value=None, offset=0, size=100):
+        """ list topostores
+        Unsuccessful operation will cause an LogException.
+
+        :type offset: int
+        :param offset: line offset of return topostores
+
+        :type size: int
+        :param size: max line number of return topostores
+
+        :type tag_key: string
+        :param tag_key: topostore tag key
+
+        :type tag_value: string
+        :param tag_value: topostore tag value
+
+        :type names: list
+        :param names: topostore names witch need to be listed
+
+        :return: ListTopostoresResponse
+        :raise: LogException
+        """
+        if names and not isinstance(names, list):
+            raise TypeError("topostore_names type must be list")
+
+        if tag_key and not isinstance(tag_key, str):
+            raise TypeError("tag_key type must be str")
+
+        if tag_value and not isinstance(tag_value, str):
+            raise TypeError("tag_value type must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if names:
+            params["names"] = ",".join(names)
+        if tag_key:
+            params["tagKey"] = tag_key
+        if tag_value:
+            params["tagValue"] = tag_value
+        resource = "/topostores"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoresResponse(resp, header)
+
+    def create_topostore_node(self, topostore_name, node):
+        """create topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type node: TopostoreNode
+        :param node: instance of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(node, TopostoreNode):
+            raise TypeError("node must be instance of TopostoreNode ")
+        params = {}
+        node.check_for_create()
+        body = node.to_dict()
+        property = node.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreNodeResponse(header, resp)
+
+    def upsert_topostore_node(self, topostore_name, nodes):
+        """upsert topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type nodes: list of TopostoreNode
+        :param nodes: list of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(nodes, list):
+            raise TypeError("nodes must be instance of list ")
+
+        nodes_list = []
+        if len(nodes) > 100:
+            raise Exception("nodes count should less than 100")
+
+        for node in nodes:
+            if not isinstance(node, TopostoreNode):
+                raise TypeError("node item  must be instance of TopostoreNode ")
+            node.check_for_create()
+            node_dict = node.to_dict()
+            property = node.get_property()
+            if property:
+                node_dict['property'] = json.dumps(property)
+            nodes_list.append(node_dict)
+        params = {}
+        body = {"nodes" :nodes_list }
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertTopostoreNodeResponse(header, resp)
+
+    def update_topostore_node(self, topostore_name, node):
+        """update topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type node: TopostoreNode
+        :param node: instance of TopostoreNode
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(node, TopostoreNode):
+            raise TypeError("node must be instance of TopostoreNode ")
+        params = {}
+        node.check_for_create()
+        body = node.to_dict()
+        property = node.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/"  + topostore_name + "/nodes/" + node.get_node_id()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreNodeResponse(header, resp)
+
+    def delete_topostore_node(self, topostore_name, node_ids):
+        """delete topostore node
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type node_ids: list
+        :param node_ids: topostore node id list, id should be str
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(node_ids, list):
+            raise TypeError("node_ids type must be list of str")
+
+        for node_id in node_ids:
+            if not isinstance(node_id, str):
+                raise TypeError("node_id type must be str")
+        params = {"nodeIds" : ",".join(node_ids)}
+        body = {}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("DELETE", None, body_str, resource, params, headers)
+        return DeleteTopostoreNodeResponse(header, resp)
+
+    def get_topostore_node(self, topostore_name, node_id):
+        """get topsotore node
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type node_id: string
+        :param node_id: topostore node id
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(node_id, str):
+            raise TypeError("node_id type must be str, got %s" % type(node_id))
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name + "/nodes/" + node_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreNodeResponse(header, resp)
+
+    def list_topostore_node(self, topostore_name, node_ids=None, node_types=None, property_key=None, 
+                property_value=None, offset=0, size=100):
+        """list Topostore nodes
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+
+        :type node_ids: list of string
+        :param node_ids: topostore node ids
+
+        :type node_types: list of string
+        :param node_types: list of node id(which is str)
+
+        :type property_key: string
+        :param property_key: property_key of node id property
+
+        :type property_value: string
+        :param property_value: property_value of node id property
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max nodes for each page
+
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+
+        if node_ids and not isinstance(node_ids, list):
+            raise TypeError("node_ids type must be list,element is node id which type is str")
+
+        if node_types and not isinstance(node_types, list):
+            raise TypeError("node_types must be list of string")
+
+        if node_types and isinstance(node_types, list):
+            for node_type in node_types:
+                if not isinstance(node_type, str):
+                    raise TypeError("node_types must be list of string")
+            
+        if property_key and not isinstance(property_key, str):
+            raise TypeError("property_key must be str")
+
+        if property_value and not isinstance(property_value, str):
+            raise TypeError("property_value must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if node_types is not None:
+            params["nodeTypes"] = ','.join(node_types)
+        if property_key is not None:
+            params["propertyKey"] = property_key
+        if property_value is not None:
+            params["propertyValue"] = property_value
+        if node_ids is not None:
+            params["nodeIds"] = ','.join(node_ids)
+        resource = "/topostores/" + topostore_name + "/nodes"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoreNodesResponse(resp, header)
+
+    def create_topostore_relation(self, topostore_name, relation):
+        """create topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relation: TopostoreRelation
+        :param relation: instance of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation, TopostoreRelation):
+            raise TypeError("relation must be instance of TopostoreRelation ")
+        params = {}
+        relation.check_for_create()
+        body = relation.to_dict()
+        property = relation.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("POST", None, body_str, resource, params, headers)
+        return CreateTopostoreRelationResponse(header, resp)
+
+    def upsert_topostore_relation(self, topostore_name, relations):
+        """upsert topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relations: list of TopostoreRelation
+        :param relations: list of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relations, list):
+            raise TypeError("relations must be instance of list ")
+
+        relation_list = []
+        if len(relations) > 100:
+            raise Exception("relations count should less than 100")
+
+        for relation in relations:
+            if not isinstance(relation, TopostoreRelation):
+                raise TypeError("node item  must be instance of TopostoreRelation ")
+            relation.check_for_create()
+            relation_dict = relation.to_dict()
+            property = relation.get_property()
+            if property:
+                relation_dict['property'] = json.dumps(property)
+            relation_list.append(relation_dict)
+        params = {}
+        body = {"relations" :relation_list }
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpsertTopostoreRelationResponse(header, resp)
+
+    def update_topostore_relation(self, topostore_name, relation):
+        """update topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type relation: TopostoreRelation
+        :param relation: instance of TopostoreRelation
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation, TopostoreRelation):
+            raise TypeError("relation must be instance of TopostoreRelation ")
+        params = {}
+        relation.check_for_create()
+        body = relation.to_dict()
+        property = relation.get_property()
+        if property:
+            body['property'] = json.dumps(property)
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations/" + relation.get_relation_id()
+        (resp, header) = self._send("PUT", None, body_str, resource, params, headers)
+        return UpdateTopostoreRelationResponse(header, resp)
+
+    def delete_topostore_relation(self, topostore_name, relation_ids):
+        """delete topostore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type relation_ids: list of string
+        :param relation_ids: topostore relation ids
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+        if not isinstance(relation_ids, list):
+            raise TypeError("relation_ids type must be str")
+        for relation_id in relation_ids:
+            if not isinstance(relation_id, str):
+                raise TypeError("relation_id type must be str")
+        params = {"relationIds" :  ",".join(relation_ids)}
+        body = {}
+        body_str = six.b(json.dumps(body))
+        headers = {'x-log-bodyrawsize': str(len(body_str))}
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("DELETE", None, body_str, resource, params, headers)
+        return DeleteTopostoreRelationResponse(header, resp)
+
+    def get_topostore_relation(self, topostore_name, relation_id):
+        """get topsotore relation
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore_name name
+
+        :type relation_id: string
+        :param relation_id: topostore relation id
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("topostore_name type must be str")
+        if not isinstance(relation_id, str):
+            raise TypeError("relation_id type must be str")
+        headers = {}
+        params = {}
+        resource = "/topostores/" + topostore_name + "/relations/" + relation_id
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return GetTopostoreRelationResponse(header, resp)
+
+    def list_topostore_relation(self, topostore_name, relation_ids=None, relation_types=None, 
+            src_node_ids=None, dst_node_ids=None,
+            property_key=None, property_value=None, offset=0, size=100):
+        """list Topostore relationss
+        Unsuccessful operation will cause an LogException.
+
+        :type topostore_name: string
+        :param topostore_name: topostore name
+
+        :type relation_ids: list of string
+        :param relation_ids: topostore relation ids (which is str)
+
+        :type relation_types: list of string
+        :param relation_types: list of relation id (which is str)
+
+        :type src_node_ids: list of string
+        :param src_node_ids: list of src_node_id (which is str)
+
+        :type dst_node_ids: list of string
+        :param dst_node_ids: list of dst_node_id (which is str)
+
+        :type property_key: string
+        :param property_key: property_key of relation id property
+
+        :type property_value: string
+        :param property_value: property_value of relation id property
+
+        :type offset: long int
+        :param offset: start location
+
+        :type size: long int
+        :param size: max relations for each page
+
+        """
+        if not isinstance(topostore_name, str):
+            raise TypeError("resource_name type must be str")
+
+        if relation_ids and not isinstance(relation_ids, list):
+            raise TypeError("relation_ids type must be list,element is relation id which type is str")
+
+        if relation_types and not isinstance(relation_types, list):
+            raise TypeError("relation_types must be list of string")
+        
+        if relation_types and isinstance(relation_types, list):
+            for relation_type in relation_types:
+                if not isinstance(relation_type, str):
+                    raise TypeError("relation_types must be list of string")
+
+        if src_node_ids and not isinstance(src_node_ids, list):
+            raise TypeError("src_node_ids must be list of string")
+        if src_node_ids and isinstance(src_node_ids, list):
+            for src_node_id in src_node_ids:
+                if not isinstance(src_node_id, str):
+                    raise TypeError("src_node_ids must be list of string")
+
+        if dst_node_ids and not isinstance(dst_node_ids, list):
+            raise TypeError("dst_node_id must be str")
+        if dst_node_ids and isinstance(dst_node_ids, list):
+            for dst_node_id in dst_node_ids:
+                if not isinstance(dst_node_id, str):
+                    raise TypeError("dst_node_ids must be list of string")
+
+        if property_key and not isinstance(property_key, str):
+            raise TypeError("property_key must be str")
+
+        if property_value and not isinstance(property_value, str):
+            raise TypeError("property_value must be str")
+
+        if not (isinstance(size, int) and isinstance(offset, int)):
+            raise TypeError("size and offset type must be int")
+
+        headers = {}
+        params = {"offset": offset, "size": size}
+        if relation_ids is not None:
+            params["relationIds"] = ','.join(relation_ids)
+
+        if relation_types is not None:
+            params["relationTypes"] = ",".join(relation_types)
+    
+        if src_node_ids is not None:
+            params["srcNodeIds"] = ",".join(src_node_ids)
+
+        if dst_node_ids is not None:
+            params["dstNodeIds"] = ",".join(dst_node_ids)
+
+        if property_key is not None:
+            params["propertyKey"] = property_key
+
+        if property_value is not None:
+            params["propertyValue"] = property_value
+
+        resource = "/topostores/" + topostore_name + "/relations"
+        (resp, header) = self._send("GET", None, None, resource, params, headers)
+        return ListTopostoreRelationsResponse(resp, header)
+
     def create_export(self, project_name, export):
         """ Create an export job
         Unsuccessful opertaion will cause an LogException.
@@ -4132,9 +4689,593 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExportResponse(resp, header)
 
+    def list_alert(self, project, offset=0, size=100):
+        """list alerts
+        Unsuccessful opertaion will cause an LogException.
 
+        :type project: string
+        :param project: the project name
 
-make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
-make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
-make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
-make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
+        :type offset: int
+        :param offset: the offset of all the matched alerts
+
+        :type size: int
+        :param size: the max return alert count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_alert, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {}
+        resource = "/jobs"
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        params['jobType'] = "Alert"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="alerts", entities_key="results")
+
+    def get_alert(self, project, entity):
+        """get alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the alert name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_alert(self, project, entity):
+        """delte alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the alert name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_alert(self, project, detail):
+        """update alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of alert config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        alert_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            alert_name = detail.get("name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            alert_name = detail.get("name", "")
+
+        if alert_name is None:
+            alert_name = json.loads(body_str).get("name", "")
+
+        assert alert_name, LogException(
+            "InvalidParameter",
+            'unknown alert name in "{0}"'.format(detail),
+        )
+
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/jobs/" + alert_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_alert(self, project, detail):
+        """create alert
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of alert config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_dashboard(self, project, offset=0, size=100):
+        """list the dashboards
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type offset: int
+        :param offset: the offset of all the matched dashboards
+
+        :type size: int
+        :param size: the max return dashboard count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_dashboard, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard")
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="dashboards", entities_key="dashboards")
+
+    def get_dashboard(self, project, entity):
+        """get dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the dashabord name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard") + "/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_dashboard(self, project, entity):
+        """delete dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the dashabord name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("dashboard") + "/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_dashboard(self, project, detail):
+        """update dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of dashboard config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        dashabord_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            dashabord_name = detail.get("dashboardName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            dashabord_name = detail.get("dashboardName" or "name", "")
+
+        if dashabord_name is None:
+            dashabord_name = json.loads(body_str).get("dashboardName", "")
+
+        assert dashabord_name, LogException(
+            "InvalidParameter",
+            'unknown dashabord name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/" + pluralize("dashboard") + "/" + dashabord_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_dashboard(self, project, detail):
+        """create dashboard
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of dashboard config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/" + pluralize("dashboard")
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_savedsearch(self, project, offset=0, size=100):
+        """list savedsearches
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type offset: int
+        :param offset: the offset of all the matched savedsearches
+
+        :type size: int
+        :param size: the max return savedsearch count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_savedsearch, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project)
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch")
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="savedsearches", entities_key="savedsearches")
+
+    def get_savedsearch(self, project, entity):
+        """get savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the savedsearch name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch") + "/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_savedsearch(self, project, entity):
+        """delete savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type entity: string
+        :param entity: the savedsearch name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/" + pluralize("savedsearch") + "/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_savedsearch(self, project, detail):
+        """update savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of savedsearch config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        savedsearch_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            savedsearch_name = detail.get("savedsearchName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            savedsearch_name = detail.get("savedsearchName" or "name", "")
+
+        if savedsearch_name is None:
+            savedsearch_name = json.loads(body_str).get("savedsearchName", "")
+
+        assert savedsearch_name, LogException(
+            "InvalidParameter",
+            'unknown savedsearch name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/" + pluralize("savedsearch") + "/" + savedsearch_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_savedsearch(self, project, detail):
+        """create savedsearch
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type detail: dict/string
+        :param detail: json string of savedsearch config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+
+        resource = "/" + pluralize("savedsearch")
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+    def list_shipper(self, project, logstore, offset=0, size=100):
+        """list shippers
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type offset: int
+        :param offset: the offset of all the matched shippers
+
+        :type size: int
+        :param size: the max return shipper count, -1 means all
+
+        :return: ListEntityResponse
+
+        :raise: LogException
+        """
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_shipper, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project, logstore)
+
+        headers = {}
+        params = {}
+        params["offset"] = str(offset)
+        params["size"] = str(size)
+        resource = "/logstores/" + logstore + "/shipper"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListEntityResponse(header, resp, resource_name="shipper", entities_key="shipper")
+
+    def get_shipper(self, project, logstore, entity):
+        """get shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type entity: string
+        :param entity: the shipper name
+
+        :return: GetEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore + "/shipper/" + entity
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetEntityResponse(header, resp)
+
+    def delete_shipper(self, project, logstore, entity):
+        """delete shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type entity: string
+        :param entity: the shipper name
+
+        :return: DeleteEntityResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/logstores/" + logstore + "/shipper/" + entity
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        return DeleteEntityResponse(header, resp)
+
+    def update_shipper(self, project, logstore, detail):
+        """update shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type detail: dict/string
+        :param detail: json string of shipper config details
+
+        :return: UpdateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {}
+        shipper_name = None
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+            shipper_name = detail.get("shipperName" or "name", "")
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+            shipper_name = detail.get("shipperName" or "name", "")
+
+        if shipper_name is None:
+            shipper_name = json.loads(body_str).get("shipperName", "")
+
+        assert shipper_name, LogException(
+            "InvalidParameter",
+            'unknown shipper name in "{0}"'.format(detail),
+        )
+        headers["Content-Type"] = "application/json"
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        resource = "/logstores/" + logstore + "/shipper/" + shipper_name
+        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
+        return UpdateEntityResponse(headers, resp)
+
+    def create_shipper(self, project, logstore, detail):
+        """create shipper
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+
+        :type detail: dict/string
+        :param detail: json string of shipper config details
+
+        :return: CreateEntityResponse
+
+        :raise: LogException
+        """
+        params = {}
+        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
+        if hasattr(detail, "to_json"):
+            detail = detail.to_json()
+            body_str = six.b(json.dumps(detail))
+        elif isinstance(detail, six.binary_type):
+            body_str = detail
+        elif isinstance(detail, six.text_type):
+            body_str = detail.encode("utf8")
+        else:
+            body_str = six.b(json.dumps(detail))
+        resource = "/logstores/" + logstore + "/shipper"
+        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
+        return CreateEntityResponse(header, resp)
+
+# make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
+# make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
+# make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
+# make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')

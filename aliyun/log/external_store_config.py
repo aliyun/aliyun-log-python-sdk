@@ -4,6 +4,7 @@
 # All rights reserved.
 import logging
 from .logexception import LogException
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +162,12 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
         self.columns = columns
         self.objects = [externalStoreCsvFile,]
         self.storeType = 'csv'
+        if type(externalStoreCsvFile) == str:
+            resp = False
+            if externalStoreCsvFile.startswith("file://"):
+                externalStoreCsvFile = externalStoreCsvFile.replace("file://", "")
+            if not os.path.exists(externalStoreCsvFile):
+                raise LogException("ExternalStoreCsvConfig", "The csv file path is not exist")
         if not resp:
             externalStoreCsvFh = open(externalStoreCsvFile, 'rb')
             externalStoreCsv = externalStoreCsvFh.read()
@@ -193,8 +200,6 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
     @staticmethod
     def from_json(json_value):
         externalStoreName = json_value["externalStoreName"]
-        storeType = json_value["storeType"]
-        endpoint = json_value["parameter"]["endpoint"]
         columns = json_value["parameter"]["columns"]
         objects = json_value["parameter"]["objects"]
 
