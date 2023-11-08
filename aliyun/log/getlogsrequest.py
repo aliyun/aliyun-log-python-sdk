@@ -57,7 +57,7 @@ class GetLogsRequest(LogRequest):
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=100, offset=0, reverse=False, power_sql=False, scan=False, forward=True, accurate_query=False, from_time_nano_part=0, to_time_nano_part=0):
+                 query=None, line=100, offset=0, reverse=False, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime
