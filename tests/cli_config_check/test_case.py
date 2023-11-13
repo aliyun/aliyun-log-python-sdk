@@ -133,4 +133,3 @@ c = """
 KEEP_FIELDS_f1 = "abc".__class__
 """
 check_module(c, True)
-

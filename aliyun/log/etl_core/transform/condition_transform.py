@@ -73,5 +73,3 @@ class keep_event(transform_base):
             return event
         logger.info(u"keep_event: drop event: {0}".format(event))
         return None
-
-

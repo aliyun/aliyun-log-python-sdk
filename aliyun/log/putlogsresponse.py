@@ -9,7 +9,7 @@ from .logresponse import LogResponse
 
 class PutLogsResponse(LogResponse):
     """ The response of the PutLogs API from log.
-    
+
     :type header: dict
     :param header: PutLogsResponse HTTP response header
     """

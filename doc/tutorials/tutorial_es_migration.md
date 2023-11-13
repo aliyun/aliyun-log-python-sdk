@@ -120,7 +120,7 @@ migrate: {"task_id": 8, "es_index": "my_index_01", "es_shard": 2, "logstore": "m
 ```
 __source__:  127.0.0.1
 __tag__:__migration__:  c34d9636f8934cc18b9727263c476b66
-__topic__:  
+__topic__:
 dropped:  0
 failed:  0
 finished:  5
@@ -132,7 +132,7 @@ total:  12
 ```
 __source__:  127.0.0.1
 __tag__:__migration__:  c34d9636f8934cc18b9727263c476b66
-__topic__:  
+__topic__:
 checkpoint:  {"_id": "anBkzXABMIXHzcoem-t0", "offset": {"@timestamp": "2020-02-28T22:40:11"}}
 es_index:  my_index
 es_shard:  2
@@ -154,7 +154,7 @@ update_time:  2020-03-12T23:55:10
 ```Python
 config = MigrationConfig(
     cache_path='/path/to/cache',
-    hosts="localhost:9200",   
+    hosts="localhost:9200",
     endpoint=endpoint,
     project_name="project1",
     access_key_id=access_key_id,
@@ -169,7 +169,7 @@ manager.migrate()
 ```Python
 config = MigrationConfig(
     cache_path='/path/to/cache',
-    hosts="localhost:9200",   
+    hosts="localhost:9200",
     endpoint=endpoint,
     project_name="project1",
     access_key_id=access_key_id,
@@ -185,7 +185,7 @@ migration_manager.migrate()
 ```Python
 config = MigrationConfig(
     cache_path='/path/to/cache',
-    hosts="localhost:9200",   
+    hosts="localhost:9200",
     endpoint=endpoint,
     project_name="project1",
     access_key_id=access_key_id,
@@ -202,7 +202,7 @@ migration_manager.migrate()
 ```Python
 config = MigrationConfig(
     cache_path='/path/to/cache',
-    hosts="user:secret@localhost:9200",   
+    hosts="user:secret@localhost:9200",
     endpoint=endpoint,
     project_name="project1",
     access_key_id=access_key_id,

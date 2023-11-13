@@ -77,4 +77,3 @@ if __name__ == '__main__':
     create_job(job_name="")
     # restart_job(job_name="ingest-es-1682322708-0424")
     # delete_job(job_name="ingest-es-1682322708-0424")
-

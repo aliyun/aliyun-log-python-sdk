@@ -10,7 +10,7 @@
 4. 智能解析: 自动解析日志中JSON和KV格式信息
 
 本篇主要如何打开自动解析`JSON格式`的功能, 关于如何配置并使用的基本信息, 请参考[使用Log Handler自动上传Python日志](https://aliyun-log-python-sdk.readthedocs.io/tutorials/tutorial_logging_handler.html)
- 
+
 ## 解决的问题
 
 在程序中, 有时我们需要将特定数据输出到日志中以便跟踪, 例如:
@@ -110,4 +110,3 @@ c1 = 'student="xiao ming" level=3'
 | extract_json_suffix | 给解析的域添加后缀  | 空串 |
 | buildin_fields_prefix | 给系统域添加前缀 | 空串 |
 | buildin_fields_suffix | 给系统域添加后缀 | 空串 |
-

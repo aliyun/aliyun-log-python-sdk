@@ -12,7 +12,7 @@ from .logresponse import LogResponse
 
 class UpdateAclResponse(LogResponse):
     """ The response of the update_projecta_acl/update_logstore_acl API from log.
-    
+
     :type header: dict
     :param header: UpdateAclResponse HTTP response header
     """
@@ -27,7 +27,7 @@ class UpdateAclResponse(LogResponse):
 
 class ListAclResponse(LogResponse):
     """ The response of the get_project_acl/get_logstore_acl API from log.
-    
+
     :type header: dict
     :param header: GetAclResponse HTTP response header
     """

@@ -323,4 +323,3 @@ def make_lcrud_methods(obj, entity_name, logstore_level=None, name_field=None, r
     setattr(obj, 'delete_' + entity_name, delete_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource))
     setattr(obj, 'update_' + entity_name, update_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource, name_field=name_field))
     setattr(obj, 'create_' + entity_name, create_entity(entity_name, logstore_level=logstore_level, root_resource=root_resource))
-

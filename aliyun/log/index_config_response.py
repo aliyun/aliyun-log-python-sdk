@@ -12,7 +12,7 @@ __all__ = ['CreateIndexResponse', 'UpdateIndexResponse', 'DeleteIndexResponse', 
 
 class CreateIndexResponse(LogResponse):
     """ The response of the create_index API from log.
-    
+
     :type header: dict
     :param header: CreateIndexResponse HTTP response header
     """
@@ -27,7 +27,7 @@ class CreateIndexResponse(LogResponse):
 
 class UpdateIndexResponse(LogResponse):
     """ The response of the update_index API from log.
-    
+
     :type header: dict
     :param header: UpdateIndexResponse HTTP response header
     """
@@ -42,7 +42,7 @@ class UpdateIndexResponse(LogResponse):
 
 class DeleteIndexResponse(LogResponse):
     """ The response of the delete_index API from log.
-    
+
     :type header: dict
     :param header: DeleteIndexResponse HTTP response header
     """
@@ -57,7 +57,7 @@ class DeleteIndexResponse(LogResponse):
 
 class GetIndexResponse(LogResponse):
     """ The response of the get_index_config API from log.
-    
+
     :type header: dict
     :param header: GetIndexResponse HTTP response header
 

@@ -19,4 +19,3 @@ TRANSFORM_EVENT_data = [
     ({"__topic__": "reboot_event"}, ("data", r"System Reboot \[(?P<reboot_code>\d+)\]")),
     ({"__topic__": "download"}, ("data", r"Provision Firmware Download start \[(?P<firmware_version>[\w\.]+)\]")),
     ]
-

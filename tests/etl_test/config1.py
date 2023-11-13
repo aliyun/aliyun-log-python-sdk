@@ -37,4 +37,3 @@ TRANSFORM_EVENT_data = [
     ({"__topic__": "reboot_event"}, {"__topic__": "reboot_event"}),
     ({"__topic__": "download"}, {"__topic__": "download"}),
     (True, {"__topic__": "unknown"})]
-

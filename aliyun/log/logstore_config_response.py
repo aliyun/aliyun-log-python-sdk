@@ -13,7 +13,7 @@ from .logresponse import LogResponse
 
 class CreateLogStoreResponse(LogResponse):
     """ The response of the create_logstore API from log.
-    
+
     :type header: dict
     :param header: CreateLogStoreResponse HTTP response header
     """
@@ -28,7 +28,7 @@ class CreateLogStoreResponse(LogResponse):
 
 class DeleteLogStoreResponse(LogResponse):
     """ The response of the delete_logstore API from log.
-    
+
     :type header: dict
     :param header: DeleteLogStoreResponse HTTP response header
     """
@@ -43,7 +43,7 @@ class DeleteLogStoreResponse(LogResponse):
 
 class GetLogStoreResponse(LogResponse):
     """ The response of the get_logstore API from log.
-    
+
     :type header: dict
     :param header: GetLogStoreResponse HTTP response header
 
@@ -123,7 +123,7 @@ class GetLogStoreResponse(LogResponse):
 
 class UpdateLogStoreResponse(LogResponse):
     """ The response of the update_logstore API from log.
-    
+
     :type header: dict
     :param header: UpdateLogStoreResponse HTTP response header
     """
@@ -138,7 +138,7 @@ class UpdateLogStoreResponse(LogResponse):
 
 class ListLogStoreResponse(LogResponse):
     """ The response of the list_logstore API from log.
-    
+
     :type header: dict
     :param header: ListLogStoreResponse HTTP response header
 

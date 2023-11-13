@@ -406,10 +406,10 @@ class LogClient(object):
     def put_logs(self, request):
         """ Put logs to log service. up to 512000 logs up to 10MB size
         Unsuccessful operation will cause an LogException.
-        
+
         :type request: PutLogsRequest
         :param request: the PutLogs request parameters class
-        
+
         :return: PutLogsResponse
 
         :raise: LogException
@@ -479,12 +479,12 @@ class LogClient(object):
     def list_logstores(self, request):
         """ List all logstores of requested project.
         Unsuccessful operation will cause an LogException.
-        
+
         :type request: ListLogstoresRequest
         :param request: the ListLogstores request parameters class.
-        
+
         :return: ListLogStoresResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -497,12 +497,12 @@ class LogClient(object):
     def list_topics(self, request):
         """ List all topics in a logstore.
         Unsuccessful operation will cause an LogException.
-        
+
         :type request: ListTopicsRequest
         :param request: the ListTopics request parameters class.
-        
+
         :return: ListTopicsResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -522,12 +522,12 @@ class LogClient(object):
     def get_histograms(self, request):
         """ Get histograms of requested query from log service.
         Unsuccessful operation will cause an LogException.
-        
+
         :type request: GetHistogramsRequest
         :param request: the GetHistograms request parameters class.
-        
+
         :return: GetHistogramsResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -669,9 +669,9 @@ class LogClient(object):
 
         :type request: GetLogsRequest
         :param request: the GetLogs request parameters class.
-        
+
         :return: GetLogsResponse
-        
+
         :raise: LogException
         """
         project = request.get_project()
@@ -912,12 +912,12 @@ class LogClient(object):
     def get_project_logs(self, request):
         """ Get logs from log service.
         Unsuccessful operation will cause an LogException.
-        
+
         :type request: GetProjectLogsRequest
         :param request: the GetProjectLogs request parameters class.
-        
+
         :return: GetLogsResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -936,7 +936,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -948,7 +948,7 @@ class LogClient(object):
         :param start_time: the start time of cursor, e.g 1441093445 or "begin"/"end", or readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
 
         :return: GetCursorResponse
-        
+
         :raise: LogException
         """
 
@@ -965,7 +965,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1046,7 +1046,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1055,7 +1055,7 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :return: GetLogsResponse
-        
+
         :raise: LogException
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "begin")
@@ -1065,7 +1065,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1074,7 +1074,7 @@ class LogClient(object):
         :param shard_id: the shard id
 
         :return: GetLogsResponse
-        
+
         :raise: LogException
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
@@ -1084,7 +1084,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1105,7 +1105,7 @@ class LogClient(object):
         :param compress: if use zip compress for transfer data, default is True
 
         :return: PullLogResponse
-        
+
         :raise: LogException
         """
 
@@ -1246,11 +1246,11 @@ class LogClient(object):
                         hot_ttl=-1,
                         mode = None
                         ):
-        """ create log store 
+        """ create log store
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1296,9 +1296,9 @@ class LogClient(object):
 
         :type hot_ttl: int
         :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
-        
+
         :return: CreateLogStoreResponse
-        
+
         :raise: LogException
         """
         if preserve_storage:
@@ -1344,13 +1344,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
 
         :return: DeleteLogStoreResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1364,13 +1364,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
 
         :return: GetLogStoreResponse
-        
+
         :raise: LogException
         """
 
@@ -1395,7 +1395,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1443,7 +1443,7 @@ class LogClient(object):
         :param telemetry_type: the Telemetry type
 
         :return: UpdateLogStoreResponse
-        
+
         :raise: LogException
         """
 
@@ -1538,18 +1538,18 @@ class LogClient(object):
         return ListLogStoreResponse(resp, header)
 
     def create_external_store(self, project_name, config):
-        """ create log store 
+        """ create log store
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config : ExternalStoreConfigBase
         :param config :external store config
 
 
         :return: CreateExternalStoreResponse
-        
+
         :raise: LogException
         """
         params = {}
@@ -1566,13 +1566,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type store_name: string
         :param store_name: the external store name
 
         :return: DeleteExternalStoreResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1586,13 +1586,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type store_name: string
         :param store_name: the logstore name
 
         :return: GetLogStoreResponse
-        
+
         :raise: LogException
         """
 
@@ -1608,7 +1608,7 @@ class LogClient(object):
         return GetExternalStoreResponse(resp, header)
 
     def update_external_store(self, project_name, config):
-        """ 
+        """
         update the logstore meta info
         Unsuccessful operation will cause an LogException.
 
@@ -1616,7 +1616,7 @@ class LogClient(object):
         :param config : external store config
 
         :return: UpdateExternalStoreResponse
-        
+
         :raise: LogException
         """
 
@@ -1668,13 +1668,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
 
         :return: ListShardResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1688,11 +1688,11 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
-        
+
         :type shardId: int
         :param shardId: the shard id
 
@@ -1700,7 +1700,7 @@ class LogClient(object):
         :param split_hash: the internal hash between the shard begin and end hash
 
         :return: ListShardResponse
-        
+
         :raise: LogException
         """
 
@@ -1715,16 +1715,16 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
-        
+
         :type shardId: int
         :param shardId: the shard id of the left shard, server will determine the right adjacent shardId
 
         :return: ListShardResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1734,20 +1734,20 @@ class LogClient(object):
         return ListShardResponse(resp, header)
 
     def delete_shard(self, project_name, logstore_name, shardId):
-        """ delete a readonly shard 
+        """ delete a readonly shard
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
-        
+
         :type shardId: int
         :param shardId: the read only shard id
 
         :return: ListShardResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1761,7 +1761,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1770,7 +1770,7 @@ class LogClient(object):
         :param index_detail: the index config detail used to create index
 
         :return: CreateIndexResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1788,7 +1788,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -1797,7 +1797,7 @@ class LogClient(object):
         :param index_detail: the index config detail used to update index
 
         :return: UpdateIndexResponse
-        
+
         :raise: LogException
         """
 
@@ -1816,13 +1816,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
 
         :return: DeleteIndexResponse
-        
+
         :raise: LogException
         """
 
@@ -1858,13 +1858,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_detail: LogtailConfigGenerator or SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail or CommonRegLogConfigDetail
         :param config_detail: the logtail config detail info, use `LogtailConfigGenerator.from_json` to generate config: SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail, Note: CommonRegLogConfigDetail is deprecated.
 
         :return: CreateLogtailConfigResponse
-        
+
         :raise: LogException
         """
 
@@ -1886,13 +1886,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_detail: LogtailConfigGenerator or SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail or CommonRegLogConfigDetail
         :param config_detail: the logtail config detail info, use `LogtailConfigGenerator.from_json` to generate config: SeperatorFileConfigDetail or SimpleFileConfigDetail or FullRegFileConfigDetail or JsonFileConfigDetail or ApsaraFileConfigDetail or SyslogConfigDetail
 
         :return: UpdateLogtailConfigResponse
-        
+
         :raise: LogException
         """
 
@@ -1910,13 +1910,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_name: string
         :param config_name: the logtail config name
 
         :return: DeleteLogtailConfigResponse
-        
+
         :raise: LogException
         """
 
@@ -1931,13 +1931,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_name: string
         :param config_name: the logtail config name
 
         :return: GetLogtailConfigResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -1951,7 +1951,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore: string
         :param logstore: logstore name to filter related config
@@ -1966,7 +1966,7 @@ class LogClient(object):
         :param size: the max return names count, -1 means all
 
         :return: ListLogtailConfigResponse
-        
+
         :raise: LogException
         """
         # need to use extended method to get more
@@ -1990,13 +1990,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type group_detail: MachineGroupDetail
         :param group_detail: the machine group detail config
 
         :return: CreateMachineGroupResponse
-        
+
         :raise: LogException
         """
 
@@ -2014,13 +2014,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type group_name: string
         :param group_name: the group name
 
         :return: DeleteMachineGroupResponse
-        
+
         :raise: LogException
         """
 
@@ -2035,13 +2035,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type group_detail: MachineGroupDetail
         :param group_detail: the machine group detail config
 
         :return: UpdateMachineGroupResponse
-        
+
         :raise: LogException
         """
 
@@ -2059,13 +2059,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type group_name: string
         :param group_name: the group name to get
 
         :return: GetMachineGroupResponse
-        
+
         :raise: LogException
         """
 
@@ -2080,7 +2080,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type offset: int
         :param offset: the offset of all group name
@@ -2089,7 +2089,7 @@ class LogClient(object):
         :param size: the max return names count, -1 means all
 
         :return: ListMachineGroupResponse
-        
+
         :raise: LogException
         """
 
@@ -2110,8 +2110,8 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
-        
+        :param project_name: the Project name
+
         :type group_name: string
         :param group_name: the group name to list
 
@@ -2122,7 +2122,7 @@ class LogClient(object):
         :param size: the max return names count, -1 means all
 
         :return: ListMachinesResponse
-        
+
         :raise: LogException
         """
 
@@ -2143,16 +2143,16 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_name: string
         :param config_name: the logtail config name to apply
-        
+
         :type group_name: string
-        :param group_name: the machine group name 
+        :param group_name: the machine group name
 
         :return: ApplyConfigToMachineGroupResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -2166,16 +2166,16 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_name: string
         :param config_name: the logtail config name to apply
-        
+
         :type group_name: string
-        :param group_name: the machine group name 
+        :param group_name: the machine group name
 
         :return: RemoveConfigToMachineGroupResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -2189,13 +2189,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type group_name: string
         :param group_name: the group name list
 
         :return: GetMachineGroupAppliedConfigResponse
-        
+
         :raise: LogException
         """
 
@@ -2210,13 +2210,13 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type config_name: string
         :param config_name: the logtail config name used to apply
 
         :return: GetConfigAppliedMachineGroupsResponse
-        
+
         :raise: LogException
         """
 
@@ -2232,7 +2232,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -2244,7 +2244,7 @@ class LogClient(object):
         :param start_time: the start timestamp
 
         :type end_time: int
-        :param end_time: the end timestamp 
+        :param end_time: the end timestamp
 
         :type status_type: string
         :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
@@ -2256,7 +2256,7 @@ class LogClient(object):
         :param size: the needed tasks count, -1 means all
 
         :return: GetShipperTasksResponse
-        
+
         :raise: LogException
         """
         # need to use extended method to get more
@@ -2280,7 +2280,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type logstore_name: string
         :param logstore_name: the logstore name
@@ -2292,7 +2292,7 @@ class LogClient(object):
         :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...], currently the max retry task count 10 every time
 
         :return: RetryShipperTasksResponse
-        
+
         :raise: LogException
         """
         headers = {}
@@ -2494,7 +2494,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
         :type project_des: string
         :param project_des: the description of a project
@@ -2502,7 +2502,7 @@ class LogClient(object):
         type resource_group_id: string
         :param resource_group_id: the resource group id, the project created will put in the resource group
 
-        :return: CreateProjectResponse 
+        :return: CreateProjectResponse
 
         :raise: LogException
         """
@@ -2522,9 +2522,9 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
-        :return: GetProjectResponse 
+        :return: GetProjectResponse
 
         :raise: LogException
         """
@@ -2540,9 +2540,9 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
-        :return: DeleteProjectResponse 
+        :return: DeleteProjectResponse
 
         :raise: LogException
         """
@@ -2583,9 +2583,9 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
-        :return: LogResponse 
+        :return: LogResponse
 
         :raise: LogException
         """
@@ -2604,10 +2604,10 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Project name 
+        :param project_name: the Project name
 
-        :return: LogResponse 
-        
+        :return: LogResponse
+
         :raise: LogException
         """
         resource = "/untag"
@@ -2623,11 +2623,11 @@ class LogClient(object):
     def get_project_tags(self, project_name, **filer_tags):
         """ get project tags
         Unsuccessful operation will cause an LogException.
-        
-        :type project_name: string
-        :param project_name: the Project name 
 
-        :return: GetProjectTagsResponse 
+        :type project_name: string
+        :param project_name: the Project name
+
+        :return: GetProjectTagsResponse
 
         :raise: LogException
         """

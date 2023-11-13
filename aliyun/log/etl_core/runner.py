@@ -37,4 +37,3 @@ class Runner(object):
 
     def __call__(self, event):
         return process_event(event, self.fn_list)
-

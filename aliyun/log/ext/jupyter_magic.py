@@ -307,14 +307,14 @@ class MyMagics(Magics):
                     progress.value = 100
                     progress.description = u"完成" if result else u"失败"
                     break
-                
+
         def on_button_clicked(b):
             global result, detail
             progress.layout = show_layout
             progress.description = u"连接中..."
             progress.value = 0
             w_result.value = ""
-               
+
             result = None
             detail = ""
             thread = threading.Thread(target=work, args=(progress,))
@@ -332,9 +332,9 @@ class MyMagics(Magics):
         w_confirm.on_click(on_button_clicked)
 
         p = widgets.VBox(children=[w_1, w_endpoint, w_key_id, w_key_val, w_project, w_logstore, w_confirm, progress, w_result])
-        
+
         return p
-    
+
 
 def df_html(df1):
     if not __CAN_USE_WIDGET__:

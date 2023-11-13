@@ -6,8 +6,8 @@
 
 
 class LogRequest(object):
-    """ The base request of all log request. 
-    
+    """ The base request of all log request.
+
     :type project: string
     :param project: project name
     """
@@ -17,14 +17,14 @@ class LogRequest(object):
 
     def get_project(self):
         """ Get project name
-        
+
         :return: string, project name.
         """
         return self.project if self.project else ''
 
     def set_project(self, project):
         """ Set project name
-        
+
         :type project: string
         :param project: project name
         """

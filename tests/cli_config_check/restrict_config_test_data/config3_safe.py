@@ -26,5 +26,3 @@ TRANSFORM_EVENT_v = [
 DROP_FIELDS_a = ["remote_addr", "http_user_agent"]
 
 ALIAS_x = {"real_client_ip": "client_ip"}
-
-

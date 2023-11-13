@@ -10,10 +10,10 @@ class QueriedLog(object):
 
     :type timestamp: int
     :param timestamp: log timestamp
-    
+
     :type source: string
     :param source: log source
-    
+
     :type contents: dict
     :param contents: log contents, content many key/value pair
     """
@@ -25,21 +25,21 @@ class QueriedLog(object):
 
     def get_time(self):
         """ Get log time
-        
+
         :return: int, log time
         """
         return self.timestamp
 
     def get_source(self):
         """ Get log source
-        
+
         :return: string, log source
         """
         return self.source
 
     def get_contents(self):
         """ Get log contents
-        
+
         :return: dict, log contents
         """
         return self.contents
