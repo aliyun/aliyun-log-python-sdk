@@ -12,3 +12,8 @@ doc/source/tutorials/tutorial_logging_handler_json.rst
 doc/source/tutorials/tutorial_logging_handler_kv.rst
 aliyun_log_python_sdk.egg-info/
 dist/
+cscope.files
+cscope.in.out
+cscope.out
+cscope.po.out
+tags
