@@ -35,7 +35,7 @@ class GetHistogramsRequest(LogRequest):
     :param to_time_nano_part: nano part of query end time
     """
 
-    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=False, from_time_nano_part=0 ,to_time_nano_part=0):
+    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=True, from_time_nano_part=0 ,to_time_nano_part=0):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = parse_timestamp(fromTime)
