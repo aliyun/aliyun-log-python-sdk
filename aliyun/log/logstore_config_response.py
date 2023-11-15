@@ -72,6 +72,8 @@ class GetLogStoreResponse(LogResponse):
             self.mode = resp["mode"]
         if 'telemetryType' in resp:
             self.telemetry_type = resp["telemetryType"]
+        if 'infrequentAccessTTL' in resp:
+            self.infrequent_access_ttl = resp["infrequentAccessTTL"]
 
     def get_shard_count(self):
         """
