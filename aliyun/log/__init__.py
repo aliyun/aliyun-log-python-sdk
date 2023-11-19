@@ -13,7 +13,8 @@ from .shipper_config import ShipperTask, OssShipperConfig, OdpsShipperConfig
 from .version import __version__
 from .logitem import LogItem
 from .consumer_group_request import *
-from .external_store_config import * 
+from .external_store_config import *
+from .session import Session
 
 # response class
 from .consumer_group_response import *
