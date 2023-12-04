@@ -22,4 +22,3 @@ TRANSFORM_EVENT_v = [
     ( {"http_user_agent": r".+\bWindows\b.+"}, {"is_windows": "1"} ),
     ( {"http_user_agent": r".+\bLinux\b.+"}, {"is_linux": "1"} ),
     ( NO_EMPTY("real_client_ip"), {"real_client_ip": "xyz" } ) ]
-

@@ -32,4 +32,3 @@ message LogGroupListRaw
 {
     repeated LogGroupRaw LogGroups = 1;
 }
-

@@ -9,7 +9,7 @@ from .logrequest import LogRequest
 
 class ListLogstoresRequest(LogRequest):
     """ The request used to list log store from log.
-    
+
     :type project: string
     :param project: project name
     """

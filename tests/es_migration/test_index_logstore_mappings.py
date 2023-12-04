@@ -16,8 +16,8 @@ class TestIndexLogstoreMappings(unittest.TestCase):
     def setUp(self):
         logstore_index_mappings = '''
                     {
-                        "logstore1": "my_index*", 
-                        "logstore2": "a_index,b_index,c_index", 
+                        "logstore1": "my_index*",
+                        "logstore2": "a_index,b_index,c_index",
                         "logstore3": "index1",
                         "logstore4": "xxx_*_yyy",
                         "logstore5": "not_exists"
@@ -88,7 +88,7 @@ class TestIndexLogstoreMappings(unittest.TestCase):
     def test_invalid_logstore_index_mappings(self):
         logstore_index_mappings = '''
                             {
-                                "logstore1": "my_index*", 
+                                "logstore1": "my_index*",
                                 "logstore2": "my_index"
                             }
                             '''

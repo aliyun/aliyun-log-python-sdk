@@ -12,7 +12,7 @@ __all__ = ['ListShardResponse', 'DeleteShardResponse']
 
 class ListShardResponse(LogResponse):
     """ The response of the list_shard API from log.
-    
+
     :type header: dict
     :param header: ListShardResponse HTTP response header
 
@@ -43,7 +43,7 @@ class ListShardResponse(LogResponse):
 
 class DeleteShardResponse(LogResponse):
     """ The response of the create_logstore API from log.
-    
+
     :type header: dict
     :param header: DeleteShardResponse HTTP response header
     """

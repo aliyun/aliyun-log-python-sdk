@@ -90,7 +90,7 @@ classifiers = [
 
 
 long_description = """
-Python SDK for Alicloud Log Service 
+Python SDK for Alicloud Log Service
 http://aliyun-log-python-sdk.readthedocs.io
 """
 

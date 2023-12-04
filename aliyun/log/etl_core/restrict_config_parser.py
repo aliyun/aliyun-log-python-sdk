@@ -79,4 +79,3 @@ class RestrictConfigParser(ast.NodeVisitor):
 
     def parse(self, code):
         self.visit(ast.parse(code))
-

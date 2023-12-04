@@ -10,4 +10,3 @@ class SettingError(LogException):
 
         super(SettingError, self).__init__('InvalidConfig', u'{0}\nDetail: {1}'.format(msg, ex))
         self.settings = settings
-

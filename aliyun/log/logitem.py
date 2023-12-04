@@ -11,12 +11,12 @@ import copy
 class LogItem(object):
     """ LogItem used to present a log, it contains log time and multiple
     key/value pairs to present the log contents.
-    
+
     :type timestamp: int
     :param timestamp: time of the log item, the default time is the now time.
-    
+
     :type contents: tuple(key-value) list
-    :param contents: the data of the log item, including many (key,value) pairs. 
+    :param contents: the data of the log item, including many (key,value) pairs.
     """
 
     def __init__(self, timestamp=None, time_nano_part=None, contents=None):
@@ -27,10 +27,10 @@ class LogItem(object):
 
     def push_back(self, key, value):
         """ Append a key/value pair as a log content to the log
-        
+
         :type key: string
         :param key: log content key
-        
+
         :type value: string
         :param value: log content value
         """
@@ -38,14 +38,14 @@ class LogItem(object):
 
     def get_contents(self):
         """ Get log contents
-        
+
         :return: tuple(key-value) list, log contents.
         """
         return self.contents
 
     def set_contents(self, contents):
         """ Set log contents
-        
+
         :type contents: tuple(key-value) list
         :param contents: log contents (key-value pair list)
         """
@@ -53,7 +53,7 @@ class LogItem(object):
 
     def get_time(self):
         """ Get log time
-        
+
         :return: int, log time
         """
         return self.timestamp
@@ -66,7 +66,7 @@ class LogItem(object):
 
     def set_time(self, timestamp):
         """ Set log time
-        
+
         :type timestamp: int
         :param timestamp: log time
         """

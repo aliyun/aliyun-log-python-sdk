@@ -20,4 +20,3 @@ TRANSFORM_EVENT_data = [
     ({"__topic__": "download"}, ("data", r"Provision Firmware Download start \[(?P<firmware_version>[\w\.]+)\]")),
     ( ANY, DROP_F("data") )
     ]
-

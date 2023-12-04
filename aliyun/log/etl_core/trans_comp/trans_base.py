@@ -77,4 +77,3 @@ class trans_comp_check_mdoe_base(trans_comp_base):
             has_update = self.set(e, k, v, check_kw_name=check_kw_name) or has_update
 
         return has_update
-

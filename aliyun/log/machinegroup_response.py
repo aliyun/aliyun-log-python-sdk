@@ -18,7 +18,7 @@ from .machine_group_detail import MachineStatus
 
 class CreateMachineGroupResponse(LogResponse):
     """ The response of the create_machine_group API from log.
-    
+
     :type header: dict
     :param header: CreateMachineGroupResponse HTTP response header
     """
@@ -33,7 +33,7 @@ class CreateMachineGroupResponse(LogResponse):
 
 class DeleteMachineGroupResponse(LogResponse):
     """ The response of the delete_machine_group API from log.
-    
+
     :type header: dict
     :param header: DeleteMachineGroupResponse HTTP response header
     """
@@ -48,7 +48,7 @@ class DeleteMachineGroupResponse(LogResponse):
 
 class GetMachineGroupResponse(LogResponse):
     """ The response of the get_machine_group API from log.
-    
+
     :type header: dict
     :param header: GetMachineGroupResponse HTTP response header
 
@@ -80,7 +80,7 @@ class GetMachineGroupResponse(LogResponse):
 
 class UpdateMachineGroupResponse(LogResponse):
     """ The response of the update_machine_group API from log.
-    
+
     :type header: dict
     :param header: UpdateMachineGroupResponse HTTP response header
     """
@@ -95,7 +95,7 @@ class UpdateMachineGroupResponse(LogResponse):
 
 class ListMachineGroupResponse(LogResponse):
     """ The response of the list_machine_group API from log.
-    
+
     :type header: dict
     :param header: ListMachineGroupResponse HTTP response header
 
@@ -171,7 +171,7 @@ class ListMachineGroupResponse(LogResponse):
 
 class ListMachinesResponse(LogResponse):
     """ The response of the list_machines API from log.
-    
+
     :type header: dict
     :param header: ListMachinesResponse HTTP response header
 
@@ -241,7 +241,7 @@ class ListMachinesResponse(LogResponse):
 
 class ApplyConfigToMachineGroupResponse(LogResponse):
     """ The response of the apply_config_to_machine_group API from log.
-    
+
     :type header: dict
     :param header: ApplyConfigToMachineGroupResponse HTTP response header
     """
@@ -256,7 +256,7 @@ class ApplyConfigToMachineGroupResponse(LogResponse):
 
 class RemoveConfigToMachineGroupResponse(LogResponse):
     """ The response of the remove_config_to_machine_group API from log.
-    
+
     :type header: dict
     :param header: RemoveConfigToMachineGroupResponse HTTP response header
     """
@@ -271,7 +271,7 @@ class RemoveConfigToMachineGroupResponse(LogResponse):
 
 class GetMachineGroupAppliedConfigResponse(LogResponse):
     """ The response of the get_machine_group_applied_config API from log.
-    
+
     :type header: dict
     :param header: GetMachineGroupAppliedConfigResponse HTTP response header
 
@@ -307,7 +307,7 @@ class GetMachineGroupAppliedConfigResponse(LogResponse):
 
 class GetConfigAppliedMachineGroupsResponse(LogResponse):
     """ The response of the get_config_applied_machine_group API from log.
-    
+
     :type header: dict
     :param header: GetConfigAppliedMachineGroupsResponse HTTP response header
 

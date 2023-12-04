@@ -39,7 +39,7 @@ class LogtailConfigDetail(object):
     :param config_name: the config name
 
     :type logstore_name: string
-    :param logstore_name: the logstore name for the config 
+    :param logstore_name: the logstore name for the config
 
     :type endpoint: string
     :param endpoint: deprecated, set it as empty
@@ -116,7 +116,7 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
     :param config_name: the config name
 
     :type logstore_name: string
-    :param logstore_name: the logstore name for the config 
+    :param logstore_name: the logstore name for the config
 
     :type endpoint: string
     :param endpoint: log data endpoint, deprecated, set it as empty
@@ -208,7 +208,7 @@ class ApsaraLogConfigDetail(LogtailConfigDetail):
     :param config_name: the config name
 
     :type logstore_name: string
-    :param logstore_name: the logstore name for the config 
+    :param logstore_name: the logstore name for the config
 
     :type endpoint: string
     :param endpoint: deprecated, set it as empty
@@ -1055,4 +1055,3 @@ class LogtailConfigGenerator(object):
     @staticmethod
     def from_json(json_value):
         return LogtailConfigGenerator.generate_config(json_value)
-

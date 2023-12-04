@@ -14,7 +14,7 @@
     ],
     "timeFormat": "%Y",
 
-  
+
     "localStorage": false,
     "enableRawLog": true,
     "topicFormat": "(file_reg_for_topic).*",

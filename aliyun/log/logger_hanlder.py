@@ -10,8 +10,8 @@ from .version import LOGGING_HANDLER_USER_AGENT
 from .auth import *
 import six
 try:
-    from collections.abc import Callable	
-except ImportError:	
+    from collections.abc import Callable
+except ImportError:
     from collections import Callable
 import six
 
@@ -575,4 +575,3 @@ class UwsgiQueuedLogHandler(QueuedLogHandler):
     def stop(self):
         self.stop_time = time()
         self.stop_flag = True
-
