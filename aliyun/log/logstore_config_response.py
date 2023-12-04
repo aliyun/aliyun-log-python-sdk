@@ -64,6 +64,7 @@ class GetLogStoreResponse(LogResponse):
         self.encrypt_conf = None
         self.mode = None
         self.hot_ttl=-1;
+        self.infrequent_access_ttl=-1
         if 'hot_ttl' in resp:
             self.hot_ttl= int(resp['hot_ttl'])
         if 'encrypt_conf' in resp:
@@ -93,6 +94,11 @@ class GetLogStoreResponse(LogResponse):
         :return:
         """
         return self.hot_ttl
+    def get_infrequent_access_ttl(self):
+        """
+        :return:
+        """
+        return self.infrequent_access_ttl
     def get_enable_tracking(self):
         """
 

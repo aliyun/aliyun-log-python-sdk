@@ -252,7 +252,9 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
                                         append_meta=ret.append_meta,
                                         auto_split=ret.auto_split,
                                         max_split_shard=ret.max_split_shard,
-                                        preserve_storage=ret.preserve_storage)
+                                        preserve_storage=ret.preserve_storage,
+                                        hot_ttl=ret.get_hot_ttl(),
+                                        infrequent_access_ttl=ret.get_infrequent_access_ttl())
     except LogException as ex:
         if ex.get_error_code().lower() == "logstorealreadyexist":
             # update logstore's settings
@@ -262,8 +264,9 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
                                             append_meta=ret.append_meta,
                                             auto_split=ret.auto_split,
                                             max_split_shard=ret.max_split_shard,
-                                            preserve_storage=ret.preserve_storage
-                                            )
+                                            preserve_storage=ret.preserve_storage,
+                                            hot_ttl=ret.get_hot_ttl(),
+                                            infrequent_access_ttl=ret.get_infrequent_access_ttl())
 
             # arrange shard to expected count
             res = arrange_shard(to_client, to_project, to_logstore, min(expected_rwshard_count, MAX_INIT_SHARD_COUNT))
