@@ -193,7 +193,7 @@ class IndexLineConfig(object):
     def from_json(self, json_value):
         self.token_list = json_value["token"]
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
-        self.chn = bool(json_value["caseSensitive"]) if "caseSensitive" in json_value else None
+        self.chn = bool(json_value["chn"]) if "chn" in json_value else None
 
 
 class IndexConfig(object):
