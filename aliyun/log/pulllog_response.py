@@ -161,6 +161,8 @@ class PullLogResponse(LogResponse):
                 item = {u'__time__': six.text_type(log.Time) if time_as_str else log.Time,
                         u'__topic__': logGroup.Topic,
                         u'__source__': logGroup.Source}
+                if log.Time_ns:
+                    item[u'__time_ns_part__'] = log.Time_ns
                 item.update(tags)
                 for content in log.Contents:
                     item[PullLogResponse._b2u(content.Key) if decode_bytes else content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value
