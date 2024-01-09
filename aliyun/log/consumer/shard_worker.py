@@ -30,7 +30,7 @@ class ShardConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
 
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
-                 max_fetch_log_group_size=1000, executor=None, cursor_end_time=None):
+                 max_fetch_log_group_size=1000, executor=None, cursor_end_time=None, query=None):
         self.log_client = log_client
         self.shard_id = shard_id
         self.consumer_name = consumer_name
@@ -60,7 +60,7 @@ class ShardConsumerWorker(object):
         self.last_success_fetch_time = 0
         self.last_success_fetch_time_with_data = 0
         self.save_last_checkpoint = False
-
+        self.query = query
         self.logger = ShardConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"shard_consumer_worker": self})
 
@@ -97,6 +97,8 @@ class ShardConsumerWorker(object):
                                                             task_result.get_cursor())
                 self.next_fetch_cursor = task_result.get_cursor()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
+                self.rawLogGroupCountBeforeQuery = task_result.get_raw_log_group_count_before_query()
+                self.lastFetchRawSizeBeforeQuery = task_result.get_raw_size_before_query()
                 if self.last_fetch_count > 0:
                     self.last_success_fetch_time_with_data = time.time()
                     self.save_last_checkpoint = False
@@ -128,7 +130,7 @@ class ShardConsumerWorker(object):
                         self.executor.submit(consumer_fetch_task,
                                              self.log_client, self.shard_id, self.next_fetch_cursor,
                                              max_fetch_log_group_size=self.max_fetch_log_group_size,
-                                             end_cursor=self.fetch_end_cursor)
+                                             end_cursor=self.fetch_end_cursor, query=self.query)
                 else:
                     self.fetch_data_future = None
             else:

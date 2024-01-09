@@ -31,6 +31,7 @@ class PullLogResponse(LogResponse):
         self._is_bytes_type = None
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
+        self.raw_data_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         self.loggroup_list = LogGroupList()
 
         self._parse_loggroup_list(resp)
@@ -74,6 +75,9 @@ class PullLogResponse(LogResponse):
         if index < 0 or index >= len(self.loggroup_list.LogGroups):
             return None
         return self.loggroup_list.LogGroups[index]
+
+    def get_raw_data_size(self):
+        return self.raw_data_size
 
     def log_print(self):
         print('PullLogResponse')

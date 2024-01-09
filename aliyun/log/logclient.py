@@ -1079,7 +1079,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None):
         """ batch pull log data from log service
         Unsuccessful operation will cause an LogException.
 
@@ -1104,6 +1104,9 @@ class LogClient(object):
         :type compress: boolean
         :param compress: if use zip compress for transfer data, default is True
 
+        :type query: string
+        :param query: the SPL query for rule-based filtering
+
         :return: PullLogResponse
         
         :raise: LogException
@@ -1126,6 +1129,10 @@ class LogClient(object):
         params['cursor'] = cursor
         count = count or 1000
         params['count'] = str(count)
+        if query:
+            params['pullMode'] = "scan_on_stream"
+            params['responseWithMeta'] = "true"
+            params['query'] = query
         if end_cursor:
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
@@ -2499,7 +2506,7 @@ class LogClient(object):
         type resource_group_id: string
         :param resource_group_id: the resource group id, the project created will put in the resource group
 
-        :return: CreateProjectResponse 
+        :return: CreateProjectResponse
 
         :raise: LogException
         """
