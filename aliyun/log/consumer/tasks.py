@@ -126,6 +126,9 @@ class FetchTaskResult(TaskResult):
     def get_cursor(self):
         return self.cursor
 
+    def get_raw_size(self):
+        return self.raw_size
+
     def get_raw_size_before_query(self):
         return self.raw_size_before_query
 
@@ -192,18 +195,19 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_g
             response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query)
             fetch_log_group_list = response.get_loggroup_list()
             next_cursor = response.get_next_cursor()
+            raw_size = response.get_raw_size()
             raw_size_before_query = 0
             raw_log_group_count_before_query = 0
             if query:
-                raw_size_before_query = response.get_raw_data_size()
-                raw_log_group_count_before_query = response.get_loggroup_count()
+                raw_size_before_query = response.get_raw_size_before_query()
+                raw_log_group_count_before_query = response.get_raw_log_group_count_before_query()
             logger.debug("shard id = %s cursor = %s next cursor = %s size: %s",
                          shard_id, cursor, next_cursor,
                          response.get_log_count())
             if not next_cursor:
-                return FetchTaskResult(fetch_log_group_list, cursor, raw_size_before_query, raw_log_group_count_before_query)
+                return FetchTaskResult(fetch_log_group_list, cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
             else:
-                return FetchTaskResult(fetch_log_group_list, next_cursor, raw_size_before_query, raw_log_group_count_before_query)
+                return FetchTaskResult(fetch_log_group_list, next_cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
         except LogException as e:
             exception = e
         except Exception as e1:

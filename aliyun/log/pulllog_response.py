@@ -31,9 +31,10 @@ class PullLogResponse(LogResponse):
         self._is_bytes_type = None
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
-        self.raw_data_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        self.raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        self.raw_log_group_count_before_query = None
+        self.raw_size_before_query = None
         self.loggroup_list = LogGroupList()
-
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
@@ -76,8 +77,16 @@ class PullLogResponse(LogResponse):
             return None
         return self.loggroup_list.LogGroups[index]
 
-    def get_raw_data_size(self):
-        return self.raw_data_size
+    def get_raw_size(self):
+        return self.raw_size
+
+    def get_raw_log_group_count_before_query(self):
+        self.raw_log_group_count_before_query = int(Util.h_v_t(self.headers, 'x-log-rawdatacount'))
+        return self.raw_log_group_count_before_query
+
+    def get_raw_size_before_query(self):
+        self.raw_size_before_query = int(Util.h_v_t(self.headers, 'x-log-rawdatasize'))
+        return self.raw_size_before_query
 
     def log_print(self):
         print('PullLogResponse')

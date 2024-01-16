@@ -1146,7 +1146,6 @@ class LogClient(object):
             else:
                 raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=resp)
         elif compress_type in ('gzip', 'deflate'):
-            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
             raw_data = zlib.decompress(resp)
             return PullLogResponse(raw_data, header)
         else:
