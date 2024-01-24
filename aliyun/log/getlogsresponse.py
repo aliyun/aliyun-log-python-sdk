@@ -15,10 +15,10 @@ import json
 
 class GetLogsResponse(LogResponse):
     """ The response of the GetLog API from log.
-    
+
     :type resp: dict
     :param resp: GetLogsResponse HTTP response body
-    
+
     :type header: dict
     :param header: GetLogsResponse HTTP response header
     """
@@ -72,21 +72,21 @@ class GetLogsResponse(LogResponse):
 
     def get_count(self):
         """ Get log number from the response
-        
+
         :return: int, log number
         """
         return len(self.logs)
 
     def is_completed(self):
         """ Check if the get logs query is completed
-        
+
         :return: bool, true if this logs query is completed
         """
         return self.progress == 'Complete'
 
     def get_logs(self):
         """ Get all logs from the response
-        
+
         :return: QueriedLog list, all log data
         """
         return self.logs

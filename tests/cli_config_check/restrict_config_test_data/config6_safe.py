@@ -109,4 +109,3 @@ TRANSFORM_EVENT_v155 = (ANY,   {"combine": ZIP("f1", "f2", sep="|")} )
 TRANSFORM_EVENT_v156 = (ANY,   {"combine": ZIP("f1", "f2", quote='|')} )
 TRANSFORM_EVENT_v157 = (ANY,   {"combine": ZIP("f1", "f2", combine_sep="|")} )
 TRANSFORM_EVENT_v160 = (ANY,  {"combine": ZIP("f1", "f2", lparse=(",", '|'), rparse=(",", '"'))} )
-

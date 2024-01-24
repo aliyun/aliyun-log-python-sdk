@@ -32,7 +32,7 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>=3.4.0,<4.0.0',
+    'protobuf>3.4.0,<4.0.0',
 ]
 requirements_py2 = [
     'six==1.14.0',
@@ -42,7 +42,7 @@ requirements_py2 = [
     'jmespath==0.9.5',
     'enum34==1.1.10',
     'futures==3.3.0',
-    'protobuf<=3.4.0',
+    'protobuf>3.4.0,<4.0.0',
     'regex==2021.3.17',
     'tzlocal==2.0.0',
     'lz4a==0.7.0',
@@ -90,7 +90,7 @@ classifiers = [
 
 
 long_description = """
-Python SDK for Alicloud Log Service 
+Python SDK for Alicloud Log Service
 http://aliyun-log-python-sdk.readthedocs.io
 """
 

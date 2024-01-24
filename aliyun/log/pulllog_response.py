@@ -18,7 +18,7 @@ DEFAULT_DECODE_LIST = ('utf8',)
 
 class PullLogResponse(LogResponse):
     """ The response of the pull_logs API from log.
-    
+
     :type header: dict
     :param header: PullLogResponse HTTP response header
 

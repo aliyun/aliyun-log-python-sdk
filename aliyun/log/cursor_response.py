@@ -10,7 +10,7 @@ from .logresponse import LogResponse
 
 class GetCursorResponse(LogResponse):
     """ The response of the get_cursor API from log.
-    
+
     :type header: dict
     :param header: ListShardResponse HTTP response header
 

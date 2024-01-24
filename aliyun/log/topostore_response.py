@@ -4,7 +4,7 @@ from .topostore_params import *
 from .util import Util
 
 __all__ = ['CreateTopostoreResponse', 'DeleteTopostoreResponse',
-         'GetTopostoreResponse', 'UpdateTopostoreResponse',"ListTopostoresResponse", 
+         'GetTopostoreResponse', 'UpdateTopostoreResponse',"ListTopostoresResponse",
         'CreateTopostoreNodeResponse', 'DeleteTopostoreNodeResponse',
         'GetTopostoreNodeResponse','UpsertTopostoreNodeResponse', 'UpdateTopostoreNodeResponse',"ListTopostoreNodesResponse",
         'CreateTopostoreRelationResponse', 'DeleteTopostoreRelationResponse',
@@ -466,4 +466,3 @@ class GetTopostoreRelationResponse(LogResponse):
         print('GetTopostoreRelationResponse:')
         print('headers:', self.get_all_headers())
         print('relation: ', self.relation)
-

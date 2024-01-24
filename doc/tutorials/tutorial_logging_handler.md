@@ -107,17 +107,17 @@ aliyunlog log update_index --project_name="project1" --logstore_name="logstore1"
 
 | 域 | 说明 |
 | -- | -- |
-| message | 消息内容 | 
-| record_name | logging handler的名字，上面例子是`sls` | 
-| level | 级别，INFO、ERROR等 | 
+| message | 消息内容 |
+| record_name | logging handler的名字，上面例子是`sls` |
+| level | 级别，INFO、ERROR等 |
 | file_path | 代码文件全路径 |
 | func_name | 所在函数名 |
-| line_no | 行号 | 
-| module | 所在模块 | 
-| thread_id | 当前线程Id | 
-| thread_name | 当前线程名 | 
-| process_id | 当前进程Id | 
-| process_name | 当前进程名 | 
+| line_no | 行号 |
+| module | 所在模块 |
+| thread_id | 当前线程Id |
+| thread_name | 当前线程名 |
+| process_id | 当前进程Id |
+| process_name | 当前进程名 |
 
 参考类[QueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.QueuedLogHandler)的参数`fields`接受一个列表来调整想要配置的域。
 进一步参考[日志域列表](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.LogFields)
@@ -180,7 +180,7 @@ logger.info("Hello world")
 
 ## UWSGI下使用Python Logging Handler
 
-这里主要介绍了`QueuedLogHandler`, 但是在UWSGI下因为进程调度模型的原因, **这个类无法正常工作**. 因此提供了另外2个Handler, 如下: 
+这里主要介绍了`QueuedLogHandler`, 但是在UWSGI下因为进程调度模型的原因, **这个类无法正常工作**. 因此提供了另外2个Handler, 如下:
 
 - [UwsgiQueuedLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.UwsgiQueuedLogHandler) - **这个类目前在实验阶段，因uwsgi机制，会出现特定进程被kill后丢失，不推荐使用**, 配置一样. 需要额外安装一个第三方法库`uwsgidecorators`
 - [SimpleLogHandler](https://aliyun-log-python-sdk.readthedocs.io/api.html#aliyun.log.SimpleLogHandler) - 即时发送的简单Logging Handler, 配置完全一样. 在数据量不大的情况下可以使用（例如每日100万条内）.

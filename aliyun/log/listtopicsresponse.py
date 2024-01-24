@@ -13,7 +13,7 @@ class ListTopicsResponse(LogResponse):
 
     :type resp: dict
     :param resp: ListTopicsResponse HTTP response body
-    
+
     :type header: dict
     :param header: ListTopicsResponse HTTP response header
     """
@@ -26,14 +26,14 @@ class ListTopicsResponse(LogResponse):
 
     def get_count(self):
         """ Get the number of all the topics from the response
-        
+
         :return: int, the number of all the topics from the response
         """
         return self.count
 
     def get_topics(self):
         """ Get all the topics from the response
-        
+
         :return: list, topic list
         """
         return self.topics
@@ -41,7 +41,7 @@ class ListTopicsResponse(LogResponse):
     def get_next_token(self):
         """ Return the next token from the response. If there is no more topic
         to list, it will return None
-        
+
         :return: string, next token used to list more topics
         """
         return self.nextToken

@@ -9,10 +9,10 @@ from .logresponse import LogResponse
 
 class ListLogstoresResponse(LogResponse):
     """ The response of the ListLogstores API from log.
-    
+
     :type resp: dict
     :param resp: ListLogstoresResponse HTTP response body
-    
+
     :type header: dict
     :param header: ListLogstoresResponse HTTP response header
     """
@@ -25,7 +25,7 @@ class ListLogstoresResponse(LogResponse):
 
     def get_count(self):
         """ Get total count of logstores from the response
-        
+
         :return: int, the number of total logstores from the response
         """
         return self.count
@@ -35,7 +35,7 @@ class ListLogstoresResponse(LogResponse):
 
     def get_logstores(self):
         """ Get all the logstores from the response
-        
+
         :return: list, all logstores
         """
         return self.logstores

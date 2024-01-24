@@ -10,4 +10,3 @@ def p(fn): pass
 def sls_eu_my_logic(event):
     event["hello"] = "world"
     return event
-

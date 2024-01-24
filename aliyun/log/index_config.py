@@ -27,7 +27,7 @@ class IndexJsonKeyConfig(object):
         self.json_keys = {}
 
     """
-    Inner key config in json, if the json value is : 
+    Inner key config in json, if the json value is :
     json_key : {
         "map_1" : {
             "k_1" : "v_1",
@@ -230,7 +230,7 @@ class IndexConfig(object):
         self.docvalue_max_text_len = 0
 
     '''
-    :type max_len : int 
+    :type max_len : int
     :param max_len : the max len  of the docvalue
     '''
 
@@ -238,16 +238,16 @@ class IndexConfig(object):
         self.docvalue_max_text_len = max_len
 
     '''
-    :type black_list : list 
-    :param black_list : the list of black list keys for log reduce, e.g black_list = ["key_1", "key_2"] 
+    :type black_list : list
+    :param black_list : the list of black list keys for log reduce, e.g black_list = ["key_1", "key_2"]
     '''
 
     def set_log_reduce_black_list(self, black_list):
         self.log_reduce_black_list = black_list
 
     '''
-    :type white_list : list 
-    :param white_list : the list of white list keys for log reduce, e.g white_list = ["key_1", "key_2"] 
+    :type white_list : list
+    :param white_list : the list of white list keys for log reduce, e.g white_list = ["key_1", "key_2"]
     '''
 
     def set_log_reduce_white_list(self, white_list):

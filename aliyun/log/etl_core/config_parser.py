@@ -74,4 +74,3 @@ class ConfigParser(ast.NodeVisitor):
 
         self.visit(ast.parse(code))
         return sorted(self.name_list + self.fn_list, key=lambda x: x[0])
-

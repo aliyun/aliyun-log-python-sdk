@@ -210,5 +210,3 @@ class ExternalStoreCsvConfig(ExternalStoreConfigBase):
         print("storeType", self.storeType)
         print("columns", self.columns)
         #print("objects", self.objects)
-
-

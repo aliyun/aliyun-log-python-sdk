@@ -102,4 +102,3 @@ class ListEntityResponse(LogResponse):
         }
 
         return self
-

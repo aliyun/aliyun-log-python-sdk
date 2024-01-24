@@ -31,4 +31,3 @@ message LogGroupList
 {
     repeated LogGroup LogGroups = 1;
 }
-

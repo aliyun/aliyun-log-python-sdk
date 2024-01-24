@@ -9,13 +9,13 @@ import json
 
 class LogException(Exception):
     """The Exception of the log request & response.
-    
+
     :type errorCode: string
-    :param errorCode: log service error code 
-    
+    :param errorCode: log service error code
+
     :type errorMessage: string
     :param errorMessage: detailed information for the exception
-    
+
     :type requestId: string
     :param requestId: the request id of the response, '' is set if client error
     """
@@ -44,21 +44,21 @@ class LogException(Exception):
 
     def get_error_code(self):
         """ return error code of exception
-        
+
         :return: string, error code of exception.
         """
         return self._errorCode
 
     def get_error_message(self):
         """ return error message of exception
-        
+
         :return: string, error message of exception.
         """
         return self._errorMessage
 
     def get_request_id(self):
         """ return request id of exception. if client exception, request id is empty string
-        
+
         :return: string, request id of exception.
         """
         return self._requestId

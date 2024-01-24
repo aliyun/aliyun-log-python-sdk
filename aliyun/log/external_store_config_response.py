@@ -13,7 +13,7 @@ from .external_store_config import ExternalStoreConfigBase
 
 class CreateExternalStoreResponse(LogResponse):
     """ The response of the create_logstore API from log.
-    
+
     :type header: dict
     :param header: CreateExternalStoreResponse HTTP response header
     """
@@ -28,7 +28,7 @@ class CreateExternalStoreResponse(LogResponse):
 
 class DeleteExternalStoreResponse(LogResponse):
     """ The response of the delete_logstore API from log.
-    
+
     :type header: dict
     :param header: DeleteExternalStoreResponse HTTP response header
     """
@@ -43,7 +43,7 @@ class DeleteExternalStoreResponse(LogResponse):
 
 class GetExternalStoreResponse(LogResponse):
     """ The response of the get_logstore API from log.
-    
+
     :type header: dict
     :param header: GetExternalStoreResponse HTTP response header
 
@@ -74,7 +74,7 @@ class GetExternalStoreResponse(LogResponse):
 
 class UpdateExternalStoreResponse(LogResponse):
     """ The response of the update_logstore API from log.
-    
+
     :type header: dict
     :param header: UpdateExternalStoreResponse HTTP response header
     """
@@ -90,7 +90,7 @@ class UpdateExternalStoreResponse(LogResponse):
 
 class ListExternalStoreResponse(LogResponse):
     """ The response of the list_logstore API from log.
-    
+
     :type header: dict
     :param header: ListExternalStoreResponse HTTP response header
 

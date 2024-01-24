@@ -38,4 +38,3 @@ sls_en_df1 = DROP_F(["remote_addr"])
 sls_en_df2 = DROP_F("http_user_agent")
 
 sls_en_rf1 = RENAME({"real_client_ip": "client_ip"})
-
