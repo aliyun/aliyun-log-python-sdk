@@ -199,8 +199,8 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_g
             raw_size_before_query = 0
             raw_log_group_count_before_query = 0
             if query:
-                raw_size_before_query = response.get_raw_size_before_query()
-                raw_log_group_count_before_query = response.get_raw_log_group_count_before_query()
+                raw_size_before_query = max(response.get_raw_size_before_query(), 0)
+                raw_log_group_count_before_query = max(response.get_raw_log_group_count_before_query(), 0)
             logger.debug("shard id = %s cursor = %s next cursor = %s size: %s",
                          shard_id, cursor, next_cursor,
                          response.get_log_count())

@@ -81,11 +81,11 @@ class PullLogResponse(LogResponse):
         return self.raw_size
 
     def get_raw_log_group_count_before_query(self):
-        self.raw_log_group_count_before_query = int(Util.h_v_t(self.headers, 'x-log-rawdatacount'))
+        self.raw_log_group_count_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatacount', '-1'))
         return self.raw_log_group_count_before_query
 
     def get_raw_size_before_query(self):
-        self.raw_size_before_query = int(Util.h_v_t(self.headers, 'x-log-rawdatasize'))
+        self.raw_size_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatasize', '-1'))
         return self.raw_size_before_query
 
     def log_print(self):
