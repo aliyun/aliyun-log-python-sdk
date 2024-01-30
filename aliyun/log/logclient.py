@@ -1131,7 +1131,6 @@ class LogClient(object):
         params['count'] = str(count)
         if query:
             params['pullMode'] = "scan_on_stream"
-            params['responseWithMeta'] = "true"
             params['query'] = query
         if end_cursor:
             params['end_cursor'] = end_cursor

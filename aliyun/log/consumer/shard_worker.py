@@ -121,7 +121,7 @@ class ShardConsumerWorker(object):
                 is_generate_fetch_task = True
                 fetch_size = self.last_fetch_size
                 fetch_count = self.last_fetch_count
-                if self.query is not None:
+                if self.query:
                     fetch_size = self.rawSizeBeforeQuery
                     fetch_count = self.rawLogGroupCountBeforeQuery
 
