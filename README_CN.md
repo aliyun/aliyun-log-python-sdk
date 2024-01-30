@@ -543,8 +543,6 @@ print(res.get_cursor_time())
 from time import time
 res = client.get_cursor('project1', 'logstore1', shard_id=0, start_time=int(time())-3600)
 res = client.pull_logs('project1', 'logstore1', shard_id=0, cursor=res.get_cursor())
-# 使用Query过滤消费，基于规则消费可设置对应规则 如 *| where a = 'xxx'
-res = client.pull_logs('project1', 'logstore1', shard_id=0, cursor=res.get_cursor(), query="*| where a = 'xxx'")
 res.log_print()
 
 # 或者

@@ -10,7 +10,9 @@ accessKeyId = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSID', '')
 accessKey = os.environ.get('ALIYUN_LOG_SAMPLE_ACCESSKEY', '')
 project = os.environ.get('ALIYUN_LOG_SAMPLE_PROJECT', '')
 logstore = os.environ.get('ALIYUN_LOG_SAMPLE_LOGSTORE', '')
-query = '* | where 1 = 1'
+query = ''' 
+* | where cast(body_bytes_sent as bigint) > 14000
+'''
 
 class SampleConsumer(ConsumerProcessorBase):
     shard_id = -1

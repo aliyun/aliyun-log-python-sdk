@@ -210,6 +210,8 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_g
                 return FetchTaskResult(fetch_log_group_list, next_cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
         except LogException as e:
             exception = e
+            if exception.get_resp_status() == 403:
+                time.sleep(5)
         except Exception as e1:
             logger.error(e1, exc_info=True)
             raise Exception(e1)

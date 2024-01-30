@@ -65,3 +65,6 @@ class LogException(Exception):
 
     def get_resp_body(self):
         return self.resp_body
+
+    def get_resp_status(self):
+        return self.resp_status
