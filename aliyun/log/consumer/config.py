@@ -47,7 +47,7 @@ class LogHubConfig(object):
         :param cursor_end_time: cursor end time, default is None (never stop processing). could setting it as ISO time-format, when setting it as "end", it means process all logs received from start to the time when the consumer is started.
         :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4
         :param region: region of project
-        :param query: the SPL query for rule-based filtering
+        :param query: the SPL query, such as *| where a = 'xxx'
         """
         self.endpoint = endpoint
         self.accessKeyId = access_key_id

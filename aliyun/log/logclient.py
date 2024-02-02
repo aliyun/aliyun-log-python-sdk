@@ -1105,7 +1105,7 @@ class LogClient(object):
         :param compress: if use zip compress for transfer data, default is True
 
         :type query: string
-        :param query: the SPL query for rule-based filtering
+        :param query: the SPL query, such as *| where a = 'xxx'
 
         :return: PullLogResponse
 
