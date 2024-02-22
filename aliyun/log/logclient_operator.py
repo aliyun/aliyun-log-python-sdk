@@ -390,9 +390,9 @@ def get_encoder_cls(encodings):
 
 def dump_worker(client, project_name, logstore_name, from_time, to_time,
                 shard_id, file_path,
-                batch_size=None, compress=None, encodings=None, no_escape=None):
+                batch_size=None, compress=None, encodings=None, no_escape=None, query=None):
     res = client.pull_log(project_name, logstore_name, shard_id, from_time, to_time, batch_size=batch_size,
-                          compress=compress)
+                          compress=compress, query=query)
     encodings = encodings or ('utf8', 'latin1', 'gbk')
     ensure_ansi = not no_escape
 
@@ -436,7 +436,7 @@ def dump_worker(client, project_name, logstore_name, from_time, to_time,
 
 
 def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_path, batch_size=None, compress=None,
-                  encodings=None, shard_list=None, no_escape=None):
+                  encodings=None, shard_list=None, no_escape=None, query=None):
     cpu_count = multiprocessing.cpu_count() * 2
 
     shards = client.list_shards(project_name, logstore_name).get_shards_info()
@@ -449,7 +449,7 @@ def pull_log_dump(client, project_name, logstore_name, from_time, to_time, file_
     with ProcessPoolExecutor(max_workers=worker_size) as pool:
         futures = [pool.submit(dump_worker, client, project_name, logstore_name, from_time, to_time,
                                shard_id=shard, file_path=file_path.format(shard),
-                               batch_size=batch_size, compress=compress, encodings=encodings, no_escape=no_escape)
+                               batch_size=batch_size, compress=compress, encodings=encodings, no_escape=no_escape, query=query)
                    for shard in target_shards]
 
         for future in as_completed(futures):
