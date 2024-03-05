@@ -30,7 +30,7 @@ class ShardConsumerWorkerLoggerAdapter(logging.LoggerAdapter):
 
 class ShardConsumerWorker(object):
     def __init__(self, log_client, shard_id, consumer_name, processor, cursor_position, cursor_start_time,
-                 max_fetch_log_group_size=1000, executor=None, cursor_end_time=None):
+                 max_fetch_log_group_size=1000, executor=None, cursor_end_time=None, query=None):
         self.log_client = log_client
         self.shard_id = shard_id
         self.consumer_name = consumer_name
@@ -57,10 +57,13 @@ class ShardConsumerWorker(object):
         self.last_log_error_time = 0
         self.last_fetch_time = 0
         self.last_fetch_count = 0
+        self.last_fetch_size = 0
+        self.rawLogGroupCountBeforeQuery = 0
+        self.rawSizeBeforeQuery = 0
         self.last_success_fetch_time = 0
         self.last_success_fetch_time_with_data = 0
         self.save_last_checkpoint = False
-
+        self.query = query
         self.logger = ShardConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"shard_consumer_worker": self})
 
@@ -97,6 +100,9 @@ class ShardConsumerWorker(object):
                                                             task_result.get_cursor())
                 self.next_fetch_cursor = task_result.get_cursor()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
+                self.last_fetch_size = task_result.get_raw_size()
+                self.rawLogGroupCountBeforeQuery = task_result.get_raw_log_group_count_before_query()
+                self.rawSizeBeforeQuery = task_result.get_raw_size_before_query()
                 if self.last_fetch_count > 0:
                     self.last_success_fetch_time_with_data = time.time()
                     self.save_last_checkpoint = False
@@ -113,22 +119,26 @@ class ShardConsumerWorker(object):
             if task_result is None or task_result.get_exception() is None:
                 # flag to indicate if it's done
                 is_generate_fetch_task = True
+                fetch_size = self.last_fetch_size
+                fetch_count = self.last_fetch_count
+                if self.query:
+                    fetch_size = self.rawSizeBeforeQuery
+                    fetch_count = self.rawLogGroupCountBeforeQuery
 
                 # throttling control, similar as Java's SDK
-                if self.last_fetch_count < 100:
+                if fetch_size < 1024 * 1024 and fetch_count < 100 and fetch_count < self.max_fetch_log_group_size:
                     is_generate_fetch_task = (time.time() - self.last_fetch_time) > 0.5
-                elif self.last_fetch_count < 500:
+                elif fetch_size < 2 * 1024 * 1024 and fetch_count < 500 and fetch_count < self.max_fetch_log_group_size:
                     is_generate_fetch_task = (time.time() - self.last_fetch_time) > 0.2
-                elif self.last_fetch_count < 1000:
+                elif fetch_size < 4 * 1024 * 1024 and fetch_count < 1000 and fetch_count < self.max_fetch_log_group_size:
                     is_generate_fetch_task = (time.time() - self.last_fetch_time) > 0.05
-
                 if is_generate_fetch_task:
                     self.last_fetch_time = time.time()
                     self.fetch_data_future = \
                         self.executor.submit(consumer_fetch_task,
                                              self.log_client, self.shard_id, self.next_fetch_cursor,
                                              max_fetch_log_group_size=self.max_fetch_log_group_size,
-                                             end_cursor=self.fetch_end_cursor)
+                                             end_cursor=self.fetch_end_cursor, query=self.query)
                 else:
                     self.fetch_data_future = None
             else:

@@ -31,8 +31,10 @@ class PullLogResponse(LogResponse):
         self._is_bytes_type = None
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
+        self.raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        self.raw_log_group_count_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatacount', '-1'))
+        self.raw_size_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatasize', '-1'))
         self.loggroup_list = LogGroupList()
-
         self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
@@ -74,6 +76,15 @@ class PullLogResponse(LogResponse):
         if index < 0 or index >= len(self.loggroup_list.LogGroups):
             return None
         return self.loggroup_list.LogGroups[index]
+
+    def get_raw_size(self):
+        return self.raw_size
+
+    def get_raw_log_group_count_before_query(self):
+        return self.raw_log_group_count_before_query
+
+    def get_raw_size_before_query(self):
+        return self.raw_size_before_query
 
     def log_print(self):
         print('PullLogResponse')
@@ -157,6 +168,8 @@ class PullLogResponse(LogResponse):
                 item = {u'__time__': six.text_type(log.Time) if time_as_str else log.Time,
                         u'__topic__': logGroup.Topic,
                         u'__source__': logGroup.Source}
+                if log.Time_ns:
+                    item[u'__time_ns_part__'] = log.Time_ns
                 item.update(tags)
                 for content in log.Contents:
                     item[PullLogResponse._b2u(content.Key) if decode_bytes else content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value
