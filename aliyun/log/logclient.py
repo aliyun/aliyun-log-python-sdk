@@ -1129,6 +1129,8 @@ class LogClient(object):
         params['cursor'] = cursor
         count = count or 1000
         params['count'] = str(count)
+        if isinstance(query, str) and len(query.strip()) <= 0:
+            query = None
         if query:
             params['pullMode'] = "scan_on_stream"
             params['query'] = query
