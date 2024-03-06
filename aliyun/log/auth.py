@@ -68,7 +68,7 @@ class AuthV1(AuthBase):
         if body:
             headers['Content-MD5'] = Util.cal_md5(body)
         if not self.access_key_secret:
-            return six.b('')
+            raise ValueError('invalid access_key_secret:{}'.format(self.access_key_secret))
         content = method + '\n'
         if 'Content-MD5' in headers:
             content += headers['Content-MD5']
@@ -90,6 +90,8 @@ class AuthV4(AuthBase):
         self._region = region
 
     def sign_request(self, method, resource, params, headers, body):
+        if not self.access_key_secret:
+            raise ValueError('invalid access_key_secret:{}'.format(self.access_key_secret))
         current_time = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
         headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time)
 
