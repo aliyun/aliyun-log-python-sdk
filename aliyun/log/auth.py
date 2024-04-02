@@ -32,17 +32,16 @@ AUTH_VERSION_1 = 'v1'
 AUTH_VERSION_4 = 'v4'
 
 
-def make_auth(access_key_id, access_key_secret, auth_version=AUTH_VERSION_1, region=''):
+def make_auth(credentials_provider, auth_version=AUTH_VERSION_1, region=''):
     if auth_version == AUTH_VERSION_4:
-        return AuthV4(access_key_id, access_key_secret, region)
+        return AuthV4(credentials_provider, region)
     else:
-        return AuthV1(access_key_id, access_key_secret)
+        return AuthV1(credentials_provider)
 
 
 class AuthBase(object):
-    def __init__(self, access_key_id, access_key_secret):
-        self.access_key_id = access_key_id
-        self.access_key_secret = access_key_secret
+    def __init__(self, credentials_provider):
+        self.credentials_provider = credentials_provider
 
     def sign_request(self, method, resource, params, headers, body):
         pass
@@ -50,8 +49,8 @@ class AuthBase(object):
 
 class AuthV1(AuthBase):
 
-    def __init__(self, access_key_id, access_key_secret):
-        AuthBase.__init__(self, access_key_id, access_key_secret)
+    def __init__(self, credentials_provider):
+        AuthBase.__init__(self, credentials_provider)
 
     @staticmethod
     def _getGMT():
@@ -62,12 +61,16 @@ class AuthV1(AuthBase):
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     def sign_request(self, method, resource, params, headers, body):
+        credentials = self.credentials_provider.get_credentials()
+        if credentials.get_security_token():
+            headers['x-acs-security-token'] = credentials.get_security_token()
+
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         headers['Date'] = self._getGMT()
 
         if body:
             headers['Content-MD5'] = Util.cal_md5(body)
-        if not self.access_key_secret:
+        if not credentials.get_access_key_secret():
             return six.b('')
         content = method + '\n'
         if 'Content-MD5' in headers:
@@ -79,14 +82,14 @@ class AuthV1(AuthBase):
         content += headers['Date'] + '\n'
         content += Util.canonicalized_log_headers(headers)
         content += Util.canonicalized_resource(resource, params)
-        signature = Util.hmac_sha1(content, self.access_key_secret)
-        headers['Authorization'] = 'LOG ' + self.access_key_id + ':' + signature
+        signature = Util.hmac_sha1(content, credentials.get_access_key_secret())
+        headers['Authorization'] = 'LOG ' + credentials.get_access_key_id() + ':' + signature
         headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
 
 
 class AuthV4(AuthBase):
-    def __init__(self, access_key_id, access_key_secret, region):
-        AuthBase.__init__(self, access_key_id, access_key_secret)
+    def __init__(self, credentials_provider, region):
+        AuthBase.__init__(self, credentials_provider)
         self._region = region
 
     def sign_request(self, method, resource, params, headers, body):
@@ -94,6 +97,11 @@ class AuthV4(AuthBase):
         headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time)
 
     def _do_sign_request(self, method, resource, params, headers, body, current_time):
+        credentials = self.credentials_provider.get_credentials()
+
+        if credentials.get_security_token():
+            headers['x-acs-security-token'] = credentials.get_security_token()
+
         content_sha256 = sha256(body).hexdigest() \
             if body else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         headers['x-log-content-sha256'] = content_sha256
@@ -119,8 +127,9 @@ class AuthV4(AuthBase):
                          + current_time + '\n' \
                          + scope + '\n' \
                          + sha256(canonical_request.encode('utf-8')).hexdigest()
-        signature = self.build_sign_key(self.access_key_secret, self._region, current_date, string_to_sign)
-        return 'SLS4-HMAC-SHA256 Credential=%s/%s,Signature=%s' % (self.access_key_id, scope, signature)
+        signature = self.build_sign_key(credentials.get_access_key_secret(),
+                                        self._region, current_date, string_to_sign)
+        return 'SLS4-HMAC-SHA256 Credential=%s/%s,Signature=%s' % (credentials.get_access_key_id(), scope, signature)
 
     @staticmethod
     def build_canonical_request(method, resource, params, canonical_headers, signed_headers, hashed_payload):
