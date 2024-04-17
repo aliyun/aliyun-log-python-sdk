@@ -53,12 +53,7 @@ def base64_decodestring(s):
         if isinstance(s, str):
             s = s.encode('utf8')
         return base64.decodebytes(s).decode('utf8')
-    
-def value_or_default(v, default=None):
-    """ returns default value if v is None
-        else return v
-    """
-    return v if v is not None else default
+
 
 class Util(object):
     @staticmethod
@@ -241,6 +236,13 @@ class Util(object):
             key = key.title()
 
         return header.get(key, default)
+
+    @staticmethod
+    def v_or_d(v, default=None):
+        """ returns default value if v is None
+            else return v
+        """
+        return v if v is not None else default
 
     @staticmethod
     def uncompress_response(header, response):

@@ -24,7 +24,7 @@ class QueriedLog(object):
         self.contents = contents
 
     @staticmethod
-    def from_dict(data):
+    def _from_dict(data):
         """ Initalize from dict
         """
         source = data.get("__source__", "")
@@ -36,7 +36,7 @@ class QueriedLog(object):
 
         return QueriedLog(time, source, contents)
 
-    def to_dict(self):
+    def _to_dict(self):
         res = {
             '__time__': str(self.timestamp),
             '__source__': self.source,
