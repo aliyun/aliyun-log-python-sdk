@@ -1,9 +1,7 @@
 import unittest
 
 import os
-import json
-from aliyun.log import LogClient, GetLogsV3Response, GetLogsResponse, GetLogsRequest, PutLogsRequest, LogItem
-import six
+from aliyun.log import LogClient
 import time
 
 
@@ -23,119 +21,115 @@ class TestDict(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_get_log(self):
-        print('test_get_log')
-        resp = self.client.get_log(self.project, self.logstore,
-                            self.from_time, self.to_time,
-                            query="*",
-                            reverse=True,
-                            offset=0,
-                            size=100,
-                            power_sql=True,
-                            scan=True,
-                            accurate_query=True,
-                            )
-        resp.log_print()
-        print('second query')
-        resp = self.client.get_log(self.project, self.logstore,
-                            self.from_time, self.to_time,
-                            query="*",
-                            reverse=False,
-                            offset=50,
-                            size=100,
-                            power_sql=True,
-                            scan=False,
-                            accurate_query=True,
-                            )
-        resp.log_print()
-                
-    def test_get_logs(self):
-        print('test_get_logs')
-        request=GetLogsRequest(project=self.project,
-                               logstore=self.logstore,
-                               fromTime=self.from_time,
-                               toTime=self.to_time,
-                               query="*",
-                               reverse=True,
-                               offset=0,
-                               line=100,
-                               power_sql=True,
-                               scan=True,
-                               accurate_query=True,
-                               )
-        resp = self.client.get_logs(request)
-        resp.log_print()
+    def compare(self, fn, *args, **kwargs):
+        self.client._get_log_use_post = False
+        respOld = fn(*args, **kwargs)
+        self.client._get_log_use_post = True
+        respNew = fn(*args, **kwargs)
+        self.assertCompatibility(respNew, respOld)
+        respNew.log_print()
     
-    def test_get_log_all_v2(self):
-        print('test_get_log_all_v2')
-        iter = self.client.get_log_all_v2(self.project, self.logstore,
-                                          self.to_time - 30, self.to_time,
-                                          query="*",
-                                          reverse=True,
-                                          offset=0,
-                                          power_sql=True,
-                                          scan=True)
-        for logs in iter:
-            logs.log_print()
-
-    def test_get_log_all_v3(self):
-        print('test_get_log_all_v3')
-        iter = self.client.get_log_all_v3(self.project, self.logstore,
-                                          self.to_time - 30, self.to_time,
-                                          query="*",
-                                          reverse=True,
-                                          offset=0,
-                                          power_sql=True,
-                                          scan=True)
-        logs1 = [*iter]
-        iter = self.client.get_log_all_v2(self.project, self.logstore,
-                                          self.to_time - 30, self.to_time,
-                                          query="*",
-                                          reverse=True,
-                                          offset=0,
-                                          power_sql=True,
-                                          scan=True)
-        logs2 = [*iter]
-        self.assertEquals(len(logs1), len(logs2))
-        for resp1, resp2 in zip(logs1, logs2):
-            for log1, log2 in zip(resp1.get_logs(), resp2.get_logs()):
-                self.assertLogEquals(log1, log2)
+    def compare_generator(self, fn, *args, **kwargs):
+        self.client._get_log_use_post = False
+        respOld = [*fn(*args, **kwargs)]
+        self.client._get_log_use_post = True
+        respNew = [*fn(*args, **kwargs)]
+        self.assertTrue(len(respNew) - len(respOld) <= 1 and len(respNew) - len(respOld) >= -1)
+        for resp1, resp2 in zip(respOld, respNew):
+            self.assertCompatibility(resp1, resp2)
+            resp1.log_print()
         
-    def assertLogEquals(self, log1, log2):
-        self.assertEquals(log1.timestamp, log2.timestamp)
-        self.assertEquals(log1.source, log2.source)
-        contents1 = log1.contents
-        contents2 = log2.contents
-        for content1, content2 in zip(contents1, contents2):
-            self.assertEquals(content1[0], content2[0])
-            self.assertEquals(content1[1], content2[1])
+    def test_get_log1(self):
+        print('test_get_log1')
+        self.compare(self.client.get_log, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="*",
+                     reverse=True,
+                     offset=0,
+                     size=100,
+                     power_sql=True,
+                     scan=False,
+                     accurate_query=True)
 
-    def test_get_log_v3(self):
-        print('test_get_log_v3')
-        resp1 = self.client.get_log(self.project, self.logstore,
-                            self.from_time, self.to_time,
-                            query="*",
-                            reverse=True,
-                            offset=50,
-                            size=100,
-                            power_sql=True,
-                            scan=True,
-                            accurate_query=True,
-                            )
-        resp2 = self.client.get_log_v3(self.project, self.logstore,
-                            self.from_time, self.to_time,
-                            query="*",
-                            reverse=True,
-                            offset=50,
-                            size=100,
-                            power_sql=True,
-                            scan=True,
-                            accurate_query=True,
-                            )
-        self.assertEquals(resp1.get_count(), resp2.get_count())
-        logs1 = resp1.get_logs()
-        logs2 = resp2.get_logs()
-        for log1, log2 in zip(logs1, logs2):
-            self.assertLogEquals(log1, log2)
+    def test_get_log2(self):
+        print('test_get_log2')
+        self.compare(self.client.get_log, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="* | select * limit 10,10",
+                     reverse=False,
+                     power_sql=True,
+                     scan=False,
+                     accurate_query=True)
+
+    def test_get_log3(self):
+        print('test_get_log3')
+        self.compare(self.client.get_log, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="* | select method limit 10",
+                     reverse=True,
+                     power_sql=True,
+                     scan=True,
+                     accurate_query=True)
+    
+    def test_get_log4(self):
+        print('test_get_log4')
+        self.compare(self.client.get_log, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="*",
+                     offset=0,
+                     size=10,
+                     reverse=True,
+                     power_sql=True,
+                     scan=True,
+                     accurate_query=True)
+
+    def test_get_log5(self):
+        print('test_get_log5')
+        self.compare_generator(self.client.get_log_all_v2, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="*",
+                     offset=0,
+                     reverse=False,
+                     power_sql=False,
+                     scan=False,
+                     forward=False)
+
+    def test_get_log6(self):
+        print('test_get_log6')
+        self.compare_generator(self.client.get_log_all_v2, self.project, self.logstore,
+                     self.from_time, self.to_time,
+                     query="* | select method",
+                     offset=0,
+                     reverse=True,
+                     power_sql=True,
+                     scan=True,
+                     forward=False)
+        
+    def assertCompatibility(self, resp1, resp2):
+        methods = ['is_completed', 'get_count', 'get_processed_rows',
+                   'get_has_sql', 'get_scan_all',
+                   'get_query_mode',
+                   'get_begin_offset', 'get_end_offset',]
+        for method in methods:
+            msg = "method: %s \n resp1Meta: %s \n resp1Header: %s \n resp2Meta: %s \n resp2Header: %s" % (method, 
+                resp1.get_meta()._to_dict(), resp1.get_all_headers(),
+                resp2.get_meta()._to_dict(), resp2.get_all_headers())
+            self.assertEqual(getattr(resp1, method)(), getattr(resp2, method)(), msg)
+        self.assertEqual(resp1.get_where_query().strip(), resp2.get_where_query().strip(), 'get_where_query')
+        self.assertEqual(resp1.get_agg_query().strip(), resp2.get_agg_query().strip(), 'get_agg_query')
+        
+        self.assertLogEquals(resp1, resp2)
+    
+    def assertLogEquals(self, resp1, resp2):
+        msg = '%s or %s' % (resp1.get_request_id(), resp2.get_request_id())
+        for log1, log2 in zip(resp1.get_logs(), resp2.get_logs()):
+            self.assertEqual(log1.timestamp, log2.timestamp, msg)
+            self.assertEqual(log1.source, log2.source, msg)
+            contents1 = log1.contents
+            contents2 = log2.contents
+            for content1, content2 in zip(contents1, contents2):
+                self.assertEqual(content1[0], content2[0], msg)
+                self.assertEqual(content1[1], content2[1], msg)
+
 if __name__ == '__main__':
     unittest.main()

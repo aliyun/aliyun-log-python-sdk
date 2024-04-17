@@ -58,7 +58,7 @@ class GetLogsResponse(MergeableLogResponse):
                                resp_body=resp)
 
     @staticmethod
-    def _from_v1_resp(header, resp):
+    def _from_v1_resp(resp, header):
         """
         Support old api with best effort
         """
@@ -67,7 +67,7 @@ class GetLogsResponse(MergeableLogResponse):
             'progress': Util.h_v_t(header, 'x-log-progress'),
             'processedRows': int(Util.h_v_td(header, 'x-log-processed-rows', '0')),
             'elapsedMillisecond': int(Util.h_v_td(header, 'x-log-elapsed-millisecond', '0')),
-            'hasSQL': bool(Util.h_v_td(header, 'x-log-has-sql', 'False')),
+            'hasSQL': (Util.h_v_td(header, 'x-log-has-sql', 'false') != 'false'),
             'whereQuery': Util.h_v_td(header, 'x-log-where-query', ''),
             'aggQuery': Util.h_v_td(header, 'x-log-agg-query', ''),
             'cpuSec': float(Util.h_v_td(header, 'x-log-cpu-sec', '0')),
@@ -207,6 +207,7 @@ class GetLogsResponse(MergeableLogResponse):
         print('headers:', self.get_all_headers())
         print('count:', self.get_count())
         print('progress:', self.get_meta().get_progress())
+        print('meta:', self.get_meta()._to_dict())
         print("\nQueriedLog class:\n")
         for log in self.get_logs():
             log.log_print()
