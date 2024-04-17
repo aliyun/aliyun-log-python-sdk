@@ -21,6 +21,7 @@ from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse, Histogram
 from .getlogsresponse import GetLogsResponse, QueriedLog
+from .getlogv3sresponse import GetLogsV3Response
 from .index_config_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse

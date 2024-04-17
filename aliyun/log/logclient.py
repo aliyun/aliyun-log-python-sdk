@@ -59,6 +59,7 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
+from .getlogv3sresponse import GetLogsV3Response
 
 logger = logging.getLogger(__name__)
 
@@ -609,6 +610,29 @@ class LogClient(object):
         """
         # need to use extended method to get more when:
         # it's not select query, and size > default page size
+        return self._get_log(project, logstore, from_time, to_time,
+                             topic=topic,
+                             query=query,
+                             reverse=reverse,
+                             offset=offset,
+                             size=size,
+                             power_sql=power_sql,
+                             scan=scan,
+                             forward=forward,
+                             accurate_query=accurate_query,
+                             from_time_nano_part=from_time_nano_part,
+                             to_time_nano_part=to_time_nano_part,
+                             use_v3=False)
+    
+    def _get_log(self, project, logstore, from_time, to_time, topic=None,
+                query=None, reverse=False, offset=0, size=100, power_sql=False,
+                scan=False, forward=True, accurate_query=True, 
+                from_time_nano_part=0, to_time_nano_part=0,
+                use_v3=False):
+        """
+            return GetLogsResponse if use_v3 is False
+            return GetLogsV3Response if use_v3 is True
+        """
         size, offset = int(size), int(offset)
         if not is_stats_query(query) and (size == -1 or size > MAX_GET_LOG_PAGING_SIZE):
             return query_more(
@@ -633,10 +657,8 @@ class LogClient(object):
             headers = {}
             params = {'from': parse_timestamp(from_time),
                       'to': parse_timestamp(to_time),
-                      'type': 'log',
                       'line': size,
                       'offset': offset,
-                      'reverse': 'true' if reverse else 'false',
                       'powerSql': power_sql,
                       'accurate': accurate_query,
                       'fromNs': from_time_nano_part,
@@ -650,10 +672,27 @@ class LogClient(object):
             if scan:
                 params['session'] = 'mode=scan'
                 params['forward'] = 'true' if forward else 'false'
-
-            resource = "/logstores/" + logstore
-            (resp, header) = self._send("GET", project, None, resource, params, headers)
-            ret = GetLogsResponse(resp, header)
+            
+            if use_v3:
+                headers["Content-Type"] = "application/json"
+                headers["Accept-Encoding"] = "lz4"
+                resource = "/logstores/" + logstore + "/logs"
+                params['reverse'] = reverse
+                params['forward'] = forward
+                body_str = six.b(json.dumps(params))
+                headers["x-log-bodyrawsize"] = str(len(body_str))
+                accept_encoding = "lz4" if Util.is_lz4_available() else "deflate"
+                headers['Accept-Encoding'] = accept_encoding
+                (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
+                request_id = Util.h_v_td(header, 'x-log-requestid', '')
+                raw_data = Util.uncompress_response(header, resp)
+                ret = GetLogsV3Response(Util.to_json(raw_data, header, request_id), header)
+            else:
+                resource = "/logstores/" + logstore
+                params['type'] = 'log'
+                params['reverse'] = 'true' if reverse else 'false'
+                (resp, header) = self._send("GET", project, None, resource, params, headers)
+                ret = GetLogsResponse(resp, header)
             if ret.is_completed():
                 break
 
@@ -661,6 +700,84 @@ class LogClient(object):
 
         return ret
 
+    def get_log_v3(self, project, logstore, from_time, to_time, topic=None,
+                   query=None, reverse=False, offset=0, size=100, power_sql=False,
+                   scan=False, forward=True, accurate_query=True,
+                   from_time_nano_part=0, to_time_nano_part=0):
+        """ Get logs from log service.
+        will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
+        Unsuccessful operation will cause an LogException.
+        Note: for larger volume of data (e.g. > 1 million logs), use get_log_all
+
+        Difference with method get_log:
+            1. The length of the "query" field is not restricted by the HTTP URL length limit.
+            2. get_log_v3 returns GetLogsV3Response
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type to_time: int/string
+        :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+        :type topic: string
+        :param topic: topic name of logs, could be None
+
+        :type query: string
+        :param query: user defined query, could be None
+
+        :type reverse: bool
+        :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :type power_sql: bool
+        :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+        :type scan: bool
+        :param scan: if scan is set to true, the query will use scan mode
+
+        :type forward: bool
+        :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
+        :type accurate_query: bool
+        :param accurate_query: if accurate_query is set to true, the query will global ordered time second mode
+
+        :type from_time_nano_part: int
+        :param from_time_nano_part: nano part of query begin time
+
+        :type to_time_nano_part: int
+        :param to_time_nano_part: nano part of query end time
+
+        :return: GetLogsV3Response
+
+        :raise: LogException
+        """
+        # need to use extended method to get more when:
+        # it's not select query, and size > default page size
+        return self._get_log(project, logstore, from_time, to_time,
+                             topic=topic,
+                             query=query,
+                             reverse=reverse,
+                             offset=offset,
+                             size=size,
+                             power_sql=power_sql,
+                             scan=scan,
+                             forward=forward,
+                             accurate_query=accurate_query,
+                             from_time_nano_part=from_time_nano_part,
+                             to_time_nano_part=to_time_nano_part,
+                             use_v3=True)
+        
     def get_logs(self, request):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
@@ -809,6 +926,76 @@ class LogClient(object):
                     offset = response.get_end_offset()
                 else:
                     offset = response.get_begin_offset()
+
+            if count == 0 or is_stats_query(query) or scan_all:
+                break
+
+    def get_log_all_v3(self, project, logstore, from_time, to_time, topic=None,
+                       query=None, reverse=False, offset=0, power_sql=False,
+                       scan=False, forward=True):
+        """ FOR PHRASE AND SCAN WHERE.
+                Get logs from log service. will retry when incomplete.
+                Unsuccessful operation will cause an LogException. different with `get_log` with size=-1,
+                It will try to iteratively fetch all data every 100 items and yield them, in CLI, it could apply jmes filter to
+                each batch and make it possible to fetch larger volume of data.
+
+                :type project: string
+                :param project: project name
+
+                :type logstore: string
+                :param logstore: logstore name
+
+                :type from_time: int/string
+                :param from_time: the begin timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type to_time: int/string
+                :param to_time: the end timestamp or format of time in readable time like "%Y-%m-%d %H:%M:%S<time_zone>" e.g. "2018-01-02 12:12:10+8:00", also support human readable string, e.g. "1 hour ago", "now", "yesterday 0:0:0", refer to https://aliyun-log-cli.readthedocs.io/en/latest/tutorials/tutorial_human_readable_datetime.html
+
+                :type topic: string
+                :param topic: topic name of logs, could be None
+
+                :type query: string
+                :param query: user defined query, could be None
+
+                :type reverse: bool
+                :param reverse: if reverse is set to true, the query will return the latest logs first, default is false
+
+                :type offset: int
+                :param offset: offset to start, by default is 0
+
+                :type power_sql: bool
+                :param power_sql: if power_sql is set to true, the query will run on enhanced sql mode
+
+                :type scan: bool
+                :param scan: if scan is set to true, the query will use scan mode
+
+                :type forward: bool
+                :param forward: only for scan query, if forward is set to true, the query will get next page, otherwise previous page
+
+                :return: GetLogsV3Response iterator
+
+                :raise: LogException
+                """
+        while True:
+            response = self.get_log_v3(project, logstore, from_time, to_time,
+                                       topic=topic, query=query, reverse=reverse,
+                                       offset=offset, size=100, power_sql=power_sql,
+                                       scan=scan, forward=forward)
+
+            yield response
+
+            count = response.get_count()
+            phrase_query_info = response.get_meta().get_phrase_query_info()
+            query_mode = response.get_query_mode()
+            scan_all = False
+            if query_mode is GetLogsV3Response.QueryMode.NORMAL or query_mode is GetLogsV3Response.QueryMode.SCAN_SQL:
+                offset += count
+            else:
+                scan_all = phrase_query_info.get_scan_all()
+                if forward:
+                    offset = phrase_query_info.get_end_offset()
+                else:
+                    offset = phrase_query_info.get_begin_offset()
 
             if count == 0 or is_stats_query(query) or scan_all:
                 break

@@ -12,8 +12,20 @@ from .util import Util
 from enum import Enum
 import json
 
+class MergeableLogResponse(LogResponse):
+    def __init__(self, headers, body=''):
+        LogResponse.__init__(self, headers, body)
+        
+    def merge(self, response):
+        raise NotImplementedError
+    def is_completed(self):
+        raise NotImplementedError
+    def get_count(self):
+        raise NotImplementedError
+    
+        
 
-class GetLogsResponse(LogResponse):
+class GetLogsResponse(MergeableLogResponse):
     """ The response of the GetLog API from log.
 
     :type resp: dict
@@ -31,7 +43,7 @@ class GetLogsResponse(LogResponse):
         SCAN_SQL = 3
 
     def __init__(self, resp, header):
-        LogResponse.__init__(self, header, resp)
+        MergeableLogResponse.__init__(self, header, resp)
         try:
             self.progress = Util.h_v_t(header, 'x-log-progress')
             self.processed_rows = Util.h_v_td(header, 'x-log-processed-rows', '0')
