@@ -659,10 +659,13 @@ class LogClient(object):
                 headers["x-log-bodyrawsize"] = str(len(body_str))
                 accept_encoding = "lz4" if Util.is_lz4_available() else "deflate"
                 headers['Accept-Encoding'] = accept_encoding
+
                 (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
-                request_id = Util.h_v_td(header, 'x-log-requestid', '')
+
                 raw_data = Util.uncompress_response(header, resp)
-                ret = GetLogsResponse(Util.to_json(raw_data, header, request_id), header)
+                exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
+                exJson = Util.convert_unicode_to_str(exJson)
+                ret = GetLogsResponse(exJson, header)
             else:
                 resource = "/logstores/" + logstore
                 params['type'] = 'log'

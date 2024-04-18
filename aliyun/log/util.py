@@ -162,46 +162,6 @@ class Util(object):
     @staticmethod
     def is_lz4_available():
         return lz4 is not None
-
-    @staticmethod
-    def check_and_decompress_lz4(resp_body, resp_headers, request_id):
-        """ 
-        raise LogException if response not encoded in lz4 or client has no 
-        lz4 lib available to decompress
-        return the decompress data using lz4
-        """
-        compress_type = Util.h_v_td(resp_headers, 'x-log-compresstype', '').lower()
-        if compress_type != 'lz4':
-            raise LogException("AcceptEncodingNotMatch", "Expect lz4 encoding but got different encoding: "
-                               + compress_type, 
-                               requestId=request_id,
-                               resp_header=resp_headers,
-                               resp_body=resp_body)
-        if not lz4:
-            raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response",
-                               requestId=request_id,
-                               resp_header=resp_headers,
-                               resp_body=resp_body)
-
-        raw_size = int(Util.h_v_t(resp_headers, 'x-log-bodyrawsize'))
-        return lz_decompress(raw_size, resp_body)
-
-    @staticmethod
-    def to_json(raw_data, resp_headers, request_id):
-        """ covert http repsonse body(application/json) to dict
-        """
-        try:
-            if isinstance(raw_data, six.binary_type):
-                body = json.loads(raw_data.decode('utf8', "ignore"))
-            else:
-                body = json.loads(raw_data)
-        except Exception as ex:
-            raise LogException('BadResponse',
-                        'Bad json format:\n"%s"' % base64_encodestring(raw_data) + '\n' + repr(ex),
-                        requestId=request_id, 
-                        resp_header=resp_headers, 
-                        resp_body=raw_data) from ex
-        return Util.convert_unicode_to_str(body)
         
     @staticmethod
     def h_v_t(header, key):
