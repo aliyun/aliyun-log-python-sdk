@@ -22,17 +22,21 @@ import zlib
 
 try:
     import lz4
-
-    if not hasattr(lz4, 'loads') or not hasattr(lz4, 'dumps'):
-        lz4 = None
-    else:
+    if hasattr(lz4, 'loads') and hasattr(lz4, 'dumps'):
         def lz_decompress(raw_size, data):
             return lz4.loads(struct.pack('<I', raw_size) + data)
 
         def lz_compresss(data):
             return lz4.dumps(data)[4:]
+    else:
+        import lz4.block
+        def lz_decompress(raw_size, data):
+            return lz4.block.decompress(data, uncompressed_size=raw_size)
+
+        def lz_compresss(data):
+            return lz4.block.compress(data)
 except ImportError:
-    lz4 = None     
+    lz4 = None
       
 logger = logging.getLogger(__name__)
 
