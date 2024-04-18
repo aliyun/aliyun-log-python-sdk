@@ -11,19 +11,7 @@ from .util import Util
 from enum import Enum
 import json
 
-class MergeableLogResponse(LogResponse):
-    def __init__(self, headers, body=''):
-        LogResponse.__init__(self, headers, body)
-        
-    def merge(self, response):
-        raise NotImplementedError
-    def is_completed(self):
-        raise NotImplementedError
-    def get_count(self):
-        raise NotImplementedError
-    
-        
-class GetLogsResponse(MergeableLogResponse):
+class GetLogsResponse(LogResponse):
     """ The response of the GetLog API from log.
 
     :type resp: dict
@@ -41,7 +29,7 @@ class GetLogsResponse(MergeableLogResponse):
         SCAN_SQL = 3
 
     def __init__(self, resp, header):
-        MergeableLogResponse.__init__(self, header, resp)
+        LogResponse.__init__(self, header, resp)
         try:
             self._meta = GetLogsResponse.GetLogsResponseMeta(
                 resp.get("meta"))

@@ -24,17 +24,17 @@ class TestDict(unittest.TestCase):
         pass
 
     def compare(self, fn, *args, **kwargs):
-        self.client._get_log_use_post = False
+        self.client._get_logs_v2_enabled = False
         respOld = fn(*args, **kwargs)
-        self.client._get_log_use_post = True
+        self.client._get_logs_v2_enabled = True
         respNew = fn(*args, **kwargs)
         self.assertCompatibility(respNew, respOld)
         respNew.log_print()
     
     def compare_generator(self, fn, *args, **kwargs):
-        self.client._get_log_use_post = False
+        self.client._get_logs_v2_enabled = False
         respOld = [*fn(*args, **kwargs)]
-        self.client._get_log_use_post = True
+        self.client._get_logs_v2_enabled = True
         respNew = [*fn(*args, **kwargs)]
         self.assertTrue(len(respNew) - len(respOld) <= 1 and len(respNew) - len(respOld) >= -1)
         for resp1, resp2 in zip(respOld, respNew):

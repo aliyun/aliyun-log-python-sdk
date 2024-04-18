@@ -173,7 +173,7 @@ class LogClient(object):
         self._auth_version = auth_version
         self._region = region
         self._auth = make_auth(accessKeyId, accessKey, auth_version, region)
-        self._get_log_use_post = True
+        self._get_logs_v2_enabled = True
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -650,7 +650,7 @@ class LogClient(object):
                 params['session'] = 'mode=scan'
                 params['forward'] = 'true' if forward else 'false'
             
-            if self._get_log_use_post:
+            if self._get_logs_v2_enabled:
                 resource = "/logstores/" + logstore + "/logs"
                 headers["Content-Type"] = "application/json"
                 params['reverse'] = reverse
