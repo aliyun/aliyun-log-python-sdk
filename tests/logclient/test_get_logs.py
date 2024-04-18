@@ -2,6 +2,7 @@ import unittest
 
 import os
 from aliyun.log import LogClient
+from aliyun.log.util import Util
 import time
 
 
@@ -17,6 +18,7 @@ class TestDict(unittest.TestCase):
             self.endpoint, self.access_key_id, self.access_key_secret)
         self.to_time = int(time.time())
         self.from_time = self.to_time - 3600
+        print('lz4 is available:', Util.is_lz4_available())
 
     def tearDown(self):
         pass
