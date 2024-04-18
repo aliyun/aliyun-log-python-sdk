@@ -651,9 +651,8 @@ class LogClient(object):
                 params['forward'] = 'true' if forward else 'false'
             
             if self._get_log_use_post:
-                headers["Content-Type"] = "application/json"
-                headers["Accept-Encoding"] = "lz4"
                 resource = "/logstores/" + logstore + "/logs"
+                headers["Content-Type"] = "application/json"
                 params['reverse'] = reverse
                 params['forward'] = forward
                 body_str = six.b(json.dumps(params))
