@@ -27,7 +27,7 @@ class ConsumerClient(object):
         from .. import LogClient
 
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token, auth_version=auth_version, region=region)
-        self.mclient.set_user_agent('%s-consumergroup-%s' % (USER_AGENT, consumer_group))
+        self.mclient.set_user_agent('%s-consumergroup-%s-%s' % (USER_AGENT, consumer_group, consumer))
         if credentials_refresher is not None:
             self.mclient.set_credentials_auto_refresher(credentials_refresher)
         self.mproject = project
