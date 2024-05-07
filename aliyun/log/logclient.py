@@ -178,6 +178,7 @@ class LogClient(object):
         else:
             self._auth = make_auth(StaticCredentialsProvider(accessKeyId, accessKey, securityToken),
                                    auth_version, region)
+        self._get_logs_v2_enabled = True
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -638,10 +639,8 @@ class LogClient(object):
             headers = {}
             params = {'from': parse_timestamp(from_time),
                       'to': parse_timestamp(to_time),
-                      'type': 'log',
                       'line': size,
                       'offset': offset,
-                      'reverse': 'true' if reverse else 'false',
                       'powerSql': power_sql,
                       'accurate': accurate_query,
                       'fromNs': from_time_nano_part,
@@ -655,10 +654,29 @@ class LogClient(object):
             if scan:
                 params['session'] = 'mode=scan'
                 params['forward'] = 'true' if forward else 'false'
+            
+            if self._get_logs_v2_enabled:
+                resource = "/logstores/" + logstore + "/logs"
+                headers["Content-Type"] = "application/json"
+                params['reverse'] = reverse
+                params['forward'] = forward
+                body_str = six.b(json.dumps(params))
+                headers["x-log-bodyrawsize"] = str(len(body_str))
+                accept_encoding = "lz4" if Util.is_lz4_available() else "deflate"
+                headers['Accept-Encoding'] = accept_encoding
 
-            resource = "/logstores/" + logstore
-            (resp, header) = self._send("GET", project, None, resource, params, headers)
-            ret = GetLogsResponse(resp, header)
+                (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
+
+                raw_data = Util.uncompress_response(header, resp)
+                exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
+                exJson = Util.convert_unicode_to_str(exJson)
+                ret = GetLogsResponse(exJson, header)
+            else:
+                resource = "/logstores/" + logstore
+                params['type'] = 'log'
+                params['reverse'] = 'true' if reverse else 'false'
+                (resp, header) = self._send("GET", project, None, resource, params, headers)
+                ret = GetLogsResponse._from_v1_resp(resp, header)
             if ret.is_completed():
                 break
 
@@ -809,7 +827,7 @@ class LogClient(object):
             if query_mode is GetLogsResponse.QueryMode.NORMAL or query_mode is GetLogsResponse.QueryMode.SCAN_SQL:
                 offset += count
             else:
-                scan_all = (response.get_scan_all() == 'true')
+                scan_all = response.get_scan_all()
                 if forward:
                     offset = response.get_end_offset()
                 else:

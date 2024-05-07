@@ -13,10 +13,31 @@ import socket
 import six
 from datetime import datetime, tzinfo, timedelta
 from dateutil import parser
+from .logexception import LogException
 import re
 import logging
 import json
+import struct
+import zlib
 
+try:
+    import lz4
+    if hasattr(lz4, 'loads') and hasattr(lz4, 'dumps'):
+        def lz_decompress(raw_size, data):
+            return lz4.loads(struct.pack('<I', raw_size) + data)
+
+        def lz_compresss(data):
+            return lz4.dumps(data)[4:]
+    else:
+        import lz4.block
+        def lz_decompress(raw_size, data):
+            return lz4.block.decompress(data, uncompressed_size=raw_size)
+
+        def lz_compresss(data):
+            return lz4.block.compress(data)
+except ImportError:
+    lz4 = None
+      
 logger = logging.getLogger(__name__)
 
 
@@ -143,6 +164,10 @@ class Util(object):
         return data
 
     @staticmethod
+    def is_lz4_available():
+        return lz4 is not None
+        
+    @staticmethod
     def h_v_t(header, key):
         """
         get header value with title
@@ -176,6 +201,29 @@ class Util(object):
 
         return header.get(key, default)
 
+    @staticmethod
+    def v_or_d(v, default=None):
+        """ returns default value if v is None
+            else return v
+        """
+        return v if v is not None else default
+
+    @staticmethod
+    def uncompress_response(header, response):
+        """
+        Supported compress type [lz4, gzip, deflate]
+        """
+        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
+        if compress_type == 'lz4':
+            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+            if lz4:
+                return lz_decompress(raw_size, response)
+            else:
+                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=response)
+        elif compress_type in ('gzip', 'deflate'):
+            return zlib.decompress(response)
+        else:
+            raise LogException('UnknownCompressType', 'Unknown compress type: ' + compress_type, resp_header=header, resp_body=response)
 
 ZERO = timedelta(0)
 
