@@ -267,15 +267,15 @@ class GetLogsResponse(LogResponse):
 
             :return: bool, true if this logs query is completed
             """
-            return self._progress == 'Complete'
+            return self.get_progress() == 'Complete'
 
         def merge(self, other):
             """ merge with other GetLogsResponseMeta
 
             """
-            self._progress = other.progress
-            self._count += other.count
-            self._processed_rows += other.processed_rows
+            self._progress = other.get_progress()
+            self._count += other.get_count()
+            self._processed_rows += other.get_processed_rows()
             return self
 
         def get_count(self):
@@ -289,21 +289,21 @@ class GetLogsResponse(LogResponse):
             """ to Dict
             """
             phrase_query_info = None
-            if self._phrase_query_info is not None:
-                phrase_query_info = self._phrase_query_info._to_dict()
+            if self.get_phrase_query_info() is not None:
+                phrase_query_info = self.get_phrase_query_info()._to_dict()
 
             return {
-                'count': self._count,
-                'progress': self._progress,
-                'processedRows': self._processed_rows,
-                'elapsedMillisecond': self._elapsed_millisecond,
-                'hasSQL': self._has_sql,
-                'whereQuery': self._where_query,
-                'aggQuery': self._agg_query,
-                'cpuSec': self._cpu_sec,
-                'cpuCores': self._cpu_cores,
-                'mode': self._mode,
-                'scanBytes': self._scan_bytes,
+                'count': self.get_count(),
+                'progress': self.get_progress(),
+                'processedRows': self.get_processed_rows(),
+                'elapsedMillisecond': self.get_elapsed_millisecond(),
+                'hasSQL': self.get_has_sql(),
+                'whereQuery': self.get_where_query(),
+                'aggQuery': self.get_agg_query(),
+                'cpuSec': self.get_cpu_sec(),
+                'cpuCores': self.get_cpu_cores(),
+                'mode': self.get_mode(),
+                'scanBytes': self.get_scan_bytes(),
                 'phraseQueryInfo': phrase_query_info,
                 # 'limited': self._limited,
                 # 'processedBytes': self._processed_bytes,
@@ -515,10 +515,10 @@ class GetLogsResponse(LogResponse):
             """ to Dict
             """
             return {
-                "beginOffset": self._begin_offset,
-                "endOffset": self._end_offset,
-                "scanAll": self._scan_all,
-                "endTime": self._end_time
+                "beginOffset": self.get_begin_offset(),
+                "endOffset": self.get_end_offset(),
+                "scanAll": self.get_scan_all(),
+                "endTime": self.get_end_time()
             }
 
         def log_print(self):
