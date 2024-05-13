@@ -288,9 +288,8 @@ class GetLogsResponse(LogResponse):
         def _to_dict(self):
             """ to Dict
             """
-            phrase_query_info = None
-            if self.get_phrase_query_info() is not None:
-                phrase_query_info = self.get_phrase_query_info()._to_dict()
+            phrase_query_info = self.get_phrase_query_info()
+            phrase_query_info_dict = phrase_query_info._to_dict() if phrase_query_info is not None else None
 
             return {
                 'count': self.get_count(),
@@ -304,7 +303,7 @@ class GetLogsResponse(LogResponse):
                 'cpuCores': self.get_cpu_cores(),
                 'mode': self.get_mode(),
                 'scanBytes': self.get_scan_bytes(),
-                'phraseQueryInfo': phrase_query_info,
+                'phraseQueryInfo': phrase_query_info_dict,
                 # 'limited': self._limited,
                 # 'processedBytes': self._processed_bytes,
                 # 'telementryType': self._telemetry_type,  # not typo
