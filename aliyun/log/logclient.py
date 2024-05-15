@@ -545,6 +545,8 @@ class LogClient(object):
         params['accurate'] = request.get_accurate_query()
         params['fromNs'] = request.get_from_time_nano_part()
         params['toNs'] = request.get_to_time_nano_part()
+        if request.get_shard_id() != -1:
+            params['shard'] = request.get_shard_id()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
         project = request.get_project()
