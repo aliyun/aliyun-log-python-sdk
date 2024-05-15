@@ -33,9 +33,12 @@ class GetHistogramsRequest(LogRequest):
 
     :type to_time_nano_part: int
     :param to_time_nano_part: nano part of query end time
+
+    :type shard_id: int
+    :param shard_id: specific shard id,-1 means all shard
     """
 
-    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=True, from_time_nano_part=0 ,to_time_nano_part=0):
+    def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None, query=None, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0, shard_id=-1):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = parse_timestamp(fromTime)
@@ -45,6 +48,7 @@ class GetHistogramsRequest(LogRequest):
         self.accurate_query = accurate_query
         self.from_time_nano_part = from_time_nano_part
         self.to_time_nano_part = to_time_nano_part
+        self.shard_id = shard_id
 
     def get_logstore(self):
         """ Get logstore name
@@ -163,3 +167,18 @@ class GetHistogramsRequest(LogRequest):
         :param to_time_nano_part: to_time_nano_part part of query end time
         """
         self.to_time_nano_part = to_time_nano_part
+
+    def set_shard_id(self, shard_id):
+        """ Set request shard_id
+
+        :type shard_id: int
+        :param shard_id: user defined shard_id
+        """
+        self.shard_id = shard_id
+
+    def get_shard_id(self):
+        """ Get request shard_id
+
+        :return: int, shard_id
+        """
+        return self.shard_id
