@@ -20,4 +20,3 @@ def sls_en_restore(event):
     assert '__time__' in event
     event['__time__'] = '900000'
     return event
-

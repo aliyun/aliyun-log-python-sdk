@@ -37,4 +37,3 @@ sls_en_transform_event = transform_event([
 sls_en_drop_fields = DROP_F(["remote_addr", "http_user_agent"])
 
 sls_en_rename_fields = ALIAS({"real_client_ip": "client_ip"})
-

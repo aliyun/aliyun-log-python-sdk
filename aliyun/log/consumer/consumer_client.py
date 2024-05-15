@@ -27,7 +27,7 @@ class ConsumerClient(object):
         from .. import LogClient
 
         self.mclient = LogClient(endpoint, access_key_id, access_key, security_token, auth_version=auth_version, region=region)
-        self.mclient.set_user_agent('%s-consumergroup-%s' % (USER_AGENT, consumer_group))
+        self.mclient.set_user_agent('%s-consumergroup-%s-%s' % (USER_AGENT, consumer_group, consumer))
         if credentials_refresher is not None:
             self.mclient.set_credentials_auto_refresher(credentials_refresher)
         self.mproject = project
@@ -100,5 +100,5 @@ class ConsumerClient(object):
     def get_end_cursor(self, shard_id):
         return self.mclient.get_end_cursor(self.mproject, self.mlogstore, shard_id).get_cursor()
 
-    def pull_logs(self, shard_id, cursor, end_cursor=None, count=1000):
-        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True, end_cursor=end_cursor)
+    def pull_logs(self, shard_id, cursor, end_cursor=None, count=1000, query=None):
+        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True, end_cursor=end_cursor,query=query)

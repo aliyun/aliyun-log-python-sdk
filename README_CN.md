@@ -549,7 +549,7 @@ res.log_print()
 it = client.pull_log('project1', 'logstore1', shard_id=0, from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10")
 for res in it:
     res.log_print()
-
+    
 # 或者大并发直接下载在本地
 it = client.pull_log_dump('project1', 'logstore1',from_time="2018-1-1 10:10:10", to_time="2018-1-1 10:20:10", file_path="./data/dump_{}.data")
 ```
@@ -655,7 +655,7 @@ res.log_print();
 - 创建报表
 
   通过`create_dashboard`创建一个报表. 传入的结构是一个字典对象，如下：
-  
+
 ```python
 {
   "charts": [
@@ -919,7 +919,7 @@ res.log_print();
 - 创建快速查询
 
   通过`create_savedsearch`创建一个快速查询. 传入的结构是一个字典对象，如下：
-  
+
 ```python
 {
     "logstore": "test2",
@@ -951,7 +951,7 @@ res.log_print();
 - 创建外部存储
 
   通过`create_external_store`创建一个快速查询. 传入的结构是一个字典对象，如下：
-  
+
 ```python
 {
 	"externalStoreName": "rds_store4",
@@ -1072,13 +1072,13 @@ OSS以JSON格式投递（注意storage.detail.columns为空是必须的，这个
 - 重试运行实例
 
   通过`retry_shipper_tasks`重试某一个运行实例.
-  
+
 ## Elasticsearch 数据迁移
 用于将 Elasticsearch 中的数据迁移至日志服务。
 
 - 将 hosts 为 `localhost:9200` 的 Elasticsearch 中的所有文档导入日志服务的项目 `project1` 中。
 ```
-migration_manager = MigrationManager(hosts="localhost:9200",      
+migration_manager = MigrationManager(hosts="localhost:9200",
                                      endpoint=endpoint,
                                      project_name="project1",
                                      access_key_id=access_key_id,
@@ -1088,7 +1088,7 @@ migration_manager.migrate()
 
 - 指定将 Elasticsearch 中索引名以 `myindex_` 开头的数据写入日志库 `logstore1`，将索引 `index1,index2` 中的数据写入日志库 `logstore2` 中。
 ```
-migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",      
+migration_manager = MigrationManager(hosts="localhost:9200,other_host:9200",
                                      endpoint=endpoint,
                                      project_name="project1",
                                      access_key_id=access_key_id,
@@ -1099,7 +1099,7 @@ migration_manager.migrate()
 
 - 使用参数 query 指定从 Elasticsearch 中抓取 `title` 字段等于 `python` 的文档，并使用文档中的字段 `date1` 作为日志的 time 字段。
 ```
-migration_manager = MigrationManager(hosts="localhost:9200",      
+migration_manager = MigrationManager(hosts="localhost:9200",
                                      endpoint=endpoint,
                                      project_name="project1",
                                      access_key_id=access_key_id,
@@ -1123,4 +1123,3 @@ migration_manager.migrate()
 1. 日志服务产品介绍：http://www.aliyun.com/product/sls/
 2. 日志服务产品文档：https://help.aliyun.com/product/28958.html
 3. 其他问题请提工单
-

@@ -63,7 +63,7 @@ class MachineStatus(object):
 
     :type machine_unique_id: string
     :param machine_unique_id: the machine unique id
-    
+
     :type user_defined_id: string
     :param user_defined_id: the user defined id
 

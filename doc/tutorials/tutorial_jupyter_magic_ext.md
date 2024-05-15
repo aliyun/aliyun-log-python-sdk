@@ -207,4 +207,3 @@ sns.boxenplot(x='host', y='body_bytes_sent', data=log_df);
 %%log -1 day ~ now
 * | select host, count(1) as pv group by host
 ```
-

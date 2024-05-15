@@ -15,7 +15,7 @@ __all__ = ['CreateLogtailConfigResponse', 'DeleteLogtailConfigResponse',
 
 class CreateLogtailConfigResponse(LogResponse):
     """ The response of the create_logtail_config API from log.
-    
+
     :type header: dict
     :param header: CreateLogtailConfigResponse HTTP response header
     """
@@ -30,7 +30,7 @@ class CreateLogtailConfigResponse(LogResponse):
 
 class DeleteLogtailConfigResponse(LogResponse):
     """ The response of the delete_logtail_config API from log.
-    
+
     :type header: dict
     :param header: DeleteLogtailConfigResponse HTTP response header
     """
@@ -45,7 +45,7 @@ class DeleteLogtailConfigResponse(LogResponse):
 
 class GetLogtailConfigResponse(LogResponse):
     """ The response of the get_logtail_config API from log.
-    
+
     :type header: dict
     :param header: GetLogtailConfigResponse HTTP response header
 
@@ -65,7 +65,7 @@ class GetLogtailConfigResponse(LogResponse):
 
 class UpdateLogtailConfigResponse(LogResponse):
     """ The response of the update_logtail_config API from log.
-    
+
     :type header: dict
     :param header: UpdateLogtailConfigResponse HTTP response header
     """
@@ -80,7 +80,7 @@ class UpdateLogtailConfigResponse(LogResponse):
 
 class ListLogtailConfigResponse(LogResponse):
     """ The response of the list_logtail_config API from log.
-    
+
     :type header: dict
     :param header: ListLogtailConfigResponse HTTP response header
 

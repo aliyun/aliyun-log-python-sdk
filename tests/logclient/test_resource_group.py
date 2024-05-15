@@ -26,5 +26,3 @@ if __name__ == '__main__':
     resource_group_new = ''
 
     test_project_resource_group(client, project, resource_group_default, resource_group_new)
-
-

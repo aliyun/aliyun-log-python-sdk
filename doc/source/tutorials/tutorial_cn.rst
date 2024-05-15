@@ -14,6 +14,3 @@
    tutorial_es_migration.rst
    tutorial_jupyter_magic_ext.rst
    tutorial_ipython_ext_download_excel.rst
-
-
-

@@ -62,4 +62,3 @@ class ConsumerCheckpointTracker(object):
 
     def get_check_point(self):
         return self.temp_check_point
-

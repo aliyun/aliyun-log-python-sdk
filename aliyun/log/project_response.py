@@ -46,7 +46,8 @@ class GetProjectResponse(LogResponse):
         self.owner = resp['owner']
         self.createTime = resp['createTime']
         self.lastModifyTime = resp['lastModifyTime']
-        self.resourceGroupId = resp['resourceGroupId']
+        # resourceGroupId is optional for some old backend releases
+        self.resourceGroupId = resp.get('resourceGroupId', '')
 
     def get_owner(self):
         return self.owner

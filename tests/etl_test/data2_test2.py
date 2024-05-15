@@ -53,4 +53,3 @@ def sls_eu_anoymouse_ip(event):
 
 DROP_FIELDS_remote = ["remote_addr", "http_user_agent"]
 ALIAS_ip = {"real_client_ip": "client_ip"}
-

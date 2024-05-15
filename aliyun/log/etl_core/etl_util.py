@@ -204,4 +204,3 @@ def get_set_mode_if_skip_fn(skip_if_src_exist, skip_if_src_not_empty, skip_if_va
 
         return False
     return if_skip
-

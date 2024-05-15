@@ -9,7 +9,7 @@ from .logresponse import LogResponse
 
 class GetCursorTimeResponse(LogResponse):
     """ The response of the get_cursor_time API from log.
-    
+
     :type header: dict
     :param header: GetCursorTimeResponse HTTP response header
 

@@ -14,7 +14,7 @@ from .logresponse import LogResponse
 
 class CreateSubStoreResponse(LogResponse):
     """ The response of the create_substore API from log.
-    
+
     :type header: dict
     :param header: CreateSubStoreResponse HTTP response header
     """
@@ -29,7 +29,7 @@ class CreateSubStoreResponse(LogResponse):
 
 class DeleteSubStoreResponse(LogResponse):
     """ The response of the delete_substore API from log.
-    
+
     :type header: dict
     :param header: DeleteSubStoreResponse HTTP response header
     """
@@ -44,7 +44,7 @@ class DeleteSubStoreResponse(LogResponse):
 
 class GetSubStoreResponse(LogResponse):
     """ The response of the get_substore API from log.
-    
+
     :type header: dict
     :param header: GetSubStoreResponse HTTP response header
 
@@ -111,7 +111,7 @@ class GetSubStoreResponse(LogResponse):
 
 class UpdateSubStoreResponse(LogResponse):
     """ The response of the update_substore API from log.
-    
+
     :type header: dict
     :param header: UpdateSubStoreResponse HTTP response header
     """
@@ -126,7 +126,7 @@ class UpdateSubStoreResponse(LogResponse):
 
 class ListSubStoreResponse(LogResponse):
     """ The response of the list_substore API from log.
-    
+
     :type header: dict
     :param header: ListSubStoreResponse HTTP response header
 
