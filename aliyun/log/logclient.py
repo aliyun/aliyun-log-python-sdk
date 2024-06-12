@@ -12,6 +12,7 @@ import time
 import zlib
 from datetime import datetime
 import logging
+from .credentials import StaticCredentialsProvider
 from .scheduled_sql import ScheduledSQLConfiguration
 from .scheduled_sql_response import *
 from itertools import cycle
@@ -154,8 +155,8 @@ class LogClient(object):
     __version__ = API_VERSION
     Version = __version__
 
-    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None,
-                 auth_version=AUTH_VERSION_1, region=''):
+    def __init__(self, endpoint, accessKeyId=None, accessKey=None, securityToken=None, source=None,
+                 auth_version=AUTH_VERSION_1, region='', credentials_provider=None):
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint)
         self._accessKeyId = accessKeyId
@@ -172,7 +173,11 @@ class LogClient(object):
         self._last_refresh = 0
         self._auth_version = auth_version
         self._region = region
-        self._auth = make_auth(accessKeyId, accessKey, auth_version, region)
+        if credentials_provider is not None:
+            self._auth = make_auth(credentials_provider, auth_version, region)
+        else:
+            self._auth = make_auth(StaticCredentialsProvider(accessKeyId, accessKey, securityToken),
+                                   auth_version, region)
         self._get_logs_v2_enabled = True
 
     def _replace_credentials(self):
@@ -185,8 +190,8 @@ class LogClient(object):
         self._last_refresh = time.time()
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
-                self._accessKeyId, self._accessKey, self._securityToken = self._credentials_auto_refresher()
-                self._auth = make_auth(self._accessKeyId, self._accessKey, self._auth_version, self._region)
+                self._auth = make_auth(StaticCredentialsProvider(self._credentials_auto_refresher()),
+                                       self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
                     "failed to call _credentials_auto_refresher to refresh credentials, details: {0}".format(str(ex)))
