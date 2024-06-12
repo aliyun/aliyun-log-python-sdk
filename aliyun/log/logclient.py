@@ -954,7 +954,7 @@ class LogClient(object):
         project = request.get_project()
         resource = "/logs"
         (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return GetLogsResponse(resp, header)
+        return GetLogsResponse._from_v1_resp(resp, header)
 
     def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs

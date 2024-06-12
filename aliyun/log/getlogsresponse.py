@@ -63,18 +63,19 @@ class GetLogsResponse(LogResponse):
         }
         # parse query info
         query_info_str = Util.h_v_td(header, 'x-log-query-info', '')
-        query_info = json.loads(query_info_str)
-        meta_dict['mode'] = Util.h_v_td(query_info, 'mode', 0)
-        query_mode = GetLogsResponse.QueryMode(meta_dict['mode'])
-        if query_mode in (GetLogsResponse.QueryMode.SCAN, GetLogsResponse.QueryMode.SCAN_SQL):
-            meta_dict['scanBytes'] = Util.h_v_td(query_info, 'scanBytes', 0)
-        if query_mode in (GetLogsResponse.QueryMode.PHRASE, GetLogsResponse.QueryMode.SCAN):
-            scan_query_info = Util.h_v_td(query_info, 'phraseQueryInfo', dict())
-            meta_dict['phraseQueryInfo'] = {
-                'scanAll': (Util.h_v_td(scan_query_info, 'scanAll', 'false') != 'false'), 
-                'beginOffset': int(Util.h_v_td(scan_query_info, 'beginOffset', '0')),
-                'endOffset': int(Util.h_v_td(scan_query_info, 'endOffset', '0'))
-            }
+        if query_info_str != '':
+            query_info = json.loads(query_info_str)
+            meta_dict['mode'] = Util.h_v_td(query_info, 'mode', 0)
+            query_mode = GetLogsResponse.QueryMode(meta_dict['mode'])
+            if query_mode in (GetLogsResponse.QueryMode.SCAN, GetLogsResponse.QueryMode.SCAN_SQL):
+                meta_dict['scanBytes'] = Util.h_v_td(query_info, 'scanBytes', 0)
+            if query_mode in (GetLogsResponse.QueryMode.PHRASE, GetLogsResponse.QueryMode.SCAN):
+                scan_query_info = Util.h_v_td(query_info, 'phraseQueryInfo', dict())
+                meta_dict['phraseQueryInfo'] = {
+                    'scanAll': (Util.h_v_td(scan_query_info, 'scanAll', 'false') != 'false'), 
+                    'beginOffset': int(Util.h_v_td(scan_query_info, 'beginOffset', '0')),
+                    'endOffset': int(Util.h_v_td(scan_query_info, 'endOffset', '0'))
+                }
 
         return GetLogsResponse({
             "meta": meta_dict,
