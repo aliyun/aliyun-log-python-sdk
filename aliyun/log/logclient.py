@@ -5129,24 +5129,18 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name
 
-        :type export: Export
+        :type job_name: string
+        :param job_name: the job name
+
+        :type export: string
         :param export: the export job configuration
         """
         params = {"action": "RESTART"}
-        export_sink_config = export.getConfiguration().getSink()
-        export_type = export_sink_config.getType()
-        if export_type not in ["AliyunODPS", "AliyunOSS"]:
-            raise TypeError("export job type must in AliyunODPS or AliyunOSS, not %s" % export_type)
-        if export_type == "AliyunODPS":
-            sink = maxcompute_sink_deserialize(export_sink_config)
-        elif export_type == "AliyunOSS":
-            sink = oss_sink_deserialize(export_sink_config)
-        export = export_deserialize(export, sink)
         body = six.b(export)
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
         resource = "/jobs/" + job_name
         (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
-        return CreateExportResponse(header, resp)
+        return RestartExportResponse(header, resp)
 
     def get_export(self, project_name, job_name):
         """ get export

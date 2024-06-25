@@ -2,6 +2,7 @@ import time
 from aliyun.log import LogClient
 from aliyun.log.odps_sink import AliyunMaxComputeSink
 from aliyun.log.job import Export, ExportConfiguration
+import json
 
 
 def create_export():
@@ -38,35 +39,14 @@ def getJobConfig(client, project, jobName):
 
 
 def restart_export():
+    # 本示例演示更新displayName和delaySeconds参数的值
     client = LogClient("region", "ak", "ak_key")
-    project = '111111'
-    jobName = '111111'
-    config = getJobConfig(client, project, jobName)
-
-    configuration = config['configuration']
-    sinkConfig = configuration['sink']
-    sink = AliyunMaxComputeSink([], [])
-    sink.setOdpsRolearn(sinkConfig['odpsRolearn'])
-    sink.setOdpsEndpoint(sinkConfig['odpsEndpoint'])
-    sink.setOdpsTunnelEndpoint(sinkConfig['odpsTunnelEndpoint'])
-    sink.setOdpsProject(sinkConfig['odpsProject'])
-    sink.setOdpsTable(sinkConfig['odpsTable'])
-    sink.setTimeZone(sinkConfig['timeZone'])
-    sink.setFields(sinkConfig['fields'])
-    sink.setPartitionColumn(sinkConfig['partitionColumn'])
-    sink.setPartitionTimeFormat(sinkConfig['partitionTimeFormat'])
-
-    exportConfiguration = ExportConfiguration()
-    exportConfiguration.setRoleArn(configuration['roleArn'])
-    exportConfiguration.setLogstore(configuration['logstore'])
-    exportConfiguration.setSink(sink)
-    exportConfiguration.setFromTime(configuration['fromTime'])
-    exportConfiguration.setToTime(configuration['toTime'])
-
-    export = Export()
-    export.setConfiguration(exportConfiguration)
-    export.setName(config['name'])
-    export.setDisplayName(config['displayName']+'new') # 说明：本示例更新了 displayName
+    project = '11111'
+    jobName = '11111'
+    config = getJobConfig(client, project, jobName)  # 获取任务的配置
+    config['displayName'] = config['displayName'] + 'new'
+    config['configuration']['sink']['delaySeconds'] = 909
+    export = json.dumps(config)
     client.restart_export(project_name=project, job_name=jobName, export=export)
 
 
