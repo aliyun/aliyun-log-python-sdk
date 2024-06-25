@@ -5130,7 +5130,7 @@ class LogClient(object):
         :param project_name: the Project name
 
         :type job_name: string
-        :param job_name: the job name
+        :param job_name: the job name of export job
 
         :type export: string
         :param export: the export job configuration
