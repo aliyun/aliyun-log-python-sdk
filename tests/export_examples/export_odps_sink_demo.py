@@ -39,8 +39,8 @@ def getJobConfig(client, project, jobName):
 
 def restart_export():
     client = LogClient("region", "ak", "ak_key")
-    project = '11111'
-    jobName = '11111'
+    project = '111111'
+    jobName = '111111'
     config = getJobConfig(client, project, jobName)
 
     configuration = config['configuration']
