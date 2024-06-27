@@ -306,12 +306,12 @@ class GetLogsResponse(LogResponse):
                 'phraseQueryInfo': phrase_query_info_dict,
                 'limited': self.get_limited(),
                 'processedBytes': self.get_processed_bytes(),
-                'telementryType': self._telemetry_type,  # not typo
+                'telementryType': self.get_telemetry_type(),  # not typo
                 'powerSql': self.get_power_sql(),
                 'insertedSQL': self.get_inserted_sql(),
                 'keys': self.get_keys(),
                 'marker': self.get_marker(),
-                'isAccurate': self._is_accurate,
+                'isAccurate': self.get_is_accurate(),
                 'columnTypes': self.get_column_types(),
                 'highlights': self.get_highlights(),
                 'terms': [term._to_dict() for term in self.get_terms()],
