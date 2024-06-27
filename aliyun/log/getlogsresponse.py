@@ -305,18 +305,18 @@ class GetLogsResponse(LogResponse):
                 'mode': self.get_mode(),
                 'scanBytes': self.get_scan_bytes(),
                 'phraseQueryInfo': phrase_query_info_dict,
-                'limited': self._limited,
-                'processedBytes': self._processed_bytes,
+                'limited': self.get_limited(),
+                'processedBytes': self.get_processed_bytes(),
                 # 'telementryType': self._telemetry_type,  # not typo
-                'powerSql': self._power_sql,
-                'insertedSQL': self._inserted_sql,
-                'keys': self._keys,
-                'marker': self._marker,
+                'powerSql': self.get_power_sql(),
+                'insertedSQL': self.get_inserted_sql(),
+                'keys': self.get_keys(),
+                'marker': self.get_marker(),
                 # 'shard': self._shard,
                 # 'isAccurate': self._is_accurate,
-                'columnTypes': self._column_types,
-                'highlights': self._highlights,
-                'terms': [term.to_dict() for term in self._terms],
+                'columnTypes': self.get_column_types(),
+                'highlights': self.get_highlights(),
+                'terms': [term._to_dict() for term in self.get_terms()],
             }
 
         def log_print(self):
