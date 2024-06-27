@@ -248,20 +248,19 @@ class GetLogsResponse(LogResponse):
             self._phrase_query_info = GetLogsResponse.PhraseQueryInfo(
                 phrase_query_info) if phrase_query_info else None
 
-            # self._limited = meta.get("limited")
-            # self._processed_bytes = meta.get("processedBytes")
-            # self._telemetry_type = meta.get("telementryType")  # not typo
-            # self._power_sql = Util.v_or_d(meta.get("powerSql"), False)
-            # self._inserted_sql = meta.get("insertedSQL")
-            # self._keys = meta.get("keys")
-            # self._marker = meta.get("marker")
-            # self._shard = meta.get("shard")
-            # self._is_accurate = meta.get("isAccurate")
-            # self._column_types = meta.get("columnTypes")
-            # self._highlights = meta.get("highlights")
-            # self._terms = []
-            # for term in meta.get("terms", []):
-            #     self._terms.append(GetLogsResponse.Term._from_dict(term))
+            self._limited = meta.get("limited")
+            self._processed_bytes = meta.get("processedBytes")
+            self._telemetry_type = meta.get("telementryType") or meta.get("telemetryType") # not typo
+            self._power_sql = Util.v_or_d(meta.get("powerSql"), False)
+            self._inserted_sql = meta.get("insertedSQL")
+            self._keys = meta.get("keys")
+            self._marker = meta.get("marker")
+            self._is_accurate = meta.get("isAccurate")
+            self._column_types = meta.get("columnTypes")
+            self._highlights = meta.get("highlights")
+            self._terms = []
+            for term in meta.get("terms", []):
+                self._terms.append(GetLogsResponse.Term._from_dict(term))
 
         def is_completed(self):
             """ Check if the get logs query is completed
@@ -305,18 +304,17 @@ class GetLogsResponse(LogResponse):
                 'mode': self.get_mode(),
                 'scanBytes': self.get_scan_bytes(),
                 'phraseQueryInfo': phrase_query_info_dict,
-                # 'limited': self._limited,
-                # 'processedBytes': self._processed_bytes,
-                # 'telementryType': self._telemetry_type,  # not typo
-                # 'powerSql': self._power_sql,
-                # 'insertedSQL': self._inserted_sql,
-                # 'keys': self._keys,
-                # 'marker': self._marker,
-                # 'shard': self._shard,
-                # 'isAccurate': self._is_accurate,
-                # 'columnTypes': self._column_types,
-                # 'highlights': self._highlights,
-                # 'terms': [term.to_dict() for term in self._terms],
+                'limited': self.get_limited(),
+                'processedBytes': self.get_processed_bytes(),
+                'telementryType': self.get_telemetry_type(),  # not typo
+                'powerSql': self.get_power_sql(),
+                'insertedSQL': self.get_inserted_sql(),
+                'keys': self.get_keys(),
+                'marker': self.get_marker(),
+                'isAccurate': self.get_is_accurate(),
+                'columnTypes': self.get_column_types(),
+                'highlights': self.get_highlights(),
+                'terms': [term._to_dict() for term in self.get_terms()],
             }
 
         def log_print(self):
@@ -400,77 +398,72 @@ class GetLogsResponse(LogResponse):
             """
             return self._phrase_query_info
 
-        # def get_limited(self):
-        #     """ 
-        #     :return: limited, int
-        #     """
-        #     return self._limited
+        def get_limited(self):
+            """ 
+            :return: limited, int
+            """
+            return self._limited
 
-        # def get_processed_bytes(self):
-        #     """ 
-        #     :return: processed_bytes, int
-        #     """
-        #     return self._processed_bytes
+        def get_processed_bytes(self):
+            """ 
+            :return: processed_bytes, int
+            """
+            return self._processed_bytes
 
-        # def get_telemetry_type(self):
-        #     """ 
-        #     :return: telemetry_type, str
-        #     """
-        #     return self._telemetry_type
+        def get_telemetry_type(self):
+            """ 
+            :return: telemetry_type, str
+            """
+            return self._telemetry_type
 
-        # def get_power_sql(self):
-        #     """ 
-        #     :return: power_sql, bool
-        #     """
-        #     return self._power_sql
+        def get_power_sql(self):
+            """ 
+            :return: power_sql, bool
+            """
+            return self._power_sql
 
-        # def get_inserted_sql(self):
-        #     """ 
-        #     :return: inserted_sql, str
-        #     """
-        #     return self._inserted_sql
+        def get_inserted_sql(self):
+            """ 
+            :return: inserted_sql, str
+            """
+            return self._inserted_sql
 
-        # def get_keys(self):
-        #     """ 
-        #     :return: keys, List[str]
-        #     """
-        #     return self._keys
+        def get_keys(self):
+            """ 
+            :return: keys, List[str]
+            """
+            return self._keys
 
-        # def get_marker(self):
-        #     """ 
-        #     :return: marker, str
-        #     """
-        #     return self._marker
+        def get_marker(self):
+            """ 
+            :return: marker, str
+            """
+            return self._marker
 
-        # def get_shard(self):
-        #     """ 
-        #     :return: shard, int
-        #     """
-        #     return self._shard
 
-        # def get_is_accurate(self):
-        #     """ 
-        #     :return: is_accurate, bool
-        #     """
-        #     return self._is_accurate
+        def get_is_accurate(self):
+            """ 
+            :return: is_accurate, bool
+            """
+            return self._is_accurate
 
-        # def get_column_types(self):
-        #     """ 
-        #     :return: column_types, List[str]
-        #     """
-        #     return self._column_types
+        def get_column_types(self):
+            """ 
+            :return: column_types, List[str]
+            """
+            return self._column_types
 
-        # def get_highlights(self):
-        #     """ 
-        #     :return: highlights, List[Dict]
-        #     """
-        #     return self._highlights
+        def get_highlights(self):
+            """ 
+            :return: highlights, List[Dict]
+            """
+            return self._highlights
         
-        # def get_terms(self):
-        #     """ 
-        #     :return: terms, List[Term]
-        #     """
-        #     return self._terms
+        def get_terms(self):
+            """ 
+            :return: terms, List[Term]
+            """
+            return self._terms
 
     class PhraseQueryInfo():
         """ query info of phrase, includes beginOffset/endOffset/scanAll/endTime
@@ -528,41 +521,41 @@ class GetLogsResponse(LogResponse):
             print(self._to_dict())
 
 
-    # class Term():
-    #     """ terms of query, field key/term
-    #     """
+    class Term():
+        """ terms of query, field key/term
+        """
 
-    #     def __init__(self, key, term):
-    #         self._key = key
-    #         self._term = term
+        def __init__(self, key, term):
+            self._key = key
+            self._term = term
 
-    #     @classmethod
-    #     def _from_dict(cls, data):
-    #         """ Initialize from a dict
-    #         """
-    #         key = data.get("key")
-    #         term = data.get("term")
-    #         return cls(key, term)
+        @classmethod
+        def _from_dict(cls, data):
+            """ Initialize from a dict
+            """
+            key = data.get("key")
+            term = data.get("term")
+            return cls(key, term)
 
-    #     def get_key(self):
-    #         """ field key of term
-    #         """
-    #         return self._key
+        def get_key(self):
+            """ field key of term
+            """
+            return self._key
 
-    #     def get_term(self):
-    #         """ field term of term
-    #         """
-    #         return self._term
+        def get_term(self):
+            """ field term of term
+            """
+            return self._term
 
-    #     def _to_dict(self):
-    #         """ to Dict
-    #         """
-    #         return {
-    #             "key": self._key,
-    #             "term": self._term
-    #         }
+        def _to_dict(self):
+            """ to Dict
+            """
+            return {
+                "key": self.get_key(),
+                "term": self.get_term()
+            }
 
-    #     def log_print(self):
-    #         """ print info
-    #         """
-    #         print(self._to_dict())
+        def log_print(self):
+            """ print info
+            """
+            print(self._to_dict())
