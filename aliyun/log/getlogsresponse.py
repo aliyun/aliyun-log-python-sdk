@@ -250,13 +250,13 @@ class GetLogsResponse(LogResponse):
 
             self._limited = meta.get("limited")
             self._processed_bytes = meta.get("processedBytes")
-            self._telemetry_type = meta.get("telementryType") or meta.get("telemetryType") # not typo
+            # self._telemetry_type = meta.get("telementryType") or meta.get("telemetryType") # not typo
             self._power_sql = Util.v_or_d(meta.get("powerSql"), False)
             self._inserted_sql = meta.get("insertedSQL")
             self._keys = meta.get("keys")
             self._marker = meta.get("marker")
-            self._shard = meta.get("shard")
-            self._is_accurate = meta.get("isAccurate")
+            # self._shard = meta.get("shard")
+            # self._is_accurate = meta.get("isAccurate")
             self._column_types = meta.get("columnTypes")
             self._highlights = meta.get("highlights")
             self._terms = []
@@ -307,13 +307,13 @@ class GetLogsResponse(LogResponse):
                 'phraseQueryInfo': phrase_query_info_dict,
                 'limited': self._limited,
                 'processedBytes': self._processed_bytes,
-                'telementryType': self._telemetry_type,  # not typo
+                # 'telementryType': self._telemetry_type,  # not typo
                 'powerSql': self._power_sql,
                 'insertedSQL': self._inserted_sql,
                 'keys': self._keys,
                 'marker': self._marker,
-                'shard': self._shard,
-                'isAccurate': self._is_accurate,
+                # 'shard': self._shard,
+                # 'isAccurate': self._is_accurate,
                 'columnTypes': self._column_types,
                 'highlights': self._highlights,
                 'terms': [term.to_dict() for term in self._terms],
@@ -412,11 +412,11 @@ class GetLogsResponse(LogResponse):
             """
             return self._processed_bytes
 
-        def get_telemetry_type(self):
-            """ 
-            :return: telemetry_type, str
-            """
-            return self._telemetry_type
+        # def get_telemetry_type(self):
+        #     """ 
+        #     :return: telemetry_type, str
+        #     """
+        #     return self._telemetry_type
 
         def get_power_sql(self):
             """ 
@@ -442,17 +442,17 @@ class GetLogsResponse(LogResponse):
             """
             return self._marker
 
-        def get_shard(self):
-            """ 
-            :return: shard, int
-            """
-            return self._shard
+        # def get_shard(self):
+        #     """ 
+        #     :return: shard, int
+        #     """
+        #     return self._shard
 
-        def get_is_accurate(self):
-            """ 
-            :return: is_accurate, bool
-            """
-            return self._is_accurate
+        # def get_is_accurate(self):
+        #     """ 
+        #     :return: is_accurate, bool
+        #     """
+        #     return self._is_accurate
 
         def get_column_types(self):
             """ 
