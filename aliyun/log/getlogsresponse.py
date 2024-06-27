@@ -551,8 +551,8 @@ class GetLogsResponse(LogResponse):
             """ to Dict
             """
             return {
-                "key": self._key,
-                "term": self._term
+                "key": self.get_key(),
+                "term": self.get_term()
             }
 
         def log_print(self):
