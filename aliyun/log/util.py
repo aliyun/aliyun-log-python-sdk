@@ -34,7 +34,7 @@ try:
             return lz4.block.decompress(data, uncompressed_size=raw_size)
 
         def lz_compresss(data):
-            return lz4.block.compress(data)
+            return lz4.block.compress(data)[4:]
 except ImportError:
     lz4 = None
       
