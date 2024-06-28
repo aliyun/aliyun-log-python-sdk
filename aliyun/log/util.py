@@ -35,8 +35,9 @@ try:
 
         def lz_compresss(data):
             return lz4.block.compress(data)[4:]
+    lz4_available = True
 except ImportError:
-    lz4 = None
+    lz4_available = False
       
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ class Util(object):
 
     @staticmethod
     def is_lz4_available():
-        return lz4 is not None
+        return lz4_available
         
     @staticmethod
     def h_v_t(header, key):
@@ -216,7 +217,7 @@ class Util(object):
         compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
         if compress_type == 'lz4':
             raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
-            if lz4:
+            if Util.is_lz4_available():
                 return lz_decompress(raw_size, response)
             else:
                 raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=response)
