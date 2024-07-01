@@ -1150,7 +1150,7 @@ class LogClient(object):
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
         raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
-        if raw_size == 0:
+        if raw_size <= 0:
             return PullLogResponse(None, header)
         compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
         if compress_type == 'lz4':
