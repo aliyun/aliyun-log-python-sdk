@@ -29,13 +29,14 @@ class PullLogResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self._is_bytes_type = None
-        self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
         self.raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.raw_log_group_count_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatacount', '-1'))
         self.raw_size_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatasize', '-1'))
         self.loggroup_list = LogGroupList()
-        self._parse_loggroup_list(resp)
+        if resp is not None:
+            self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
         self._body = None
