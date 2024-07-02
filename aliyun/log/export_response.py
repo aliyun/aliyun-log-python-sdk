@@ -8,7 +8,7 @@
 from .logresponse import LogResponse
 from .util import Util
 
-__all__ = ['CreateExportResponse', 'DeleteExportResponse', 'GetExportResponse', 'ListExportResponse', 'RestartExportResponse']
+__all__ = ['CreateExportResponse', 'DeleteExportResponse', 'GetExportResponse', 'ListExportResponse', 'UpdateExportResponse']
 
 
 class CreateExportResponse(LogResponse):
@@ -32,12 +32,12 @@ class DeleteExportResponse(LogResponse):
         print('headers:', self.get_all_headers())
 
 
-class RestartExportResponse(LogResponse):
+class UpdateExportResponse(LogResponse):
     def __init__(self, header, resp=''):
         LogResponse.__init__(self, header, resp)
 
     def log_print(self):
-        print('RestartExportResponse:')
+        print('UpdateExportResponse:')
         print('headers:', self.get_all_headers())
 
 

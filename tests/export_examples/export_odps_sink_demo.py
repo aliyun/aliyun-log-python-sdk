@@ -38,7 +38,7 @@ def getJobConfig(client, project, jobName):
     return res.body
 
 
-def restart_export():
+def update_export():
     # 本示例演示更新displayName和delaySeconds参数的值
     client = LogClient("region", "ak", "ak_key")
     project = '11111'
@@ -47,11 +47,11 @@ def restart_export():
     config['displayName'] = config['displayName'] + 'new'
     config['configuration']['sink']['delaySeconds'] = 909
     export = json.dumps(config)
-    client.restart_export(project_name=project, job_name=jobName, export=export)
+    client.update_export(project_name=project, job_name=jobName, export=export)
 
 
 def main():
-    restart_export()
+    update_export()
 
 
 if __name__ == "__main__":
