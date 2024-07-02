@@ -5075,7 +5075,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name
 
-        :type export: string
+        :type export: Export
         :param export: the export job configuration
         """
         params = {}
@@ -5109,6 +5109,28 @@ class LogClient(object):
         resource = "/jobs/" + job_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteExportResponse(header, resp)
+
+    def update_export(self, project_name, job_name, export):
+        """ Update and Restart an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the job name of export job
+
+        :type export: string
+        :param export: the export job configuration
+        """
+        if not isinstance(export, str):
+            raise TypeError("export type must be string")
+        params = {"action": "RESTART"}
+        body = six.b(export)
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateExportResponse(header, resp)
 
     def get_export(self, project_name, job_name):
         """ get export
