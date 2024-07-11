@@ -4,7 +4,7 @@
 #include <map>
 #include <ctime>
 
-#include "SlsLogPbParser.h"
+#include "log_parser.h"
 #include "log_builder.h"
 
 using namespace std;
@@ -552,14 +552,14 @@ static PyMethodDef SLSPBMethods[] = {
 
 static struct PyModuleDef slspbmodule = {
     PyModuleDef_HEAD_INIT,
-    "slspb",   /* name of module */
+    "aliyun_log_pb",   /* name of module */
     "a module to parse and write sls pb", /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
     SLSPBMethods
 };
 }
-PyMODINIT_FUNC PyInit_slspb(void) {
+PyMODINIT_FUNC PyInit_aliyun_log_pb(void) {
     PyObject *module = PyModule_Create(&slspbmodule);
     PyModule_AddIntConstant(module, "is_enable", 1);
     return module;

@@ -2,7 +2,7 @@ import unittest
 
 import six
 import time
-import slspb
+import aliyun_log_pb as slspb
 import random
 import pickle
 from aliyun.log.util import lz_decompress

@@ -2,7 +2,7 @@ import os
 import unittest
 
 import six
-import slspb
+import aliyun_log_pb as slspb
 
 
 class TestParsePB(unittest.TestCase):

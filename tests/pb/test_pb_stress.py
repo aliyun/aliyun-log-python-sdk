@@ -2,7 +2,7 @@ import os
 import unittest
 
 import time
-import slspb
+import aliyun_log_pb as slspb
 import six
 import concurrent.futures
 

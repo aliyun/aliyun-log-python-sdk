@@ -1,6 +1,0 @@
-build
-dist
-*.so
-*.pyc
-tests/__pycache__
-slspb.egg-info

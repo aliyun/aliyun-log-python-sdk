@@ -1,7 +1,7 @@
 import sys
 import unittest
 import aliyun.log.log_logs_pb2 as sls_logs_pb2
-import slspb
+import aliyun_log_pb as slspb
 import six  
 def _gen_varint(value):
     pieces = []
