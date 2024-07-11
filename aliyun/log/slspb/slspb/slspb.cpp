@@ -10,7 +10,8 @@
 #include "log_builder.h"
 
 using namespace std;
-
+namespace
+{
 bool get_str_bytes_from_pyobj(PyObject * pyObj ,char ** val, Py_ssize_t * valLen, bool allowBytes) {
     if(PyUnicode_CheckExact(pyObj)){
         *val = (char *) PyUnicode_AsUTF8AndSize(pyObj, valLen);
@@ -58,7 +59,12 @@ bool check_list_and_size(PyObject * obj, int exceptSize) {
 
 string get_obj_err_msg(string err, PyObject * obj) {
     PyObject * pyErrInfo = PyObject_Repr(obj);
-    err += PyUnicode_AsUTF8(pyErrInfo);
+    const char* pyErrInfoStr = PyUnicode_AsUTF8(pyErrInfo);
+    if (!pyErrInfoStr) {
+        Py_DECREF(pyErrInfo);
+        return err;
+    }
+    err += pyErrInfoStr;
     Py_XDECREF(pyErrInfo);
     return err;
 }
@@ -232,7 +238,8 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
        return NULL;
     }
     if (has_nano){
-        long tnsCnt = PyList_Size(PyList_GetItem(args, 5));
+        PyObject* item = PyList_GetItem(args, 5);
+        long tnsCnt = PyList_Size(item);
         if(PyErr_Occurred() || !PyList_Check(item)) {
             string err = get_obj_err_msg("slspb error: except time_ns_part list at sixth element in list, like [tns1, tns2..], ts should be int, got: ",
                             PyList_GetItem(args, 5));
@@ -528,7 +535,7 @@ static struct PyModuleDef slspbmodule = {
                  or -1 if the module keeps state in global variables. */
     SLSPBMethods
 };
-
+}
 PyMODINIT_FUNC PyInit_slspb(void) {
     PyObject *module = PyModule_Create(&slspbmodule);
     PyModule_AddIntConstant(module, "is_enable", 1);
