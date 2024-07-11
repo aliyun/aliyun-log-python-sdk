@@ -129,12 +129,13 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
     long rawSize = 0;
     PyObject * pyWarnMsgList = PyList_New(0);
 
-    int lzoCompress = (int) PyLong_AsLong(PyList_GetItem(args, 0));
-    if(PyErr_Occurred()){
-       string err = get_obj_err_msg("slspb error: except int at fisrt element in list, got: ", PyList_GetItem(args, 0));
+    PyObject* arg0 = PyList_GetItem(args, 0);
+    if (PyErr_Occurred() || !PyLong_Check(arg0)) {
+       string err = get_obj_err_msg("slspb error: except int at fisrt element in list, got: ", arg0);
        PyErr_SetString(PyExc_Exception, err.c_str());
        return NULL;
     }
+    int lzoCompress = (int)PyLong_AsLong(arg0);
 
     if(lzoCompress!=0&&lzoCompress!=1){
        string err = get_obj_err_msg("slspb error: except 0 or 1 at fisrt element in list, got: ", PyList_GetItem(args, 0));
@@ -193,16 +194,17 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         add_source(builder, "127.0.0.1", strlen("127.0.0.1"));
     }
 
-    n = PyList_Size(PyList_GetItem(args, 3));
-    if(PyErr_Occurred()){
-        string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], got: ", PyList_GetItem(args, 3));
+    PyObject* arg3 = PyList_GetItem(args, 3);
+    if (PyErr_Occurred() || !PyList_Check(arg3)){
+        string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], got: ", arg3);
         PyErr_SetString(PyExc_Exception, err.c_str());
         write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
+    n = PyList_Size(arg3);
 
     for (i=0; i<n; i++) {
-        PyObject * pyTagTuple = PyList_GetItem(PyList_GetItem(args, 3),i);
+        PyObject * pyTagTuple = PyList_GetItem(arg3, i);
         if(!check_tuple_and_size(pyTagTuple, 2)){
             string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], tag key and value should be string, got: ",
                              pyTagTuple);
@@ -244,32 +246,36 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         add_tag(builder, key, keyLen, val, valLen);
     }
 
-    long tsCnt = PyList_Size(PyList_GetItem(args, 4));
-    if(PyErr_Occurred()){
+    PyObject* arg4 = PyList_GetItem(args, 4);
+    if (PyErr_Occurred() || !PyList_Check(arg4)) {
        string err = get_obj_err_msg("slspb error: except time list at fifth element in list, like [ts1, ts2..], ts should be int, got: ",
-                       PyList_GetItem(args, 4));
+                       arg4);
        PyErr_SetString(PyExc_Exception, err.c_str());
        write_pb_do_clean(builder, pyWarnMsgList);
        return NULL;
     }
+    long tsCnt = PyList_Size(arg4);
+
     if (has_nano){
-        PyObject* item = PyList_GetItem(args, 5);
-        if(PyErr_Occurred() || !PyList_Check(item)) {
+        PyObject* arg5 = PyList_GetItem(args, 5);
+        if(PyErr_Occurred() || !PyList_Check(arg5)) {
             string err = get_obj_err_msg("slspb error: except time_ns_part list at sixth element in list, like [tns1, tns2..], ts should be int, got: ",
-                            PyList_GetItem(args, 5));
+                            arg5);
             PyErr_SetString(PyExc_Exception, err.c_str());
             write_pb_do_clean(builder, pyWarnMsgList);
             return NULL;
         }
     }
-    totalLogCnt = PyList_Size(PyList_GetItem(args, index_content));
-    if(PyErr_Occurred()){
+
+    PyObject* contentArg = PyList_GetItem(args, index_content);
+    if (PyErr_Occurred() || !PyList_Check(contentArg)){
         string err = get_obj_err_msg("slspb error: except content list at " + to_math_string(index_content) + " element in list, like [[(key1,value1),..],], content key and value should be string, got: ",
-                          PyList_GetItem(args, index_content));
+                          contentArg);
         PyErr_SetString(PyExc_Exception, err.c_str());
         write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
+    totalLogCnt = PyList_Size(contentArg);
 
     if (tsCnt != totalLogCnt) {
         string err = "slspb error: the count of ts and logs mismath, got:  ts count: " + to_string(tsCnt) + " log count:" + to_string(totalLogCnt);
@@ -313,9 +319,18 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
                 return NULL;
             }
             logtime_nano_part = PyLong_AsLong(pyLogTimeNano);
+            if (logtime_nano_part == -1 && PyErr_Occurred()) {
+                // handle overflow
+                string err = get_obj_err_msg("slspb warning: nano time value overflow, got: ", pyLogTimeNano);
+                add_warning_msg(pyWarnMsgList, err);
+                PyErr_Clear(); // ignore
+            }
             if(logtime_nano_part>=0 && logtime_nano_part<std::nano::den){
                 //only tns part is larger than 0 and less than 1000000000, time_ns_part can be added
                 add_log_timenano_part(builder, (uint32_t)logtime_nano_part);
+            } else {
+                string err = string("slspb warning: nano time value ignored, value not in [0, 999999999], got: ") + std::to_string(logtime_nano_part);
+                add_warning_msg(pyWarnMsgList, err);
             }
         } 
         pyContentList = PyList_GetItem(PyList_GetItem(args, index_content), i);
