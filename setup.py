@@ -15,9 +15,9 @@ Depending on your version of Python, these libraries may also should be installe
 http://pypi.python.org/pypi/simplejson/
 
 """
-
+import sys
 try:
-    from setuptools import setup
+    from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup
 
@@ -57,6 +57,8 @@ elif sys.version_info[:2] == (3, 3):
 elif sys.version_info[0] == 3:
     requirements = requirements_py3
 
+test_requirements = [
+]
 
 packages = [
     'aliyun',
@@ -94,6 +96,22 @@ Python SDK for Alicloud Log Service
 http://aliyun-log-python-sdk.readthedocs.io
 """
 
+if sys.platform == 'darwin':
+    extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-stdlib=libc++']
+else:
+    extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-std=c++11']
+
+extension_source_dir = 'aliyun/log/slspb/slspb'
+extension_sources = ['slspb.cpp',
+                     'log_builder.c',
+                     'sds.c',
+                     'lz4.c']
+slspb = Extension('slspb',
+                  sources=[extension_source_dir + '/' + s for s in extension_sources],
+                  extra_compile_args=extra_compile_args,
+                  language='c++')
+
+
 setup(
     name='aliyun-log-python-sdk',
     version=version,
@@ -101,6 +119,10 @@ setup(
     author='Aliyun',
     url='https://github.com/aliyun/aliyun-log-python-sdk',
     install_requires=requirements,
+    extras_require = {
+        'test': test_requirements,
+    },
+    ext_modules=[slspb],
     packages=packages,
     classifiers=classifiers,
     long_description=long_description,

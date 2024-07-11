@@ -1,16 +1,56 @@
 #ifndef _SLS_LOG_PB_PARSER_H_
 #define _SLS_LOG_PB_PARSER_H_
 
-#include "SlsCoding.h"
 #include <vector>
 #include <ratio>
 
-namespace apsara {
-namespace sls { 
+namespace aliyun {
+namespace log { 
 
 #define IF_NULL_RETURN_FALSE(ptr)  { if (ptr == NULL) { return false;} }
 #define IF_FAIL_RETURN_FALSE(exp)  { if ((exp) == false) { return false;}}
 #define IF_CONDITION_RETURN_FALSE(condition) { if (condition) { return false;}}
+
+inline static const char* GetVarint32Ptr(const char* p,const char* limit, uint32_t* v)
+{
+#define BITS_VALUE(ptr, offset)   (((uint32_t)(*(ptr))) << offset)
+#define BITS_VALUE_WITH_MASK(ptr, offset)   (((uint32_t)(((uint8_t)(*(ptr))) ^ MASK)) << offset)
+    if (p == NULL) 
+    {
+        return NULL;
+    }
+    const static uint8_t MASK = 128;
+    if (p < limit && ((*p) & MASK) == 0) 
+    {
+        *v = *p;
+        return p + 1;
+    }
+    else if (p + 1 < limit && !((*(p + 1)) & MASK))
+    {
+        *v = BITS_VALUE_WITH_MASK(p, 0) |  BITS_VALUE(p + 1 , 7);
+        return p + 2;
+    }
+    else if (p + 2 < limit && !((*(p + 2)) & MASK))
+    {
+        *v = BITS_VALUE_WITH_MASK(p, 0) |  BITS_VALUE_WITH_MASK(p + 1 , 7) | BITS_VALUE(p + 2 , 14);
+        return p + 3;
+    }
+    else if (p + 3 < limit && !((*(p + 3)) & MASK))
+    {
+        *v = BITS_VALUE_WITH_MASK(p, 0) |  BITS_VALUE_WITH_MASK(p + 1 , 7) | BITS_VALUE_WITH_MASK(p + 2 , 14) | BITS_VALUE( p + 3 , 21);
+        return p + 4;
+    }
+    else if (p + 4 < limit && !((*(p + 4)) & MASK))
+    {
+        *v = BITS_VALUE_WITH_MASK(p, 0) |  BITS_VALUE_WITH_MASK(p + 1 , 7) | BITS_VALUE_WITH_MASK(p + 2 , 14) | BITS_VALUE_WITH_MASK( p + 3 , 21) | BITS_VALUE(p + 4 , 28);
+        return p + 5;
+    }
+    *v = 0;
+    return NULL;
+
+#undef BITS_VALUE
+#undef BITS_VALUE_WITH_MASK
+}
 
 class SlsPbValidator
 {

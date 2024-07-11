@@ -3,9 +3,7 @@
 
 #include <map>
 #include <ctime>
-#include <iostream>
 
-#include "SlsCoding.h"
 #include "SlsLogPbParser.h"
 #include "log_builder.h"
 
@@ -435,7 +433,7 @@ static PyObject * parse_pb(PyObject * self, PyObject * args) {
      return NULL;
    }
 
-   apsara::sls::SlsLogGroupListFlatPb loggroupList(buffer, length) ;
+   aliyun::log::SlsLogGroupListFlatPb loggroupList(buffer, length) ;
    loggroupList.Decode();
 
    int loggroupCnt = loggroupList.GetLogGroupSize();
@@ -450,23 +448,23 @@ static PyObject * parse_pb(PyObject * self, PyObject * args) {
 
    PyObject *pyLogList = PyList_New(0);
    for(int i=0; i<loggroupCnt; i++) {
-       const apsara::sls::SlsLogGroupFlatPb& flatLogGroup = loggroupList.GetLogGroupFlatPb(i);
-       apsara::sls::SlsStringPiece tagKey;
-       apsara::sls::SlsStringPiece tagValue;
-       map<string , apsara::sls::SlsStringPiece> tagMap;
+       const aliyun::log::SlsLogGroupFlatPb& flatLogGroup = loggroupList.GetLogGroupFlatPb(i);
+       aliyun::log::SlsStringPiece tagKey;
+       aliyun::log::SlsStringPiece tagValue;
+       map<string , aliyun::log::SlsStringPiece> tagMap;
        tagCount = flatLogGroup.GetTagsSize();
        for (int tagIdx = 0; tagIdx < tagCount; ++ tagIdx) {
-           const apsara::sls::SlsTagFlatPb & flatPb = flatLogGroup.GetTagFlatPb(tagIdx);
+           const aliyun::log::SlsTagFlatPb & flatPb = flatLogGroup.GetTagFlatPb(tagIdx);
            if (flatPb.GetTagKeyValue(tagKey, tagValue)) {
                string tagKeyStr ;
                tagKeyStr.reserve(64);
                tagKeyStr.append("__tag__:");
                tagKeyStr.append(tagKey.mPtr, tagKey.mLen);
-               tagMap.insert(pair<string , apsara::sls::SlsStringPiece>(tagKeyStr, tagValue));
+               tagMap.insert(pair<string , aliyun::log::SlsStringPiece>(tagKeyStr, tagValue));
            }
        }
 
-       apsara::sls::SlsStringPiece topicStringPiece, sourceStringPiece;
+       aliyun::log::SlsStringPiece topicStringPiece, sourceStringPiece;
        if (!flatLogGroup.GetTopic(topicStringPiece)) {
            topicStringPiece.mPtr = NULL;
            topicStringPiece.mLen = 0;
@@ -490,8 +488,8 @@ static PyObject * parse_pb(PyObject * self, PyObject * args) {
           PyDict_SetItem(pyLogDict, pySourceKey, pySourceVal);
           Py_XDECREF(pySourceVal);
 
-          const apsara::sls::SlsLogFlatPb & flatLog = flatLogGroup.GetLogFlatPb(logIdx);
-          apsara::sls::SlsLogFlatPb::SlsLogFlatPbReader flatLogReader = flatLog.GetReader();
+          const aliyun::log::SlsLogFlatPb & flatLog = flatLogGroup.GetLogFlatPb(logIdx);
+          aliyun::log::SlsLogFlatPb::SlsLogFlatPbReader flatLogReader = flatLog.GetReader();
 
           PyObject *pyTimeVal ;
           if(timeAsStr == 0) {
@@ -513,7 +511,7 @@ static PyObject * parse_pb(PyObject * self, PyObject * args) {
               Py_XDECREF(pyTimeNanoVal);
           }
 
-          apsara::sls::SlsStringPiece key, value;
+          aliyun::log::SlsStringPiece key, value;
           while (flatLogReader.GetNextKeyValue(key, value)) {
               PyObject *pyContentKey = get_pyobj_from_str_bytes(key.mPtr, key.mLen);
               PyObject *pyContentVal = get_pyobj_from_str_bytes(value.mPtr, value.mLen);

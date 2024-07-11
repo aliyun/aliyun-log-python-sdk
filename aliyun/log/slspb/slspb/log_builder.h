@@ -1,10 +1,3 @@
-//
-//  log_builder.h
-//  log-c-sdk
-//
-//  Created by 王佳玮 on 16/8/23.
-//  Copyright © 2016年 wangjwchn. All rights reserved.
-//
 #ifndef LOG_BUILDER_H
 #define LOG_BUILDER_H
 
