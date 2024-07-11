@@ -3,6 +3,7 @@
 
 #include <map>
 #include <ctime>
+#include <string>
 
 #include "log_parser.h"
 #include "log_builder.h"
@@ -300,7 +301,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         }
         
         add_log_begin(builder);
-        add_log_time(builder, (u_int32_t)logtime);
+        add_log_time(builder, (uint32_t)logtime);
         PyObject * pyContentList;
         if (has_nano){
             PyObject * pyLogTimeNano = PyList_GetItem(PyList_GetItem(args, 5),i);
@@ -314,7 +315,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
             logtime_nano_part = PyLong_AsLong(pyLogTimeNano);
             if(logtime_nano_part>=0 && logtime_nano_part<std::nano::den){
                 //only tns part is larger than 0 and less than 1000000000, time_ns_part can be added
-                add_log_timenano_part(builder, (u_int32_t)logtime_nano_part);
+                add_log_timenano_part(builder, (uint32_t)logtime_nano_part);
             }
         } 
         pyContentList = PyList_GetItem(PyList_GetItem(args, index_content), i);
