@@ -16,12 +16,8 @@ http://pypi.python.org/pypi/simplejson/
 
 """
 import sys
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup
-
-import sys
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 import re
 
 
@@ -96,19 +92,30 @@ Python SDK for Alicloud Log Service
 http://aliyun-log-python-sdk.readthedocs.io
 """
 
-if sys.platform == 'darwin':
-    extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-stdlib=libc++']
-else:
-    extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-std=c++11']
+class BuildExt(build_ext):
+    def build_extensions(self):
+        # windows msvc
+        if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
+            for ext in self.extensions:
+                ext.extra_compile_args = ['/EHsc', '/std:c++11', '/DLOG_KEY_VALUE_FLAG']
+        # macos
+        elif sys.platform == 'darwin':
+            for ext in self.extensions:
+                ext.extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-stdlib=libc++']
+        # linux and other
+        else:
+            for ext in self.extensions:
+                ext.extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-std=c++11']
 
-extension_source_dir = 'aliyun/log/slspb/slspb'
-extension_sources = ['slspb.cpp',
+        build_ext.build_extensions(self)
+
+extension_source_dir = 'aliyun/log/pb'
+extension_sources = ['pb.cpp',
                      'log_builder.c',
                      'sds.c',
                      'lz4.c']
-slspb = Extension('slspb',
+slspb = Extension('aliyun_log_pb',
                   sources=[extension_source_dir + '/' + s for s in extension_sources],
-                  extra_compile_args=extra_compile_args,
                   language='c++')
 
 
@@ -126,4 +133,7 @@ setup(
     packages=packages,
     classifiers=classifiers,
     long_description=long_description,
+    cmdclass={
+        'build_ext': BuildExt,
+    },
 )
