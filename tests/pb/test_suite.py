@@ -15,4 +15,8 @@ if __name__ == '__main__':
     suite.addTests(loader.loadTestsFromTestCase(TestPBCompare))
     # suite.addTests(loader.loadTestsFromTestCase(TestWritePBStress))
     runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    result = runner.run(suite)
+    
+    if not result.wasSuccessful():
+        exit(-1)
+    exit(0)
