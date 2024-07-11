@@ -1,7 +1,6 @@
 import sys
-sys.path.append('/home/admin/etl-client-1')
 import unittest
-import sls_logs_pb2
+import aliyun.log.log_logs_pb2 as sls_logs_pb2
 import slspb
 import six  
 def _gen_varint(value):
