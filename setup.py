@@ -54,6 +54,7 @@ elif sys.version_info[0] == 3:
     requirements = requirements_py3
 
 test_requirements = [
+    'lz4'
 ]
 
 packages = [
