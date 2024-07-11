@@ -93,6 +93,15 @@ void add_warning_msg(PyObject * pyWarnMsgList, string err){
     Py_XDECREF(pyWarnMsg);
 }
 
+void write_pb_do_clean(log_group_builder* builder, PyObject* pyWarnMsgList)
+{
+    if (builder != NULL)
+    {
+        log_group_destroy(builder);
+    }
+    Py_XDECREF(pyWarnMsgList);
+}
+
 static PyObject * write_pb(PyObject * self, PyObject * args) {
     bool has_nano = false;
     int index_content = 5;
@@ -146,6 +155,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         if(!get_str_bytes_from_pyobj(pyTopic, &topic, &topicLen, true)){
            string err = get_obj_err_msg("slspb error: except string at second element(topic) in list, got: ", pyTopic);
            PyErr_SetString(PyExc_Exception, err.c_str());
+           write_pb_do_clean(builder, pyWarnMsgList);
            return NULL;
         }
 
@@ -167,6 +177,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         if(!get_str_bytes_from_pyobj(pySource, &source, &sourceLen, true)){
            string err = get_obj_err_msg("slspb error: except string at third element(source) in list, got: ", pySource);
            PyErr_SetString(PyExc_Exception, err.c_str());
+           write_pb_do_clean(builder, pyWarnMsgList);
            return NULL;
         }
 
@@ -187,6 +198,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
     if(PyErr_Occurred()){
         string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], got: ", PyList_GetItem(args, 3));
         PyErr_SetString(PyExc_Exception, err.c_str());
+        write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
 
@@ -196,6 +208,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
             string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], tag key and value should be string, got: ",
                              pyTagTuple);
             PyErr_SetString(PyExc_Exception, err.c_str());
+            write_pb_do_clean(builder, pyWarnMsgList);
             return NULL;
         }
 
@@ -204,6 +217,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
            string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], tag key should be string, got: ",
                              pyTagKey);
            PyErr_SetString(PyExc_Exception, err.c_str());
+           write_pb_do_clean(builder, pyWarnMsgList);
            return NULL;
         }
 
@@ -220,6 +234,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
                string err = get_obj_err_msg("slspb error: except tag list at fourth element in list, like [(tagk1,tagv1),(tagk2,tagv2)], tag value should be string or bytes, got: ",
                                  pyTagVal);
                PyErr_SetString(PyExc_Exception, err.c_str());
+               write_pb_do_clean(builder, pyWarnMsgList);
                return NULL;
            }
         }
@@ -235,6 +250,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
        string err = get_obj_err_msg("slspb error: except time list at fifth element in list, like [ts1, ts2..], ts should be int, got: ",
                        PyList_GetItem(args, 4));
        PyErr_SetString(PyExc_Exception, err.c_str());
+       write_pb_do_clean(builder, pyWarnMsgList);
        return NULL;
     }
     if (has_nano){
@@ -244,6 +260,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
             string err = get_obj_err_msg("slspb error: except time_ns_part list at sixth element in list, like [tns1, tns2..], ts should be int, got: ",
                             PyList_GetItem(args, 5));
             PyErr_SetString(PyExc_Exception, err.c_str());
+            write_pb_do_clean(builder, pyWarnMsgList);
             return NULL;
         }
     }
@@ -252,17 +269,20 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         string err = get_obj_err_msg("slspb error: except content list at " + to_math_string(index_content) + " element in list, like [[(key1,value1),..],], content key and value should be string, got: ",
                           PyList_GetItem(args, index_content));
         PyErr_SetString(PyExc_Exception, err.c_str());
+        write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
 
     if (tsCnt != totalLogCnt) {
         string err = "slspb error: the count of ts and logs mismath, got:  ts count: " + to_string(tsCnt) + " log count:" + to_string(totalLogCnt);
         PyErr_SetString(PyExc_TypeError, err.c_str());
+        write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
 
     if (tsCnt == 0) {
         PyErr_SetString(PyExc_TypeError, "slspb error: the count of ts and logs should large than 1");
+        write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
     for (i=0; i<totalLogCnt; i++) {
@@ -271,6 +291,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
            string err = get_obj_err_msg("slspb error: except time list at fifth element in list, like [ts1, ts2..], ts should be int, got: ",
                                  PyList_GetItem(args, 4));
            PyErr_SetString(PyExc_Exception, err.c_str());
+           write_pb_do_clean(builder, pyWarnMsgList);
            return NULL;
         }
 
@@ -290,6 +311,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
                 string err = get_obj_err_msg("slspb error: except time_ns_part list at sixth element in list, like [tns1, tns2..], tns should be int, got: ",
                                         PyList_GetItem(args, 5));
                 PyErr_SetString(PyExc_Exception, err.c_str());
+                write_pb_do_clean(builder, pyWarnMsgList);
                 return NULL;
             }
             logtime_nano_part = PyLong_AsLong(pyLogTimeNano);
@@ -303,6 +325,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         if(PyErr_Occurred()){
             string err = get_obj_err_msg("slspb error: except content list at " + to_math_string(index_content) + " element in list, like [[(key1,value1),..],], content key and value should be string, got: ",PyList_GetItem(args, index_content));
             PyErr_SetString(PyExc_Exception, err.c_str());
+            write_pb_do_clean(builder, pyWarnMsgList);
             return NULL;
         }
 
@@ -312,6 +335,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
             if(!check_tuple_and_size(pyContentTuple, 2)){
                 string err = get_obj_err_msg("slspb error: except content list at " + to_math_string(index_content) + " element in list, like [[(key1,value1),..],], content key and value should be string, got: ",pyContentTuple);
                 PyErr_SetString(PyExc_Exception, err.c_str());
+                write_pb_do_clean(builder, pyWarnMsgList);
                 return NULL;
             }
 
@@ -339,6 +363,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
                     string err;
                     err = get_obj_err_msg("slspb error: except content list at "+ to_math_string(index_content) +" element in list, like [[(key1,value1),..],], content value should be string or bytes , got: ", pyContentVal);
                     PyErr_SetString(PyExc_Exception, err.c_str());
+                    write_pb_do_clean(builder, pyWarnMsgList);
                     return NULL;
                 }
             }
@@ -360,6 +385,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
     }
     if(NULL==logBuf){
         PyErr_SetString(PyExc_Exception, "slspb error: serialize data failed!");
+        write_pb_do_clean(builder, pyWarnMsgList);
         return NULL;
     }
     PyObject * pbBuf = PyBytes_FromStringAndSize((char *) logBuf->data, (Py_ssize_t) logBuf->length);
