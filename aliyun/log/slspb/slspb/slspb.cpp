@@ -255,7 +255,6 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
     }
     if (has_nano){
         PyObject* item = PyList_GetItem(args, 5);
-        long tnsCnt = PyList_Size(item);
         if(PyErr_Occurred() || !PyList_Check(item)) {
             string err = get_obj_err_msg("slspb error: except time_ns_part list at sixth element in list, like [tns1, tns2..], ts should be int, got: ",
                             PyList_GetItem(args, 5));
