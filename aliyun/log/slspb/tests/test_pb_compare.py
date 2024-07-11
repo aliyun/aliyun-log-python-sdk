@@ -30,7 +30,7 @@ def encode_log(log):
         content_msg.Value = content["Value"]
         log_msg.Contents.append(content_msg)
 
-    log_msg.Reserved.extend(log["Reserved"])
+    # log_msg.Reserved.extend(log["Reserved"])
     if "Time_ns" in log:
         log_msg.Time_ns = log["Time_ns"]
 
@@ -102,7 +102,7 @@ def encode_log_group2(log_group):
                 content_msg.Value = v
         if "Time_ns" in log:
             log_msg.Time_ns = log["Time_ns"]
-        log_msg.Reserved.extend(log["Reserved"])
+        # log_msg.Reserved.extend(log["Reserved"])
     log_group_msg.Topic = log_group["Topic"]
     log_group_msg.Source = log_group["Source"]
     for log_tag in log_group["LogTags"]:
@@ -145,7 +145,7 @@ class TestWritePB(unittest.TestCase):
             "Logs": [{
             "Time": 1597317524,
             "Time_ns": 12345,
-            "Reserved": ["hello", "world"],
+            # "Reserved": ["hello", "world"],
             "Contents": [{"a": "b"},{"a1": "b1"}]
         }],
             "Topic": "hello",

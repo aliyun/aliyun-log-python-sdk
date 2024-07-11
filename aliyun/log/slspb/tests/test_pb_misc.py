@@ -5,8 +5,7 @@ import time
 import slspb
 import random
 import pickle
-import lz4
-import struct
+from aliyun.log.util import lz_decompress
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -45,7 +44,7 @@ class TestPBMisc(unittest.TestCase):
         self.assertEqual(0, len(warnings))
         self.assertEqual(0, skip_cnt)
 
-        pb_str = lz4.decompress(struct.pack('<I', raw_size) + pb_str)
+        pb_str = lz_decompress(raw_size, pb_str)
 
         loggroup_list_pb_str = bytes.fromhex('0a') + self._gen_varint(len(pb_str)) + pb_str
         (logs, loggroup_cnt) = slspb.parse_pb([loggroup_list_pb_str,1])
@@ -212,7 +211,7 @@ class TestPBMisc(unittest.TestCase):
         self.assertEqual(0, len(warnings))
         self.assertEqual(0, skip_cnt)
 
-        pb_str = lz4.decompress(struct.pack('<I', raw_size) + pb_str)
+        pb_str = lz_decompress(raw_size, pb_str)
 
         groups = 20
         loggroup_list_pb_str = None
