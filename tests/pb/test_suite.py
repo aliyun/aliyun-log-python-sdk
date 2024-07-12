@@ -4,6 +4,7 @@ from .test_pb_write import TestWritePB
 from .test_pb_misc import TestPBMisc
 from .test_pb_compare import TestWritePB as TestPBCompare
 from .test_pb_stress import TestWritePB as TestWritePBStress
+from .test_put_logs import TestPutLogs
 
 if __name__ == '__main__':
     suite = unittest.TestSuite()
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     suite.addTests(loader.loadTestsFromTestCase(TestWritePB))
     suite.addTests(loader.loadTestsFromTestCase(TestPBMisc))
     suite.addTests(loader.loadTestsFromTestCase(TestPBCompare))
+    suite.addTests(loader.loadTestsFromTestCase(TestPutLogs))
     # suite.addTests(loader.loadTestsFromTestCase(TestWritePBStress))
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
