@@ -187,11 +187,7 @@ static PyObject * write_pb(PyObject * self, PyObject * args) {
         }
         if (sourceLen!=0){
             add_source(builder, source, sourceLen);
-        }else{
-            add_source(builder, "127.0.0.1", strlen("127.0.0.1"));
         }
-    } else{
-        add_source(builder, "127.0.0.1", strlen("127.0.0.1"));
     }
 
     PyObject* arg3 = PyList_GetItem(args, 3);
