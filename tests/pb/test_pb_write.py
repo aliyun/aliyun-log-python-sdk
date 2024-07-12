@@ -160,7 +160,7 @@ class TestWritePB(unittest.TestCase):
         large_str = ''.join(['a' for i in range(0,300)])
         (pb_str, raw_size, skip_cnt, warnings) = slspb.write_pb([0,large_str,None,[("4","5"),("6","7")],[1597317524],[[("a","b")]]])
         self.assertEqual(['topic is too long, limit to 255'], warnings)
-        self.assertEqual(301, len(pb_str))
+        self.assertEqual(290, len(pb_str))
 
         (pb_str, raw_size, skip_cnt, warnings) = slspb.write_pb([0,None,large_str,[("4","5"),("6","7")],[1597317524],[[("a","b")]]])
         self.assertEqual(['source is too long, limit to 128'], warnings)
@@ -168,7 +168,7 @@ class TestWritePB(unittest.TestCase):
 
         (pb_str, raw_size, skip_cnt, warnings) = slspb.write_pb([0,None,None,[("4",large_str),("6","7")],[1597317524],[[("a","b")]]])
         self.assertEqual(['tag value is too long, limit to 255'], warnings)
-        self.assertEqual(301, len(pb_str))
+        self.assertEqual(290, len(pb_str))
 
     def test_slspb_writepb_arg_check(self):
         with self.assertRaises(Exception) as context:

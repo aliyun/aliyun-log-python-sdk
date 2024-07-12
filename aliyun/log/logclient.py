@@ -60,7 +60,7 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
-
+from deprecated import deprecated
 logger = logging.getLogger(__name__)
 
 if six.PY3:
@@ -166,6 +166,7 @@ class LogClient(object):
             self._auth = make_auth(StaticCredentialsProvider(accessKeyId, accessKey, securityToken),
                                    auth_version, region)
         self._get_logs_v2_enabled = True
+        self._use_slspb = True # protobuf will be remove once this stablized  
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -358,6 +359,7 @@ class LogClient(object):
         """
         self._source = source
 
+    @deprecated(reason="kept for backward compatibility, will be removed once the depedent protobuf is removed")
     def put_log_raw(self, project, logstore, log_group, compress=None):
         """ Put logs to log service. using raw data in protobuf
 
@@ -411,30 +413,38 @@ class LogClient(object):
             raise LogException('InvalidLogSize',
                                "logItems' length exceeds maximum limitation: 512000 lines. now: {0}".format(
                                    len(request.get_log_items())))
-        logGroup = LogGroup()
-        logGroup.Topic = request.get_topic()
-        if request.get_source():
-            logGroup.Source = request.get_source()
-        else:
+        
+        source = request.get_source()
+        if not source:
             if self._source == '127.0.0.1':
                 self._source = Util.get_host_ip(request.get_project() + '.' + self._logHost)
-            logGroup.Source = self._source
-        for logItem in request.get_log_items():
-            log = logGroup.Logs.add()
-            log.Time = logItem.get_time()
-            log.Time_ns = logItem.get_time_nano_part()
-            contents = logItem.get_contents()
-            for key, value in contents:
-                content = log.Contents.add()
-                content.Key = self._get_unicode(key)
-                content.Value = self._get_binary(value)
-        if request.get_log_tags() is not None:
-            tags = request.get_log_tags()
-            for key, value in tags:
-                pb_tag = logGroup.LogTags.add()
-                pb_tag.Key = key
-                pb_tag.Value = value
-        body = logGroup.SerializeToString()
+            source = self._source
+
+        body = None
+        if self._use_slspb:
+            from .util import PbCodec
+            body = PbCodec.serialize(request, source)
+        else:
+            logGroup = LogGroup()
+            logGroup.Topic = request.get_topic()
+            logGroup.Source = source
+
+            for logItem in request.get_log_items():
+                log = logGroup.Logs.add()
+                log.Time = logItem.get_time()
+                log.Time_ns = logItem.get_time_nano_part()
+                contents = logItem.get_contents()
+                for key, value in contents:
+                    content = log.Contents.add()
+                    content.Key = self._get_unicode(key)
+                    content.Value = self._get_binary(value)
+            if request.get_log_tags() is not None:
+                tags = request.get_log_tags()
+                for key, value in tags:
+                    pb_tag = logGroup.LogTags.add()
+                    pb_tag.Key = key
+                    pb_tag.Value = value
+            body = logGroup.SerializeToString()
 
         if len(body) > 10 * 1024 * 1024:  # 10 MB
             raise LogException('InvalidLogSize',

@@ -1,6 +1,6 @@
 import sys
 import unittest
-import aliyun.log.log_logs_pb2 as sls_logs_pb2
+from .log_logs_pb2 import Log, LogGroup, LogGroupList
 import aliyun_log_pb as slspb
 import six  
 def _gen_varint(value):
@@ -21,7 +21,7 @@ def _gen_varint(value):
 
 def encode_log(log):
     # 创建Log对象并设置字段值
-    log_msg = sls_logs_pb2.Log()
+    log_msg = Log()
     log_msg.Time = log["Time"]
 
     for content in log["Contents"]:
@@ -40,7 +40,7 @@ def encode_log(log):
 
 def decode_log(data):
     # 将二进制数据反序列化为Log对象
-    log_msg = sls_logs_pb2.Log()
+    log_msg = Log()
     log_msg.ParseFromString(data)
     print(log_msg)
     # 从Log对象中获取字段值并构建字典
@@ -63,7 +63,7 @@ def decode_log(data):
 
 def encode_log_group(log_group):
     # 创建LogGroup对象并设置字段值
-    log_group_msg = sls_logs_pb2.LogGroup()
+    log_group_msg = LogGroup()
 
     for log in log_group["Logs"]:
         log_msg = log_group_msg.Logs.add()
@@ -91,7 +91,7 @@ def encode_log_group(log_group):
 
 def encode_log_group2(log_group):
     # 创建LogGroup对象并设置字段值
-    log_group_msg = sls_logs_pb2.LogGroup()
+    log_group_msg = LogGroup()
     for log in log_group["Logs"]:
         log_msg = log_group_msg.Logs.add()
         log_msg.Time = log["Time"]
@@ -116,7 +116,7 @@ def encode_log_group2(log_group):
     return data
 
 def decode_log_group(data):
-    log_group_list_msg = sls_logs_pb2.LogGroupList()
+    log_group_list_msg = LogGroupList()
     log_group_list_msg.ParseFromString(data)
     for log_group_msg in log_group_list_msg.LogGroups:
         log_group = []
