@@ -28,6 +28,7 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
+    'deprecated',
     'protobuf>3.4.0,<4.0.0',
 ]
 requirements_py2 = [
@@ -41,6 +42,7 @@ requirements_py2 = [
     'protobuf>3.4.0,<4.0.0',
     'regex==2021.3.17',
     'tzlocal==2.0.0',
+    'deprecated',
     'lz4a==0.7.0',
 ]
 requirements = []
