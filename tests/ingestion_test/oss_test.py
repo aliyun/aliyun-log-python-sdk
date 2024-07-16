@@ -56,8 +56,8 @@ def get_sample_job_config(job_name):
                 "region": "oss-cn-hangzhou",   # OSS区域，例如:oss-cn-shanghai,oss-cn-hangzhou等
                 "prefix": "",                  # 文件前缀过滤（可选）
                 "pattern": "",                 # 文件正则过滤（可选）
-                # "startTime": "1681632123",   # 起始时间（可选）
-                # "endTime": "1682236927",     # 结束时间（可选）
+                # "startTime": 1681632123,   # 起始时间（可选）
+                # "endTime": 1682236927,     # 结束时间（可选）
                 "format": {
                     # 数据格式，取值：JSON,CSV,Line,Multiline,ORC,Parquet,ossAccessLog,cdnDownloadedLog
                     "type": "JSON"
