@@ -167,7 +167,7 @@ class LogClient(object):
                                    auth_version, region)
         self._get_logs_v2_enabled = True
         self._session = requests.Session()
-        self._use_long_live_conn = True
+        self._enable_keep_alive = True
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -250,7 +250,7 @@ class LogClient(object):
                                requestId, resp_status, resp_header, resp_body)
 
     def _get_http_sender(self, method):
-        if self._use_long_live_conn:
+        if self._enable_keep_alive:
             return getattr(self._session, method.lower())
         return getattr(requests, method.lower())
         
