@@ -60,7 +60,6 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
-from deprecated import deprecated
 logger = logging.getLogger(__name__)
 
 if six.PY3:
@@ -359,10 +358,9 @@ class LogClient(object):
         """
         self._source = source
 
-    @deprecated(reason="kept for backward compatibility, will be removed once the depedent protobuf is removed")
     def put_log_raw(self, project, logstore, log_group, compress=None):
         """ Put logs to log service. using raw data in protobuf
-
+        deprecated, kept for backward compatibility, will be removed once the depedent protobuf is removed
         :type project: string
         :param project: the Project name
 
