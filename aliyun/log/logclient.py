@@ -5063,7 +5063,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name
 
-        :type export: string
+        :type export: Export
         :param export: the export job configuration
         """
         params = {}
