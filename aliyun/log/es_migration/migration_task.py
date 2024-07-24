@@ -264,6 +264,8 @@ class MigrationLogstore(object):
         except LogException as exc:
             if exc.get_error_code() != "InvalidLogSize":
                 raise
+        else:  # putting succeeds
+            return
 
         for item in logitems:
             self._log_client.put_logs(
