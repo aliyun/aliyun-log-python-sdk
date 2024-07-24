@@ -11,7 +11,7 @@ import json
 import traceback
 from datetime import datetime
 from elasticsearch.exceptions import NotFoundError
-from aliyun.log import LogClient
+from aliyun.log import LogClient, LogException
 from aliyun.log.putlogsrequest import PutLogsRequest
 from aliyun.log.es_migration.doc_logitem_converter import DocLogItemConverter
 
@@ -251,12 +251,29 @@ class MigrationLogstore(object):
         return self._logstore_name
 
     def put_logs(self, logitems):
-        self._log_client.put_logs(
-            PutLogsRequest(
-                project=self._project_name,
-                logstore=self._logstore_name,
-                topic=self._topic,
-                source=self._source,
-                logitems=logitems,
+        try:
+            self._log_client.put_logs(
+                PutLogsRequest(
+                    project=self._project_name,
+                    logstore=self._logstore_name,
+                    topic=self._topic,
+                    source=self._source,
+                    logitems=logitems,
+                )
             )
-        )
+        except LogException as exc:
+            if exc.get_error_code() != "InvalidLogSize":
+                raise
+        else:  # putting succeeds
+            return
+
+        for item in logitems:
+            self._log_client.put_logs(
+                PutLogsRequest(
+                    project=self._project_name,
+                    logstore=self._logstore_name,
+                    topic=self._topic,
+                    source=self._source,
+                    logitems=[item],
+                )
+            )
