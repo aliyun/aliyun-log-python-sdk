@@ -25,6 +25,7 @@ class IndexJsonKeyConfig(object):
         self.max_depth = max_depth
         self.alias = alias
         self.json_keys = {}
+        self.keys_set = set()
 
     """
     Inner key config in json, if the json value is :
@@ -52,6 +53,10 @@ class IndexJsonKeyConfig(object):
     def add_key(self, key_name, key_type, doc_value=False, alias=None):
         if key_type != 'text' and key_type != 'long' and key_type != 'double':
             return
+        if key_name.lower() in self.keys_set:
+            return
+        self.keys_set.add(key_name.lower())
+
         self.json_keys[key_name] = {}
         self.json_keys[key_name]["type"] = key_type
         self.json_keys[key_name]["doc_value"] = doc_value
@@ -193,7 +198,7 @@ class IndexLineConfig(object):
     def from_json(self, json_value):
         self.token_list = json_value["token"]
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
-        self.chn = bool(json_value["chn"]) if "chn" in json_value else None
+        self.chn = bool(json_value["caseSensitive"]) if "caseSensitive" in json_value else None
 
 
 class IndexConfig(object):
