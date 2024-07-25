@@ -9,8 +9,7 @@ from .logresponse import LogResponse
 from .util import Util
 from .util import base64_encodestring as b64e
 
-from .proto import LogGroupList
-from .proto import LogGroupListRaw
+from .proto import LogGroupList, LogGroupListRaw
 import six
 
 DEFAULT_DECODE_LIST = ('utf8',)
