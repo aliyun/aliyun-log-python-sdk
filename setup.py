@@ -32,7 +32,7 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf>3.20.3,<6.0.0',
 ]
 requirements_py2 = [
     'six==1.14.0',
@@ -42,7 +42,7 @@ requirements_py2 = [
     'jmespath==0.9.5',
     'enum34==1.1.10',
     'futures==3.3.0',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf>3.4.0,<=3.17.3', # 3.18.0 is the last version support py2, but yanked
     'regex==2021.3.17',
     'tzlocal==2.0.0',
     'lz4a==0.7.0',
@@ -67,6 +67,7 @@ packages = [
     'aliyun.log.etl_core.trans_comp',
     'aliyun.log.consumer',
     'aliyun.log.es_migration',
+    'aliyun.log.py2_legacy',
 ]
 
 version = ''
