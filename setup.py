@@ -47,6 +47,14 @@ requirements_py2 = [
     'tzlocal==2.0.0',
     'lz4a==0.7.0',
 ]
+
+test_requirements = [
+    'pytest',
+    'lz4',
+    'virtualenv',
+    'zstandard'
+]
+
 requirements = []
 if sys.version_info[:2] == (2, 6):
     requirements = requirements_py2
@@ -105,4 +113,7 @@ setup(
     packages=packages,
     classifiers=classifiers,
     long_description=long_description,
+    extras_require = {
+        'test': test_requirements,
+    },
 )
