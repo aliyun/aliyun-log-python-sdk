@@ -72,7 +72,7 @@ class AliyunMaxComputeSink(DataSink):
     def getPartitionColumn(self):
         return self.__params["partitionColumn"]
 
-    def setPartitionColumn(self, partitionColumn: list):
+    def setPartitionColumn(self, partitionColumn):
         self.__params["partitionColumn"] = partitionColumn
 
     def getParams(self):
