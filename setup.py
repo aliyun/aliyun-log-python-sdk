@@ -17,7 +17,6 @@ http://pypi.python.org/pypi/simplejson/
 """
 import sys
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
 import re
 
 
@@ -28,7 +27,8 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf>=3.4.0,<4.0.0',
+    'aliyun_log_pb>=0.0.1',
 ]
 requirements_py2 = [
     'six==1.14.0',
@@ -38,10 +38,11 @@ requirements_py2 = [
     'jmespath==0.9.5',
     'enum34==1.1.10',
     'futures==3.3.0',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf<=3.4.0',
     'regex==2021.3.17',
     'tzlocal==2.0.0',
     'lz4a==0.7.0',
+    'aliyun_log_pb>=0.0.1',
 ]
 requirements = []
 if sys.version_info[:2] == (2, 6):
@@ -93,33 +94,6 @@ Python SDK for Alicloud Log Service
 http://aliyun-log-python-sdk.readthedocs.io
 """
 
-class BuildExt(build_ext):
-    def build_extensions(self):
-        # windows msvc
-        if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
-            for ext in self.extensions:
-                ext.extra_compile_args = ['/EHsc', '/std:c++11', '/DLOG_KEY_VALUE_FLAG']
-        # macos
-        elif sys.platform == 'darwin':
-            for ext in self.extensions:
-                ext.extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-stdlib=libc++']
-        # linux and other
-        else:
-            for ext in self.extensions:
-                ext.extra_compile_args = ['-DLOG_KEY_VALUE_FLAG', '-std=c++11']
-
-        build_ext.build_extensions(self)
-
-extension_source_dir = 'aliyun/log/pb'
-extension_sources = ['pb.cpp',
-                     'log_builder.c',
-                     'sds.c',
-                     'lz4.c']
-slspb = Extension('aliyun_log_pb',
-                  sources=[extension_source_dir + '/' + s for s in extension_sources],
-                  language='c++')
-
-
 setup(
     name='aliyun-log-python-sdk',
     version=version,
@@ -130,11 +104,7 @@ setup(
     extras_require = {
         'test': test_requirements,
     },
-    ext_modules=[slspb],
     packages=packages,
     classifiers=classifiers,
     long_description=long_description,
-    cmdclass={
-        'build_ext': BuildExt,
-    },
 )
