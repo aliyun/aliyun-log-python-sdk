@@ -34,6 +34,7 @@ class MappingIndexConverter(object):
         line_config = IndexLineConfig(token_list=cls.DEFAULT_TOKEN_LIST, chinese=True)
         key_config_list = cls.to_key_config_list(properties=mapping["properties"])
         index_config = IndexConfig(line_config=line_config, key_config_list=key_config_list)
+        index_config.docvalue_max_text_len = 16384
         return index_config
 
     @classmethod
@@ -43,6 +44,8 @@ class MappingIndexConverter(object):
             return key_config_list
         fields = set()
         for field_name, field_desc in properties.items():
+            if len(fields) >= 16:
+                break
             if field_name.lower() in fields:
                 continue
             fields.add(field_name.lower())
@@ -250,11 +253,12 @@ class MappingIndexConverter(object):
         key_configs = cls.parse_properties(None, properties)
         for key_name, key_config in key_configs.items():
             json_key_config.add_key(key_name=key_name, key_type=key_config.index_type, doc_value=key_config.doc_value)
-            if len(json_key_config.json_keys) >= 50:
+            if len(json_key_config.json_keys) >= 8:
                 break
         return IndexKeyConfig(
             index_type=AliyunLogFieldType.JSON,
-            json_key_config=json_key_config
+            json_key_config=json_key_config,
+            doc_value=True,
         )
 
     @classmethod
