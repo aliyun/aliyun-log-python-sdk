@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 LogClient class is the main class in the SDK. It can be used to communicate with
 log service server to put/get data.
