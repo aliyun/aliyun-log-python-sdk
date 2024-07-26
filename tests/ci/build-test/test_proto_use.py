@@ -12,7 +12,7 @@ def test_pb_encode():
     content = log.Contents.add()
     content.Key = "a"
     content.Value = "b"
-    tag = log.LogTags.add()
+    tag = log_group.LogTags.add()
     tag.Key = u"c中文"
     tag.Value = u"d中文"
     str = l.SerializeToString()
@@ -24,8 +24,8 @@ def test_pb_encode():
     assert d.LogGroups[0].Logs[0].Time_ns == 1
     assert d.LogGroups[0].Logs[0].Contents[0].Key == "a"
     assert d.LogGroups[0].Logs[0].Contents[0].Value == "b"
-    assert d.LogGroups[0].Logs[0].LogTags[0].Key == u"c中文"
-    assert d.LogGroups[0].Logs[0].LogTags[0].Value == u"d中文"
+    assert d.LogGroups[0].LogTags[0].Key == u"c中文"
+    assert d.LogGroups[0].LogTags[0].Value == u"d中文"
 
 
 def test_pb_raw_encode():
@@ -38,7 +38,7 @@ def test_pb_raw_encode():
     content = log.Contents.add()
     content.Key = "a"
     content.Value = b"b"
-    tag = log.LogTags.add()
+    tag = log_group.LogTags.add()
     tag.Key = u"c中文"
     tag.Value = u"d中文"
     str = l.SerializeToString()
@@ -50,5 +50,5 @@ def test_pb_raw_encode():
     assert d.LogGroups[0].Logs[0].Time_ns == 1
     assert d.LogGroups[0].Logs[0].Contents[0].Key == "a"
     assert d.LogGroups[0].Logs[0].Contents[0].Value == b"b"
-    assert d.LogGroups[0].Logs[0].LogTags[0].Key == u"c中文"
-    assert d.LogGroups[0].Logs[0].LogTags[0].Value == u"d中文"
+    assert d.LogGroups[0].LogTags[0].Key == u"c中文"
+    assert d.LogGroups[0].LogTags[0].Value == u"d中文"
