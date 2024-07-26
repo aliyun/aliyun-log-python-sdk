@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 from aliyun.log.proto import *
 
 
