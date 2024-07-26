@@ -1,5 +1,6 @@
 from aliyun.log.proto import *
 
+
 def test_pb_encode():
     l = LogGroupList()
     log_group = l.LogGroups.add()
@@ -10,8 +11,11 @@ def test_pb_encode():
     content = log.Contents.add()
     content.Key = "a"
     content.Value = "b"
+    tag = log.Tags.add()
+    tag.Key = u"c中文"
+    tag.Value = u"d中文"
     str = l.SerializeToString()
-    
+
     d = LogGroupList()
     d.ParseFromString(str)
     assert d.LogGroups[0].Topic == "test"
@@ -19,7 +23,10 @@ def test_pb_encode():
     assert d.LogGroups[0].Logs[0].Time_ns == 1
     assert d.LogGroups[0].Logs[0].Contents[0].Key == "a"
     assert d.LogGroups[0].Logs[0].Contents[0].Value == "b"
-    
+    assert d.LogGroups[0].Logs[0].Tags[0].Key == u"c中文"
+    assert d.LogGroups[0].Logs[0].Tags[0].Value == u"d中文"
+
+
 def test_pb_raw_encode():
     l = LogGroupListRaw()
     log_group = l.LogGroups.add()
@@ -30,8 +37,11 @@ def test_pb_raw_encode():
     content = log.Contents.add()
     content.Key = "a"
     content.Value = b"b"
+    tag = log.Tags.add()
+    tag.Key = u"c中文"
+    tag.Value = u"d中文"
     str = l.SerializeToString()
-    
+
     d = LogGroupListRaw()
     d.ParseFromString(str)
     assert d.LogGroups[0].Topic == "test"
@@ -39,7 +49,5 @@ def test_pb_raw_encode():
     assert d.LogGroups[0].Logs[0].Time_ns == 1
     assert d.LogGroups[0].Logs[0].Contents[0].Key == "a"
     assert d.LogGroups[0].Logs[0].Contents[0].Value == b"b"
-    
-    
-
-    
+    assert d.LogGroups[0].Logs[0].Tags[0].Key == u"c中文"
+    assert d.LogGroups[0].Logs[0].Tags[0].Value == u"d中文"
