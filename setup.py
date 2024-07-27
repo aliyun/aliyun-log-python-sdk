@@ -15,13 +15,8 @@ Depending on your version of Python, these libraries may also should be installe
 http://pypi.python.org/pypi/simplejson/
 
 """
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
 import sys
+from setuptools import setup, Extension
 import re
 
 
@@ -32,7 +27,8 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf>=3.4.0,<4.0.0',
+    'aliyun_log_pb>=0.0.1',
 ]
 requirements_py2 = [
     'six==1.14.0',
@@ -42,10 +38,11 @@ requirements_py2 = [
     'jmespath==0.9.5',
     'enum34==1.1.10',
     'futures==3.3.0',
-    'protobuf>3.4.0,<4.0.0',
+    'protobuf<=3.4.0',
     'regex==2021.3.17',
     'tzlocal==2.0.0',
     'lz4a==0.7.0',
+    'aliyun_log_pb>=0.0.1',
 ]
 requirements = []
 if sys.version_info[:2] == (2, 6):
@@ -57,6 +54,9 @@ elif sys.version_info[:2] == (3, 3):
 elif sys.version_info[0] == 3:
     requirements = requirements_py3
 
+test_requirements = [
+    'lz4'
+]
 
 packages = [
     'aliyun',
@@ -101,6 +101,9 @@ setup(
     author='Aliyun',
     url='https://github.com/aliyun/aliyun-log-python-sdk',
     install_requires=requirements,
+    extras_require = {
+        'test': test_requirements,
+    },
     packages=packages,
     classifiers=classifiers,
     long_description=long_description,

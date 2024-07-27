@@ -19,6 +19,7 @@ import logging
 import json
 import struct
 import zlib
+import aliyun_log_pb
 
 try:
     import lz4
@@ -356,3 +357,38 @@ def export_deserialize(obj, sink):
         },
         "type": obj.getType(),
     })
+
+class PbCodec(object):
+    no_lz4_compressed = 0
+    
+    @staticmethod
+    def check_request_param(put_log_request):
+        pass
+
+    @staticmethod
+    def serialize(put_log_request, source):
+        """
+        return bytes
+        """
+        PbCodec.check_request_param(put_log_request)
+        from .putlogsrequest import PutLogsRequest
+        put_log_request: PutLogsRequest
+        log_items = put_log_request.get_log_items()
+        log_times = [log_item.get_time() for log_item in log_items]
+        # nano default enabled
+        log_time_nanos = [log_item.get_time_nano_part() for log_item in log_items]
+        log_contents = [log_item.get_contents() for log_item in log_items]
+        (pb_str, raw_size, skip_cnt, warnings) = aliyun_log_pb.write_pb([
+                                PbCodec.no_lz4_compressed, 
+                                put_log_request.get_topic(),
+                                source,
+                                put_log_request.get_log_tags() or [],
+                                log_times,
+                                log_time_nanos,
+                                log_contents
+                                ])
+        return pb_str
+
+    @staticmethod
+    def deserialize(data):
+        pass
