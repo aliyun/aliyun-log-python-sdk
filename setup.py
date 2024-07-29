@@ -75,7 +75,7 @@ packages = [
     'aliyun.log.etl_core.trans_comp',
     'aliyun.log.consumer',
     'aliyun.log.es_migration',
-    'aliyun.log.py2_legacy',
+    'aliyun.log._proto_py2',
 ]
 
 version = ''
