@@ -192,7 +192,7 @@ class MigrationTask(object):
                         scroll=self._es_scroll,
                     )
                 except NotFoundError:
-                    msg = f"cache is expired, which is with duration {self._es_scroll}"
+                    msg = "cache is expired, which is with duration {}".format(self._es_scroll)
                     self._logger.error(msg, exc_info=True)
                     raise Exception(msg)
 
