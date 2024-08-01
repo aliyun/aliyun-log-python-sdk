@@ -1206,7 +1206,7 @@ class LogClient(object):
 
             yield res
             next_cursor = res.get_next_cursor()
-            if begin_cursor == next_cursor:
+            if end_cursor == next_cursor:
                 break
 
             begin_cursor = next_cursor
