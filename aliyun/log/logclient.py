@@ -178,7 +178,8 @@ class LogClient(object):
         self._last_refresh = time.time()
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
-                self._auth = make_auth(StaticCredentialsProvider(self._credentials_auto_refresher()),
+                credentials = self._credentials_auto_refresher()
+                self._auth = make_auth(StaticCredentialsProvider(credentials[0], credentials[1], credentials[2]),
                                        self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
