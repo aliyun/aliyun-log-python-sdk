@@ -9,8 +9,7 @@ from .logresponse import LogResponse
 from .util import Util
 from .util import base64_encodestring as b64e
 
-from .log_logs_pb2 import LogGroupList
-from .log_logs_raw_pb2 import LogGroupListRaw
+from .proto import LogGroupList, LogGroupListRaw
 import six
 
 DEFAULT_DECODE_LIST = ('utf8',)
@@ -29,13 +28,14 @@ class PullLogResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self._is_bytes_type = None
-        self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.log_count = int(Util.h_v_t(header, "x-log-count"))
         self.raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.raw_log_group_count_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatacount', '-1'))
         self.raw_size_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatasize', '-1'))
         self.loggroup_list = LogGroupList()
-        self._parse_loggroup_list(resp)
+        if resp is not None:
+            self._parse_loggroup_list(resp)
         self.loggroup_list_json = None
         self.flatten_logs_json = None
         self._body = None
@@ -169,7 +169,7 @@ class PullLogResponse(LogResponse):
                         u'__topic__': logGroup.Topic,
                         u'__source__': logGroup.Source}
                 if log.Time_ns:
-                    item[u'__time_ns_part__'] = log.Time_ns
+                    item[u'__time_ns_part__'] = six.text_type(log.Time_ns) if time_as_str else log.Time_ns,
                 item.update(tags)
                 for content in log.Contents:
                     item[PullLogResponse._b2u(content.Key) if decode_bytes else content.Key] = PullLogResponse._b2u(content.Value) if decode_bytes else content.Value

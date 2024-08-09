@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 LogClient class is the main class in the SDK. It can be used to communicate with
 log service server to put/get data.
@@ -47,10 +48,10 @@ from .tag_response import GetResourceTagsResponse
 from .topostore_response import *
 from .topostore_params import *
 from .util import base64_encodestring as b64e
-from .util import base64_encodestring as e64, base64_decodestring as d64
+from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
 
-from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
@@ -66,22 +67,9 @@ logger = logging.getLogger(__name__)
 if six.PY3:
     xrange = range
 
-
-try:
-    import lz4
-
-    if not hasattr(lz4, 'loads') or not hasattr(lz4, 'dumps'):
-        lz4 = None
-    else:
-        def lz_decompress(raw_size, data):
-            return lz4.loads(struct.pack('<I', raw_size) + data)
-
-        def lz_compresss(data):
-            return lz4.dumps(data)[4:]
-
-except ImportError:
-    lz4 = None
-
+lz4_available = Util.is_lz4_available()
+if lz4_available:
+    from .util import lz_decompress, lz_compresss
 
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
@@ -395,7 +383,7 @@ class LogClient(object):
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
         if compress is None or compress:
-            if lz4:
+            if lz4_available:
                 headers['x-log-compresstype'] = 'lz4'
                 body = lz_compresss(body)
             else:
@@ -459,7 +447,7 @@ class LogClient(object):
 
         compress_data = None
         if is_compress:
-            if lz4:
+            if lz4_available:
                 headers['x-log-compresstype'] = 'lz4'
                 compress_data = lz_compresss(body)
             else:
@@ -550,6 +538,8 @@ class LogClient(object):
         params['accurate'] = request.get_accurate_query()
         params['fromNs'] = request.get_from_time_nano_part()
         params['toNs'] = request.get_to_time_nano_part()
+        if request.get_shard_id() != -1:
+            params['shard'] = request.get_shard_id()
         params['type'] = 'histogram'
         logstore = request.get_logstore()
         project = request.get_project()
@@ -662,7 +652,7 @@ class LogClient(object):
                 params['forward'] = forward
                 body_str = six.b(json.dumps(params))
                 headers["x-log-bodyrawsize"] = str(len(body_str))
-                accept_encoding = "lz4" if Util.is_lz4_available() else "deflate"
+                accept_encoding = "lz4" if lz4_available else "deflate"
                 headers['Accept-Encoding'] = accept_encoding
 
                 (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
@@ -952,7 +942,7 @@ class LogClient(object):
         project = request.get_project()
         resource = "/logs"
         (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return GetLogsResponse(resp, header)
+        return GetLogsResponse._from_v1_resp(resp, header)
 
     def get_cursor(self, project_name, logstore_name, shard_id, start_time):
         """ Get cursor from log service for batch pull logs
@@ -1137,7 +1127,7 @@ class LogClient(object):
 
         headers = {}
         if compress is None or compress:
-            if lz4:
+            if lz4_available:
                 headers['Accept-Encoding'] = 'lz4'
             else:
                 headers['Accept-Encoding'] = 'gzip'
@@ -1160,11 +1150,12 @@ class LogClient(object):
         if end_cursor:
             params['end_cursor'] = end_cursor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
-
+        raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
+        if raw_size <= 0:
+            return PullLogResponse(None, header)
         compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
         if compress_type == 'lz4':
-            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
-            if lz4:
+            if lz4_available:
                 raw_data = lz_decompress(raw_size, resp)
                 return PullLogResponse(raw_data, header)
             else:
@@ -5085,7 +5076,7 @@ class LogClient(object):
         :type project_name: string
         :param project_name: the Project name
 
-        :type export: string
+        :type export: Export
         :param export: the export job configuration
         """
         params = {}
@@ -5119,6 +5110,28 @@ class LogClient(object):
         resource = "/jobs/" + job_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, headers)
         return DeleteExportResponse(header, resp)
+
+    def update_export(self, project_name, job_name, export):
+        """ Update and Restart an export job
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type job_name: string
+        :param job_name: the job name of export job
+
+        :type export: string
+        :param export: the export job configuration
+        """
+        if not isinstance(export, str):
+            raise TypeError("export type must be string")
+        params = {"action": "RESTART"}
+        body = six.b(export)
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateExportResponse(header, resp)
 
     def get_export(self, project_name, job_name):
         """ get export

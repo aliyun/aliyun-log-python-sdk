@@ -1,4 +1,7 @@
 # Release History
+### 0.9.2 (2024-05-10)
+**Fixing**
+- fix get_log merge use not eixsted attr
 
 ### 0.7.2 (2021-10-25)
 ----------------------------
