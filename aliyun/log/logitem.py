@@ -73,6 +73,9 @@ class LogItem(object):
         :type timestamp: int
         :param timestamp: log time
         """
+        # milliseconds
+        if timestamp > 1e10:
+            timestamp = timestamp / 1000.0
         self.timestamp_seconds = int(timestamp)
 
     def set_time_nano_part(self, time_nano_part):
