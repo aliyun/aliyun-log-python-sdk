@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 LogClient class is the main class in the SDK. It can be used to communicate with
 log service server to put/get data.
@@ -50,7 +51,7 @@ from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
 
-from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
@@ -177,7 +178,8 @@ class LogClient(object):
         self._last_refresh = time.time()
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
-                self._auth = make_auth(StaticCredentialsProvider(self._credentials_auto_refresher()),
+                credentials = self._credentials_auto_refresher()
+                self._auth = make_auth(StaticCredentialsProvider(credentials[0], credentials[1], credentials[2]),
                                        self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
