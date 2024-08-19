@@ -2529,7 +2529,7 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project, None, resource, params, headers)
         return ModifyScheduledSqlJobStateResponse(header, resp)
 
-    def create_project(self, project_name, project_des, resource_group_id=''):
+    def create_project(self, project_name, project_des, resource_group_id='', data_redundancy_type=None):
         """ Create a project
         Unsuccessful operation will cause an LogException.
 
@@ -2539,8 +2539,11 @@ class LogClient(object):
         :type project_des: string
         :param project_des: the description of a project
 
-        type resource_group_id: string
+        :type resource_group_id: string
         :param resource_group_id: the resource group id, the project created will put in the resource group
+
+        :type data_redundancy_type: string
+        :param data_redundancy_type: the data redundancy type, LRS or ZRS
 
         :return: CreateProjectResponse
 
@@ -2549,7 +2552,8 @@ class LogClient(object):
 
         params = {}
         body = {"projectName": project_name, "description": project_des, "resourceGroupId": resource_group_id}
-
+        if data_redundancy_type is not None:
+            body["dataRedundancyType"] = data_redundancy_type
         body = six.b(json.dumps(body))
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
         resource = "/"

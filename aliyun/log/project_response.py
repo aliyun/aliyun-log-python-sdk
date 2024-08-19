@@ -48,6 +48,7 @@ class GetProjectResponse(LogResponse):
         self.lastModifyTime = resp['lastModifyTime']
         # resourceGroupId is optional for some old backend releases
         self.resourceGroupId = resp.get('resourceGroupId', '')
+        self.dataRedundancyType = resp.get('dataRedundancyType')
 
     def get_owner(self):
         return self.owner
@@ -72,6 +73,9 @@ class GetProjectResponse(LogResponse):
 
     def get_resource_group_id(self):
         return self.resourceGroupId
+    
+    def get_data_redundancy_type(self):
+        return self.dataRedundancyType
 
     def log_print(self):
         print('GetProjectResponse:')
@@ -84,6 +88,7 @@ class GetProjectResponse(LogResponse):
         print('create_time:' + self.get_create_time())
         print('last_modify_time:' + self.get_last_modify_time())
         print('resource_group_id:' + self.get_resource_group_id())
+        print('dataRedundancyType:' + self.get_data_redundancy_type())
 
 class ListProjectResponse(LogResponse):
     def __init__(self, resp, header):
