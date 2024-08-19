@@ -855,7 +855,7 @@ class LogClient(object):
         :raise: LogException
         """
         if not is_stats_query(sql):
-            raise LogException("parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
+            raise LogException("InvalidParameter", "parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
                                "https://help.aliyun.com/document_detail/43772.html")
         return self.get_log(project, logstore, from_time, to_time, topic=None,
                             query=sql, reverse=False, offset=0, size=100, power_sql=power_sql)
