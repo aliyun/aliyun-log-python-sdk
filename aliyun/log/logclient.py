@@ -5157,12 +5157,15 @@ class LogClient(object):
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetExportResponse(header, resp)
 
-    def list_export(self, project_name, offset=0, size=100):
+    def list_export(self, project_name, logstore, offset=0, size=100):
         """ list exports
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
         :param project_name: the Pqroject name
+
+        :type logstore: string
+        :param logstore: the logstore name
 
         :type offset: int
         :param offset: line offset of return logs
@@ -5176,13 +5179,14 @@ class LogClient(object):
         # need to use extended method to get more
         if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
             return list_more(self.list_export, int(offset), int(size), MAX_LIST_PAGING_SIZE,
-                             project_name)
+                             project_name, logstore)
         headers = {}
         params = {}
         resource = '/jobs'
         params['offset'] = str(offset)
         params['size'] = str(size)
         params['jobType'] = "Export"
+        params['logstore'] = logstore
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExportResponse(resp, header)
 
