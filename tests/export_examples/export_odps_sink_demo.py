@@ -45,13 +45,20 @@ def update_export():
     jobName = '11111'
     config = getJobConfig(client, project, jobName)  # 获取任务的配置
     config['displayName'] = config['displayName'] + 'new'
-    config['configuration']['sink']['delaySeconds'] = 909
     export = json.dumps(config)
     client.update_export(project_name=project, job_name=jobName, export=export)
 
 
+def list_export():
+    client = LogClient("region", "ak", "ak_key")
+    project = '11111'
+    logstore = '11111'
+    res = client.list_export(project, logstore)
+    res.log_print()
+
+
 def main():
-    update_export()
+    list_export()
 
 
 if __name__ == "__main__":
