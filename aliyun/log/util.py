@@ -38,7 +38,7 @@ try:
     lz4_available = True
 except ImportError:
     lz4_available = False
-      
+
 logger = logging.getLogger(__name__)
 
 
@@ -167,7 +167,7 @@ class Util(object):
     @staticmethod
     def is_lz4_available():
         return lz4_available
-        
+
     @staticmethod
     def h_v_t(header, key):
         """
@@ -269,6 +269,7 @@ def parse_timestamp(tm):
                 raise e
 
         except ImportError as ex2:
+            logger.exception("import error: {}".format(ex2))
             raise ex
 
     if sys.version_info[:2] == (2, 6):

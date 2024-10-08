@@ -12,7 +12,7 @@ class LogItem(object):
     """ LogItem used to present a log, it contains log time and multiple
     key/value pairs to present the log contents.
 
-    :type timestamp: int
+    :type timestamp: int with seconds as unit
     :param timestamp: time of the log item, the default time is the now time.
 
     :type contents: tuple(key-value) list
@@ -20,9 +20,12 @@ class LogItem(object):
     """
 
     def __init__(self, timestamp=None, time_nano_part=None, contents=None):
-        nano_time = int(time.time()* 10**9)
+        nano_time = int(time.time() * 10**9)
         self.timestamp = int(timestamp) if timestamp else int(nano_time / 1000000000)
-        self.time_nano_part= int(time_nano_part) if time_nano_part else int(nano_time%1000000000)
+        # milliseconds
+        if self.timestamp > 1e10:
+            self.timestamp = int(self.timestamp / 1000.0)
+        self.time_nano_part = int(time_nano_part) if time_nano_part else int(nano_time % 1000000000)
         self.contents = copy.deepcopy(contents) if contents else []
 
     def push_back(self, key, value):
@@ -70,6 +73,9 @@ class LogItem(object):
         :type timestamp: int
         :param timestamp: log time
         """
+        # milliseconds
+        if timestamp > 1e10:
+            timestamp = timestamp / 1000.0
         self.timestamp = int(timestamp)
 
     def set_time_nano_part(self, time_nano_part):
