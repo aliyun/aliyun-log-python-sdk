@@ -21,10 +21,10 @@ class LogItem(object):
 
     def __init__(self, timestamp=None, time_nano_part=None, contents=None):
         nano_time = int(time.time() * 10**9)
-        self.timestamp_seconds = int(timestamp) if timestamp else int(nano_time / 1000000000)
+        self.timestamp = int(timestamp) if timestamp else int(nano_time / 1000000000)
         # milliseconds
-        if self.timestamp_seconds > 1e10:
-            self.timestamp_seconds = int(self.timestamp_seconds / 1000.0)
+        if self.timestamp > 1e10:
+            self.timestamp = int(self.timestamp / 1000.0)
         self.time_nano_part = int(time_nano_part) if time_nano_part else int(nano_time % 1000000000)
         self.contents = copy.deepcopy(contents) if contents else []
 
@@ -59,7 +59,7 @@ class LogItem(object):
 
         :return: int, log time
         """
-        return self.timestamp_seconds
+        return self.timestamp
 
     def get_time_nano_part(self):
         """ Get log time nano part
@@ -76,7 +76,7 @@ class LogItem(object):
         # milliseconds
         if timestamp > 1e10:
             timestamp = timestamp / 1000.0
-        self.timestamp_seconds = int(timestamp)
+        self.timestamp = int(timestamp)
 
     def set_time_nano_part(self, time_nano_part):
         """ Set log time nano part
@@ -86,5 +86,5 @@ class LogItem(object):
         self.time_nano_part = int(time_nano_part)
 
     def log_print(self):
-        print('time', self.timestamp_seconds)
+        print('time', self.timestamp)
         print('contents', self.contents)
