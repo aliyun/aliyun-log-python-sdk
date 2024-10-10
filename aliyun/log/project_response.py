@@ -9,7 +9,7 @@ from .logresponse import LogResponse
 from .util import Util
 
 __all__ = [
-    'CreateProjectResponse', 'DeleteProjectResponse',
+    'CreateProjectResponse', 'UpdateProjectResponse', 'DeleteProjectResponse',
     'GetProjectResponse', 'ListProjectResponse',
     'GetProjectTagsResponse',
 ]
@@ -24,6 +24,17 @@ class CreateProjectResponse(LogResponse):
 
     def log_print(self):
         print('CreateProjectResponse:')
+        print('headers:', self.get_all_headers())
+
+class UpdateProjectResponse(LogResponse):
+    """
+    Response of update_project
+    """
+    def __init__(self, header, resp=''):
+        LogResponse.__init__(self, header, resp)
+
+    def log_print(self):
+        print('UpdateProjectResponse:')
         print('headers:', self.get_all_headers())
 
 

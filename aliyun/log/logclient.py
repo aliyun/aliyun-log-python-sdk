@@ -2560,6 +2560,31 @@ class LogClient(object):
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
         return CreateProjectResponse(header, resp)
+    
+    def update_project(self, project_name, project_des):
+        """ Update a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type project_des: string
+        :param project_des: the description of a project
+
+        :return: UpdateProjectResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        body = {"description": project_des}
+
+        body = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/"
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateProjectResponse(header, resp)
 
     def get_project(self, project_name):
         """ get project
