@@ -3077,7 +3077,7 @@ class LogClient(object):
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
-    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_same_config_name=False):
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
         """
         copy logstore, index, logtail config to target logstore, machine group are not included yet.
         the target logstore will be crated if not existing
@@ -3102,7 +3102,7 @@ class LogClient(object):
 
         :return:
         """
-        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_same_config_name=keep_same_config_name)
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_config_name=keep_config_name)
 
     def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
