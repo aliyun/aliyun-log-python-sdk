@@ -186,7 +186,7 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
             break
 
 
-def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
+def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
     """
     copy logstore, index, logtail config to target logstore, machine group are not included yet.
     the target logstore will be crated if not existing
@@ -211,6 +211,9 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
 
     :type to_region_endpoint: string
     :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+    
+    :type keep_config_name: bool
+    :param keep_config_name: use the same logtail config name as the source one, note that the config name must be unique in the same project
 
     :return:
     """
@@ -299,8 +302,10 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
             config = ret.logtail_config
             if config.logstore_name != from_logstore:
                 continue
-
-            config.config_name = to_logstore + '_' + config_name
+            if keep_config_name:
+                config.config_name = config_name
+            else:
+                config.config_name = to_logstore + '_' + config_name
             config.logstore_name = to_logstore
             ret = to_client.create_logtail_config(to_project, config)
 
