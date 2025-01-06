@@ -37,6 +37,7 @@ from .logstore_config_response import *
 from .substore_config_response import *
 from .logtail_config_response import *
 from .machinegroup_response import *
+from .rebuild_index_response import *
 from .project_response import *
 from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
@@ -5796,6 +5797,80 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/shipper"
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
+
+    def create_rebuild_index(self, project, logstore, job_name, display_name, from_time, to_time):
+        """Create a job that rebuild index for a logstore
+        type: (string, string, string, string, int, int) -> CreateRebuildIndexResponse
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+        
+        :type job_name: string
+        :param job_name: job name
+        
+        :type display_name: string
+        :param display_name: display name for the job
+        
+        :type from_time: int
+        :param from_time: from time, in unix timestamp format, eg 1736156803
+
+        
+        :type to_time: int
+        :param to_time: to time, in unix timestamp format, eg 1736156803, to_time should not large than the unix_timestamp before 900 seconds ago
+
+        :return: CreateRebuildIndexResponse
+
+        :raise: LogException
+        """
+        if type(from_time) != int:
+            raise LogException("InvalidParameter", "from_time must be int")
+        if type(to_time) != int:
+            raise LogException("InvalidParameter", "to_time must be int")
+        if from_time >= to_time: 
+            raise LogException("InvalidParameter", "from_time must be less than to_time")
+        
+        params = {}
+        headers = {"x-log-bodyrawsize": "0",
+                   "Content-Type": "application/json"}
+        body = {
+                "configuration":
+                {
+                    "fromTime": from_time,
+                    "toTime": to_time,
+                    "logstore": logstore,
+                },
+                "displayName": display_name,
+                "name": job_name,
+                "recyclable": False,
+                "type": "RebuildIndex"
+        }
+        data = six.b(json.dumps(body))
+
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project, data, resource, params, headers)
+        return CreateRebuildIndexResponse(header, resp)
+    
+    def get_rebuild_index(self, project, job_name):
+        """get rebuild index by the given job_name
+
+        :type project: string
+        :param project: the project name
+
+        :type job_name: string
+        :param job_name: the job name
+
+        :return: GetRebuildIndexResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetRebuildIndexResponse(header, resp)
 
 # make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
