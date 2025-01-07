@@ -25,8 +25,8 @@ def main():
 
     # wait a while util job complete
     while True:
+        print('wait rebuild index done...')
         time.sleep(10)
-
         resp = client.get_rebuild_index(project, job_name)
         resp.log_print()
 

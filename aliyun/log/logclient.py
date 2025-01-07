@@ -5825,16 +5825,9 @@ class LogClient(object):
 
         :raise: LogException
         """
-        if type(from_time) != int:
-            raise LogException("InvalidParameter", "from_time must be int")
-        if type(to_time) != int:
-            raise LogException("InvalidParameter", "to_time must be int")
-        if from_time >= to_time: 
-            raise LogException("InvalidParameter", "from_time must be less than to_time")
         
         params = {}
-        headers = {"x-log-bodyrawsize": "0",
-                   "Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         body = {
                 "configuration":
                 {
