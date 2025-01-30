@@ -1208,10 +1208,11 @@ class LogClient(object):
                                  count=batch_size, end_cursor=end_cursor, compress=compress, query=query)
 
             yield res
-            if res.get_log_count() <= 0:
+            next_cursor = res.get_next_cursor()
+            if end_cursor == next_cursor:
                 break
 
-            begin_cursor = res.get_next_cursor()
+            begin_cursor = next_cursor
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
                       compress=None, encodings=None, shard_list=None, no_escape=None, query=None):
