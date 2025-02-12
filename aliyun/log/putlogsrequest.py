@@ -29,7 +29,7 @@ class PutLogsRequest(LogRequest):
     :param hashKey: put data with set hash, the data will be send to shard whose range contains the hashKey
 
     :type compress: bool
-    :param compress: if need to compress the logs
+    :param compress: if need to compress the logs, default is True
 
     :type logtags: list
     :param logtags: list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
