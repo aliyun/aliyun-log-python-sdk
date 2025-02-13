@@ -37,6 +37,7 @@ from .logstore_config_response import *
 from .substore_config_response import *
 from .logtail_config_response import *
 from .machinegroup_response import *
+from .rebuild_index_response import *
 from .project_response import *
 from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
@@ -3077,7 +3078,7 @@ class LogClient(object):
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
-    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
         """
         copy logstore, index, logtail config to target logstore, machine group are not included yet.
         the target logstore will be crated if not existing
@@ -3102,7 +3103,7 @@ class LogClient(object):
 
         :return:
         """
-        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_config_name=keep_config_name)
 
     def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
@@ -5829,6 +5830,73 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/shipper"
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
+
+    def create_rebuild_index(self, project, logstore, job_name, display_name, from_time, to_time):
+        """Create a job that rebuild index for a logstore
+        type: (string, string, string, string, int, int) -> CreateRebuildIndexResponse
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+        
+        :type job_name: string
+        :param job_name: job name
+        
+        :type display_name: string
+        :param display_name: display name for the job
+        
+        :type from_time: int
+        :param from_time: from time, in unix timestamp format, eg 1736156803
+
+        
+        :type to_time: int
+        :param to_time: to time, in unix timestamp format, eg 1736156803, to_time should not large than the unix_timestamp before 900 seconds ago
+
+        :return: CreateRebuildIndexResponse
+
+        :raise: LogException
+        """
+        
+        params = {}
+        headers = {"Content-Type": "application/json"}
+        body = {
+                "configuration":
+                {
+                    "fromTime": from_time,
+                    "toTime": to_time,
+                    "logstore": logstore,
+                },
+                "displayName": display_name,
+                "name": job_name,
+                "recyclable": False,
+                "type": "RebuildIndex"
+        }
+        data = six.b(json.dumps(body))
+
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project, data, resource, params, headers)
+        return CreateRebuildIndexResponse(header, resp)
+    
+    def get_rebuild_index(self, project, job_name):
+        """get rebuild index by the given job_name
+
+        :type project: string
+        :param project: the project name
+
+        :type job_name: string
+        :param job_name: the job name
+
+        :return: GetRebuildIndexResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetRebuildIndexResponse(header, resp)
 
 # make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')

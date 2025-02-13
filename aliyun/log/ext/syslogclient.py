@@ -14,7 +14,7 @@ def datetime2rfc3339(dt, is_utc=False):
         # calculating timezone
         d1 = datetime.now()
         d2 = datetime.utcnow()
-        diff_hr = (d1 - d2).seconds / 60 / 60
+        diff_hr = round((d1 - d2).seconds / 60 / 60)
         tz = ""
 
         if diff_hr == 0:
