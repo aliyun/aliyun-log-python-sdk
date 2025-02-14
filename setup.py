@@ -33,6 +33,7 @@ requirements_py3 = [
     'jmespath',
     'dateparser',
     'protobuf>=3.20.3,<6.0.0',
+    'lz4',
 ]
 requirements_py2 = [
     'six==1.14.0',
@@ -45,7 +46,7 @@ requirements_py2 = [
     'protobuf>3.4.0,<=3.17.3', # 3.18.0 is the last version support py2, but yanked
     'regex==2021.3.17',
     'tzlocal==2.0.0',
-    'lz4a==0.7.0',
+    'lz4==2.2.1',
 ]
 
 test_requirements = [

@@ -62,15 +62,13 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
+from .compress import CompressType, Compressor
 
 logger = logging.getLogger(__name__)
 
 if six.PY3:
     xrange = range
 
-lz4_available = Util.is_lz4_available()
-if lz4_available:
-    from .util import lz_decompress, lz_compresss
 
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
@@ -384,13 +382,11 @@ class LogClient(object):
         raw_body_size = len(body)
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
-        if compress is None or compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                body = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                body = zlib.compress(body)
+        need_compress = compress is None or compress
+        if need_compress:
+            compress_type = CompressType.default_compress_type()
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         resource = '/logstores/' + logstore + "/shards/lb"
@@ -445,16 +441,12 @@ class LogClient(object):
                                    len(body) / 1024.0 / 1024))
 
         headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
-        is_compress = request.get_compress()
-
-        compress_data = None
-        if is_compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                compress_data = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                compress_data = zlib.compress(body)
+        
+        need_compress = request.get_compress() is None or request.get_compress()
+        if need_compress:
+            compress_type = CompressType.default_compress_type()
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         logstore = request.get_logstore()
@@ -465,11 +457,7 @@ class LogClient(object):
         else:
             resource = '/logstores/' + logstore + "/shards/lb"
 
-        if is_compress:
-            (resp, header) = self._send('POST', project, compress_data, resource, params, headers)
-        else:
-            (resp, header) = self._send('POST', project, body, resource, params, headers)
-
+        (resp, header) = self._send('POST', project, body, resource, params, headers)
         return PutLogsResponse(header, resp)
 
     def list_logstores(self, request):
@@ -654,12 +642,12 @@ class LogClient(object):
                 params['forward'] = forward
                 body_str = six.b(json.dumps(params))
                 headers["x-log-bodyrawsize"] = str(len(body_str))
-                accept_encoding = "lz4" if lz4_available else "deflate"
+                accept_encoding = str(CompressType.default_compress_type())
                 headers['Accept-Encoding'] = accept_encoding
 
                 (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
 
-                raw_data = Util.uncompress_response(header, resp)
+                raw_data = Compressor.decompress_response(header, resp)
                 exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
                 exJson = Util.convert_unicode_to_str(exJson)
                 ret = GetLogsResponse(exJson, header)
@@ -1128,11 +1116,10 @@ class LogClient(object):
         """
 
         headers = {}
-        if compress is None or compress:
-            if lz4_available:
-                headers['Accept-Encoding'] = 'lz4'
-            else:
-                headers['Accept-Encoding'] = 'gzip'
+
+        need_compress = compress is None or compress
+        if need_compress:
+            headers['Accept-Encoding'] = str(CompressType.default_compress_type())
         else:
             headers['Accept-Encoding'] = ''
 
@@ -1155,18 +1142,9 @@ class LogClient(object):
         raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         if raw_size <= 0:
             return PullLogResponse(None, header)
-        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
-        if compress_type == 'lz4':
-            if lz4_available:
-                raw_data = lz_decompress(raw_size, resp)
-                return PullLogResponse(raw_data, header)
-            else:
-                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=resp)
-        elif compress_type in ('gzip', 'deflate'):
-            raw_data = zlib.decompress(resp)
-            return PullLogResponse(raw_data, header)
-        else:
-            return PullLogResponse(resp, header)
+
+        raw_data = Compressor.decompress_response(header, resp)
+        return PullLogResponse(raw_data, header)
 
     def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None):
         """ batch pull log data from log service using time-range

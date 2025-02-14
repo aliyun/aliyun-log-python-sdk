@@ -6,4 +6,4 @@ enum34
 python-dateutil
 elasticsearch
 jmespath
-lz4a
+lz4
