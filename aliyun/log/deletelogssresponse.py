@@ -21,7 +21,6 @@ class DeleteLogsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.progress = Util.h_v_t(header, 'x-log-progress')
 
 
     def is_completed(self):
@@ -35,5 +34,4 @@ class DeleteLogsResponse(LogResponse):
     def log_print(self):
         print('DeleteLogsResponse:')
         print('headers:', self.get_all_headers())
-        print('progress:', self.progress)
 
