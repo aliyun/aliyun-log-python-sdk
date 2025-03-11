@@ -25,6 +25,7 @@ from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
 from .deletelogssresponse import DeleteLogsResponse
 from .getlogsresponse import GetLogsResponse
+from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
 from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
 from .ingestion_response import *
@@ -551,11 +552,11 @@ class LogClient(object):
         return GetHistogramsResponse(resp, header)
 
     def delete_logs(self, request):
-        """ Get histograms of requested query from log service.
+        """ delete logs of requested query from log service.
         Unsuccessful operation will cause an LogException.
 
         :type request: GetHistogramsRequest
-        :param request: the GetHistograms request parameters class.
+        :param request: the DeleteLogsRequest request parameters class.
 
         :return: DeleteLogsResponse
 
@@ -583,6 +584,29 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/deletelogs"
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return DeleteLogsResponse(resp, header)
+
+    def get_delete_logs_status(self, request):
+        """ Get get_delete_logs_status of requested logstore from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type request: GetHistogramsRequest
+        :param request: the GetHistograms request parameters class.
+
+        :return: GetDeleteLogsStatusResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        if request.get_shard_id() != -1:
+            params['shard'] = request.get_shard_id()
+        params['taskid'] = request.get_taskid()
+        params['type'] = 'getdeletelogs'
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/getdeletelogs"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetDeleteLogsStatusResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
                 query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0):
