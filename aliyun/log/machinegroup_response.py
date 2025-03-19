@@ -221,7 +221,9 @@ class ListMachinesResponse(LogResponse):
         print('headers:', self.get_all_headers())
         print('machine_count', self.count)
         print('machine_total', self.total)
-        print('machines:', self.machines)
+        print('machines:')
+        for machine in self.machines:
+            machine.log_print()
 
     def merge(self, response):
         if not isinstance(response, ListMachinesResponse):

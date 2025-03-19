@@ -1186,10 +1186,11 @@ class LogClient(object):
                                  count=batch_size, end_cursor=end_cursor, compress=compress, query=query)
 
             yield res
-            if res.get_log_count() <= 0:
+            next_cursor = res.get_next_cursor()
+            if end_cursor == next_cursor:
                 break
 
-            begin_cursor = res.get_next_cursor()
+            begin_cursor = next_cursor
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
                       compress=None, encodings=None, shard_list=None, no_escape=None, query=None):
@@ -5166,7 +5167,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Pqroject name
+        :param project_name: the project name
 
         :type offset: int
         :param offset: line offset of return logs
@@ -5187,6 +5188,39 @@ class LogClient(object):
         params['offset'] = str(offset)
         params['size'] = str(size)
         params['jobType'] = "Export"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListExportResponse(resp, header)
+    
+    def list_logstore_export(self, project_name, logstore_name, offset=0, size=100):
+        """ list exports that belongs to the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :type logstore_name: string
+        :param logstore_name: logstore name, only list the export job that belongs to the logstore
+
+        :return: ListExportsResponse
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logstore_export, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, logstore_name)
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        params['jobType'] = "Export"
+        params['logstore'] = logstore_name
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExportResponse(resp, header)
 

@@ -76,3 +76,8 @@ class MachineStatus(object):
         self.machine_unique_id = machine_unique_id
         self.user_defined_id = user_defined_id
         self.heartbeat_time = heartbeat_time
+
+    def log_print(self):
+        print('MachineStatus: machine_unique_id={}, user_defined_id={}, heartbeat_time={}'.format(self.machine_unique_id,
+                                                                                                  self.user_defined_id,
+                                                                                                  self.heartbeat_time))
