@@ -136,9 +136,9 @@ class IndexKeyConfig(object):
             json_value['alias'] = self.alias
         json_value["doc_value"] = bool(self.doc_value)
         if self.embedding is not None:
-            json_value["embedding"] = bool(self.embedding)
+            json_value["embedding"] = self.embedding
         if self.vector_index is not None:
-            json_value["vector_index"] = bool(self.vector_index)
+            json_value["vector_index"] = self.vector_index
 
         if self.chn is not None:
             json_value['chn'] = self.chn
