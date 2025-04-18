@@ -69,11 +69,9 @@ class ConsumerClient(object):
         try:
             exist = (self.get_consumer_group() is not None)
             return exist, False
-        except LogException as e:
-            if e.get_error_code() == 'Unauthorized':
-                return None, True
-            raise ClientWorkerException('error occour when get consumer group, errorCode: '
-                                            + e.get_error_code() + ", errorMessage: " + e.get_error_message())
+        except LogException as _:
+            return None, True
+
 
     # fallback, for backward compatibility
     def _ensure_consumer_group_created_legacy(self, timeout, in_order):
