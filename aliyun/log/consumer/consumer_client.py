@@ -37,7 +37,46 @@ class ConsumerClient(object):
         self.logger = ConsumerClientLoggerAdapter(
             logging.getLogger(__name__), {"consumer_client": self})
 
-    def create_consumer_group(self, timeout, in_order):
+    def ensure_consumer_group_created(self, timeout, in_order):
+        exists, need_fallback = self._is_consumer_group_exist()
+        # fallback
+        if need_fallback:
+            self._ensure_consumer_group_created_legacy(timeout, in_order)
+            return
+
+        # try create
+        if not exists:
+            try:
+                self.mclient.create_consumer_group(self.mproject, self.mlogstore, self.mconsumer_group,
+                                                   timeout, in_order)
+                return
+            except LogException as e:
+                if e.get_error_code() != 'ConsumerGroupAlreadyExist':
+                    raise ClientWorkerException('error occour when create consumer group, errorCode: '
+                                                + e.get_error_code() + ", errorMessage: " + e.get_error_message())
+
+        # try update
+        try:
+
+            self.mclient.update_consumer_group(self.mproject, self.mlogstore, self.mconsumer_group,
+                                               timeout, in_order)
+        except LogException as e:
+            raise ClientWorkerException("error occour when update consumer group, errorCode: " +
+                                        e.get_error_code() + ", errorMessage: " + e.get_error_message())
+
+    def _is_consumer_group_exist(self):
+        # returns (exists, need_fallback)
+        try:
+            exist = (self.get_consumer_group() is not None)
+            return exist, False
+        except LogException as e:
+            if e.get_error_code() == 'Unauthorized':
+                return None, True
+            raise ClientWorkerException('error occour when get consumer group, errorCode: '
+                                            + e.get_error_code() + ", errorMessage: " + e.get_error_message())
+
+    # fallback, for backward compatibility
+    def _ensure_consumer_group_created_legacy(self, timeout, in_order):
         try:
             self.mclient.create_consumer_group(self.mproject, self.mlogstore, self.mconsumer_group,
                                                timeout, in_order)
