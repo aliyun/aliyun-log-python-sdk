@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 LogClient class is the main class in the SDK. It can be used to communicate with
 log service server to put/get data.
@@ -36,6 +37,7 @@ from .logstore_config_response import *
 from .substore_config_response import *
 from .logtail_config_response import *
 from .machinegroup_response import *
+from .rebuild_index_response import *
 from .project_response import *
 from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
@@ -50,7 +52,7 @@ from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
 
-from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
 import struct
 from .logresponse import LogResponse
@@ -60,15 +62,13 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
+from .compress import CompressType, Compressor
 
 logger = logging.getLogger(__name__)
 
 if six.PY3:
     xrange = range
 
-lz4_available = Util.is_lz4_available()
-if lz4_available:
-    from .util import lz_decompress, lz_compresss
 
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
@@ -179,7 +179,8 @@ class LogClient(object):
         self._last_refresh = time.time()
         for tries in range(DEFAULT_REFRESH_RETRY_COUNT + 1):
             try:
-                self._auth = make_auth(StaticCredentialsProvider(self._credentials_auto_refresher()),
+                credentials = self._credentials_auto_refresher()
+                self._auth = make_auth(StaticCredentialsProvider(credentials[0], credentials[1], credentials[2]),
                                        self._auth_version, self._region)
             except Exception as ex:
                 logger.error(
@@ -389,13 +390,11 @@ class LogClient(object):
         raw_body_size = len(body)
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
-        if compress is None or compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                body = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                body = zlib.compress(body)
+        need_compress = compress is None or compress
+        if need_compress:
+            compress_type = CompressType.default_compress_type()
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         resource = '/logstores/' + logstore + "/shards/lb"
@@ -450,16 +449,12 @@ class LogClient(object):
                                    len(body) / 1024.0 / 1024))
 
         headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
-        is_compress = request.get_compress()
-
-        compress_data = None
-        if is_compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                compress_data = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                compress_data = zlib.compress(body)
+        
+        need_compress = request.get_compress() is None or request.get_compress()
+        if need_compress:
+            compress_type = CompressType.default_compress_type()
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         logstore = request.get_logstore()
@@ -470,11 +465,7 @@ class LogClient(object):
         else:
             resource = '/logstores/' + logstore + "/shards/lb"
 
-        if is_compress:
-            (resp, header) = self._send('POST', project, compress_data, resource, params, headers)
-        else:
-            (resp, header) = self._send('POST', project, body, resource, params, headers)
-
+        (resp, header) = self._send('POST', project, body, resource, params, headers)
         return PutLogsResponse(header, resp)
 
     def list_logstores(self, request):
@@ -659,12 +650,12 @@ class LogClient(object):
                 params['forward'] = forward
                 body_str = six.b(json.dumps(params))
                 headers["x-log-bodyrawsize"] = str(len(body_str))
-                accept_encoding = "lz4" if lz4_available else "deflate"
+                accept_encoding = str(CompressType.default_compress_type())
                 headers['Accept-Encoding'] = accept_encoding
 
                 (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
 
-                raw_data = Util.uncompress_response(header, resp)
+                raw_data = Compressor.decompress_response(header, resp)
                 exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
                 exJson = Util.convert_unicode_to_str(exJson)
                 ret = GetLogsResponse(exJson, header)
@@ -861,7 +852,7 @@ class LogClient(object):
         :raise: LogException
         """
         if not is_stats_query(sql):
-            raise LogException("parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
+            raise LogException("InvalidParameter", "parameter sql invalid, please follow 'Search|Analysis' syntax, refer to "
                                "https://help.aliyun.com/document_detail/43772.html")
         return self.get_log(project, logstore, from_time, to_time, topic=None,
                             query=sql, reverse=False, offset=0, size=100, power_sql=power_sql)
@@ -1133,11 +1124,10 @@ class LogClient(object):
         """
 
         headers = {}
-        if compress is None or compress:
-            if lz4_available:
-                headers['Accept-Encoding'] = 'lz4'
-            else:
-                headers['Accept-Encoding'] = 'gzip'
+
+        need_compress = compress is None or compress
+        if need_compress:
+            headers['Accept-Encoding'] = str(CompressType.default_compress_type())
         else:
             headers['Accept-Encoding'] = ''
 
@@ -1160,18 +1150,9 @@ class LogClient(object):
         raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         if raw_size <= 0:
             return PullLogResponse(None, header)
-        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
-        if compress_type == 'lz4':
-            if lz4_available:
-                raw_data = lz_decompress(raw_size, resp)
-                return PullLogResponse(raw_data, header)
-            else:
-                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=resp)
-        elif compress_type in ('gzip', 'deflate'):
-            raw_data = zlib.decompress(resp)
-            return PullLogResponse(raw_data, header)
-        else:
-            return PullLogResponse(resp, header)
+
+        raw_data = Compressor.decompress_response(header, resp)
+        return PullLogResponse(raw_data, header)
 
     def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None):
         """ batch pull log data from log service using time-range
@@ -1213,10 +1194,11 @@ class LogClient(object):
                                  count=batch_size, end_cursor=end_cursor, compress=compress, query=query)
 
             yield res
-            if res.get_log_count() <= 0:
+            next_cursor = res.get_next_cursor()
+            if end_cursor == next_cursor:
                 break
 
-            begin_cursor = res.get_next_cursor()
+            begin_cursor = next_cursor
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
                       compress=None, encodings=None, shard_list=None, no_escape=None, query=None):
@@ -2535,7 +2517,7 @@ class LogClient(object):
         (resp, header) = self._send("PUT", project, None, resource, params, headers)
         return ModifyScheduledSqlJobStateResponse(header, resp)
 
-    def create_project(self, project_name, project_des, resource_group_id=''):
+    def create_project(self, project_name, project_des, resource_group_id='', data_redundancy_type=None):
         """ Create a project
         Unsuccessful operation will cause an LogException.
 
@@ -2545,8 +2527,11 @@ class LogClient(object):
         :type project_des: string
         :param project_des: the description of a project
 
-        type resource_group_id: string
+        :type resource_group_id: string
         :param resource_group_id: the resource group id, the project created will put in the resource group
+
+        :type data_redundancy_type: string
+        :param data_redundancy_type: the data redundancy type, LRS or ZRS
 
         :return: CreateProjectResponse
 
@@ -2555,13 +2540,39 @@ class LogClient(object):
 
         params = {}
         body = {"projectName": project_name, "description": project_des, "resourceGroupId": resource_group_id}
-
+        if data_redundancy_type is not None:
+            body["dataRedundancyType"] = data_redundancy_type
         body = six.b(json.dumps(body))
         headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
         resource = "/"
 
         (resp, header) = self._send("POST", project_name, body, resource, params, headers)
         return CreateProjectResponse(header, resp)
+    
+    def update_project(self, project_name, project_des):
+        """ Update a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type project_des: string
+        :param project_des: the description of a project
+
+        :return: UpdateProjectResponse
+
+        :raise: LogException
+        """
+
+        params = {}
+        body = {"description": project_des}
+
+        body = six.b(json.dumps(body))
+        headers = {'Content-Type': 'application/json', 'x-log-bodyrawsize': str(len(body))}
+        resource = "/"
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateProjectResponse(header, resp)
 
     def get_project(self, project_name):
         """ get project
@@ -3054,7 +3065,7 @@ class LogClient(object):
             to_client = self
         return copy_project(self, to_client, from_project, to_project, copy_machine_group)
 
-    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None):
+    def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
         """
         copy logstore, index, logtail config to target logstore, machine group are not included yet.
         the target logstore will be crated if not existing
@@ -3079,7 +3090,7 @@ class LogClient(object):
 
         :return:
         """
-        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint)
+        return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_config_name=keep_config_name)
 
     def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
@@ -5164,7 +5175,7 @@ class LogClient(object):
         Unsuccessful operation will cause an LogException.
 
         :type project_name: string
-        :param project_name: the Pqroject name
+        :param project_name: the project name
 
         :type offset: int
         :param offset: line offset of return logs
@@ -5185,6 +5196,39 @@ class LogClient(object):
         params['offset'] = str(offset)
         params['size'] = str(size)
         params['jobType'] = "Export"
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListExportResponse(resp, header)
+    
+    def list_logstore_export(self, project_name, logstore_name, offset=0, size=100):
+        """ list exports that belongs to the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type offset: int
+        :param offset: line offset of return logs
+
+        :type size: int
+        :param size: max line number of return logs, -1 means get all
+
+        :type logstore_name: string
+        :param logstore_name: logstore name, only list the export job that belongs to the logstore
+
+        :return: ListExportsResponse
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logstore_export, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                             project_name, logstore_name)
+        headers = {}
+        params = {}
+        resource = '/jobs'
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        params['jobType'] = "Export"
+        params['logstore'] = logstore_name
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListExportResponse(resp, header)
 
@@ -5773,6 +5817,73 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/shipper"
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
+
+    def create_rebuild_index(self, project, logstore, job_name, display_name, from_time, to_time):
+        """Create a job that rebuild index for a logstore
+        type: (string, string, string, string, int, int) -> CreateRebuildIndexResponse
+
+        :type project: string
+        :param project: the project name
+
+        :type logstore: string
+        :param logstore: the logstore name
+        
+        :type job_name: string
+        :param job_name: job name
+        
+        :type display_name: string
+        :param display_name: display name for the job
+        
+        :type from_time: int
+        :param from_time: from time, in unix timestamp format, eg 1736156803
+
+        
+        :type to_time: int
+        :param to_time: to time, in unix timestamp format, eg 1736156803, to_time should not large than the unix_timestamp before 900 seconds ago
+
+        :return: CreateRebuildIndexResponse
+
+        :raise: LogException
+        """
+        
+        params = {}
+        headers = {"Content-Type": "application/json"}
+        body = {
+                "configuration":
+                {
+                    "fromTime": from_time,
+                    "toTime": to_time,
+                    "logstore": logstore,
+                },
+                "displayName": display_name,
+                "name": job_name,
+                "recyclable": False,
+                "type": "RebuildIndex"
+        }
+        data = six.b(json.dumps(body))
+
+        resource = "/jobs"
+        (resp, header) = self._send("POST", project, data, resource, params, headers)
+        return CreateRebuildIndexResponse(header, resp)
+    
+    def get_rebuild_index(self, project, job_name):
+        """get rebuild index by the given job_name
+
+        :type project: string
+        :param project: the project name
+
+        :type job_name: string
+        :param job_name: the job name
+
+        :return: GetRebuildIndexResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/jobs/" + job_name
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return GetRebuildIndexResponse(header, resp)
 
 # make_lcrud_methods(LogClient, 'job', name_field='name', root_resource='/jobs', entities_key='results')
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')

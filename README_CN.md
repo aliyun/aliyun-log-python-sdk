@@ -31,15 +31,8 @@
 
 ### 支持Python版本
 
-1. Python 2.6
-2. Python 2.7
-3. Python 3.3
-4. Python 3.4
-5. Python 3.5
-6. Python 3.6
-7. Python 3.7
-8. Pypy2
-9. Pypy3
+1. Python 2，版本 >= 2.7  
+2. Python 3，版本 >= 3.7  
 
 
 ### 支持API版本

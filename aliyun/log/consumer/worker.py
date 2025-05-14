@@ -44,7 +44,7 @@ class ConsumerWorker(Thread):
 
         self.last_owned_consumer_finish_time = 0
 
-        self.consumer_client.create_consumer_group(consumer_option.consumer_group_time_out, consumer_option.in_order)
+        self.consumer_client.ensure_consumer_group_created(consumer_option.consumer_group_time_out, consumer_option.in_order)
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval,
                                            consumer_option.consumer_group_time_out)
 

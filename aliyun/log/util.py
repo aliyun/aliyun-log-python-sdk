@@ -17,28 +17,8 @@ from .logexception import LogException
 import re
 import logging
 import json
-import struct
-import zlib
 
-try:
-    import lz4
-    if hasattr(lz4, 'loads') and hasattr(lz4, 'dumps'):
-        def lz_decompress(raw_size, data):
-            return lz4.loads(struct.pack('<I', raw_size) + data)
 
-        def lz_compresss(data):
-            return lz4.dumps(data)[4:]
-    else:
-        import lz4.block
-        def lz_decompress(raw_size, data):
-            return lz4.block.decompress(data, uncompressed_size=raw_size)
-
-        def lz_compresss(data):
-            return lz4.block.compress(data)[4:]
-    lz4_available = True
-except ImportError:
-    lz4_available = False
-      
 logger = logging.getLogger(__name__)
 
 
@@ -90,11 +70,6 @@ class Util(object):
         finally:
             if s:
                 s.close()
-
-    @staticmethod
-    def compress_data(data):
-        import zlib
-        return zlib.compress(data, 6)
 
     @staticmethod
     def cal_md5(content):
@@ -164,10 +139,7 @@ class Util(object):
 
         return data
 
-    @staticmethod
-    def is_lz4_available():
-        return lz4_available
-        
+
     @staticmethod
     def h_v_t(header, key):
         """
@@ -208,23 +180,7 @@ class Util(object):
             else return v
         """
         return v if v is not None else default
-
-    @staticmethod
-    def uncompress_response(header, response):
-        """
-        Supported compress type [lz4, gzip, deflate]
-        """
-        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
-        if compress_type == 'lz4':
-            raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
-            if Util.is_lz4_available():
-                return lz_decompress(raw_size, response)
-            else:
-                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=response)
-        elif compress_type in ('gzip', 'deflate'):
-            return zlib.decompress(response)
-        else:
-            raise LogException('UnknownCompressType', 'Unknown compress type: ' + compress_type, resp_header=header, resp_body=response)
+    
 
 ZERO = timedelta(0)
 
@@ -269,6 +225,7 @@ def parse_timestamp(tm):
                 raise e
 
         except ImportError as ex2:
+            logger.exception("import error: {}".format(ex2))
             raise ex
 
     if sys.version_info[:2] == (2, 6):

@@ -33,7 +33,8 @@ from .shard_response import *
 from .shipper_response import *
 from .common_response import *
 from .external_store_config_response import *
-from .log_logs_raw_pb2 import LogGroupRaw as LogGroup
+from .proto import LogGroupRaw as LogGroup
+from .rebuild_index_response import *
 
 # logging handler
 from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler
