@@ -166,6 +166,8 @@ class LogClient(object):
             self._auth = make_auth(StaticCredentialsProvider(accessKeyId, accessKey, securityToken),
                                    auth_version, region)
         self._get_logs_v2_enabled = True
+        self._session = requests.Session()
+        self._enable_keep_alive = True
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -248,10 +250,16 @@ class LogClient(object):
                                'Bad json format:\n"%s"' % resp_body + '\n' + repr(ex),
                                requestId, resp_status, resp_header, resp_body)
 
+    def _get_http_sender(self, method):
+        if self._enable_keep_alive:
+            return getattr(self._session, method.lower())
+        return getattr(requests, method.lower())
+        
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            http_sender = self._get_http_sender(method)
+            r = http_sender(url, params=params, data=body, headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
