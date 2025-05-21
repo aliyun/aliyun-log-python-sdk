@@ -282,6 +282,10 @@ class LogClient(object):
 
         exJson = self._loadJson(resp_status, resp_header, resp_body, requestId)
         exJson = Util.convert_unicode_to_str(exJson)
+        if exJson is None:
+            raise LogException('LogRequestError',
+                               'Request is failed, got None response while status code is ' + str(resp_status) + '.',
+                               requestId, resp_status, resp_header, resp_body)
 
         if 'errorCode' in exJson and 'errorMessage' in exJson:
             raise LogException(exJson['errorCode'], exJson['errorMessage'], requestId,
