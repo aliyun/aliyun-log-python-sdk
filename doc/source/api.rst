@@ -45,9 +45,6 @@ Request and Config Class
    SyslogConfigDetail
    MachineGroupDetail
    IndexConfig
-   OssShipperConfig
-   OdpsShipperConfig
-   ShipperTask
 
 
 Response Class
@@ -111,16 +108,6 @@ Response Class
    RemoveConfigToMachineGroupResponse
    GetMachineGroupAppliedConfigResponse
    GetConfigAppliedMachineGroupsResponse
-
-.. py:currentmodule:: aliyun.log
-.. autosummary::
-   CreateShipperResponse
-   UpdateShipperResponse
-   DeleteShipperResponse
-   GetShipperConfigResponse
-   ListShipperResponse
-   GetShipperTasksResponse
-   RetryShipperTasksResponse
 
 .. py:currentmodule:: aliyun.log
 .. autosummary::
@@ -285,18 +272,6 @@ Alert
    delete_alert
 
 
-Shipper
-----------
-.. autosummary::
-   create_shipper
-   update_shipper
-   delete_shipper
-   get_shipper
-   list_shipper
-   get_shipper_tasks
-   retry_shipper_tasks
-
-
 Definitions
 -------------
 
@@ -321,7 +296,6 @@ Definitions
 .. autoclass:: SyslogConfigDetail
 .. autoclass:: MachineGroupDetail
 .. autoclass:: PutLogsRequest
-.. autoclass:: ShipperTask
 
 .. autoclass:: LogResponse
    :members:
@@ -401,11 +375,6 @@ Definitions
 .. autoclass:: GetMachineGroupAppliedConfigResponse
    :members:
 .. autoclass:: GetConfigAppliedMachineGroupsResponse
-   :members:
-
-.. autoclass:: GetShipperTasksResponse
-   :members:
-.. autoclass:: RetryShipperTasksResponse
    :members:
 
 .. autoclass:: ConsumerGroupEntity
