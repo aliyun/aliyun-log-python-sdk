@@ -456,7 +456,7 @@ class LogClient(object):
         
         need_compress = request.get_compress() is None or request.get_compress()
         if need_compress:
-            compress_type = CompressType.default_compress_type()
+            compress_type = CompressType.from_nullable_str(request.get_compress_type())
             headers['x-log-compresstype'] = str(compress_type)
             body = Compressor.compress(body, compress_type)
 
