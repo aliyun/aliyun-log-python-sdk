@@ -33,6 +33,9 @@ class PutLogsRequest(LogRequest):
 
     :type logtags: list
     :param logtags: list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
+    
+    :type compress_type: String
+    :param compress_type: compress_type, eg lz4, zstd, default is lz4. To use zstd, pip install zstd.
 
     """
 
