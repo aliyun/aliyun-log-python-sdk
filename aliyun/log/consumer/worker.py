@@ -36,7 +36,8 @@ class ConsumerWorker(Thread):
                            consumer_option.project, consumer_option.logstore, consumer_option.consumer_group_name,
                            consumer_option.consumer_name, consumer_option.securityToken,
                            credentials_refresher=consumer_option.credentials_refresher,
-                           auth_version=consumer_option.auth_version, region=consumer_option.region)
+                           auth_version=consumer_option.auth_version, region=consumer_option.region,
+                           accept_compress_type=consumer_option.accept_compress_type)
         self.shut_down_flag = False
         self.logger = ConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"consumer_worker": self})
