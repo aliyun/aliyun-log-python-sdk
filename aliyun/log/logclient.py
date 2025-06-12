@@ -1094,7 +1094,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None, accept_compress_type=None):
         """ batch pull log data from log service
         Unsuccessful operation will cause an LogException.
 
@@ -1121,6 +1121,10 @@ class LogClient(object):
 
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
+        
+        :type accept_compress_type: string
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
 
         :return: PullLogResponse
 
@@ -1131,7 +1135,10 @@ class LogClient(object):
 
         need_compress = compress is None or compress
         if need_compress:
-            headers['Accept-Encoding'] = str(CompressType.default_compress_type())
+            if accept_compress_type is None or accept_compress_type == '':
+                headers['Accept-Encoding'] = str(CompressType.default_compress_type())
+            else:
+                headers['Accept-Encoding'] = accept_compress_type
         else:
             headers['Accept-Encoding'] = ''
 
@@ -1158,7 +1165,7 @@ class LogClient(object):
         raw_data = Compressor.decompress_response(header, resp)
         return PullLogResponse(raw_data, header)
 
-    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None):
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None, accept_compress_type=None):
         """ batch pull log data from log service using time-range
         Unsuccessful operation will cause an LogException. the time parameter means the time when server receives the logs
 
@@ -1185,6 +1192,10 @@ class LogClient(object):
 
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
+        
+        :type accept_compress_type: string
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
 
         :return: PullLogResponse
 
@@ -1195,7 +1206,8 @@ class LogClient(object):
 
         while True:
             res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
-                                 count=batch_size, end_cursor=end_cursor, compress=compress, query=query)
+                                 count=batch_size, end_cursor=end_cursor, compress=compress, query=query,
+                                 accept_compress_type=accept_compress_type)
 
             yield res
             next_cursor = res.get_next_cursor()
@@ -1240,6 +1252,10 @@ class LogClient(object):
 
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
+        
+        :type accept_compress_type: str
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
 
         :return: LogResponse {"total_count": 30, "files": {'file_path_1': 10, "file_path_2": 20} })
 

@@ -20,9 +20,18 @@ def lz_compresss(data):
 
 def zstd_compress(data):
     if not zstd_available:
-        raise LogException('UnsupportedompressType',
-                           'Unsupported compress type zstd, zstd not installed')
+        raise LogException('UnsupportedCompressType',
+                           'Unsupported compress type zstd, library zstd not installed')
     return zstd.compress(data, 1)
+
+def zstd_decompress(raw_size, data):
+    if not zstd_available:
+        raise LogException('UnsupportedCompressType',
+                           'Unsupported compress type zstd, library zstd not installed')
+    result = zstd.decompress(data)
+    if len(result) != raw_size:
+        raise LogException('DecompressError', 'uncompressed size ' + str(len(result)) + ' does not match x-log-bodyrawsize ' + str(raw_size))
+    return result
 
 class CompressType(Enum):
     UNCOMPRESSED = 1
@@ -62,8 +71,8 @@ class Compressor():
         if compress_type == CompressType.UNCOMPRESSED:
             return data
 
-        raise LogException('UnknownCompressType',
-                           'Unknown compress type: ' + compress_type)
+        raise LogException('UnsupportedCompressType',
+                           'Unsupported compress type: ' + compress_type)
 
     @staticmethod
     def decompress(data, raw_size, compress_type):
@@ -73,9 +82,12 @@ class Compressor():
 
         if compress_type == CompressType.UNCOMPRESSED:
             return data
+        
+        if compress_type == CompressType.ZSTD:
+            return zstd_decompress(raw_size, data)
 
-        raise LogException('UnknownCompressType',
-                           'Unknown compress type: ' + compress_type)
+        raise LogException('UnsupportedCompressType',
+                           'Unsupported compress type: ' + compress_type)
 
     @staticmethod
     def decompress_response(header, response):
@@ -93,8 +105,11 @@ class Compressor():
         if compress_type_str == 'lz4':
             return Compressor.decompress(response, raw_size, CompressType.LZ4)
 
+        if compress_type_str == 'zstd':
+            return Compressor.decompress(response, raw_size, CompressType.ZSTD)
+
         if compress_type_str in ('gzip', 'deflate'):
             return zlib.decompress(response)
 
-        raise LogException('UnknownCompressType', 'Unknown compress type: ' +
+        raise LogException('UnsupportedCompressType', 'Unsupported compress type: ' +
                            compress_type_str, resp_header=header, resp_body=response)

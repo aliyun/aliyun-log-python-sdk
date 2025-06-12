@@ -25,7 +25,8 @@ class LogHubConfig(object):
                  cursor_position=None, heartbeat_interval=None, data_fetch_interval=None, in_order=False,
                  cursor_start_time=None, security_token=None, max_fetch_log_group_size=None, worker_pool_size=None, shared_executor=None,
                  cursor_end_time=None, credentials_refresher=None,
-                 auth_version=AUTH_VERSION_1, region='', query=None):
+                 auth_version=AUTH_VERSION_1, region='', query=None,
+                 accept_compress_type=None):
         """
 
         :param endpoint:
@@ -48,6 +49,10 @@ class LogHubConfig(object):
         :param auth_version: only support AUTH_VERSION_1 and AUTH_VERSION_4
         :param region: region of project
         :param query: the SPL query, such as *| where a = 'xxx'
+        :type accept_compress_type: string
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
         """
         self.endpoint = endpoint
         self.accessKeyId = access_key_id
@@ -71,3 +76,4 @@ class LogHubConfig(object):
         self.auth_version = auth_version
         self.region = region
         self.query = query
+        self.accept_compress_type = accept_compress_type
