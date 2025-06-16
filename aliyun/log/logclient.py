@@ -600,11 +600,11 @@ class LogClient(object):
         params = {}
         if request.get_shard_id() != -1:
             params['shard'] = request.get_shard_id()
-        params['taskid'] = request.get_taskid()
-        params['type'] = 'getdeletelogs'
+        params['taskId'] = request.get_taskid()
+        params['type'] = 'deletelogs'
         logstore = request.get_logstore()
         project = request.get_project()
-        resource = "/logstores/" + logstore + "/getdeletelogs"
+        resource = "/logstores/" + logstore + "/deletelogs/" + request.get_taskid()
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetDeleteLogsStatusResponse(resp, header)
 

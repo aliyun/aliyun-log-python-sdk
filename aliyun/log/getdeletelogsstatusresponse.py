@@ -18,7 +18,7 @@ class GetDeleteLogsStatusResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.process = resp['process']
+        self.process = resp['progress']
 
     def is_completed(self):
         """ Check if the histogram is completed
