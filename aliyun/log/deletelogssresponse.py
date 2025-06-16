@@ -21,7 +21,7 @@ class DeleteLogsResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.taskid = resp['taskid']
+        self.taskid = resp['taskId']
         self.resp = resp
 
     def is_completed(self):

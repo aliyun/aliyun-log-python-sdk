@@ -578,11 +578,11 @@ class LogClient(object):
         params['toNs'] = request.get_to_time_nano_part()
         if request.get_shard_id() != -1:
             params['shard'] = request.get_shard_id()
-        params['type'] = 'deletelogs'
+        params['type'] = 'logs'
         logstore = request.get_logstore()
         project = request.get_project()
-        resource = "/logstores/" + logstore + "/deletelogs"
-        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        resource = "/logstores/" + logstore + "/logs"
+        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
         return DeleteLogsResponse(resp, header)
 
     def get_delete_logs_status(self, request):
