@@ -63,6 +63,9 @@ from .export_response import *
 from .common_response import *
 from .auth import *
 from .compress import CompressType, Compressor
+from .metering_mode_response import GetLogStoreMeteringModeResponse, \
+    GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
+        UpdateMetricStoreMeteringModeResponse
 
 logger = logging.getLogger(__name__)
 
@@ -1584,6 +1587,104 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
+
+    def get_logstore_metering_mode(self, project_name, logstore_name):
+        """ Get the metering mode of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetLogStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        headers = {}
+
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetLogStoreMeteringModeResponse(resp, header)
+    
+    def update_logstore_metering_mode(self, project_name, logstore_name, metering_mode):
+        """ Update the metering mode of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+        
+        :type metering_mode: string
+        :param metering_mode: the metering mode, ChargeByDataIngest or ChargeByFunction
+
+        :return: UpdateLogStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {
+            "meteringMode": metering_mode
+        }
+        body_str = six.b(json.dumps(body))
+
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateLogStoreMeteringModeResponse(header, resp)
+    
+    def get_metric_store_metering_mode(self, project_name, metric_store_name):
+        """ Get the metering mode of the metric store
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type metric_store_name: string
+        :param metric_store_name: the metric store name
+
+        :return: GetMetricStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/metricstores/" + metric_store_name + "/meteringmode"
+        headers = {}
+
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetMetricStoreMeteringModeResponse(resp, header)
+    
+    def update_metric_store_metering_mode(self, project_name, metric_store_name, metering_mode):
+        """ Update the metering mode of the metric store
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type metric_store_name: string
+        :param metric_store_name: the metric store name
+        
+        :type metering_mode: string
+        :param metering_mode: the metering mode, ChargeByDataIngest or ChargeByFunction
+
+        :return: UpdateMetricStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/metricstores/" + metric_store_name + "/meteringmode"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {
+            "meteringMode": metering_mode
+        }
+        body_str = six.b(json.dumps(body))
+
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateMetricStoreMeteringModeResponse(header, resp)
 
     def create_external_store(self, project_name, config):
         """ create log store
