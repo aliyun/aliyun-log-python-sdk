@@ -6,13 +6,8 @@ log service server to put/get data.
 :Author: Aliyun
 """
 
-import json
 import requests
-import six
 import time
-import zlib
-from datetime import datetime
-import logging
 from .credentials import StaticCredentialsProvider
 from .scheduled_sql import ScheduledSQLConfiguration
 from .scheduled_sql_response import *
@@ -32,7 +27,6 @@ from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
     get_resource_usage, arrange_shard, transform_data
-from .logexception import LogException
 from .logstore_config_response import *
 from .substore_config_response import *
 from .logtail_config_response import *
@@ -42,19 +36,16 @@ from .project_response import *
 from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
 from .shard_response import *
-from .shipper_response import *
 from .resource_response import *
 from .resource_params import *
 from .tag_response import GetResourceTagsResponse
 from .topostore_response import *
 from .topostore_params import *
-from .util import base64_encodestring as b64e
-from .util import base64_encodestring as e64, base64_decodestring as d64, Util
+from .util import base64_encodestring as e64, base64_decodestring as d64
 from .version import API_VERSION, USER_AGENT
 
 from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
-import struct
 from .logresponse import LogResponse
 from copy import copy
 from .pluralize import pluralize
@@ -2374,85 +2365,6 @@ class LogClient(object):
         resource = "/configs/" + config_name + "/machinegroups"
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return GetConfigAppliedMachineGroupsResponse(resp, header)
-
-    def get_shipper_tasks(self, project_name, logstore_name, shipper_name, start_time, end_time, status_type='',
-                          offset=0, size=100):
-        """ get  odps/oss shipper tasks in a certain time range
-        Unsuccessful operation will cause an LogException.
-
-        :type project_name: string
-        :param project_name: the Project name
-
-        :type logstore_name: string
-        :param logstore_name: the logstore name
-
-        :type shipper_name: string
-        :param shipper_name: the shipper name
-
-        :type start_time: int
-        :param start_time: the start timestamp
-
-        :type end_time: int
-        :param end_time: the end timestamp
-
-        :type status_type: string
-        :param status_type: support one of ['', 'fail', 'success', 'running'] , if the status_type = '' , return all kinds of status type
-
-        :type offset: int
-        :param offset: the begin task offset
-
-        :type size: int
-        :param size: the needed tasks count, -1 means all
-
-        :return: GetShipperTasksResponse
-
-        :raise: LogException
-        """
-        # need to use extended method to get more
-        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
-            return list_more(self.get_shipper_tasks, int(offset), int(size), MAX_LIST_PAGING_SIZE,
-                             project_name, logstore_name, shipper_name, start_time, end_time, status_type)
-
-        headers = {}
-        params = {"from": str(int(start_time)),
-                  "to": str(int(end_time)),
-                  "status": status_type,
-                  "offset": str(int(offset)),
-                  "size": str(int(size))}
-
-        resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name + "/tasks"
-        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
-        return GetShipperTasksResponse(resp, header)
-
-    def retry_shipper_tasks(self, project_name, logstore_name, shipper_name, task_list):
-        """ retry failed tasks , only the failed task can be retried
-        Unsuccessful operation will cause an LogException.
-
-        :type project_name: string
-        :param project_name: the Project name
-
-        :type logstore_name: string
-        :param logstore_name: the logstore name
-
-        :type shipper_name: string
-        :param shipper_name: the shipper name
-
-        :type task_list: string array
-        :param task_list: the failed task_id list, e.g ['failed_task_id_1', 'failed_task_id_2',...], currently the max retry task count 10 every time
-
-        :return: RetryShipperTasksResponse
-
-        :raise: LogException
-        """
-        headers = {}
-        params = {}
-        body = six.b(json.dumps(task_list))
-        headers['Content-Type'] = 'application/json'
-        headers['x-log-bodyrawsize'] = str(len(body))
-        resource = "/logstores/" + logstore_name + "/shipper/" + shipper_name + "/tasks"
-
-        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
-        return RetryShipperTasksResponse(header, resp)
 
     def check_upsert_scheduled_sql(self, project_name, scheduled_sql, method, resource):
         config = scheduled_sql.getConfiguration()
@@ -5784,161 +5696,6 @@ class LogClient(object):
         (resp, header) = self._send("POST", project, body_str, resource, params, headers)
         return CreateEntityResponse(header, resp)
 
-    def list_shipper(self, project, logstore, offset=0, size=100):
-        """list shippers
-        Unsuccessful opertaion will cause an LogException.
-
-        :type project: string
-        :param project: the project name
-
-        :type logstore: string
-        :param logstore: the logstore name
-
-        :type offset: int
-        :param offset: the offset of all the matched shippers
-
-        :type size: int
-        :param size: the max return shipper count, -1 means all
-
-        :return: ListEntityResponse
-
-        :raise: LogException
-        """
-        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
-            return list_more(self.list_shipper, int(offset), int(size), MAX_LIST_PAGING_SIZE,
-                             project, logstore)
-
-        headers = {}
-        params = {}
-        params["offset"] = str(offset)
-        params["size"] = str(size)
-        resource = "/logstores/" + logstore + "/shipper"
-        (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return ListEntityResponse(header, resp, resource_name="shipper", entities_key="shipper")
-
-    def get_shipper(self, project, logstore, entity):
-        """get shipper
-        Unsuccessful opertaion will cause an LogException.
-
-        :type project: string
-        :param project: the project name
-
-        :type logstore: string
-        :param logstore: the logstore name
-
-        :type entity: string
-        :param entity: the shipper name
-
-        :return: GetEntityResponse
-
-        :raise: LogException
-        """
-        headers = {}
-        params = {}
-        resource = "/logstores/" + logstore + "/shipper/" + entity
-        (resp, header) = self._send("GET", project, None, resource, params, headers)
-        return GetEntityResponse(header, resp)
-
-    def delete_shipper(self, project, logstore, entity):
-        """delete shipper
-        Unsuccessful opertaion will cause an LogException.
-
-        :type project: string
-        :param project: the project name
-
-        :type logstore: string
-        :param logstore: the logstore name
-
-        :type entity: string
-        :param entity: the shipper name
-
-        :return: DeleteEntityResponse
-
-        :raise: LogException
-        """
-        headers = {}
-        params = {}
-        resource = "/logstores/" + logstore + "/shipper/" + entity
-        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
-        return DeleteEntityResponse(header, resp)
-
-    def update_shipper(self, project, logstore, detail):
-        """update shipper
-        Unsuccessful opertaion will cause an LogException.
-
-        :type project: string
-        :param project: the project name
-
-        :type logstore: string
-        :param logstore: the logstore name
-
-        :type detail: dict/string
-        :param detail: json string of shipper config details
-
-        :return: UpdateEntityResponse
-
-        :raise: LogException
-        """
-        params = {}
-        headers = {}
-        shipper_name = None
-        if hasattr(detail, "to_json"):
-            detail = detail.to_json()
-            body_str = six.b(json.dumps(detail))
-            shipper_name = detail.get("shipperName" or "name", "")
-        elif isinstance(detail, six.binary_type):
-            body_str = detail
-        elif isinstance(detail, six.text_type):
-            body_str = detail.encode("utf8")
-        else:
-            body_str = six.b(json.dumps(detail))
-            shipper_name = detail.get("shipperName" or "name", "")
-
-        if shipper_name is None:
-            shipper_name = json.loads(body_str).get("shipperName", "")
-
-        assert shipper_name, LogException(
-            "InvalidParameter",
-            'unknown shipper name in "{0}"'.format(detail),
-        )
-        headers["Content-Type"] = "application/json"
-        headers["x-log-bodyrawsize"] = str(len(body_str))
-        resource = "/logstores/" + logstore + "/shipper/" + shipper_name
-        (resp, headers) = self._send("PUT", project, body_str, resource, params, headers)
-        return UpdateEntityResponse(headers, resp)
-
-    def create_shipper(self, project, logstore, detail):
-        """create shipper
-        Unsuccessful opertaion will cause an LogException.
-
-        :type project: string
-        :param project: the project name
-
-        :type logstore: string
-        :param logstore: the logstore name
-
-        :type detail: dict/string
-        :param detail: json string of shipper config details
-
-        :return: CreateEntityResponse
-
-        :raise: LogException
-        """
-        params = {}
-        headers = {"x-log-bodyrawsize": "0", "Content-Type": "application/json"}
-        if hasattr(detail, "to_json"):
-            detail = detail.to_json()
-            body_str = six.b(json.dumps(detail))
-        elif isinstance(detail, six.binary_type):
-            body_str = detail
-        elif isinstance(detail, six.text_type):
-            body_str = detail.encode("utf8")
-        else:
-            body_str = six.b(json.dumps(detail))
-        resource = "/logstores/" + logstore + "/shipper"
-        (resp, header) = self._send("POST", project, body_str, resource, params, headers)
-        return CreateEntityResponse(header, resp)
-
     def create_rebuild_index(self, project, logstore, job_name, display_name, from_time, to_time):
         """Create a job that rebuild index for a logstore
         type: (string, string, string, string, int, int) -> CreateRebuildIndexResponse
@@ -6010,4 +5767,3 @@ class LogClient(object):
 # make_lcrud_methods(LogClient, 'dashboard', name_field='dashboardName')
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
-# make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
