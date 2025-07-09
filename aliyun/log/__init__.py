@@ -41,3 +41,7 @@ from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, Uwsgi
 from .metering_mode_response import GetLogStoreMeteringModeResponse, \
     GetMetricStoreMeteringModeResponse, \
     UpdateLogStoreMeteringModeResponse, UpdateMetricStoreMeteringModeResponse
+
+
+from .store_view import StoreView, StoreViewStore
+from .store_view_response import CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, ListStoreViewsResponse, GetStoreViewResponse

@@ -13,6 +13,8 @@ import time
 import zlib
 from datetime import datetime
 import logging
+
+from .store_view_response import ListStoreViewsResponse, CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse
 from .credentials import StaticCredentialsProvider
 from .scheduled_sql import ScheduledSQLConfiguration
 from .scheduled_sql_response import *
@@ -6011,3 +6013,120 @@ class LogClient(object):
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
 # make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
+
+    def list_store_views(self, project_name, offset=0, size=100, store_type=None):
+        """list store views
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type offset: int
+        :param offset: the offset of the list store views
+
+        :type size: int
+        :param size: the max return store view count, default is 100
+
+        :type store_type: string
+        :param store_type: the type of the store view to filter, could be "logstore" or "metricstore"
+
+        :return: ListStoreViewsResponse
+
+        :raise: LogException
+        """
+        params = {
+            "offset": str(offset),
+            "size": str(size),
+        }
+        if store_type:
+            params["storeType"] = store_type
+        resource = "/storeviews"
+        (resp, header) = self._send("GET", project_name, None, resource, params, {})
+        return ListStoreViewsResponse(header, resp)
+    
+    def get_store_view(self, project_name, store_view_name):
+        """get store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :return: GetStoreViewResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, {})
+        return GetStoreViewResponse(header, resp)
+    
+    def update_store_view(self, project_name, store_view_name, store_view):
+        """update store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :type store_view: StoreView
+        :param store_view: the store view to update
+
+        :return: UpdateStoreViewResponse
+
+        :raise: LogException
+        """
+        headers = {"Content-Type": "application/json"}
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        body_dict = store_view._to_json_dict()
+        body = six.b(json.dumps(body_dict))
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateStoreViewResponse(header, resp)
+    
+    def create_store_view(self, project_name, store_view):
+        """create store view
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view: StoreView
+        :param store_view: the store view to create
+
+        :return: CreateStoreViewResponse
+
+        :raise: LogException
+        """
+
+        headers = {"Content-Type": "application/json"}
+        params = {}
+        resource = "/storeviews"
+        body_dict = store_view._to_json_dict()
+        body = six.b(json.dumps(body_dict))
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateStoreViewResponse(header, resp)
+    
+    def delete_store_view(self, project_name, store_view_name):
+        """delete store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :return: DeleteStoreViewResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, {})
+        return DeleteStoreViewResponse(header, resp)
