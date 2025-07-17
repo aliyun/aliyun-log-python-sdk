@@ -3227,9 +3227,6 @@ class LogClient(object):
         copy dashboard from one project to another project
         if to_dashboard_name is not None, the dashboard will be created with the name
 
-        :type from_client: LogClient
-        :param from_client: logclient instance
-
         :type from_project: string
         :param from_project: project name
 
@@ -3254,9 +3251,6 @@ class LogClient(object):
         """
         copy alert from one project to another project
         if to_alert_name is not None, the alert will be created with the name
-
-        :type from_client: LogClient
-        :param from_client: logclient instance
 
         :type from_project: string
         :param from_project: project name
