@@ -25,7 +25,8 @@ MAX_INIT_SHARD_COUNT = 100
 logger = logging.getLogger(__name__)
 
 
-def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False):
+# type: (LogClient, LogClient, str, str, bool, bool, bool) -> None
+def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False, copy_dashboards=False, copy_alerts=False):
     """
     copy project, logstore, machine group and logtail config to target project,
     will create the target project if it doesn't exist
@@ -44,6 +45,12 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
 
     :type copy_machine_group: bool
     :param copy_machine_group: if copy machine group resources, False by default.
+
+    :type copy_dashboards: bool
+    :param copy_dashboards: if copy dashboard resources, False by default.
+
+    :type copy_alerts: bool
+    :param copy_alerts: if copy alert resources, False by default.
 
     :return:
     """
@@ -184,6 +191,33 @@ def copy_project(from_client, to_client, from_project, to_project, copy_machine_
         offset += count
         if count < size or offset >= total:
             break
+    
+    offset, size = 0, default_fetch_size
+    while copy_dashboards:
+        ret = from_client.list_dashboard(from_project, offset=offset, size=size)
+        count = ret.get_count()
+        total = ret.get_total()
+        names = ret.get_dashboards()
+        for dashboard_name in names:
+            copy_dashboard(from_client, from_project, dashboard_name, to_project, to_client=to_client)
+        
+        offset += count
+        if count < size or offset >= total:
+            break
+
+    offset, size = 0, default_fetch_size
+    while copy_alerts:
+        ret = from_client.list_alert(from_project, offset=offset, size=size)
+        count = ret.get_count()
+        total = ret.get_total()
+        alerts = ret.get_alerts()
+        for alert in alerts:
+            copy_alert(from_client, from_project, alert["name"], to_project, to_client=to_client)
+        
+        offset += count
+        if count < size or offset >= total:
+            break
+        
 
 
 def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
@@ -956,3 +990,156 @@ def transform_data(from_client, from_project, from_logstore, from_time,
             worker.join(timeout=120)
 
         return LogResponse({}, result)
+
+
+def _rebind_dashboard_query(dashboard, project_name):
+    new_dashboard = copy.deepcopy(dashboard)
+    if "charts" not in dashboard:
+        return new_dashboard
+    
+    for chart in new_dashboard["charts"]:
+        # replace project in chartQueries
+        if "search" in chart and "chartQueries" in chart["search"]:
+            for query in chart["search"]["chartQueries"]:
+                if "project" in query and query["project"] != project_name:
+                    query["project"] = project_name
+
+        # replace project in events
+        if "display" in chart and "actionOptions" in chart["display"]:
+            for action in chart["display"]["actionOptions"]:
+                if "events" not in action:
+                    continue
+                for event in action["events"]:
+                    if "values" in event and "project" in event["values"] and event["values"]["project"] != project_name:
+                        event["values"]["project"] = project_name
+    return new_dashboard
+                
+def copy_dashboard(from_client, from_project, from_dashboard_name, to_project=None, to_dashboard_name=None, to_client=None, to_region_endpoint=None):
+    """
+    copy dashboard from one project to another project
+    if to_dashboard_name is not None, the dashboard will be created with the name
+
+    :type from_client: LogClient
+    :param from_client: logclient instance
+
+    :type from_project: string
+    :param from_project: project name
+
+    :type from_dashboard_name: string
+    :param from_dashboard_name: dashboard name
+
+    :type to_dashboard_name: string
+    :param to_dashboard_name: target dashboard name
+
+    :type to_project: string
+    :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+    :type to_client: LogClient
+    :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+    :type to_region_endpoint: string
+    :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+    """
+
+    if to_region_endpoint is not None and to_client is None:
+        to_client = copy.deepcopy(from_client)
+        to_client.set_endpoint(to_region_endpoint)
+    else:
+        to_client = to_client or from_client
+
+    to_project = to_project or from_project
+    to_dashboard_name = to_dashboard_name or from_dashboard_name
+
+    from_dashboard_resp = from_client.get_dashboard(from_project, from_dashboard_name)
+
+    if from_project != to_project:
+        to_dashboard = _rebind_dashboard_query(from_dashboard_resp.get_body(), to_project)
+    else:
+        to_dashboard = copy.deepcopy(from_dashboard_resp.get_body())
+    to_dashboard["dashboardName"] = to_dashboard_name
+
+    try:
+        to_dashboard = to_client.create_dashboard(to_project, to_dashboard)
+    except LogException as ex:
+        if ex.get_error_code() == 'ParameterInvalid' and 'already exists' in ex.get_error_message().lower():
+            pass
+        else:
+            raise
+
+
+def _rebind_alert_query(alert, project_name):
+    new_alert = copy.deepcopy(alert)
+    for field in ['scheduleId', 'createTime', 'lastModifiedTime', 'lastModifiedBy']:
+        if field in new_alert:
+            del new_alert[field]
+
+    if "configuration" not in new_alert:
+        return new_alert
+    
+    if "queryList" in new_alert["configuration"]:
+        for query in new_alert["configuration"]["queryList"]:
+            if "project" in query and query["project"] != project_name:
+                query["project"] = project_name
+
+    if "templateConfiguration" in new_alert["configuration"] and \
+        "tokens" in new_alert["configuration"]["templateConfiguration"] and\
+            "default.project" in new_alert["configuration"]["templateConfiguration"]["tokens"]:
+        if new_alert["configuration"]["templateConfiguration"]["tokens"]["default.project"] != project_name:
+            new_alert["configuration"]["templateConfiguration"]["tokens"]["default.project"] = project_name
+
+    return new_alert
+
+def copy_alert(from_client, from_project, from_alert_name, to_project=None, to_alert_name=None, to_client=None, to_region_endpoint=None):
+    """
+    copy alert from one project to another project
+    if to_alert_name is not None, the alert will be created with the name
+
+    :type from_client: LogClient
+    :param from_client: logclient instance
+
+    :type from_project: string
+    :param from_project: project name
+
+    :type from_alert_name: string
+    :param from_alert_name: alert name
+
+    :type to_project: string
+    :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+    :type to_alert_name: string
+    :param to_alert_name: target alert name, copy to same alert if not being specified, will try to create it if not being specified
+
+    :type to_client: LogClient
+    :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+    :type to_region_endpoint: string
+    :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+    """
+
+    if to_region_endpoint is not None and to_client is None:
+        to_client = copy.deepcopy(from_client)
+        to_client.set_endpoint(to_region_endpoint)
+    else:
+        to_client = to_client or from_client
+
+    to_project = to_project or from_project
+    to_alert_name = to_alert_name or from_alert_name
+
+    from_alert_resp = from_client.get_alert(from_project, from_alert_name)
+
+    if from_project != to_project:
+        to_alert = _rebind_alert_query(from_alert_resp.get_body(), to_project)
+    else:
+        to_alert = copy.deepcopy(from_alert_resp.get_body())
+
+    to_alert["name"] = to_alert_name
+
+    try:
+        to_alert = to_client.create_alert(to_project, to_alert)
+    except LogException as ex:
+        if ex.get_error_code() == 'JobAlreadyExist':
+            pass
+        else:
+            raise
+
+

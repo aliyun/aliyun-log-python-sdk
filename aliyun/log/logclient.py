@@ -33,7 +33,7 @@ from .sql_instance_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
-    get_resource_usage, arrange_shard, transform_data
+    get_resource_usage, arrange_shard, transform_data, copy_dashboard, copy_alert
 from .logexception import LogException
 from .logstore_config_response import *
 from .substore_config_response import *
@@ -3165,7 +3165,7 @@ class LogClient(object):
         (resp, header) = self._send('POST', project, body_str, resource, params, headers)
         return ConsumerGroupHeartBeatResponse(resp, header)
 
-    def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False):
+    def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False, copy_dashboards=False, copy_alerts=False):
         """
         copy project, logstore, machine group and logtail config to target project,
         expecting the target project doesn't contain same named logstores as source project
@@ -3182,11 +3182,17 @@ class LogClient(object):
         :type copy_machine_group: bool
         :param copy_machine_group: if copy machine group resources, False by default.
 
+        :type copy_dashboards: bool
+        :param copy_dashboards: if copy dashboard resources, False by default.
+
+        :type copy_alerts: bool
+        :param copy_alerts: if copy alert resources, False by default.
+
         :return: None
         """
         if to_client is None:
             to_client = self
-        return copy_project(self, to_client, from_project, to_project, copy_machine_group)
+        return copy_project(self, to_client, from_project, to_project, copy_machine_group, copy_dashboards, copy_alerts)
 
     def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
         """
@@ -3214,6 +3220,63 @@ class LogClient(object):
         :return:
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_config_name=keep_config_name)
+    
+
+    def copy_dashboard(self, from_project, from_dashboard_name, to_project=None, to_dashboard_name=None, to_client=None, to_region_endpoint=None):
+        """
+        copy dashboard from one project to another project
+        if to_dashboard_name is not None, the dashboard will be created with the name
+
+        :type from_client: LogClient
+        :param from_client: logclient instance
+
+        :type from_project: string
+        :param from_project: project name
+
+        :type from_dashboard_name: string
+        :param from_dashboard_name: dashboard name
+
+        :type to_dashboard_name: string
+        :param to_dashboard_name: target dashboard name
+
+        :type to_project: string
+        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+        :type to_client: LogClient
+        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+        """
+        return copy_dashboard(self, from_project, from_dashboard_name, to_project=to_project, to_dashboard_name=to_dashboard_name, to_client=to_client, to_region_endpoint=to_region_endpoint)
+    
+    def copy_alert(self, from_project, from_alert_name, to_project=None, to_alert_name=None, to_client=None, to_region_endpoint=None):  
+        """
+        copy alert from one project to another project
+        if to_alert_name is not None, the alert will be created with the name
+
+        :type from_client: LogClient
+        :param from_client: logclient instance
+
+        :type from_project: string
+        :param from_project: project name
+
+        :type from_alert_name: string
+        :param from_alert_name: alert name
+
+        :type to_project: string
+        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+
+        :type to_alert_name: string
+        :param to_alert_name: target alert name, copy to same alert if not being specified, will try to create it if not being specified
+
+        :type to_client: LogClient
+        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+        """
+        return copy_alert(self, from_project, from_alert_name, to_project=to_project, to_alert_name=to_alert_name, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
     def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
