@@ -3233,14 +3233,14 @@ class LogClient(object):
         :type from_dashboard_name: string
         :param from_dashboard_name: dashboard name
 
-        :type to_dashboard_name: string
-        :param to_dashboard_name: target dashboard name
-
         :type to_project: string
-        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+        :param to_project: project name, copy dashboard to same project if not being specified
+
+        :type to_dashboard_name: string
+        :param to_dashboard_name: target dashboard name, if not being specified, will use from_dashboard_name as to_dashboard_name. If to_project is None, to_dashboard_name must be specified with a different name.
 
         :type to_client: LogClient
-        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+        :param to_client: logclient instance
 
         :type to_region_endpoint: string
         :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
@@ -3259,13 +3259,13 @@ class LogClient(object):
         :param from_alert_name: alert name
 
         :type to_project: string
-        :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+        :param to_project: project name, copy alert to same project if not being specified
 
         :type to_alert_name: string
-        :param to_alert_name: target alert name, copy to same alert if not being specified, will try to create it if not being specified
+        :param to_alert_name: target alert name, if not being specified, will use from_alert_name as to_alert_name. If to_project is None, to_alert_name must be specified with a different name.
 
         :type to_client: LogClient
-        :param to_client: logclient instance, use it to operate on the "to_project" if being specified
+        :param to_client: logclient instance
 
         :type to_region_endpoint: string
         :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified

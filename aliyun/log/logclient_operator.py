@@ -1028,11 +1028,11 @@ def copy_dashboard(from_client, from_project, from_dashboard_name, to_project=No
     :type from_dashboard_name: string
     :param from_dashboard_name: dashboard name
 
-    :type to_dashboard_name: string
-    :param to_dashboard_name: target dashboard name
-
     :type to_project: string
-    :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+    :param to_project: project name, copy dashboard to same project if not being specified
+
+    :type to_dashboard_name: string
+    :param to_dashboard_name: target dashboard name, if not being specified, will use from_dashboard_name as to_dashboard_name. If to_project is None, to_dashboard_name must be specified with a different name.
 
     :type to_client: LogClient
     :param to_client: logclient instance, use it to operate on the "to_project" if being specified
@@ -1104,10 +1104,10 @@ def copy_alert(from_client, from_project, from_alert_name, to_project=None, to_a
     :param from_alert_name: alert name
 
     :type to_project: string
-    :param to_project: project name, copy to same project if not being specified, will try to create it if not being specified
+    :param to_project: project name, copy alert to same project if not being specified
 
     :type to_alert_name: string
-    :param to_alert_name: target alert name, copy to same alert if not being specified, will try to create it if not being specified
+    :param to_alert_name: target alert name, if not being specified, will use from_alert_name as to_alert_name. If to_project is None, to_alert_name must be specified with a different name.
 
     :type to_client: LogClient
     :param to_client: logclient instance, use it to operate on the "to_project" if being specified
