@@ -1099,7 +1099,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None, accept_compress_type=None):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None, accept_compress_type=None, processor=None):
         """ batch pull log data from log service
         Unsuccessful operation will cause an LogException.
 
@@ -1125,11 +1125,14 @@ class LogClient(object):
         :param compress: if use zip compress for transfer data, default is True
 
         :type query: string
-        :param query: the SPL query, such as *| where a = 'xxx'
+        :param query: the SPL query, such as *| where a = 'xxx', use processor instead
         
         :type accept_compress_type: string
         :param accept_compress_type: The compression type used for logs retrieved from sls.
         Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
 
         :return: PullLogResponse
 
@@ -1162,6 +1165,8 @@ class LogClient(object):
             params['query'] = query
         if end_cursor:
             params['end_cursor'] = end_cursor
+        if processor:
+            params['processor'] = processor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
         raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         if raw_size <= 0:
@@ -1170,7 +1175,7 @@ class LogClient(object):
         raw_data = Compressor.decompress_response(header, resp)
         return PullLogResponse(raw_data, header)
 
-    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None, accept_compress_type=None):
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None, accept_compress_type=None, processor=None):
         """ batch pull log data from log service using time-range
         Unsuccessful operation will cause an LogException. the time parameter means the time when server receives the logs
 
@@ -1197,6 +1202,9 @@ class LogClient(object):
 
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
+
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
         
         :type accept_compress_type: string
         :param accept_compress_type: The compression type used for logs retrieved from sls.
@@ -1212,7 +1220,7 @@ class LogClient(object):
         while True:
             res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
                                  count=batch_size, end_cursor=end_cursor, compress=compress, query=query,
-                                 accept_compress_type=accept_compress_type)
+                                 accept_compress_type=accept_compress_type, processor=processor)
 
             yield res
             next_cursor = res.get_next_cursor()
@@ -1222,7 +1230,7 @@ class LogClient(object):
             begin_cursor = next_cursor
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
-                      compress=None, encodings=None, shard_list=None, no_escape=None, query=None):
+                      compress=None, encodings=None, shard_list=None, no_escape=None, query=None, processor=None):
         """ dump all logs seperatedly line into file_path, file_path, the time parameters are log received time on server side.
 
         :type project_name: string
@@ -1257,10 +1265,13 @@ class LogClient(object):
 
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
-        
+
         :type accept_compress_type: str
         :param accept_compress_type: The compression type used for logs retrieved from sls.
         Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
 
         :return: LogResponse {"total_count": 30, "files": {'file_path_1': 10, "file_path_2": 20} })
 
@@ -1272,7 +1283,7 @@ class LogClient(object):
 
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
                              batch_size=batch_size, compress=compress, encodings=encodings,
-                             shard_list=shard_list, no_escape=no_escape, query=query)
+                             shard_list=shard_list, no_escape=no_escape, query=query, processor=processor)
 
     def create_logstore(self, project_name, logstore_name,
                         ttl=30,
