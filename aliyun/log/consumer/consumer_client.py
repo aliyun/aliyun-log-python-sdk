@@ -179,5 +179,5 @@ class ConsumerClient(object):
     def get_end_cursor(self, shard_id):
         return self.mclient.get_end_cursor(self.mproject, self.mlogstore, shard_id).get_cursor()
 
-    def pull_logs(self, shard_id, cursor, end_cursor=None, count=1000, query=None):
-        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True, end_cursor=end_cursor, query=query, accept_compress_type=self.accept_compress_type)
+    def pull_logs(self, shard_id, cursor, end_cursor=None, count=1000, query=None, processor=None):
+        return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True, end_cursor=end_cursor, query=query, accept_compress_type=self.accept_compress_type, processor=processor)
