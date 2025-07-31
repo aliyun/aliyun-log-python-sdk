@@ -581,8 +581,13 @@ class LogClient(object):
         params['type'] = 'logs'
         logstore = request.get_logstore()
         project = request.get_project()
-        resource = "/logstores/" + logstore + "/logs"
-        (resp, header) = self._send("DELETE", project, None, resource, params, headers)
+        resource = "/logstores/" + logstore + "/deletelogtasks"
+        body_str = six.b(json.dumps(params))
+        headers["x-log-bodyrawsize"] = str(len(body_str))
+        accept_encoding = "lz4" if lz4_available else "deflate"
+        headers['Accept-Encoding'] = accept_encoding
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers,
+                                        respons_body_type=accept_encoding)
         return DeleteLogsResponse(resp, header)
 
     def get_delete_logs_status(self, request):
@@ -601,10 +606,10 @@ class LogClient(object):
         if request.get_shard_id() != -1:
             params['shard'] = request.get_shard_id()
         params['taskId'] = request.get_taskid()
-        params['type'] = 'deletelogs'
+        params['type'] = 'deletelogtasks'
         logstore = request.get_logstore()
         project = request.get_project()
-        resource = "/logstores/" + logstore + "/deletelogs/" + request.get_taskid()
+        resource = "/logstores/" + logstore + "/deletelogtasks/" + request.get_taskid()
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetDeleteLogsStatusResponse(resp, header)
 

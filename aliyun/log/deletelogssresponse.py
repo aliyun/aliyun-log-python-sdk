@@ -7,22 +7,33 @@
 from .logresponse import LogResponse
 from .histogram import Histogram
 from .util import Util
+import json
 
 
 class DeleteLogsResponse(LogResponse):
     """ The response of the GetHistograms API from log.
 
-    :type resp: dict
+    :type resp: bytes
     :param resp: DeleteLogsResponse HTTP response body
 
     :type header: dict
     :param header: DeleteLogsResponse HTTP response header
     """
-
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.taskid = resp['taskId']
-        self.resp = resp
+        parsed_resp_data = {}
+
+        if isinstance(resp, bytes):
+            try:
+                resp_str = resp.decode('utf-8')
+                parsed_resp_data = json.loads(resp_str)
+            except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                print(f"Warning: Failed to decode or parse 'resp' as JSON. Error: {e}")
+                print(f"Raw bytes received: {resp!r}")
+        elif isinstance(resp, dict):
+            parsed_resp_data = resp
+
+        self.taskid = parsed_resp_data.get('taskId')
 
     def is_completed(self):
         """ Check if the histogram is completed
