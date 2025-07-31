@@ -39,5 +39,7 @@ from .deletelogsrequest import *
 from .deletelogssresponse import *
 from .getdeletelogsstatusrequest import *
 from .getdeletelogsstatusresponse import *
+from .listdeletelogsstasksrequest import *
+from .listdeletelogsstasksresponse import *
 # logging handler
 from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler

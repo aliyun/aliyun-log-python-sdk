@@ -26,6 +26,7 @@ from .gethistogramsresponse import GetHistogramsResponse
 from .deletelogssresponse import DeleteLogsResponse
 from .getlogsresponse import GetLogsResponse
 from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
+from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
 from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
 from .ingestion_response import *
@@ -612,6 +613,26 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/deletelogtasks/" + request.get_taskid()
         (resp, header) = self._send("GET", project, None, resource, params, headers)
         return GetDeleteLogsStatusResponse(resp, header)
+
+    def list_delete_logs_tasks(self, request):
+        """ List delete logs tasks of requested logstore from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type request: ListDeleteLogsTasksRequest
+        :param request: the ListDeleteLogsTasks request parameters class.
+
+        :return: ListDeleteLogsTasksResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        params['type'] = 'deletelogtasks'
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/deletelogtasks"
+        (resp, header) = self._send("GET", project, None, resource, params, headers)
+        return ListDeleteLogsTasksResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
                 query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0):
