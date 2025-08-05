@@ -187,18 +187,18 @@ def consumer_initialize_task(processor, consumer_client, shard_id, cursor_positi
         return TaskResult(e)
 
 
-def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None):
+def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None, consume_processor=None):
     exception = None
 
     for retry_times in range(3):
         try:
-            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query)
+            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query, processor=consume_processor)
             fetch_log_group_list = response.get_loggroup_list()
             next_cursor = response.get_next_cursor()
             raw_size = response.get_raw_size()
             raw_size_before_query = 0
             raw_log_group_count_before_query = 0
-            if query:
+            if query or consume_processor:
                 raw_size_before_query = max(response.get_raw_size_before_query(), 0)
                 raw_log_group_count_before_query = max(response.get_raw_log_group_count_before_query(), 0)
             logger.debug("shard id = %s cursor = %s next cursor = %s size: %s",
