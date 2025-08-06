@@ -7,4 +7,4 @@ python-dateutil
 elasticsearch
 dateparser
 jmespath
-lz4a
+lz4

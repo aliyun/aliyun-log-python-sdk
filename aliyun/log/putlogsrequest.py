@@ -29,15 +29,18 @@ class PutLogsRequest(LogRequest):
     :param hashKey: put data with set hash, the data will be send to shard whose range contains the hashKey
 
     :type compress: bool
-    :param compress: if need to compress the logs
+    :param compress: if need to compress the logs, default is True
 
     :type logtags: list
     :param logtags: list of key:value tag pair , [(tag_key_1,tag_value_1) , (tag_key_2,tag_value_2)]
+    
+    :type compress_type: String
+    :param compress_type: compress_type, eg lz4, zstd, default is lz4. To use zstd, pip install zstd.
 
     """
 
     def __init__(self, project=None, logstore=None, topic=None, source=None, logitems=None, hashKey=None,
-                 compress=True, logtags=None):
+                 compress=True, logtags=None, compress_type=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.topic = topic
@@ -46,6 +49,13 @@ class PutLogsRequest(LogRequest):
         self.hashkey = hashKey
         self.compress = compress
         self.logtags = logtags
+        self.compress_type = compress_type
+
+    def get_compress_type(self):
+        return self.compress_type
+    
+    def set_compress_type(self, compress_type):
+        self.compress_type = compress_type
 
     def get_compress(self):
         return self.compress

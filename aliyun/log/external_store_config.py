@@ -24,6 +24,8 @@ class ExternalStoreConfigBase(object):
             return ExternalStoreOssConfig.from_json(json_value)
         elif storeType == 'csv':
             return ExternalStoreCsvConfig.from_json(json_value)
+        elif storeType == 'postgresql':
+            return ExternalStoreConfig.from_json(json_value)
         else:
             raise LogException("Unknown storeType", "please contact support")
 

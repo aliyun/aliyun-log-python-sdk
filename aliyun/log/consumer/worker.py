@@ -36,7 +36,8 @@ class ConsumerWorker(Thread):
                            consumer_option.project, consumer_option.logstore, consumer_option.consumer_group_name,
                            consumer_option.consumer_name, consumer_option.securityToken,
                            credentials_refresher=consumer_option.credentials_refresher,
-                           auth_version=consumer_option.auth_version, region=consumer_option.region)
+                           auth_version=consumer_option.auth_version, region=consumer_option.region,
+                           accept_compress_type=consumer_option.accept_compress_type)
         self.shut_down_flag = False
         self.logger = ConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"consumer_worker": self})
@@ -44,7 +45,7 @@ class ConsumerWorker(Thread):
 
         self.last_owned_consumer_finish_time = 0
 
-        self.consumer_client.create_consumer_group(consumer_option.consumer_group_time_out, consumer_option.in_order)
+        self.consumer_client.ensure_consumer_group_created(consumer_option.consumer_group_time_out, consumer_option.in_order)
         self.heart_beat = ConsumerHeatBeat(self.consumer_client, consumer_option.heartbeat_interval,
                                            consumer_option.consumer_group_time_out)
 
@@ -197,6 +198,7 @@ class ConsumerWorker(Thread):
                                        executor=self._executor,
                                        cursor_end_time=self.option.cursor_end_time,
                                        max_fetch_log_group_size=self.option.max_fetch_log_group_size,
-                                       query=self.option.query)
+                                       query=self.option.query,
+                                       consume_processor=self.option.processor)
         self.shard_consumers[shard_id] = consumer
         return consumer

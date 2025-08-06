@@ -106,7 +106,7 @@ class IndexKeyConfig(object):
     """
 
     def __init__(self, token_list=None, case_sensitive=False, index_type='text', doc_value=False, alias=None,
-                 json_key_config=None, chinese=None):
+                 json_key_config=None, chinese=None,embedding=None,vector_index=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
@@ -116,6 +116,8 @@ class IndexKeyConfig(object):
         self.alias = alias
         self.json_key_config = json_key_config
         self.chn = chinese
+        self.embedding=embedding
+        self.vector_index = vector_index
 
     def set_json_key_config(self, json_key_config):
         self.json_key_config = json_key_config
@@ -133,6 +135,10 @@ class IndexKeyConfig(object):
         if self.alias is not None:
             json_value['alias'] = self.alias
         json_value["doc_value"] = bool(self.doc_value)
+        if self.embedding is not None:
+            json_value["embedding"] = self.embedding
+        if self.vector_index is not None:
+            json_value["vector_index"] = self.vector_index
 
         if self.chn is not None:
             json_value['chn'] = self.chn
@@ -159,6 +165,10 @@ class IndexKeyConfig(object):
         if self.index_type == 'json':
             self.json_key_config = IndexJsonKeyConfig()
             self.json_key_config.from_json(json_value)
+        if 'embedding' in json_value:
+            self.embedding = json_value['embedding']
+        if 'vector_index' in json_value:
+            self.vector_index = json_value['vector_index']
 
 
 class IndexLineConfig(object):

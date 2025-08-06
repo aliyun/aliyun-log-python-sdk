@@ -43,3 +43,10 @@ from .listdeletelogsstasksrequest import *
 from .listdeletelogsstasksresponse import *
 # logging handler
 from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler
+from .metering_mode_response import GetLogStoreMeteringModeResponse, \
+    GetMetricStoreMeteringModeResponse, \
+    UpdateLogStoreMeteringModeResponse, UpdateMetricStoreMeteringModeResponse
+
+
+from .store_view import StoreView, StoreViewStore
+from .store_view_response import CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, ListStoreViewsResponse, GetStoreViewResponse

@@ -13,6 +13,8 @@ import time
 import zlib
 from datetime import datetime
 import logging
+
+from .store_view_response import ListStoreViewsResponse, CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse
 from .credentials import StaticCredentialsProvider
 from .scheduled_sql import ScheduledSQLConfiguration
 from .scheduled_sql_response import *
@@ -34,7 +36,7 @@ from .sql_instance_response import *
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
-    get_resource_usage, arrange_shard, transform_data
+    get_resource_usage, arrange_shard, transform_data, copy_dashboard, copy_alert
 from .logexception import LogException
 from .logstore_config_response import *
 from .substore_config_response import *
@@ -65,15 +67,16 @@ from .etl_config_response import *
 from .export_response import *
 from .common_response import *
 from .auth import *
+from .compress import CompressType, Compressor
+from .metering_mode_response import GetLogStoreMeteringModeResponse, \
+    GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
+        UpdateMetricStoreMeteringModeResponse
 
 logger = logging.getLogger(__name__)
 
 if six.PY3:
     xrange = range
 
-lz4_available = Util.is_lz4_available()
-if lz4_available:
-    from .util import lz_decompress, lz_compresss
 
 CONNECTION_TIME_OUT = 120
 MAX_LIST_PAGING_SIZE = 500
@@ -171,6 +174,8 @@ class LogClient(object):
             self._auth = make_auth(StaticCredentialsProvider(accessKeyId, accessKey, securityToken),
                                    auth_version, region)
         self._get_logs_v2_enabled = True
+        self._session = requests.Session()
+        self._enable_keep_alive = True
 
     def _replace_credentials(self):
         delta = time.time() - self._last_refresh
@@ -253,10 +258,16 @@ class LogClient(object):
                                'Bad json format:\n"%s"' % resp_body + '\n' + repr(ex),
                                requestId, resp_status, resp_header, resp_body)
 
+    def _get_http_sender(self, method):
+        if self._enable_keep_alive:
+            return getattr(self._session, method.lower())
+        return getattr(requests, method.lower())
+        
     def _getHttpResponse(self, method, url, params, body, headers):  # ensure method, url, body is str
         try:
             headers['User-Agent'] = self._user_agent
-            r = getattr(requests, method.lower())(url, params=params, data=body, headers=headers, timeout=self._timeout)
+            http_sender = self._get_http_sender(method)
+            r = http_sender(url, params=params, data=body, headers=headers, timeout=self._timeout)
             return r.status_code, r.content, r.headers
         except Exception as ex:
             raise LogException('LogRequestError', str(ex))
@@ -279,6 +290,10 @@ class LogClient(object):
 
         exJson = self._loadJson(resp_status, resp_header, resp_body, requestId)
         exJson = Util.convert_unicode_to_str(exJson)
+        if exJson is None:
+            raise LogException('LogRequestError',
+                               'Request is failed, got None response while status code is ' + str(resp_status) + '.',
+                               requestId, resp_status, resp_header, resp_body)
 
         if 'errorCode' in exJson and 'errorMessage' in exJson:
             raise LogException(exJson['errorCode'], exJson['errorMessage'], requestId,
@@ -387,13 +402,11 @@ class LogClient(object):
         raw_body_size = len(body)
         headers = {'x-log-bodyrawsize': str(raw_body_size), 'Content-Type': 'application/x-protobuf'}
 
-        if compress is None or compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                body = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                body = zlib.compress(body)
+        need_compress = compress is None or compress
+        if need_compress:
+            compress_type = CompressType.default_compress_type()
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         resource = '/logstores/' + logstore + "/shards/lb"
@@ -448,16 +461,12 @@ class LogClient(object):
                                    len(body) / 1024.0 / 1024))
 
         headers = {'x-log-bodyrawsize': str(len(body)), 'Content-Type': 'application/x-protobuf'}
-        is_compress = request.get_compress()
-
-        compress_data = None
-        if is_compress:
-            if lz4_available:
-                headers['x-log-compresstype'] = 'lz4'
-                compress_data = lz_compresss(body)
-            else:
-                headers['x-log-compresstype'] = 'deflate'
-                compress_data = zlib.compress(body)
+        
+        need_compress = request.get_compress() is None or request.get_compress()
+        if need_compress:
+            compress_type = CompressType.from_nullable_str(request.get_compress_type())
+            headers['x-log-compresstype'] = str(compress_type)
+            body = Compressor.compress(body, compress_type)
 
         params = {}
         logstore = request.get_logstore()
@@ -468,11 +477,7 @@ class LogClient(object):
         else:
             resource = '/logstores/' + logstore + "/shards/lb"
 
-        if is_compress:
-            (resp, header) = self._send('POST', project, compress_data, resource, params, headers)
-        else:
-            (resp, header) = self._send('POST', project, body, resource, params, headers)
-
+        (resp, header) = self._send('POST', project, body, resource, params, headers)
         return PutLogsResponse(header, resp)
 
     def list_logstores(self, request):
@@ -739,12 +744,12 @@ class LogClient(object):
                 params['forward'] = forward
                 body_str = six.b(json.dumps(params))
                 headers["x-log-bodyrawsize"] = str(len(body_str))
-                accept_encoding = "lz4" if lz4_available else "deflate"
+                accept_encoding = str(CompressType.default_compress_type())
                 headers['Accept-Encoding'] = accept_encoding
 
                 (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type=accept_encoding)
 
-                raw_data = Util.uncompress_response(header, resp)
+                raw_data = Compressor.decompress_response(header, resp)
                 exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
                 exJson = Util.convert_unicode_to_str(exJson)
                 ret = GetLogsResponse(exJson, header)
@@ -1179,7 +1184,7 @@ class LogClient(object):
         """
         return self.get_cursor(project_name, logstore_name, shard_id, "end")
 
-    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None):
+    def pull_logs(self, project_name, logstore_name, shard_id, cursor, count=None, end_cursor=None, compress=None, query=None, accept_compress_type=None, processor=None):
         """ batch pull log data from log service
         Unsuccessful operation will cause an LogException.
 
@@ -1205,7 +1210,14 @@ class LogClient(object):
         :param compress: if use zip compress for transfer data, default is True
 
         :type query: string
-        :param query: the SPL query, such as *| where a = 'xxx'
+        :param query: the SPL query, such as *| where a = 'xxx', use processor instead
+        
+        :type accept_compress_type: string
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
 
         :return: PullLogResponse
 
@@ -1213,11 +1225,13 @@ class LogClient(object):
         """
 
         headers = {}
-        if compress is None or compress:
-            if lz4_available:
-                headers['Accept-Encoding'] = 'lz4'
+
+        need_compress = compress is None or compress
+        if need_compress:
+            if accept_compress_type is None or accept_compress_type == '':
+                headers['Accept-Encoding'] = str(CompressType.default_compress_type())
             else:
-                headers['Accept-Encoding'] = 'gzip'
+                headers['Accept-Encoding'] = accept_compress_type
         else:
             headers['Accept-Encoding'] = ''
 
@@ -1236,24 +1250,17 @@ class LogClient(object):
             params['query'] = query
         if end_cursor:
             params['end_cursor'] = end_cursor
+        if processor:
+            params['processor'] = processor
         (resp, header) = self._send("GET", project_name, None, resource, params, headers, "binary")
         raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         if raw_size <= 0:
             return PullLogResponse(None, header)
-        compress_type = Util.h_v_td(header, 'x-log-compresstype', '').lower()
-        if compress_type == 'lz4':
-            if lz4_available:
-                raw_data = lz_decompress(raw_size, resp)
-                return PullLogResponse(raw_data, header)
-            else:
-                raise LogException("ClientHasNoLz4", "There's no Lz4 lib available to decompress the response", resp_header=header, resp_body=resp)
-        elif compress_type in ('gzip', 'deflate'):
-            raw_data = zlib.decompress(resp)
-            return PullLogResponse(raw_data, header)
-        else:
-            return PullLogResponse(resp, header)
 
-    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None):
+        raw_data = Compressor.decompress_response(header, resp)
+        return PullLogResponse(raw_data, header)
+
+    def pull_log(self, project_name, logstore_name, shard_id, from_time, to_time, batch_size=None, compress=None, query=None, accept_compress_type=None, processor=None):
         """ batch pull log data from log service using time-range
         Unsuccessful operation will cause an LogException. the time parameter means the time when server receives the logs
 
@@ -1281,6 +1288,13 @@ class LogClient(object):
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
 
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
+        
+        :type accept_compress_type: string
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
         :return: PullLogResponse
 
         :raise: LogException
@@ -1290,7 +1304,8 @@ class LogClient(object):
 
         while True:
             res = self.pull_logs(project_name, logstore_name, shard_id, begin_cursor,
-                                 count=batch_size, end_cursor=end_cursor, compress=compress, query=query)
+                                 count=batch_size, end_cursor=end_cursor, compress=compress, query=query,
+                                 accept_compress_type=accept_compress_type, processor=processor)
 
             yield res
             next_cursor = res.get_next_cursor()
@@ -1300,7 +1315,7 @@ class LogClient(object):
             begin_cursor = next_cursor
 
     def pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path, batch_size=None,
-                      compress=None, encodings=None, shard_list=None, no_escape=None, query=None):
+                      compress=None, encodings=None, shard_list=None, no_escape=None, query=None, processor=None):
         """ dump all logs seperatedly line into file_path, file_path, the time parameters are log received time on server side.
 
         :type project_name: string
@@ -1336,6 +1351,13 @@ class LogClient(object):
         :type query: string
         :param query: the SPL query, such as *| where a = 'xxx'
 
+        :type accept_compress_type: str
+        :param accept_compress_type: The compression type used for logs retrieved from sls.
+        Supported types include 'lz4' and 'zstd'. If you choose 'zstd', ensure the `zstd` library is installed via pip. The default value is 'lz4'.
+
+        :type processor: string
+        :param processor: the consume processor which contains SPL, such as consume-processor-1, prefer to use the processor instead of query
+
         :return: LogResponse {"total_count": 30, "files": {'file_path_1': 10, "file_path_2": 20} })
 
         :raise: LogException
@@ -1346,7 +1368,7 @@ class LogClient(object):
 
         return pull_log_dump(self, project_name, logstore_name, from_time, to_time, file_path,
                              batch_size=batch_size, compress=compress, encodings=encodings,
-                             shard_list=shard_list, no_escape=no_escape, query=query)
+                             shard_list=shard_list, no_escape=no_escape, query=query, processor=processor)
 
     def create_logstore(self, project_name, logstore_name,
                         ttl=30,
@@ -1663,6 +1685,104 @@ class LogClient(object):
         params['size'] = str(size)
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogStoreResponse(resp, header)
+
+    def get_logstore_metering_mode(self, project_name, logstore_name):
+        """ Get the metering mode of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetLogStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        headers = {}
+
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetLogStoreMeteringModeResponse(resp, header)
+    
+    def update_logstore_metering_mode(self, project_name, logstore_name, metering_mode):
+        """ Update the metering mode of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+        
+        :type metering_mode: string
+        :param metering_mode: the metering mode, ChargeByDataIngest or ChargeByFunction
+
+        :return: UpdateLogStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/meteringmode"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {
+            "meteringMode": metering_mode
+        }
+        body_str = six.b(json.dumps(body))
+
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateLogStoreMeteringModeResponse(header, resp)
+    
+    def get_metric_store_metering_mode(self, project_name, metric_store_name):
+        """ Get the metering mode of the metric store
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type metric_store_name: string
+        :param metric_store_name: the metric store name
+
+        :return: GetMetricStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/metricstores/" + metric_store_name + "/meteringmode"
+        headers = {}
+
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetMetricStoreMeteringModeResponse(resp, header)
+    
+    def update_metric_store_metering_mode(self, project_name, metric_store_name, metering_mode):
+        """ Update the metering mode of the metric store
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type metric_store_name: string
+        :param metric_store_name: the metric store name
+        
+        :type metering_mode: string
+        :param metering_mode: the metering mode, ChargeByDataIngest or ChargeByFunction
+
+        :return: UpdateMetricStoreMeteringModeResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/metricstores/" + metric_store_name + "/meteringmode"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {
+            "meteringMode": metering_mode
+        }
+        body_str = six.b(json.dumps(body))
+
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return UpdateMetricStoreMeteringModeResponse(header, resp)
 
     def create_external_store(self, project_name, config):
         """ create log store
@@ -3141,7 +3261,7 @@ class LogClient(object):
         (resp, header) = self._send('POST', project, body_str, resource, params, headers)
         return ConsumerGroupHeartBeatResponse(resp, header)
 
-    def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False):
+    def copy_project(self, from_project, to_project, to_client=None, copy_machine_group=False, copy_dashboards=False, copy_alerts=False):
         """
         copy project, logstore, machine group and logtail config to target project,
         expecting the target project doesn't contain same named logstores as source project
@@ -3158,11 +3278,17 @@ class LogClient(object):
         :type copy_machine_group: bool
         :param copy_machine_group: if copy machine group resources, False by default.
 
+        :type copy_dashboards: bool
+        :param copy_dashboards: if copy dashboard resources, False by default.
+
+        :type copy_alerts: bool
+        :param copy_alerts: if copy alert resources, False by default.
+
         :return: None
         """
         if to_client is None:
             to_client = self
-        return copy_project(self, to_client, from_project, to_project, copy_machine_group)
+        return copy_project(self, to_client, from_project, to_project, copy_machine_group, copy_dashboards, copy_alerts)
 
     def copy_logstore(self, from_project, from_logstore, to_logstore, to_project=None, to_client=None, to_region_endpoint=None, keep_config_name=False):
         """
@@ -3190,6 +3316,57 @@ class LogClient(object):
         :return:
         """
         return copy_logstore(self, from_project, from_logstore, to_logstore, to_project=to_project, to_client=to_client, to_region_endpoint=to_region_endpoint, keep_config_name=keep_config_name)
+    
+
+    def copy_dashboard(self, from_project, from_dashboard_name, to_project=None, to_dashboard_name=None, to_client=None, to_region_endpoint=None):
+        """
+        copy dashboard from one project to another project
+        if to_dashboard_name is not None, the dashboard will be created with the name
+
+        :type from_project: string
+        :param from_project: project name
+
+        :type from_dashboard_name: string
+        :param from_dashboard_name: dashboard name
+
+        :type to_project: string
+        :param to_project: project name, copy dashboard to same project if not being specified
+
+        :type to_dashboard_name: string
+        :param to_dashboard_name: target dashboard name, if not being specified, will use from_dashboard_name as to_dashboard_name. If to_project is None, to_dashboard_name must be specified with a different name.
+
+        :type to_client: LogClient
+        :param to_client: logclient instance
+
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+        """
+        return copy_dashboard(self, from_project, from_dashboard_name, to_project=to_project, to_dashboard_name=to_dashboard_name, to_client=to_client, to_region_endpoint=to_region_endpoint)
+    
+    def copy_alert(self, from_project, from_alert_name, to_project=None, to_alert_name=None, to_client=None, to_region_endpoint=None):  
+        """
+        copy alert from one project to another project
+        if to_alert_name is not None, the alert will be created with the name
+
+        :type from_project: string
+        :param from_project: project name
+
+        :type from_alert_name: string
+        :param from_alert_name: alert name
+
+        :type to_project: string
+        :param to_project: project name, copy alert to same project if not being specified
+
+        :type to_alert_name: string
+        :param to_alert_name: target alert name, if not being specified, will use from_alert_name as to_alert_name. If to_project is None, to_alert_name must be specified with a different name.
+
+        :type to_client: LogClient
+        :param to_client: logclient instance
+
+        :type to_region_endpoint: string
+        :param to_region_endpoint: target region, use it to operate on the "to_project" while "to_client" not be specified
+        """
+        return copy_alert(self, from_project, from_alert_name, to_project=to_project, to_alert_name=to_alert_name, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
     def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
         """ list the project
@@ -5989,3 +6166,120 @@ class LogClient(object):
 # make_lcrud_methods(LogClient, 'alert', name_field='name', root_resource='/jobs', entities_key='results', job_type="Alert")
 # make_lcrud_methods(LogClient, 'savedsearch', name_field='savedsearchName')
 # make_lcrud_methods(LogClient, 'shipper', logstore_level=True, root_resource='/shipper', name_field='shipperName', raw_resource_name='shipper')
+
+    def list_store_views(self, project_name, offset=0, size=100, store_type=None):
+        """list store views
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type offset: int
+        :param offset: the offset of the list store views
+
+        :type size: int
+        :param size: the max return store view count, default is 100
+
+        :type store_type: string
+        :param store_type: the type of the store view to filter, could be "logstore" or "metricstore"
+
+        :return: ListStoreViewsResponse
+
+        :raise: LogException
+        """
+        params = {
+            "offset": str(offset),
+            "size": str(size),
+        }
+        if store_type:
+            params["storeType"] = store_type
+        resource = "/storeviews"
+        (resp, header) = self._send("GET", project_name, None, resource, params, {})
+        return ListStoreViewsResponse(header, resp)
+    
+    def get_store_view(self, project_name, store_view_name):
+        """get store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :return: GetStoreViewResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, {})
+        return GetStoreViewResponse(header, resp)
+    
+    def update_store_view(self, project_name, store_view_name, store_view):
+        """update store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :type store_view: StoreView
+        :param store_view: the store view to update
+
+        :return: UpdateStoreViewResponse
+
+        :raise: LogException
+        """
+        headers = {"Content-Type": "application/json"}
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        body_dict = store_view._to_json_dict()
+        body = six.b(json.dumps(body_dict))
+
+        (resp, header) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateStoreViewResponse(header, resp)
+    
+    def create_store_view(self, project_name, store_view):
+        """create store view
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view: StoreView
+        :param store_view: the store view to create
+
+        :return: CreateStoreViewResponse
+
+        :raise: LogException
+        """
+
+        headers = {"Content-Type": "application/json"}
+        params = {}
+        resource = "/storeviews"
+        body_dict = store_view._to_json_dict()
+        body = six.b(json.dumps(body_dict))
+        (resp, header) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateStoreViewResponse(header, resp)
+    
+    def delete_store_view(self, project_name, store_view_name):
+        """delete store view by the given store_view_name
+        Unsuccessful opertaion will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type store_view_name: string
+        :param store_view_name: the store view name
+
+        :return: DeleteStoreViewResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/storeviews/" + store_view_name
+        (resp, header) = self._send("DELETE", project_name, None, resource, params, {})
+        return DeleteStoreViewResponse(header, resp)
