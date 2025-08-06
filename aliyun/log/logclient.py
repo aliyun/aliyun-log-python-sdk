@@ -586,8 +586,7 @@ class LogClient(object):
         resource = "/logstores/" + logstore + "/deletelogtasks"
         body_str = six.b(json.dumps(params))
         headers["x-log-bodyrawsize"] = str(len(body_str))
-        headers['Accept-Encoding'] = "deflate"
-        (resp, header) = self._send("POST", project, body_str, resource, None, headers, respons_body_type="deflate")
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers)
         return DeleteLogsResponse(resp, header)
 
     def get_delete_logs_status(self, request):

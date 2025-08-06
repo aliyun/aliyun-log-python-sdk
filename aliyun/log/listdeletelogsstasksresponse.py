@@ -12,7 +12,7 @@ import json
 class ListDeleteLogsTasksResponse(LogResponse):
     """ The response of the ListDeleteLogsTasks API from log.
 
-    :type resp: byte
+    :type resp: dict
     :param resp: ListDeleteLogsTasksResponse HTTP response body
 
     :type header: dict
@@ -21,21 +21,10 @@ class ListDeleteLogsTasksResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        parsed_resp_data = {}
+        self.count = resp.get('count', 0)
+        self.total = resp.get('total', 0)
+        self.task_list = resp.get('tasks', [])
 
-        if isinstance(resp, bytes):
-            try:
-                resp_str = resp.decode('utf-8')
-                parsed_resp_data = json.loads(resp_str)
-            except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                print("Warning: Failed to decode or parse 'resp' as JSON. Error: " + str(e))
-                print("Raw bytes received: " + str(resp))
-        elif isinstance(resp, dict):
-            parsed_resp_data = resp
-
-        self.count = parsed_resp_data.get('count', 0)
-        self.total = parsed_resp_data.get('total', 0)
-        self.task_list = parsed_resp_data.get('tasks', [])
 
     def is_completed(self):
         """ Check if the request is completed
