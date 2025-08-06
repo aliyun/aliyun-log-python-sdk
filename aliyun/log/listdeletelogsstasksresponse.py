@@ -28,8 +28,8 @@ class ListDeleteLogsTasksResponse(LogResponse):
                 resp_str = resp.decode('utf-8')
                 parsed_resp_data = json.loads(resp_str)
             except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                print(f"Warning: Failed to decode or parse 'resp' as JSON. Error: {e}")
-                print(f"Raw bytes received: {resp!r}")
+                print("Warning: Failed to decode or parse 'resp' as JSON. Error: " + str(e))
+                print("Raw bytes received: " + str(resp))
         elif isinstance(resp, dict):
             parsed_resp_data = resp
 

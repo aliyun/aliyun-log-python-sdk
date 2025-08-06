@@ -7,13 +7,13 @@
 from .logresponse import LogResponse
 
 class GetDeleteLogsStatusResponse(LogResponse):
-    """ The response of the GetHistograms API from log.
+    """ The response of the GetDeleteLogsStatus API from log.
 
     :type resp: dict
-    :param resp: DeleteLogsResponse HTTP response body
+    :param resp: GetDeleteLogsStatusResponse HTTP response body
 
     :type header: dict
-    :param header: DeleteLogsResponse HTTP response header
+    :param header: GetDeleteLogsStatusResponse HTTP response header
     """
 
     def __init__(self, resp, header):

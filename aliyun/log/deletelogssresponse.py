@@ -11,7 +11,7 @@ import json
 
 
 class DeleteLogsResponse(LogResponse):
-    """ The response of the GetHistograms API from log.
+    """ The response of the DeleteLogs API from log.
 
     :type resp: bytes
     :param resp: DeleteLogsResponse HTTP response body
@@ -22,17 +22,12 @@ class DeleteLogsResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         parsed_resp_data = {}
-
-        if isinstance(resp, bytes):
-            try:
-                resp_str = resp.decode('utf-8')
-                parsed_resp_data = json.loads(resp_str)
-            except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                print(f"Warning: Failed to decode or parse 'resp' as JSON. Error: {e}")
-                print(f"Raw bytes received: {resp!r}")
-        elif isinstance(resp, dict):
-            parsed_resp_data = resp
-
+        try:
+            resp_str = resp.decode('utf-8')
+            parsed_resp_data = json.loads(resp_str)
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            print("Warning: Failed to decode or parse 'resp' as JSON. Error: " + str(e))
+            print("Raw bytes received: " + str(resp))
         self.taskid = parsed_resp_data.get('taskId')
 
     def is_completed(self):
