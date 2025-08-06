@@ -19,16 +19,12 @@ class GetDeleteLogsStatusRequest(LogRequest):
     :type taskid: string
     :param taskid: delete query taskid
 
-    :type shard_id: int
-    :param shard_id: specific shard id,-1 means all shard
     """
 
-    def __init__(self, project=None, logstore=None, taskid=None, shard_id=-1):
+    def __init__(self, project=None, logstore=None, taskid=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.taskid = taskid
-        self.shard_id = shard_id
-
     def get_logstore(self):
         """ Get logstore name
 
@@ -59,17 +55,3 @@ class GetDeleteLogsStatusRequest(LogRequest):
         """
         self.taskid = taskid
 
-    def set_shard_id(self, shard_id):
-        """ Set request shard_id
-
-        :type shard_id: int
-        :param shard_id: user defined shard_id
-        """
-        self.shard_id = shard_id
-
-    def get_shard_id(self):
-        """ Get request shard_id
-
-        :return: int, shard_id
-        """
-        return self.shard_id

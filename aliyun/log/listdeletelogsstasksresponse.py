@@ -12,7 +12,7 @@ import json
 class ListDeleteLogsTasksResponse(LogResponse):
     """ The response of the ListDeleteLogsTasks API from log.
 
-    :type resp: dict
+    :type resp: byte
     :param resp: ListDeleteLogsTasksResponse HTTP response body
 
     :type header: dict

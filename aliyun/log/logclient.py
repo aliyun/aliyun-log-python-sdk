@@ -561,7 +561,7 @@ class LogClient(object):
         """ delete logs of requested query from log service.
         Unsuccessful operation will cause an LogException.
 
-        :type request: GetHistogramsRequest
+        :type request: DeleteLogsRequest
         :param request: the DeleteLogsRequest request parameters class.
 
         :return: DeleteLogsResponse
@@ -579,18 +579,14 @@ class LogClient(object):
         if request.get_query() is not None:
             params['query'] = request.get_query()
 
-        params['accurate'] = request.get_accurate_query()
-        params['fromNs'] = request.get_from_time_nano_part()
-        params['toNs'] = request.get_to_time_nano_part()
-        if request.get_shard_id() != -1:
-            params['shard'] = request.get_shard_id()
+        params['accurate'] = True
         params['type'] = 'logs'
         logstore = request.get_logstore()
         project = request.get_project()
         resource = "/logstores/" + logstore + "/deletelogtasks"
         body_str = six.b(json.dumps(params))
         headers["x-log-bodyrawsize"] = str(len(body_str))
-        accept_encoding = "lz4" if lz4_available else "deflate"
+        accept_encoding = "deflate"
         headers['Accept-Encoding'] = accept_encoding
         (resp, header) = self._send("POST", project, body_str, resource, None, headers,
                                         respons_body_type=accept_encoding)
@@ -600,8 +596,8 @@ class LogClient(object):
         """ Get get_delete_logs_status of requested logstore from log service.
         Unsuccessful operation will cause an LogException.
 
-        :type request: GetHistogramsRequest
-        :param request: the GetHistograms request parameters class.
+        :type request: GetDeleteLogsStatusRequest
+        :param request: the GetDeleteLogsStatusRequest request parameters class.
 
         :return: GetDeleteLogsStatusResponse
 
@@ -609,8 +605,6 @@ class LogClient(object):
         """
         headers = {}
         params = {}
-        if request.get_shard_id() != -1:
-            params['shard'] = request.get_shard_id()
         params['taskId'] = request.get_taskid()
         params['type'] = 'deletelogtasks'
         logstore = request.get_logstore()
