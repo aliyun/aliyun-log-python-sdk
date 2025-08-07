@@ -35,7 +35,12 @@ from .common_response import *
 from .external_store_config_response import *
 from .proto import LogGroupRaw as LogGroup
 from .rebuild_index_response import *
-
+from .deletelogsrequest import *
+from .deletelogssresponse import *
+from .getdeletelogsstatusrequest import *
+from .getdeletelogsstatusresponse import *
+from .listdeletelogsstasksrequest import *
+from .listdeletelogsstasksresponse import *
 # logging handler
 from .logger_hanlder import SimpleLogHandler, QueuedLogHandler, LogFields, UwsgiQueuedLogHandler
 from .metering_mode_response import GetLogStoreMeteringModeResponse, \
