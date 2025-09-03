@@ -2863,7 +2863,7 @@ class LogClient(object):
             "tags": [{"key": str(k), "value": str(v)} for k, v in tags.items()],
         }
         body = json.dumps(body).encode()
-        resp, header = self._send("POST", None, body, resource, {}, {})
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
         return LogResponse(header, resp)
 
     def untag_project(self, project_name, *tag_keys):
@@ -2884,7 +2884,7 @@ class LogClient(object):
             "tags": tag_keys,
         }
         body = json.dumps(body).encode()
-        resp, header = self._send("POST", None, body, resource, {}, {})
+        resp, header = self._send("POST", project_name, body, resource, {}, {})
         return LogResponse(header, resp)
 
     def get_project_tags(self, project_name, **filer_tags):
