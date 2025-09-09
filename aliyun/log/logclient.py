@@ -56,6 +56,7 @@ from .topostore_params import *
 from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
+from .async_sql_response import AsyncSqlResponse
 
 from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
@@ -961,6 +962,103 @@ class LogClient(object):
         """
         request = GetProjectLogsRequest(project, sql, power_sql)
         return self.get_project_logs(request)
+
+    def submit_async_sql(self, request):
+        """ Submit async SQL query to log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type request: SubmitAsyncSqlRequest
+        :param request: the submit async SQL request
+
+        :return: AsyncSqlResponse
+
+        :raise: LogException
+        """
+        project = request.get_project()
+        
+        body = {
+            'logstore': request.get_logstore(),
+            'query': request.get_query(),
+            'from': request.get_from(),
+            'to': request.get_to()
+        }
+        
+        extensions = {
+            'powerSql': request.get_power_sql(),
+            'allowIncomplete': request.get_allow_incomplete()
+        }
+        
+        if request.get_max_run_time() is not None:
+            extensions['maxRunTime'] = request.get_max_run_time()
+            
+        body['extensions'] = extensions
+
+        body_str = six.b(json.dumps(body))
+        headers = {
+            'x-log-bodyrawsize': str(len(body_str)),
+            'Content-Type': 'application/json',
+            'Accept': 'application/x-protobuf',
+            'Accept-Encoding': str(CompressType.default_compress_type())
+        }
+
+        params = {}
+        resource = '/asyncsql'
+        (resp, header) = self._send('POST', project, body_str, resource, params, headers, "binary")
+        return AsyncSqlResponse(header, resp)
+
+    def get_async_sql(self, request):
+        """ Get async SQL query results from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type request: GetAsyncSqlRequest
+        :param request: the get async SQL request
+
+        :return: AsyncSqlResponse
+
+        :raise: LogException
+        """
+        project = request.get_project()
+        query_id = request.get_query_id()
+        
+        params = {
+            'offset': request.get_offset(),
+            'line': request.get_line()
+        }
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/x-protobuf',
+            'Accept-Encoding': str(CompressType.default_compress_type())
+        }
+
+        resource = '/asyncsql/' + query_id
+        (resp, header) = self._send('GET', project, {}, resource, params, headers, "binary")
+        return AsyncSqlResponse(header, resp)
+
+    def delete_async_sql(self, request):
+        """ Delete async SQL query from log service.
+        Unsuccessful operation will cause an LogException.
+
+        :type request: DeleteAsyncSqlRequest
+        :param request: the delete async SQL request
+
+        :return: AsyncSqlResponse
+
+        :raise: LogException
+        """
+        project = request.get_project()
+        query_id = request.get_query_id()
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/x-protobuf',
+            'Accept-Encoding': str(CompressType.default_compress_type())
+        }
+
+        params = {}
+        resource = '/asyncsql/' + query_id
+        (resp, header) = self._send('DELETE', project, {}, resource, params, headers, "binary")
+        return AsyncSqlResponse(header, resp)
 
     def get_context_logs(self, project, logstore, pack_id, pack_meta, back_lines, forward_lines):
         """ Get context logs of specified log from log service.

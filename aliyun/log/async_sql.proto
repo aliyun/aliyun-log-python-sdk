@@ -1,0 +1,28 @@
+syntax = "proto2";
+
+message AsyncSqlMetaPB
+{
+    optional int32 result_rows = 1;
+    optional int64 processed_rows = 2;
+    optional int64 processed_bytes = 3;
+    optional int64 elapsed_milli = 4;
+    optional double cpu_sec = 5;
+    optional int64 cpu_cores = 6;
+    optional string progress = 7;
+    repeated string keys = 8; // column names
+}
+
+message AsyncSqlRowPB
+{
+  repeated string columns = 1;
+}
+
+message AsyncSqlResponsePB
+{
+  required string id = 1;
+  required string state = 2;
+  optional AsyncSqlMetaPB meta = 3;
+  repeated AsyncSqlRowPB rows = 4;
+  optional string error_code = 5;
+  optional string error_message = 6;
+}
