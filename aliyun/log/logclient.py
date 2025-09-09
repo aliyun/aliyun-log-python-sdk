@@ -56,7 +56,8 @@ from .topostore_params import *
 from .util import base64_encodestring as b64e
 from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
-from .async_sql_response import AsyncSqlResponse
+if six.PY3:
+    from .async_sql_response import AsyncSqlResponse
 
 from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
