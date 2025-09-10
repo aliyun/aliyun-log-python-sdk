@@ -17,6 +17,7 @@ from .logexception import LogException
 import re
 import logging
 import json
+import functools
 
 
 logger = logging.getLogger(__name__)
@@ -313,3 +314,12 @@ def export_deserialize(obj, sink):
         },
         "type": obj.getType(),
     })
+
+
+def require_python3(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not six.PY3:
+            raise RuntimeError("Function '{func_name}' requires Python 3 to run.".format(func_name=func.__name__))
+        return func(*args, **kwargs)
+    return wrapper
