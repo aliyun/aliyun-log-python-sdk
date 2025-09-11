@@ -10,7 +10,9 @@ from .compress import Compressor
 
 
 def _get_or_default(pb, field, default):
-    return pb.HasField(field) and pb.field or default
+    if pb is None:
+        return default
+    return pb.HasField(field) and getattr(pb, field) or default
 
 class AsyncSqlResponse(LogResponse):
     """ The response used for async SQL operations.
