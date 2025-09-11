@@ -50,3 +50,7 @@ from .metering_mode_response import GetLogStoreMeteringModeResponse, \
 
 from .store_view import StoreView, StoreViewStore
 from .store_view_response import CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, ListStoreViewsResponse, GetStoreViewResponse
+from .submit_async_sql_request import SubmitAsyncSqlRequest
+from .get_async_sql_request import GetAsyncSqlRequest
+from .async_sql_response import AsyncSqlResponse
+from .async_sql_pb2 import AsyncSqlResponsePB

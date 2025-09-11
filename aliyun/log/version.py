@@ -1,4 +1,4 @@
-__version__ = '0.9.29'
+__version__ = '0.9.30'
 
 import sys
 OS_VERSION = str(sys.platform)
