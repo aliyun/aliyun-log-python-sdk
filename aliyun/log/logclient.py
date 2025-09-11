@@ -73,6 +73,7 @@ from .compress import CompressType, Compressor
 from .metering_mode_response import GetLogStoreMeteringModeResponse, \
     GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
         UpdateMetricStoreMeteringModeResponse
+from .util import require_python3
 
 logger = logging.getLogger(__name__)
 
@@ -964,6 +965,7 @@ class LogClient(object):
         request = GetProjectLogsRequest(project, sql, power_sql)
         return self.get_project_logs(request)
 
+    @require_python3
     def submit_async_sql(self, request):
         """ Submit async SQL query to log service.
         Unsuccessful operation will cause an LogException.
@@ -1007,6 +1009,7 @@ class LogClient(object):
         (resp, header) = self._send('POST', project, body_str, resource, params, headers, "binary")
         return AsyncSqlResponse(header, resp)
 
+    @require_python3
     def get_async_sql(self, request):
         """ Get async SQL query results from log service.
         Unsuccessful operation will cause an LogException.
@@ -1036,6 +1039,7 @@ class LogClient(object):
         (resp, header) = self._send('GET', project, {}, resource, params, headers, "binary")
         return AsyncSqlResponse(header, resp)
 
+    @require_python3
     def delete_async_sql(self, request):
         """ Delete async SQL query from log service.
         Unsuccessful operation will cause an LogException.

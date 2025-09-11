@@ -9,6 +9,9 @@ from .async_sql_pb2 import AsyncSqlResponsePB
 from .compress import Compressor
 
 
+def _get_or_default(pb, field, default):
+    return pb.HasField(field) and pb.field or default
+
 class AsyncSqlResponse(LogResponse):
     """ The response used for async SQL operations.
     
@@ -48,21 +51,21 @@ class AsyncSqlResponse(LogResponse):
 
         :return: string, error code
         """
-        return self.async_sql_response_pb.error_code if self.async_sql_response_pb.HasField('error_code') else None
+        return _get_or_default(self.async_sql_response_pb, 'error_code', None)
 
     def get_error_message(self):
         """ Get error message if query failed
 
         :return: string, error message
         """
-        return self.async_sql_response_pb.error_message if self.async_sql_response_pb.HasField('error_message') else None
+        return _get_or_default(self.async_sql_response_pb, 'error_message', None)
 
     def get_meta(self):
         """ Get query metadata
 
         :return: AsyncSqlMetaPB, query metadata
         """
-        return self.async_sql_response_pb.meta if self.async_sql_response_pb.HasField('meta') else None
+        return _get_or_default(self.async_sql_response_pb, 'meta', None)
 
     def get_result_rows(self):
         """ Get number of result rows
@@ -70,7 +73,7 @@ class AsyncSqlResponse(LogResponse):
         :return: int, number of result rows
         """
         meta = self.get_meta()
-        return meta.result_rows if meta and meta.HasField('result_rows') else 0
+        return _get_or_default(meta, 'result_rows', 0)
 
     def get_processed_rows(self):
         """ Get number of processed rows
@@ -78,7 +81,7 @@ class AsyncSqlResponse(LogResponse):
         :return: int, number of processed rows
         """
         meta = self.get_meta()
-        return meta.processed_rows if meta and meta.HasField('processed_rows') else 0
+        return _get_or_default(meta, 'processed_rows', 0)
 
     def get_processed_bytes(self):
         """ Get number of processed bytes
@@ -86,7 +89,7 @@ class AsyncSqlResponse(LogResponse):
         :return: int, number of processed bytes
         """
         meta = self.get_meta()
-        return meta.processed_bytes if meta and meta.HasField('processed_bytes') else 0
+        return _get_or_default(meta, 'processed_bytes', 0)
 
     def get_elapsed_milli(self):
         """ Get elapsed time in milliseconds
@@ -94,7 +97,7 @@ class AsyncSqlResponse(LogResponse):
         :return: int, elapsed time in milliseconds
         """
         meta = self.get_meta()
-        return meta.elapsed_milli if meta and meta.HasField('elapsed_milli') else 0
+        return _get_or_default(meta, 'elapsed_milli', 0)
 
     def get_cpu_sec(self):
         """ Get CPU time in seconds
@@ -102,7 +105,7 @@ class AsyncSqlResponse(LogResponse):
         :return: float, CPU time in seconds
         """
         meta = self.get_meta()
-        return meta.cpu_sec if meta and meta.HasField('cpu_sec') else 0.0
+        return _get_or_default(meta, 'cpu_sec', 0.0)
 
     def get_cpu_cores(self):
         """ Get CPU cores used
@@ -110,7 +113,7 @@ class AsyncSqlResponse(LogResponse):
         :return: int, CPU cores used
         """
         meta = self.get_meta()
-        return meta.cpu_cores if meta and meta.HasField('cpu_cores') else 0
+        return _get_or_default(meta, 'cpu_cores', 0)
 
     def get_progress(self):
         """ Get query progress
@@ -118,7 +121,7 @@ class AsyncSqlResponse(LogResponse):
         :return: string, query progress
         """
         meta = self.get_meta()
-        return meta.progress if meta and meta.HasField('progress') else ''
+        return _get_or_default(meta, 'progress', '')
 
     def get_keys(self):
         """ Get column names/keys
