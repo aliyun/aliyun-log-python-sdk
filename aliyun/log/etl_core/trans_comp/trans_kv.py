@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 try:
     from collections.abc import Iterable
