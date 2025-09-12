@@ -7,6 +7,7 @@ from .exceptions import ClientWorkerException
 from ..logexception import LogException
 from ..version import USER_AGENT
 from ..auth import *
+from ..pulllog_response import PullLogResponse
 
 
 class ConsumerClientLoggerAdapter(logging.LoggerAdapter):
@@ -180,4 +181,5 @@ class ConsumerClient(object):
         return self.mclient.get_end_cursor(self.mproject, self.mlogstore, shard_id).get_cursor()
 
     def pull_logs(self, shard_id, cursor, end_cursor=None, count=1000, query=None, processor=None):
+        # type: (int, str, str, int, str, object) -> PullLogResponse
         return self.mclient.pull_logs(self.mproject, self.mlogstore, shard_id, cursor, count, compress=True, end_cursor=end_cursor, query=query, accept_compress_type=self.accept_compress_type, processor=processor)

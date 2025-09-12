@@ -5,6 +5,8 @@ import logging
 
 from .config import CursorPosition
 from ..logexception import LogException
+from ..pulllog_response import PullLogResponse
+from .consumer_client import ConsumerClient
 import time
 import six
 import sys
@@ -112,28 +114,32 @@ class InitTaskResult(TaskResult):
 
 
 class FetchTaskResult(TaskResult):
-    def __init__(self, fetched_log_group_list, cursor, raw_size , raw_size_before_query, raw_log_group_count_before_query):
+    def __init__(self, data, log_group_count, cursor, raw_size , raw_size_before_query, raw_log_group_count_before_query):
         super(FetchTaskResult, self).__init__(None)
-        self.fetched_log_group_list = fetched_log_group_list
-        self.cursor = cursor
-        self.raw_size = raw_size
-        self.raw_size_before_query = raw_size_before_query
-        self.raw_log_group_count_before_query = raw_log_group_count_before_query
+        self._data = data
+        self._log_group_count = log_group_count
+        self._cursor = cursor
+        self._raw_size = raw_size
+        self._raw_size_before_query = raw_size_before_query
+        self._raw_log_group_count_before_query = raw_log_group_count_before_query
 
-    def get_fetched_log_group_list(self):
-        return self.fetched_log_group_list
+    def get_data(self):
+        return self._data
 
     def get_cursor(self):
-        return self.cursor
+        return self._cursor
+
+    def get_log_group_count(self):
+        return self._log_group_count
 
     def get_raw_size(self):
-        return self.raw_size
+        return self._raw_size
 
     def get_raw_size_before_query(self):
-        return self.raw_size_before_query
+        return self._raw_size_before_query
 
     def get_raw_log_group_count_before_query(self):
-        return self.raw_log_group_count_before_query
+        return self._raw_log_group_count_before_query
 
 
 def consumer_process_task(processor, log_groups, check_point_tracker):
@@ -187,15 +193,29 @@ def consumer_initialize_task(processor, consumer_client, shard_id, cursor_positi
         return TaskResult(e)
 
 
-def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None, consume_processor=None):
+def _preprocess(preprocessor, pull_log_response):
+    # type: (object, PullLogResponse) -> Any
+    if preprocessor is None:
+        return pull_log_response.get_loggroup_list()
+
+    try:
+        return preprocessor(pull_log_response)
+    except Exception:
+        logger.error("Failed to preprocess pull log response", exc_info=True)
+        raise
+
+def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None, consume_processor=None, override_preprocessor=None):
+    # type: (ConsumerClient, int, str, int, str, str, object) -> FetchTaskResult
     exception = None
 
     for retry_times in range(3):
         try:
+            # type: PullLogResponse
             response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query, processor=consume_processor)
-            fetch_log_group_list = response.get_loggroup_list()
+            data = _preprocess(override_preprocessor, response)
             next_cursor = response.get_next_cursor()
             raw_size = response.get_raw_size()
+            log_group_count = response.get_log_group_count()
             raw_size_before_query = 0
             raw_log_group_count_before_query = 0
             if query or consume_processor:
@@ -203,11 +223,11 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_g
                 raw_log_group_count_before_query = max(response.get_raw_log_group_count_before_query(), 0)
             logger.debug("shard id = %s cursor = %s next cursor = %s size: %s",
                          shard_id, cursor, next_cursor,
-                         response.get_log_count())
+                         log_group_count)
             if not next_cursor:
-                return FetchTaskResult(fetch_log_group_list, cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
+                return FetchTaskResult(data, log_group_count, cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
             else:
-                return FetchTaskResult(fetch_log_group_list, next_cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
+                return FetchTaskResult(data, log_group_count, next_cursor, raw_size, raw_size_before_query, raw_log_group_count_before_query)
         except LogException as e:
             exception = e
             if exception.get_resp_status() == 403:
