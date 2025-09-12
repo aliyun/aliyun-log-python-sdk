@@ -215,7 +215,7 @@ def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_g
             data = _preprocess(override_preprocessor, response)
             next_cursor = response.get_next_cursor()
             raw_size = response.get_raw_size()
-            log_group_count = response.get_log_group_count()
+            log_group_count = response.get_loggroup_count()
             raw_size_before_query = 0
             raw_log_group_count_before_query = 0
             if query or consume_processor:
