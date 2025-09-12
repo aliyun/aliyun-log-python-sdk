@@ -7,6 +7,7 @@ from .config import CursorPosition
 from ..logexception import LogException
 from ..pulllog_response import PullLogResponse
 from .consumer_client import ConsumerClient
+from typing import Any
 import time
 import six
 import sys
