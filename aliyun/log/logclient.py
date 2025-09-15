@@ -58,6 +58,8 @@ from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
 if six.PY3:
     from .async_sql_response import AsyncSqlResponse
+    from .get_async_sql_request import GetAsyncSqlRequest
+    from .async_sql_pb2 import AsyncSqlResponsePB
 
 from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
