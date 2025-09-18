@@ -66,6 +66,9 @@ class ShardConsumerWorker(object):
         self.save_last_checkpoint = False
         self.query = query
         self.consume_processor = consume_processor
+        # this is for python splunk add-on, do preprocess in non-python extension to convert data to splunk event format directly,
+        # which can improve performance significantly
+        self.override_preprocessor = getattr(self.processor, '_override_preprocess', None)
         self.logger = ShardConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"shard_consumer_worker": self})
 
@@ -98,10 +101,13 @@ class ShardConsumerWorker(object):
 
                 self.last_success_fetch_time = time.time()
 
-                self.last_fetch_log_group = FetchedLogGroup(self.shard_id, task_result.get_fetched_log_group_list(),
-                                                            task_result.get_cursor())
+                self.last_fetch_log_group = FetchedLogGroup(self.shard_id,
+                                                            task_result.get_data(),
+                                                            task_result.get_cursor(),
+                                                            task_result.get_log_group_count())
+
                 self.next_fetch_cursor = task_result.get_cursor()
-                self.last_fetch_count = self.last_fetch_log_group.log_group_size
+                self.last_fetch_count = task_result.get_log_group_count()
                 self.last_fetch_size = task_result.get_raw_size()
                 self.rawLogGroupCountBeforeQuery = task_result.get_raw_log_group_count_before_query()
                 self.rawSizeBeforeQuery = task_result.get_raw_size_before_query()
@@ -141,7 +147,8 @@ class ShardConsumerWorker(object):
                                              self.log_client, self.shard_id, self.next_fetch_cursor,
                                              max_fetch_log_group_size=self.max_fetch_log_group_size,
                                              end_cursor=self.fetch_end_cursor, query=self.query,
-                                             consume_processor=self.consume_processor)
+                                             consume_processor=self.consume_processor,
+                                             override_preprocessor=self.override_preprocessor)
                 else:
                     self.fetch_data_future = None
             else:
@@ -213,13 +220,12 @@ class ShardConsumerWorker(object):
                 self.checkpoint_tracker.set_cursor(self.last_fetch_log_group.end_cursor)
                 self.current_task_exist = True
 
-                # must deep copy cause some revision will happen
-                last_fetch_log_group = copy.deepcopy(self.last_fetch_log_group)
+                log_group = self.last_fetch_log_group
                 self.last_fetch_log_group = None
 
                 if self.last_fetch_count > 0:
                     self.task_future = self.executor.submit(consumer_process_task, self.processor,
-                                                            last_fetch_log_group.fetched_log_group_list,
+                                                            log_group.data,
                                                             self.checkpoint_tracker)
 
         elif self.consumer_status == ConsumerStatus.SHUTTING_DOWN:

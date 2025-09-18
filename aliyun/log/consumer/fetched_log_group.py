@@ -3,18 +3,19 @@
 
 class FetchedLogGroup(object):
 
-    def __init__(self, shard_id, log_group_list, end_cursor):
+    def __init__(self, shard_id, data, end_cursor, log_group_count):
         self._shard_id = shard_id
-        self._fetched_log_group_list = log_group_list
+        self._data = data
         self._end_cursor = end_cursor
+        self._log_group_count = log_group_count
 
     @property
     def shard_id(self):
         return self._shard_id
 
     @property
-    def fetched_log_group_list(self):
-        return self._fetched_log_group_list
+    def data(self):
+        return self._data
 
     @property
     def end_cursor(self):
@@ -22,4 +23,4 @@ class FetchedLogGroup(object):
 
     @property
     def log_group_size(self):
-        return len(self._fetched_log_group_list.LogGroups)
+        return self._log_group_count

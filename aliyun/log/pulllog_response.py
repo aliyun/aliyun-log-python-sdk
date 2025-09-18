@@ -28,17 +28,27 @@ class PullLogResponse(LogResponse):
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
         self._is_bytes_type = None
-        self.log_count = int(Util.h_v_t(header, "x-log-count"))
+        self._log_group_count = int(Util.h_v_t(header, "x-log-count"))
         self.raw_size = int(Util.h_v_t(header, 'x-log-bodyrawsize'))
         self.next_cursor = Util.convert_unicode_to_str(Util.h_v_t(header, "x-log-cursor"))
         self.raw_log_group_count_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatacount', '-1'))
         self.raw_size_before_query = int(Util.h_v_td(self.headers, 'x-log-rawdatasize', '-1'))
-        self.loggroup_list = LogGroupList()
-        if resp is not None:
-            self._parse_loggroup_list(resp)
+
+        self._loggroup_list = None
+        self._raw_uncompressed_body = resp
         self.loggroup_list_json = None
         self.flatten_logs_json = None
         self._body = None
+
+
+    @property
+    def loggroup_list(self):
+        if self._loggroup_list is None :
+            log_group_list, is_bytes_type = self._parse_loggroup_list(self._raw_uncompressed_body)
+            self._loggroup_list = log_group_list
+            self._is_bytes_type = is_bytes_type
+            self._raw_uncompressed_body = None
+        return self._loggroup_list
 
     def get_body(self):
         if self._body is None:
@@ -58,11 +68,15 @@ class PullLogResponse(LogResponse):
     def get_next_cursor(self):
         return self.next_cursor
 
+    @property
+    def log_count(self):
+        return self.get_log_count()
+
     def get_log_count(self):
         return len(self.get_flatten_logs_json())
 
     def get_loggroup_count(self):
-        return len(self.loggroup_list.LogGroups)
+        return self._log_group_count
 
     def get_loggroup_json_list(self):
         if self.loggroup_list_json is None:
@@ -89,21 +103,24 @@ class PullLogResponse(LogResponse):
     def log_print(self):
         print('PullLogResponse')
         print('next_cursor', self.next_cursor)
-        print('log_count', self.log_count)
+        print('log_group_count', self.get_loggroup_count())
         print('headers:', self.get_all_headers())
         print('detail:', self.get_loggroup_json_list())
 
     def _parse_loggroup_list(self, data):
+        if data is None:
+            return LogGroupList(), False 
+
         try:
-            self.loggroup_list.ParseFromString(data)
+            p = LogGroupList()
+            p.ParseFromString(data)
+            return p, False
         except Exception as ex:
             ex_second = None
             try:
                 p = LogGroupListRaw()
                 p.ParseFromString(data)
-                self.loggroup_list = p
-                self._is_bytes_type = True
-                return
+                return p, True
             except Exception as ex2:
                 ex_second = ex2
 
