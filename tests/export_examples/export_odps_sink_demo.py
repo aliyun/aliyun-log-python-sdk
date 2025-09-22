@@ -45,8 +45,7 @@ def update_export():
     jobName = '11111'
     config = getJobConfig(client, project, jobName)  # 获取任务的配置
     config['displayName'] = config['displayName'] + 'new'
-    config['configuration']['sink']['delaySeconds'] = 909
-    export = json.dumps(config)
+
     client.update_export(project_name=project, job_name=jobName, export=export)
 
 
