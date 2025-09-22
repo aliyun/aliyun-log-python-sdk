@@ -43,8 +43,8 @@ def update_export():
     client = LogClient("region", "ak", "ak_key")
     project = '11111'
     jobName = '11111'
-    config = getJobConfig(client, project, jobName)  # 获取任务的配置
-    config['displayName'] = config['displayName'] + 'new'
+    export = getJobConfig(client, project, jobName)  # 获取任务的配置
+    export['displayName'] = export['displayName'] + 'new'
 
     client.update_export(project_name=project, job_name=jobName, export=export)
 
