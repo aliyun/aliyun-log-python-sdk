@@ -71,13 +71,19 @@ class MachineStatus(object):
     :param heartbeat_time: last updated heartbeat_time
     """
 
-    def __init__(self, ip, machine_unique_id, user_defined_id, heartbeat_time):
+    def __init__(self, ip, machine_unique_id, user_defined_id, heartbeat_time, binary=None):
         self.ip = ip
         self.machine_unique_id = machine_unique_id
         self.user_defined_id = user_defined_id
         self.heartbeat_time = heartbeat_time
+        self.binary = binary
 
     def log_print(self):
-        print('MachineStatus: machine_unique_id={}, user_defined_id={}, heartbeat_time={}'.format(self.machine_unique_id,
-                                                                                                  self.user_defined_id,
-                                                                                                  self.heartbeat_time))
+        print(
+            "MachineStatus: machine_unique_id={}, user_defined_id={}, heartbeat_time={}, binary={}".format(
+                self.machine_unique_id,
+                self.user_defined_id,
+                self.heartbeat_time,
+                self.binary,
+            )
+        )

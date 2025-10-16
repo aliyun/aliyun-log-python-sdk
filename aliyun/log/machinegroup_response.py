@@ -181,12 +181,17 @@ class ListMachinesResponse(LogResponse):
 
     def __init__(self, resp, header):
         LogResponse.__init__(self, header, resp)
-        self.count = resp['count']
-        self.total = resp['total']
+        self.count = resp["count"]
+        self.total = resp["total"]
         self.machines = []
-        for machine_status in resp['machines']:
-            machine = MachineStatus(machine_status['ip'], machine_status['machine-uniqueid'],
-                                    machine_status['userdefined-id'], machine_status['lastHeartbeatTime'])
+        for machine_status in resp["machines"]:
+            machine = MachineStatus(
+                machine_status["ip"],
+                machine_status.get("machine-uniqueid", None),
+                machine_status["userdefined-id"],
+                machine_status["lastHeartbeatTime"],
+                machine_status.get("binary", None),
+            )
             self.machines.append(machine)
 
     def get_machine_count(self):
