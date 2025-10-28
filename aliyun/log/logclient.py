@@ -58,6 +58,8 @@ from .util import base64_encodestring as e64, base64_decodestring as d64, Util
 from .version import API_VERSION, USER_AGENT
 if six.PY3:
     from .async_sql_response import AsyncSqlResponse
+    from .get_async_sql_request import GetAsyncSqlRequest
+    from .async_sql_pb2 import AsyncSqlResponsePB
 
 from .proto import LogGroupRaw as LogGroup
 from .external_store_config_response import *
@@ -3462,7 +3464,7 @@ class LogClient(object):
         """
         return copy_alert(self, from_project, from_alert_name, to_project=to_project, to_alert_name=to_alert_name, to_client=to_client, to_region_endpoint=to_region_endpoint)
 
-    def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id=''):
+    def list_project(self, offset=0, size=100, project_name_pattern=None, resource_group_id='', description=None):
         """ list the project
         Unsuccessful operation will cause an LogException.
 
@@ -3477,6 +3479,9 @@ class LogClient(object):
 
         :type resource_group_id: string
         :param resource_group_id: the resource group id, used for the server to return project in resource group
+
+        :type description: string
+        :param description: use this to filter project by description, support fuzzy search
 
         :return: ListProjectResponse
 
@@ -3495,6 +3500,8 @@ class LogClient(object):
         params['offset'] = str(offset)
         params['size'] = str(size)
         params['resourceGroupId'] = resource_group_id
+        if description:
+            params['description'] = str(description)
         (resp, header) = self._send("GET", None, None, resource, params, headers)
         return ListProjectResponse(resp, header)
 
