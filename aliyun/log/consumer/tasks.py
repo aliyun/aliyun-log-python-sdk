@@ -20,7 +20,7 @@ class ConsumerProcessorBase(object):
         self.shard_id = -1
         self.last_check_time = 0
         self.checkpoint_timeout = 3
-        self._preprocess = to_log_group_list_pb
+        self._preprocessor = to_log_group_list_pb
 
     def save_checkpoint(self, tracker, force=False):
         current_time = time.time()
@@ -61,7 +61,7 @@ class ConsumerJsonProcessorBase(ConsumerProcessorBase):
 
     def __init__(self):
         super(ConsumerJsonProcessorBase, self).__init__()
-        self._preprocess = to_flattern_json_list
+        self._preprocessor = to_flattern_json_list
 
     @abc.abstractmethod
     def process(self, flattern_json_list, check_point_tracker):
