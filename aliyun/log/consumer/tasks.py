@@ -7,7 +7,7 @@ from .config import CursorPosition
 from ..logexception import LogException
 from ..pulllog_response import PullLogResponse
 from .consumer_client import ConsumerClient
-from typing import Any
+from .preprocessor import to_log_group_list_pb, to_flattern_json_list
 import time
 import six
 import sys
@@ -20,6 +20,7 @@ class ConsumerProcessorBase(object):
         self.shard_id = -1
         self.last_check_time = 0
         self.checkpoint_timeout = 3
+        self._preprocess = to_log_group_list_pb
 
     def save_checkpoint(self, tracker, force=False):
         current_time = time.time()
@@ -54,6 +55,20 @@ class ConsumerProcessorBase(object):
         logger.info("[%s]ConsumerProcesser is shutdown, shard id: %s", _id,
                     self.shard_id)
         self.save_checkpoint(check_point_tracker, force=True)
+
+
+class ConsumerJsonProcessorBase(ConsumerProcessorBase):
+
+    def __init__(self):
+        super(ConsumerJsonProcessorBase, self).__init__()
+        self._preprocess = to_flattern_json_list
+
+    @abc.abstractmethod
+    def process(self, flattern_json_list, check_point_tracker):
+        """
+        @flattern_json_list a list of dict, each dict is a log, eg: [{"__time__": 1761721979, "key1": "value1", "hello": "world", "__tag__:tagkey1": "tagvalue1" }]
+        """
+        raise NotImplementedError("not create method process")
 
 
 class ConsumerProcessorAdaptor(ConsumerProcessorBase):
@@ -193,27 +208,15 @@ def consumer_initialize_task(processor, consumer_client, shard_id, cursor_positi
     except Exception as e:
         return TaskResult(e)
 
-
-def _preprocess(preprocessor, pull_log_response):
-    # type: (object, PullLogResponse) -> Any
-    if preprocessor is None:
-        return pull_log_response.get_loggroup_list()
-
-    try:
-        return preprocessor(pull_log_response)
-    except Exception:
-        logger.error("Failed to preprocess pull log response", exc_info=True)
-        raise
-
-def consumer_fetch_task(loghub_client_adapter, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None, consume_processor=None, override_preprocessor=None):
-    # type: (ConsumerClient, int, str, int, str, str, object) -> FetchTaskResult
+def consumer_fetch_task(loghub_client_adapter, preprocessor, shard_id, cursor, max_fetch_log_group_size=1000, end_cursor=None, query=None, consume_processor=None):
+    # type: (ConsumerClient, object, int, str, int, str, str, str) -> FetchTaskResult
     exception = None
 
     for retry_times in range(3):
         try:
             # type: PullLogResponse
             response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query, processor=consume_processor)
-            data = _preprocess(override_preprocessor, response)
+            data = preprocessor(response)
             next_cursor = response.get_next_cursor()
             raw_size = response.get_raw_size()
             log_group_count = response.get_loggroup_count()

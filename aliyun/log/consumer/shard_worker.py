@@ -66,9 +66,7 @@ class ShardConsumerWorker(object):
         self.save_last_checkpoint = False
         self.query = query
         self.consume_processor = consume_processor
-        # this is for python splunk add-on, do preprocess in non-python extension to convert data to splunk event format directly,
-        # which can improve performance significantly
-        self.override_preprocessor = getattr(self.processor, '_override_preprocess', None)
+        self.preprocessor = self.processor._preprocessor
         self.logger = ShardConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"shard_consumer_worker": self})
 
@@ -120,7 +118,6 @@ class ShardConsumerWorker(object):
                         self.checkpoint_tracker.flush_check_point()
                         self.save_last_checkpoint = True
 
-
             self._sample_log_error(task_result)
 
             # no task or task is done, create new task
@@ -142,13 +139,17 @@ class ShardConsumerWorker(object):
                     is_generate_fetch_task = (time.time() - self.last_fetch_time) > 0.05
                 if is_generate_fetch_task:
                     self.last_fetch_time = time.time()
-                    self.fetch_data_future = \
-                        self.executor.submit(consumer_fetch_task,
-                                             self.log_client, self.shard_id, self.next_fetch_cursor,
-                                             max_fetch_log_group_size=self.max_fetch_log_group_size,
-                                             end_cursor=self.fetch_end_cursor, query=self.query,
-                                             consume_processor=self.consume_processor,
-                                             override_preprocessor=self.override_preprocessor)
+                    self.fetch_data_future = self.executor.submit(
+                        consumer_fetch_task,
+                        self.log_client,
+                        self.preprocessor,
+                        self.shard_id,
+                        self.next_fetch_cursor,
+                        max_fetch_log_group_size=self.max_fetch_log_group_size,
+                        end_cursor=self.fetch_end_cursor,
+                        query=self.query,
+                        consume_processor=self.consume_processor,
+                    )
                 else:
                     self.fetch_data_future = None
             else:
