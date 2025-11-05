@@ -41,6 +41,7 @@ from .logexception import LogException
 from .logstore_config_response import *
 from .substore_config_response import *
 from .logtail_config_response import *
+from .logtail_pipeline_config_response import *
 from .machinegroup_response import *
 from .rebuild_index_response import *
 from .project_response import *
@@ -2327,6 +2328,132 @@ class LogClient(object):
             params['configName'] = config
         (resp, header) = self._send("GET", project_name, None, resource, params, headers)
         return ListLogtailConfigResponse(resp, header)
+
+    def create_logtail_pipeline_config(self, project_name, config_detail):
+        """ create logtail pipeline config in a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type config_detail: LogtailPipelineConfigDetail
+        :param config_detail: the logtail pipeline config detail
+
+        :return: CreateLogtailPipelineConfigResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/pipelineconfigs"
+        headers['Content-Type'] = 'application/json'
+        body = six.b(json.dumps(config_detail.to_json()))
+        headers['x-log-bodyrawsize'] = str(len(body))
+        (resp, headers) = self._send("POST", project_name, body, resource, params, headers)
+        return CreateLogtailPipelineConfigResponse(headers, resp)
+
+    def update_logtail_pipeline_config(self, project_name, config_detail):
+        """ update logtail pipeline config in a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type config_detail: LogtailPipelineConfigDetail
+        :param config_detail: the logtail pipeline config detail
+
+        :return: UpdateLogtailPipelineConfigResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/pipelineconfigs/" + config_detail.config_name
+        headers['Content-Type'] = 'application/json'
+        body = six.b(json.dumps(config_detail.to_json()))
+        headers['x-log-bodyrawsize'] = str(len(body))
+        (resp, headers) = self._send("PUT", project_name, body, resource, params, headers)
+        return UpdateLogtailPipelineConfigResponse(headers, resp)
+
+    def delete_logtail_pipeline_config(self, project_name, config_name):
+        """ delete logtail pipeline config in a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type config_name: string
+        :param config_name: the logtail pipeline config name
+
+        :return: DeleteLogtailPipelineConfigResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/pipelineconfigs/" + config_name
+        (resp, headers) = self._send("DELETE", project_name, None, resource, params, headers)
+        return DeleteLogtailPipelineConfigResponse(headers, resp)
+
+    def get_logtail_pipeline_config(self, project_name, config_name):
+        """ get logtail pipeline config in a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type config_name: string
+        :param config_name: the logtail pipeline config name
+
+        :return: GetLogtailPipelineConfigResponse
+
+        :raise: LogException
+        """
+        headers = {}
+        params = {}
+        resource = "/pipelineconfigs/" + config_name
+        (resp, headers) = self._send("GET", project_name, None, resource, params, headers)
+        return GetLogtailPipelineConfigResponse(resp, headers)
+
+    def list_logtail_pipeline_config(self, project_name, config_name=None, logstore_name=None, offset=0, size=100):
+        """ list logtail pipeline config names in a project
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type config_name: string
+        :param config_name: config name to filter
+
+        :type logstore_name: string
+        :param logstore_name: logstore name to filter
+
+        :type offset: int
+        :param offset: the offset of all config names
+
+        :type size: int
+        :param size: the max return names count, -1 means all
+
+        :return: ListLogtailPipelineConfigResponse
+
+        :raise: LogException
+        """
+        # need to use extended method to get more
+        if int(size) == -1 or int(size) > MAX_LIST_PAGING_SIZE:
+            return list_more(self.list_logtail_pipeline_config, int(offset), int(size), MAX_LIST_PAGING_SIZE,
+                           project_name, config_name, logstore_name)
+
+        headers = {}
+        params = {}
+        resource = "/pipelineconfigs"
+        params['offset'] = str(offset)
+        params['size'] = str(size)
+        if config_name:
+            params['configName'] = config_name
+        if logstore_name:
+            params['logstoreName'] = logstore_name
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return ListLogtailPipelineConfigResponse(resp, header)
 
     def create_machine_group(self, project_name, group_detail):
         """ create machine group in a project

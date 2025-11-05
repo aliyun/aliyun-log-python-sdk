@@ -7,6 +7,8 @@ from .index_config import IndexConfig, IndexKeyConfig, IndexLineConfig
 from .listtopicsrequest import ListTopicsRequest
 from .listlogstoresrequest import ListLogstoresRequest
 from .logtail_config_detail import *
+from .logtail_pipeline_config_detail import *
+from .logtail_pipeline_config_response import *
 from .machine_group_detail import MachineGroupDetail
 from .putlogsrequest import PutLogsRequest
 from .shipper_config import ShipperTask, OssShipperConfig, OdpsShipperConfig
