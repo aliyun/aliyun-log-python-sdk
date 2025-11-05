@@ -32,12 +32,14 @@ class kv_transformer(trans_comp_check_mdoe_base):
     @staticmethod
     @cached
     def _get_kv_ptn(sep, quote, escape):
-        p1 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)'
+        # Use Unicode characters directly to avoid escape sequence warnings
+        # \u4e00-\u9fa5 = Chinese characters, \u0800-\u4e00 = other Unicode range
+        p1 = r'(?!{0})([' + '\u4e00-\u9fa5\u0800-\u4e00' + r'\w\.\-]+)\s*{0}\s*([' + '\u4e00-\u9fa5\u0800-\u4e00' + r'\w\.\-]+)'
         if not escape:
-            p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*{1}\s*([^{1}]*?)\s*{1}'
+            p2 = r'(?!{0})([' + '\u4e00-\u9fa5\u0800-\u4e00' + r'\w\.\-]+)\s*{0}\s*{1}\s*([^{1}]*?)\s*{1}'
         else:
-            p2 = u'(?!{0})([\u4e00-\u9fa5\u0800-\u4e00\\w\\.\\-]+)\\s*{0}\\s*{1}\s*((?:[^{1}]|\\\\{1})*?[^\\\\]){1}'
-        ps = u'|'.join([p1, p2]).format(sep, quote)
+            p2 = r'(?!{0})([' + '\u4e00-\u9fa5\u0800-\u4e00' + r'\w\.\-]+)\s*{0}\s*{1}\s*((?:[^{1}]|\\{1})*?[^\\]){1}'
+        ps = '|'.join([p1, p2]).format(sep, quote)
 
         logger.info(u"trans_comp_kv: get ptn: {0}".format(ps))
         return re.compile(ps)
