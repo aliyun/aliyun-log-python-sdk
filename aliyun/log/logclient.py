@@ -10,9 +10,9 @@ import json
 import requests
 import six
 import time
-import zlib
 from datetime import datetime
 import logging
+import re
 
 from .store_view_response import ListStoreViewsResponse, CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse
 from .credentials import StaticCredentialsProvider
@@ -76,6 +76,7 @@ from .compress import CompressType, Compressor
 from .metering_mode_response import GetLogStoreMeteringModeResponse, \
     GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
         UpdateMetricStoreMeteringModeResponse
+from .object_response import PutObjectResponse, GetObjectResponse
 from .util import require_python3
 
 logger = logging.getLogger(__name__)
@@ -310,7 +311,7 @@ class LogClient(object):
                                'Request is failed. Http code is ' + str(resp_status) + exJson, requestId,
                                resp_status, resp_header, resp_body)
 
-    def _send(self, method, project, body, resource, params, headers, respons_body_type='json'):
+    def _send(self, method, project, body, resource, params, headers, respons_body_type='json', compute_content_hash=True):
         if body:
             headers['Content-Length'] = str(len(body))
         else:
@@ -337,7 +338,7 @@ class LogClient(object):
                 params2 = copy(params)
                 if self._securityToken:
                     headers2["x-acs-security-token"] = self._securityToken
-                self._auth.sign_request(method, resource, params2, headers2, body)
+                self._auth.sign_request(method, resource, params2, headers2, body, compute_content_hash=compute_content_hash)
                 return self._sendRequest(method, url, params2, body, headers2, respons_body_type)
             except LogException as ex:
                 last_err = ex
@@ -6511,3 +6512,82 @@ class LogClient(object):
         resource = "/storeviews/" + store_view_name
         (resp, header) = self._send("DELETE", project_name, None, resource, params, {})
         return DeleteStoreViewResponse(header, resp)
+
+    def put_object(
+        self, project_name, logstore_name, object_name, content, headers=None
+    ):
+        """Put an object to the specified logstore.
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type object_name: string
+        :param object_name: the object name (only allow a-z A-Z 0-9 _ -)
+
+        :type content: bytes/string
+        :param content: the object content (can be empty)
+
+        :type headers: dict
+        :param headers: optional headers to send with the request.
+                        - x-log-meta-* headers will be converted to x-oss-meta-* on server side, and passed through to OSS if provided
+                        - Content-Type will be passed through to OSS if provided
+                        - Content-MD5 will be used for signing and passed through to OSS if provided
+
+        :return: PutObjectResponse
+
+        :raise: LogException
+        """
+
+        if not re.match(r"^[a-zA-Z0-9_-]+$", object_name):
+            raise LogException(
+                "InvalidParameter", 'object_name "{}" is invalid'.format(object_name)
+            )
+
+        if headers is None:
+            headers = {}
+        else:
+            headers = dict(headers)
+
+        if isinstance(content, six.text_type):
+            body = content.encode("utf-8")
+        elif isinstance(content, six.binary_type):
+            body = content
+        else:
+            raise LogException("InvalidParameter", "content must be bytes or string")
+
+        headers["x-log-bodyrawsize"] = str(len(body))
+        resource = "/logstores/" + logstore_name + "/objects/" + object_name
+
+        (resp, resp_header) = self._send(
+            "PUT", project_name, body, resource, {}, headers, compute_content_hash=False
+        )
+        return PutObjectResponse(resp_header, resp)
+
+    def get_object(self, project_name, logstore_name, object_name):
+        """Get an object from the specified logstore.
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :type object_name: string
+        :param object_name: the object name
+
+        :return: GetObjectResponse
+
+        :raise: LogException
+        """
+
+        resource = "/logstores/" + logstore_name + "/objects/" + object_name
+
+        (resp, resp_header) = self._send(
+            "GET", project_name, None, resource, {}, {}, respons_body_type="raw"
+        )
+        return GetObjectResponse(resp_header, resp)
