@@ -93,6 +93,7 @@ def sample_put_with_md5():
         print(response.get_body())
     except LogException as e:
         print("Put object failed:", e)
+        raise
 
 
 if __name__ == "__main__":
