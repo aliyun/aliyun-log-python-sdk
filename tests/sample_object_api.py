@@ -13,8 +13,8 @@ from aliyun.log import LogClient
 from aliyun.log.logexception import LogException
 
 endpoint = "cn-hangzhou.log.aliyuncs.com"  # Replace with your endpoint
-accessKeyId = ""  # Replace with your access key id
-accessKey = ""  # Replace with your access key
+accessKeyId = os.getenv("ACCESS_KEY_ID")  # Replace with your access key id
+accessKey = os.getenv("ACCESS_KEY")  # Replace with your access key
 project = "project"  # Replace with your project name
 logstore = "logstore"  # Replace with your logstore name
 
@@ -33,11 +33,18 @@ def sample_put_object():
         response = client.put_object(project, logstore, object_name, content)
         print("Put object success!")
         response.log_print()
+
+        response = client.get_object(project, logstore, object_name)
+        response.log_print()
+        print(response.get_body())
+
     except LogException as e:
         print("Put object failed:", e)
         raise
 
-    # Example 2: Put an object with custom headers
+
+# Example 2: Put an object with custom headers
+def sample_put_with_header():
     try:
         object_name = "test_object_2"
         content = b"Content with metadata"
@@ -50,11 +57,17 @@ def sample_put_object():
         response = client.put_object(project, logstore, object_name, content, headers)
         response.log_print()
         print("Put object with headers success!")
+
+        response = client.get_object(project, logstore, object_name)
+        response.log_print()
+        print(response.get_body())
     except LogException as e:
         print("Put object failed:", e)
         raise
 
-    # Example 3: Put an object with Content-MD5
+
+# Example 3: Put an object with Content-MD5
+def sample_put_with_md5():
     try:
         import hashlib
         import base64
@@ -74,24 +87,12 @@ def sample_put_object():
         response = client.put_object(project, logstore, object_name, content, headers)
         print("Put object with MD5 success!")
         response.log_print()
-    except LogException as e:
-        print("Put object failed:", e)
-
-
-def sample_get_object():
-    """
-    Sample: Get an object from logstore
-    """
-
-    # Example: Get an object
-    try:
-        object_name = "test_object_1"
 
         response = client.get_object(project, logstore, object_name)
         response.log_print()
-        print("Get object success!")
+        print(response.get_body())
     except LogException as e:
-        print("Get object failed:", e)
+        print("Put object failed:", e)
 
 
 if __name__ == "__main__":
@@ -101,6 +102,11 @@ if __name__ == "__main__":
     sample_put_object()
 
     print("\n" + "=" * 60)
-    print("Sample: Get Object")
+    print("Sample: Put Object with Custom Headers")
     print("=" * 60)
-    sample_get_object()
+    sample_put_with_header()
+
+    print("\n" + "=" * 60)
+    print("Sample: Put Object with Content-MD5")
+    print("=" * 60)
+    sample_put_with_md5()

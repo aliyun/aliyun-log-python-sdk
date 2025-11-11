@@ -47,7 +47,6 @@ class GetObjectResponse(LogResponse):
 
     def __init__(self, header, resp):
         LogResponse.__init__(self, header, resp)
-        print(self.headers)
 
     def get_etag(self):
         """ Get the ETag of the object.
