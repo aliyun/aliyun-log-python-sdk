@@ -28,12 +28,11 @@ class PutObjectResponse(LogResponse):
 
         :return: string, ETag value
         """
-        return Util.h_v_td(self.headers, 'etag', '')
+        return Util.h_v_td(self.headers, 'ETag', None)
 
     def log_print(self):
         print('PutObjectResponse:')
         print('headers:', self.get_all_headers())
-        print('etag:', self.get_etag())
 
 
 class GetObjectResponse(LogResponse):
@@ -48,27 +47,28 @@ class GetObjectResponse(LogResponse):
 
     def __init__(self, header, resp):
         LogResponse.__init__(self, header, resp)
+        print(self.headers)
 
     def get_etag(self):
         """ Get the ETag of the object.
 
-        :return: string, ETag value
+        :return: string, ETag value, may be None if not set
         """
-        return Util.h_v_td(self.headers, 'etag', '')
+        return Util.h_v_td(self.headers, 'ETag', None)
 
     def get_last_modified(self):
         """ Get the last modified time of the object.
 
-        :return: string, last modified time
+        :return: string, last modified time, may be None if not set
         """
-        return Util.h_v_td(self.headers, 'last-modified', '')
+        return Util.h_v_td(self.headers, 'Last-Modified', None)
 
     def get_content_type(self):
         """ Get the content type of the object.
 
         :return: string, content type
         """
-        return Util.h_v_td(self.headers, 'content-type', '')
+        return Util.h_v_td(self.headers, 'Content-Type', '')
 
     def get_headers(self):
         """ Get all headers of the response.
@@ -76,17 +76,6 @@ class GetObjectResponse(LogResponse):
         :return: dict, all response headers
         """
         return self.headers
-
-    def get_body_length(self):
-        """ Get the length of the object content.
-
-        :return: int, content length
-        """
-        content_length = Util.h_v_td(self.headers, 'content-length', '0')
-        try:
-            return int(content_length)
-        except (ValueError, TypeError):
-            return 0
 
     def get_body(self):
         """ Get the object content.
@@ -98,8 +87,4 @@ class GetObjectResponse(LogResponse):
     def log_print(self):
         print('GetObjectResponse:')
         print('headers:', self.get_all_headers())
-        print('etag:', self.get_etag())
-        print('last_modified:', self.get_last_modified())
-        print('content_type:', self.get_content_type())
-        print('body_length:', self.get_body_length())
 
