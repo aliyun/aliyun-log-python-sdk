@@ -6533,9 +6533,9 @@ class LogClient(object):
 
         :type headers: dict
         :param headers: optional headers to send with the request.
-                        - x-log-meta-* headers will be converted to x-oss-meta-* on server side, and passed through to OSS if provided
-                        - Content-Type will be passed through to OSS if provided
-                        - Content-MD5 will be used for signing and passed through to OSS if provided
+                        - x-log-meta-* headers will be attached to the object as metadata, and returned in the response when getting the object
+                        - Content-Type will be attached to the object as metadata, and returned in the response when getting the object
+                        - Content-MD5 will be attached to the object as metadata, and returned in the response when getting the object
 
         :return: PutObjectResponse
 
