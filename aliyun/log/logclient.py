@@ -77,7 +77,7 @@ from .metering_mode_response import GetLogStoreMeteringModeResponse, \
     GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
         UpdateMetricStoreMeteringModeResponse
 from .object_response import PutObjectResponse, GetObjectResponse
-from .util import require_python3
+from .util import require_python3, object_name_encode
 
 logger = logging.getLogger(__name__)
 
@@ -6541,12 +6541,7 @@ class LogClient(object):
 
         :raise: LogException
         """
-
-        if not re.match(r"^[a-zA-Z0-9_-]+$", object_name):
-            raise LogException(
-                "InvalidParameter", 'object_name "{}" is invalid'.format(object_name)
-            )
-
+        encoded_object_name = object_name_encode(object_name)
         if headers is None:
             headers = {}
         else:
@@ -6560,7 +6555,7 @@ class LogClient(object):
             raise LogException("InvalidParameter", "content must be bytes or string")
 
         headers["x-log-bodyrawsize"] = str(len(body))
-        resource = "/logstores/" + logstore_name + "/objects/" + object_name
+        resource = "/logstores/" + logstore_name + "/objects/" + encoded_object_name
 
         (resp, resp_header) = self._send(
             "PUT", project_name, body, resource, {}, headers, compute_content_hash=False
@@ -6584,8 +6579,8 @@ class LogClient(object):
 
         :raise: LogException
         """
-
-        resource = "/logstores/" + logstore_name + "/objects/" + object_name
+        encoded_object_name = object_name_encode(object_name)
+        resource = "/logstores/" + logstore_name + "/objects/" + encoded_object_name
 
         (resp, resp_header) = self._send(
             "GET", project_name, None, resource, {}, {}, respons_body_type="raw"

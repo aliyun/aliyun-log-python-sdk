@@ -323,3 +323,13 @@ def require_python3(func):
             raise RuntimeError("Function '{func_name}' requires Python 3 to run.".format(func_name=func.__name__))
         return func(*args, **kwargs)
     return wrapper
+
+
+if six.PY2:
+    from urllib import quote as urlquote
+else:
+    from urllib.parse import quote as urlquote
+    urlquote
+
+def object_name_encode(object_name):
+    return urlquote(object_name)
