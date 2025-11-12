@@ -60,7 +60,7 @@ class AuthV1(AuthBase):
             logger.warning("failed to set locale time to C. skip it: {0}".format(ex))
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
-    def sign_request(self, method, resource, params, headers, body):
+    def sign_request(self, method, resource, params, headers, body, compute_content_hash=True):
         credentials = self.credentials_provider.get_credentials()
         if credentials.get_security_token():
             headers['x-acs-security-token'] = credentials.get_security_token()
@@ -68,7 +68,7 @@ class AuthV1(AuthBase):
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         headers['Date'] = self._getGMT()
 
-        if body:
+        if body and compute_content_hash:
             headers['Content-MD5'] = Util.cal_md5(body)
         if not credentials.get_access_key_secret():
             return six.b('')
@@ -92,7 +92,7 @@ class AuthV4(AuthBase):
         AuthBase.__init__(self, credentials_provider)
         self._region = region
 
-    def sign_request(self, method, resource, params, headers, body):
+    def sign_request(self, method, resource, params, headers, body, compute_content_hash=True):
         current_time = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
         headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time)
 
