@@ -1,5 +1,14 @@
 # Release History
 
+## 0.9.36 (2025-11-13)
+
+**Breaking Changes**
+
+Fix: Adapt to [LogItem](aliyun/log/logitem.py) breaking change from v0.8.10
+
+Updates code to reflect the new LogItem signature, where the
+`nano_time_part` argument moved from the 3rd to the 4th position.
+
 ## 0.9.35 (2025-11-05)
 
 **Feature**
