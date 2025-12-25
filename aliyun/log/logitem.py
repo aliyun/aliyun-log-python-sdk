@@ -17,9 +17,12 @@ class LogItem(object):
 
     :type contents: tuple(key-value) list
     :param contents: the data of the log item, including many (key,value) pairs.
+
+    :type time_nano_part: int
+    :param time_nano_part: time nano part of the log item, ranges from 0 to 999999999.
     """
 
-    def __init__(self, timestamp=None, time_nano_part=None, contents=None):
+    def __init__(self, timestamp=None, contents=None, time_nano_part=None):
         nano_time = int(time.time() * 10**9)
         self.timestamp = int(timestamp) if timestamp else int(nano_time / 1000000000)
         # milliseconds

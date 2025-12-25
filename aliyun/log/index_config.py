@@ -229,9 +229,12 @@ class IndexConfig(object):
     :type log_reduce: bool
     :param log_reduce: if to enable logreduce
 
+    :type scan_index: bool
+    :param scan_index: if to enable scan index
+
     """
 
-    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None, log_reduce=None):
+    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None, log_reduce=None, scan_index=None):
         if key_config_list is None:
             key_config_list = {}
         self.ttl = ttl
@@ -243,7 +246,7 @@ class IndexConfig(object):
         self.log_reduce_black_list = None
         self.log_reduce_white_list = None
         self.docvalue_max_text_len = 0
-
+        self.scan_index = scan_index
     '''
     :type max_len : int
     :param max_len : the max len  of the docvalue
@@ -268,6 +271,9 @@ class IndexConfig(object):
     def set_log_reduce_white_list(self, white_list):
         self.log_reduce_white_list = white_list
 
+    def set_scan_index(self, scan_index):
+        self.scan_index = scan_index
+
     def to_json(self):
         json_value = {}
         if self.line_config is not None:
@@ -289,6 +295,9 @@ class IndexConfig(object):
 
         elif self.log_reduce_black_list != None:
             json_value["log_reduce_black_list"] = self.log_reduce_black_list
+        
+        if self.scan_index is not None:
+            json_value["scan_index"] = self.scan_index
 
         return json_value
 
@@ -314,3 +323,6 @@ class IndexConfig(object):
         self.docvalue_max_text_len = json_value.get('max_text_len', 0)
 
         self.modify_time = json_value.get("lastModifyTime", int(time.time()))
+
+        if 'scan_index' in json_value:
+            self.scan_index = json_value['scan_index']
