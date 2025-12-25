@@ -15,8 +15,8 @@ from aliyun.log.logexception import LogException
 endpoint = "cn-hangzhou.log.aliyuncs.com"  # Replace with your endpoint
 accessKeyId = os.getenv("ACCESS_KEY_ID")  # Replace with your access key id
 accessKey = os.getenv("ACCESS_KEY")  # Replace with your access key
-project = "project"  # Replace with your project name
-logstore = "logstore"  # Replace with your logstore name
+project = ""  # Replace with your project name
+logstore = ""  # Replace with your logstore name
 
 client = LogClient(endpoint, accessKeyId, accessKey)
 
@@ -33,10 +33,14 @@ def sample_put_object():
         response = client.put_object(project, logstore, object_name, content)
         print("Put object success!")
         response.log_print()
+        print('etag', response.get_etag())
 
         response = client.get_object(project, logstore, object_name)
         response.log_print()
         print(response.get_body())
+        print('etag', response.get_etag())
+        print('last_modified', response.get_last_modified())
+        print('content-type', response.get_content_type())
 
     except LogException as e:
         print("Put object failed:", e)
@@ -56,11 +60,15 @@ def sample_put_with_header():
 
         response = client.put_object(project, logstore, object_name, content, headers)
         response.log_print()
+        print('etag', response.get_etag())
         print("Put object with headers success!")
 
         response = client.get_object(project, logstore, object_name)
         response.log_print()
         print(response.get_body())
+        print('etag', response.get_etag())
+        print('last_modified', response.get_last_modified())
+        print('content-type', response.get_content_type())
     except LogException as e:
         print("Put object failed:", e)
         raise
@@ -87,16 +95,21 @@ def sample_put_with_md5():
         response = client.put_object(project, logstore, object_name, content, headers)
         print("Put object with MD5 success!")
         response.log_print()
+        print('etag', response.get_etag())
 
         response = client.get_object(project, logstore, object_name)
         response.log_print()
         print(response.get_body())
+        print('etag', response.get_etag())
+        print('last_modified', response.get_last_modified())
+        print('content-type', response.get_content_type())
     except LogException as e:
         print("Put object failed:", e)
         raise
 
 
 if __name__ == "__main__":
+    client.list_project()
     print("=" * 60)
     print("Sample: Put Object")
     print("=" * 60)
