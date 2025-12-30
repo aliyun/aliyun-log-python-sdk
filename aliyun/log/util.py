@@ -40,6 +40,7 @@ def base64_decodestring(s):
             s = s.encode('utf8')
         return base64.decodebytes(s).decode('utf8')
 
+_EXCLUDE_SIGN_HEADER_PREFIX = 'x-log-meta-'
 
 class Util(object):
     @staticmethod
@@ -90,9 +91,17 @@ class Util(object):
     def canonicalized_log_headers(headers):
         content = ''
         for key in sorted(six.iterkeys(headers)):
-            if key[:6].lower() in ('x-log-', 'x-acs-'):  # x-log- header
+            if Util._is_extra_sign_header(key):
                 content += key + ':' + str(headers[key]) + "\n"
         return content
+
+    @staticmethod
+    def _is_extra_sign_header(key):
+        lower_key = key.lower()
+        return lower_key.startswith("x-acs-") or (
+            lower_key.startswith("x-log-")
+            and not lower_key.startswith(_EXCLUDE_SIGN_HEADER_PREFIX)
+        )
 
     @staticmethod
     def url_encode(params):

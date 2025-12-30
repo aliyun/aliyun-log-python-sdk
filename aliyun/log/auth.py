@@ -111,7 +111,11 @@ class AuthV4(AuthBase):
         signed_headers = ''
         for original_key, value in headers.items():
             key = original_key.lower()
-            if key == 'content-type' or key == 'host' or key.startswith('x-log-') or key.startswith('x-acs-'):
+            if (
+                key == "content-type"
+                or key == "host"
+                or Util._is_extra_sign_header(key)
+            ):
                 canonical_headers[key] = value
         headers_to_string = ''
         for key, value in sorted(canonical_headers.items()):
