@@ -55,13 +55,6 @@ class GetObjectResponse(LogResponse):
         """
         return Util.h_v_td(self.headers, 'ETag', None)
 
-    def get_last_modified(self):
-        """ Get the last modified time of the object.
-
-        :return: string, last modified time, may be None if not set
-        """
-        return Util.h_v_td(self.headers, 'Last-Modified', None)
-
     def get_content_type(self):
         """ Get the content type of the object.
 
