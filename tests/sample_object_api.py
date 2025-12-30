@@ -39,7 +39,6 @@ def sample_put_object():
         response.log_print()
         print(response.get_body())
         print('etag', response.get_etag())
-        print('last_modified', response.get_last_modified())
         print('content-type', response.get_content_type())
 
     except LogException as e:
@@ -67,7 +66,6 @@ def sample_put_with_header():
         response.log_print()
         print(response.get_body())
         print('etag', response.get_etag())
-        print('last_modified', response.get_last_modified())
         print('content-type', response.get_content_type())
     except LogException as e:
         print("Put object failed:", e)
@@ -101,7 +99,6 @@ def sample_put_with_md5():
         response.log_print()
         print(response.get_body())
         print('etag', response.get_etag())
-        print('last_modified', response.get_last_modified())
         print('content-type', response.get_content_type())
     except LogException as e:
         print("Put object failed:", e)

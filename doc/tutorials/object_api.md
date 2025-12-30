@@ -139,7 +139,6 @@ response = client.get_object(project, logstore, object_name)
 
 # 访问响应数据
 print('ETag:', response.get_etag())
-print('Last Modified:', response.get_last_modified())
 print('Content Type:', response.get_content_type())
 print('Content Length:', len(response.get_body()))
 print('Content:', response.get_body())

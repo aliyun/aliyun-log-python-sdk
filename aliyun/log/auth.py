@@ -68,13 +68,17 @@ class AuthV1(AuthBase):
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         headers['Date'] = self._getGMT()
 
+        content_md5 = None
+        # we don't need content-md5 in signature if compute_content_hash is False
         if body and compute_content_hash:
-            headers['Content-MD5'] = Util.cal_md5(body)
+            content_md5 = Util.cal_md5(body)
+            headers['Content-MD5'] = content_md5
+
         if not credentials.get_access_key_secret():
             return six.b('')
         content = method + '\n'
-        if 'Content-MD5' in headers:
-            content += headers['Content-MD5']
+        if content_md5 is not None:
+            content += content_md5
         content += '\n'
         if 'Content-Type' in headers:
             content += headers['Content-Type']
@@ -87,6 +91,8 @@ class AuthV1(AuthBase):
         headers['x-log-date'] = headers['Date']  # bypass some proxy doesn't allow "Date" in header issue.
 
 
+_EMPTY_CONTENT_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+
 class AuthV4(AuthBase):
     def __init__(self, credentials_provider, region):
         AuthBase.__init__(self, credentials_provider)
@@ -94,16 +100,18 @@ class AuthV4(AuthBase):
 
     def sign_request(self, method, resource, params, headers, body, compute_content_hash=True):
         current_time = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-        headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time)
+        headers['Authorization'] = self._do_sign_request(method, resource, params, headers, body, current_time, compute_content_hash=compute_content_hash)
 
-    def _do_sign_request(self, method, resource, params, headers, body, current_time):
+    def _do_sign_request(self, method, resource, params, headers, body, current_time, compute_content_hash=True):
         credentials = self.credentials_provider.get_credentials()
 
         if credentials.get_security_token():
             headers['x-acs-security-token'] = credentials.get_security_token()
 
-        content_sha256 = sha256(body).hexdigest() \
-            if body else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+        content_sha256 = _EMPTY_CONTENT_SHA256
+        if compute_content_hash and body: 
+            content_sha256 = sha256(body).hexdigest()
+
         headers['x-log-content-sha256'] = content_sha256
         headers['x-log-date'] = current_time
         current_date = current_time[:8]
@@ -111,7 +119,11 @@ class AuthV4(AuthBase):
         signed_headers = ''
         for original_key, value in headers.items():
             key = original_key.lower()
-            if key == 'content-type' or key == 'host' or key.startswith('x-log-') or key.startswith('x-acs-'):
+            if (
+                key == "content-type"
+                or key == "host"
+                or Util._is_extra_sign_header(key)
+            ):
                 canonical_headers[key] = value
         headers_to_string = ''
         for key, value in sorted(canonical_headers.items()):
