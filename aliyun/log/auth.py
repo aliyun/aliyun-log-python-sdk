@@ -68,13 +68,17 @@ class AuthV1(AuthBase):
         headers['x-log-signaturemethod'] = 'hmac-sha1'
         headers['Date'] = self._getGMT()
 
+        content_md5 = None
+        # we don't need content-md5 in signature if compute_content_hash is False
         if body and compute_content_hash:
-            headers['Content-MD5'] = Util.cal_md5(body)
+            content_md5 = Util.cal_md5(body)
+            headers['Content-MD5'] = content_md5
+
         if not credentials.get_access_key_secret():
             return six.b('')
         content = method + '\n'
-        if 'Content-MD5' in headers:
-            content += headers['Content-MD5']
+        if content_md5 is not None:
+            content += content_md5
         content += '\n'
         if 'Content-Type' in headers:
             content += headers['Content-Type']
