@@ -76,6 +76,8 @@ from .compress import CompressType, Compressor
 from .metering_mode_response import GetLogStoreMeteringModeResponse, \
     GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
         UpdateMetricStoreMeteringModeResponse
+from .multimodal_config_response import GetLogStoreMultimodalConfigurationResponse, \
+    PutLogStoreMultimodalConfigurationResponse
 from .object_response import PutObjectResponse, GetObjectResponse
 from .util import require_python3, object_name_encode
 
@@ -1832,6 +1834,61 @@ class LogClient(object):
 
         (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
         return UpdateLogStoreMeteringModeResponse(header, resp)
+    
+    def get_logstore_multimodal_configuration(self, project_name, logstore_name):
+        """ Get the multimodal configuration of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+
+        :return: GetLogStoreMultimodalConfigurationResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/multimodalconfiguration"
+        headers = {}
+
+        (resp, header) = self._send("GET", project_name, None, resource, params, headers)
+        return GetLogStoreMultimodalConfigurationResponse(resp, header)
+    
+    def put_logstore_multimodal_configuration(self, project_name, logstore_name, status, anonymous_write=None):
+        """ Put the multimodal configuration of the logstore
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the Project name
+
+        :type logstore_name: string
+        :param logstore_name: the logstore name
+        
+        :type status: string
+        :param status: the status of multimodal configuration, required (e.g., "Enabled" or "Disabled")
+        
+        :type anonymous_write: string
+        :param anonymous_write: the anonymous write setting, optional (e.g., "Enabled" or "Disabled")
+
+        :return: PutLogStoreMultimodalConfigurationResponse
+
+        :raise: LogException
+        """
+        params = {}
+        resource = "/logstores/" + logstore_name + "/multimodalconfiguration"
+        headers = {"x-log-bodyrawsize": '0', "Content-Type": "application/json"}
+        body = {
+            "status": status
+        }
+        if anonymous_write is not None:
+            body["anonymousWrite"] = anonymous_write
+        
+        body_str = six.b(json.dumps(body))
+
+        (resp, header) = self._send("PUT", project_name, body_str, resource, params, headers)
+        return PutLogStoreMultimodalConfigurationResponse(header, resp)
     
     def get_metric_store_metering_mode(self, project_name, metric_store_name):
         """ Get the metering mode of the metric store
