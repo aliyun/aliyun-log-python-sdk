@@ -189,19 +189,33 @@ class IndexLineConfig(object):
     :type chinese: bool
     :param chinese: enable Chinese words segmentation
 
+    :type auto_key_detect: bool
+    :param auto_key_detect: enable auto key detection
+
+    :type auto_key_count_limit: int
+    :param auto_key_count_limit: limit for auto key count, only effective when auto_key_detect is True
+
     """
 
-    def __init__(self, token_list=None, case_sensitive=False, include_keys=None, exclude_keys=None, chinese=None):
+    def __init__(self, token_list=None, case_sensitive=False, include_keys=None, exclude_keys=None, chinese=None, 
+                 auto_key_detect=None, auto_key_count_limit=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
         self.case_sensitive = case_sensitive
         self.chn = bool(chinese)
+        self.auto_key_detect = auto_key_detect
+        self.auto_key_count_limit = auto_key_count_limit
 
     def to_json(self):
         json_value = {"token": self.token_list, "caseSensitive": bool(self.case_sensitive)}
         if self.chn is not None:
             json_value["chn"] = bool(self.chn)
+
+        if self.auto_key_detect is not None:
+            json_value["auto_key_detect"] = bool(self.auto_key_detect)
+            if self.auto_key_detect and self.auto_key_count_limit is not None:
+                json_value["auto_key_count_limit"] = int(self.auto_key_count_limit)
 
         return json_value
 
@@ -209,6 +223,8 @@ class IndexLineConfig(object):
         self.token_list = json_value["token"]
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
         self.chn = bool(json_value["chn"]) if "chn" in json_value else None
+        self.auto_key_detect = bool(json_value["auto_key_detect"]) if "auto_key_detect" in json_value else None
+        self.auto_key_count_limit = int(json_value["auto_key_count_limit"]) if "auto_key_count_limit" in json_value else None
 
 
 class IndexConfig(object):
