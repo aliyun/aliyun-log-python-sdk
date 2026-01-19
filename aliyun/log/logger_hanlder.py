@@ -22,6 +22,7 @@ else:
 
 import json
 import re
+import os
 
 
 class LogFields(Enum):
@@ -427,6 +428,17 @@ class QueuedLogHandler(SimpleLogHandler):
         self.queue_size = queue_size or 40960  # default is 40960, about 10MB ~ 40MB
         self.batch_size = min(batch_size or 1024, self.queue_size)  # default is 1024 items
 
+        self.init_worker()
+
+        self.reg()
+
+
+    def reg(self):
+        if (hasattr(os, 'register_at_fork')):
+            os.register_at_fork(
+                after_in_child=self.__fork_after_in_child)
+
+    def __fork_after_in_child(self):
         self.init_worker()
 
     def init_worker(self):
