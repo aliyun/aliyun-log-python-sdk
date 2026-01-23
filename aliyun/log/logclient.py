@@ -80,6 +80,7 @@ from .multimodal_config_response import GetLogStoreMultimodalConfigurationRespon
     PutLogStoreMultimodalConfigurationResponse
 from .object_response import PutObjectResponse, GetObjectResponse
 from .util import require_python3, object_name_encode
+from .execute_query_response import ExecuteQueryResponse
 
 logger = logging.getLogger(__name__)
 
@@ -6643,3 +6644,44 @@ class LogClient(object):
             "GET", project_name, None, resource, {}, {}, respons_body_type="raw"
         )
         return GetObjectResponse(resp_header, resp)
+
+    def execute_query(self, project_name, query, type):
+        """Execute a query.
+        Unsuccessful operation will cause an LogException.
+
+        :type project_name: string
+        :param project_name: the project name
+
+        :type query: string
+        :param query: the query string (required)
+
+        :type type: string
+        :param type: the query type (required)
+
+        :type accept_encoding: string
+        :param accept_encoding: optional compression type for response (lz4/zstd), default is None (no compression preference)
+
+        :return: ExecuteQueryResponse
+
+        :raise: LogException
+        """
+        params = {}
+        body = {"query": query, "type": type}
+        body_str = six.b(json.dumps(body))
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'x-log-bodyrawsize': str(len(body_str))
+        }
+        
+        headers['Accept-Encoding'] = str(CompressType.default_compress_type())
+        
+        resource = "/executequery"
+        
+        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+        
+        # Decompress response body if compressed
+        raw_data = Compressor.decompress_response(header, resp)
+        exJson = self._loadJson(200, header, raw_data, requestId=Util.h_v_td(header, 'x-log-requestid', ''))
+        exJson = Util.convert_unicode_to_str(exJson)
+        return ExecuteQueryResponse(header, exJson)
