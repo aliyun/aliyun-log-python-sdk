@@ -6678,7 +6678,7 @@ class LogClient(object):
         
         resource = "/executequery"
         
-        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers)
+        (resp, header) = self._send("POST", project_name, body_str, resource, params, headers, "binary")
         
         # Decompress response body if compressed
         raw_data = Compressor.decompress_response(header, resp)
