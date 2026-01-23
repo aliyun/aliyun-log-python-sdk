@@ -51,6 +51,7 @@ from .metering_mode_response import GetLogStoreMeteringModeResponse, \
 from .multimodal_config_response import GetLogStoreMultimodalConfigurationResponse, \
     PutLogStoreMultimodalConfigurationResponse
 from .object_response import PutObjectResponse, GetObjectResponse
+from .execute_query_response import ExecuteQueryResponse
 
 from .store_view import StoreView, StoreViewStore
 from .store_view_response import CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, ListStoreViewsResponse, GetStoreViewResponse
