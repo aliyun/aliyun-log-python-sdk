@@ -1,5 +1,42 @@
 # Release History
 
+## 0.9.43 (2026-02-04)
+
+**Breaking Changes**
+
+- create_logstore dose not support custom telemetryType anymore except 'Metrics', 'None' or ''
+
+
+## 0.9.42 (2026-01-15)
+
+**Feature**
+
+- support auto_key_detect in index line config
+
+## 0.9.41 (2026-01-13)
+
+**Feature**
+
+- add extend_path in init.py to support namespace packages
+
+## 0.9.40 (2026-01-07)
+
+**Feature**
+
+- support multimodal configuration api
+
+## 0.9.39 (2025-12-30)
+
+**Feature**
+
+- support object api
+
+## 0.9.37 (2025-11-27)
+
+**Feature**
+
+- index config support scan_index
+
 ## 0.9.36 (2025-11-13)
 
 **Breaking Changes**

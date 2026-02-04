@@ -1527,7 +1527,7 @@ class LogClient(object):
 +                    }
 +                }
         :type telemetry_type: string
-        :param telemetry_type: the Telemetry type
+        :param telemetry_type: the Telemetry type, can only be one of 'Metrics', 'None' or '', any other value will be treated as ''
 
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
@@ -1544,6 +1544,9 @@ class LogClient(object):
         """
         if preserve_storage:
             ttl = 3650
+
+        if telemetry_type not in ['Metrics', 'None', '', 'Event']:
+            telemetry_type = ''
 
         params = {}
         resource = "/logstores"
@@ -1684,7 +1687,7 @@ class LogClient(object):
         :type mode: string
         :param mode: type of logstore, can be choose between lite and standard, default value standard
         :type telemetry_type: string
-        :param telemetry_type: the Telemetry type
+        :param telemetry_type: the Telemetry type, deprecated, telemetry type is ignored when updating logstore
 
         :type infrequent_access_ttl: int
         :param infrequent_access_ttl: infrequent access storage time
