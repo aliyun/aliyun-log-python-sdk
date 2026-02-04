@@ -6676,7 +6676,7 @@ class LogClient(object):
         
         headers['Accept-Encoding'] = str(CompressType.default_compress_type())
         
-        resource = "/executequery"
+        resource = "/execute-query"
         
         (resp, header) = self._send("POST", project_name, body_str, resource, params, headers, "binary")
         
