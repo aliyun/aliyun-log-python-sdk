@@ -254,7 +254,7 @@ def copy_logstore(from_client, from_project, from_logstore, to_logstore, to_proj
 
     if to_region_endpoint is not None and to_client is None:
         to_client = copy.deepcopy(from_client)
-        to_client.set_endpoint(to_region_endpoint)
+        to_client._setendpoint(to_region_endpoint)
     else:
         to_client = to_client or from_client
 
@@ -1043,7 +1043,7 @@ def copy_dashboard(from_client, from_project, from_dashboard_name, to_project=No
 
     if to_region_endpoint is not None and to_client is None:
         to_client = copy.deepcopy(from_client)
-        to_client.set_endpoint(to_region_endpoint)
+        to_client._setendpoint(to_region_endpoint)
     else:
         to_client = to_client or from_client
 
@@ -1118,7 +1118,7 @@ def copy_alert(from_client, from_project, from_alert_name, to_project=None, to_a
 
     if to_region_endpoint is not None and to_client is None:
         to_client = copy.deepcopy(from_client)
-        to_client.set_endpoint(to_region_endpoint)
+        to_client._setendpoint(to_region_endpoint)
     else:
         to_client = to_client or from_client
 
