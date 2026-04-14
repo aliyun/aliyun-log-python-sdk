@@ -73,8 +73,8 @@ class json_transformer(trans_comp_check_mdoe_base):
         :param depth: depth to scan, 1 means first layer, default is 100.
         :param include_node: keys to expand and include. regex string. using '|' for multiple ones. default is all.
         :param exclude_node: keys to skip, regex string. using '|' for multiple ones. default is nothing.
-        :param include_path: path to expand and include. regex string to match from begin. using '|' for multiple ones. default is all. e.g. r"data\.k1", all sub-keys in data.k1 will be included.
-        :param exclude_path: path to skip, regex string to match from begin. using '|' for multiple ones. default is nothing. . e.g. r"data\.k2", all sub-keys in data.k2 will be excluded.
+        :param include_path: path to expand and include. regex string to match from begin. using '|' for multiple ones. default is all. e.g. r"data\\.k1", all sub-keys in data.k1 will be included.
+        :param exclude_path: path to skip, regex string to match from begin. using '|' for multiple ones. default is nothing. . e.g. r"data\\.k2", all sub-keys in data.k2 will be excluded.
         :param fmt: during expansion, how to format the key name, there're several types or customized as described in FMT_MAP
         :param sep: sep used in formatting during expansion
         :param prefix: prefix used in formatting during expansion

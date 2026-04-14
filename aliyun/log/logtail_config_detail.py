@@ -125,7 +125,7 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
     :param log_path: the log file dir path
 
     :type file_pattern: string
-    :param file_pattern: the log file name pattern, e.g \*.LOG , access.log
+    :param file_pattern: the log file name pattern, e.g *.LOG , access.log
 
     :type time_format: string
     :param time_format: the time format of the logs, e.g.  "%Y-%m-%d %M:%H:%S"
@@ -134,7 +134,7 @@ class CommonRegLogConfigDetail(LogtailConfigDetail):
     :param log_begin_regex: the regular express to match the first line of a log
 
     :type log_parse_regex: string
-    :param log_parse_regex: the regular express to match a log, e.g (\d+-\d+\d+ \d+:\d+:\d+) (\S+) (.*)
+    :param log_parse_regex: the regular express to match a log, e.g (\\d+-\\d+\\d+ \\d+:\\d+:\\d+) (\\S+) (.*)
 
     :type reg_keys: string list
     :param reg_keys: the key for every captured value in log_parse_reg, e.g ["time", "level", "message"]
@@ -460,7 +460,7 @@ class PluginConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
@@ -539,7 +539,7 @@ class SeperatorFileConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
@@ -624,7 +624,7 @@ class SimpleFileConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
@@ -720,7 +720,7 @@ class FullRegFileConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
@@ -812,7 +812,7 @@ class JsonFileConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
@@ -898,7 +898,7 @@ class ApsaraFileConfigDetail(ConfigDetailBase):
     :param enableRawLog: if upload raw data in content, default is False
 
     :type topicFormat: string
-    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\w+).log" will extract each file as topic, default is "none"
+    :param topicFormat: "none", "group_topic" or regex to extract value from file path e.g. "/test/(\\w+).log" will extract each file as topic, default is "none"
 
     :type fileEncoding: string
     :param fileEncoding: "utf8" or "gbk" so far
