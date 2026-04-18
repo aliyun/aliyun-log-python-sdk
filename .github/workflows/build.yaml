@@ -66,6 +66,6 @@ jobs:
       run: |
         python tests/ci/run_stubtest.py
 
-    - name: Run public type smoke
+    - name: Check stub signatures match source
       run: |
-        python tests/ci/run_public_type_smoke.py
+        python tests/ci/check_stub_signatures.py
