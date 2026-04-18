@@ -45,28 +45,31 @@ config = LogHubConfig(
 
 worker = ConsumerWorker(build_processor, config)
 adaptor = ConsumerProcessorAdaptor(lambda shard_id, log_groups: True)
-json_processor_cls = DemoJsonProcessor
 """
 
 
 def main():
+    import shutil
     temp_dir = tempfile.mkdtemp(prefix='aliyun-public-type-smoke-')
-    smoke_file = os.path.join(temp_dir, 'consumer_public_smoke.py')
-    with open(smoke_file, 'w') as fh:
-        fh.write(SMOKE_SOURCE)
+    try:
+        smoke_file = os.path.join(temp_dir, 'consumer_public_smoke.py')
+        with open(smoke_file, 'w') as fh:
+            fh.write(SMOKE_SOURCE)
 
-    os.chdir(temp_dir)
-    cmd = [
-        sys.executable,
-        '-m',
-        'mypy',
-        '--python-version',
-        '3.12',
-        '--follow-imports=skip',
-        '--ignore-missing-imports',
-        smoke_file,
-    ]
-    subprocess.check_call(cmd)
+        os.chdir(temp_dir)
+        cmd = [
+            sys.executable,
+            '-m',
+            'mypy',
+            '--python-version',
+            '3.12',
+            '--follow-imports=skip',
+            '--ignore-missing-imports',
+            smoke_file,
+        ]
+        subprocess.check_call(cmd)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 if __name__ == '__main__':

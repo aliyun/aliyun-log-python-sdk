@@ -19,13 +19,11 @@ def _read_non_empty_lines(path):
 
 def main():
     modules = _read_non_empty_lines(MODULES_FILE)
+    allowlist_args = ['--allowlist', ALLOWLIST_FILE]
     # Run outside the checkout so stubtest validates the installed package payload.
     os.chdir(tempfile.gettempdir())
     for module in modules:
-        cmd = [sys.executable, '-m', 'mypy.stubtest', '--ignore-missing-stub']
-        if os.path.exists(ALLOWLIST_FILE):
-            cmd.extend(['--allowlist', ALLOWLIST_FILE])
-        cmd.append(module)
+        cmd = [sys.executable, '-m', 'mypy.stubtest', '--ignore-missing-stub'] + allowlist_args + [module]
         subprocess.check_call(cmd)
 
 

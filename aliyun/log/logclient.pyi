@@ -1,25 +1,39 @@
-# -*- coding: utf-8 -*-
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from .async_sql_response import AsyncSqlResponse
 from .common_response import CreateEntityResponse, DeleteEntityResponse, GetEntityResponse, ListEntityResponse, UpdateEntityResponse
+from .compress import CompressType, Compressor
 from .consumer_group_response import ConsumerGroupCheckPointResponse, ConsumerGroupHeartBeatResponse, ConsumerGroupUpdateCheckPointResponse, CreateConsumerGroupResponse, DeleteConsumerGroupResponse, ListConsumerGroupResponse, UpdateConsumerGroupResponse
-from .credentials import CredentialsProvider
+from .credentials import CredentialsProvider, StaticCredentialsProvider
+from .cursor_response import GetCursorResponse
+from .cursor_time_response import GetCursorTimeResponse
 from .delete_async_sql_request import DeleteAsyncSqlRequest
 from .deletelogsrequest import DeleteLogsRequest
+from .deletelogssresponse import DeleteLogsResponse
 from .etl_config_response import CreateEtlResponse, DeleteEtlResponse, GetEtlResponse, ListEtlsResponse, StartEtlResponse, StopEtlResponse, UpdateEtlResponse
 from .export_response import CreateExportResponse, DeleteExportResponse, GetExportResponse, ListExportResponse, UpdateExportResponse
 from .external_store_config import ExternalStoreConfigBase
 from .external_store_config_response import CreateExternalStoreResponse, DeleteExternalStoreResponse, GetExternalStoreResponse, ListExternalStoreResponse, UpdateExternalStoreResponse
+from .get_async_sql_request import GetAsyncSqlRequest
+from .getcontextlogsresponse import GetContextLogsResponse
 from .getdeletelogsstatusrequest import GetDeleteLogsStatusRequest
+from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
 from .gethistogramsrequest import GetHistogramsRequest
+from .gethistogramsresponse import GetHistogramsResponse
 from .getlogsrequest import GetLogsRequest, GetProjectLogsRequest
+from .getlogsresponse import GetLogsResponse
 from .index_config import IndexConfig
 from .index_config_response import CreateIndexResponse, DeleteIndexResponse, GetIndexResponse, UpdateIndexResponse
 from .ingestion_response import CreateIngestionResponse, DeleteIngestionResponse, GetIngestionResponse, ListIngestionResponse, RestartIngestionResponse, StartIngestionResponse, StopIngestionResponse, UpdateIngestionResponse
 from .job import Export
 from .listdeletelogsstasksrequest import ListDeleteLogsTasksRequest
+from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
 from .listlogstoresrequest import ListLogstoresRequest
+from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsrequest import ListTopicsRequest
-from .logclient_operator import ResourceUsageResponse
+from .listtopicsresponse import ListTopicsResponse
+from .logclient_operator import ResourceUsageResponse, copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, get_resource_usage, arrange_shard, transform_data, copy_dashboard, copy_alert
+from .logexception import LogException
+from .logresponse import LogResponse
 from .logstore_config_response import CreateLogStoreResponse, DeleteLogStoreResponse, GetLogStoreResponse, ListLogStoreResponse, UpdateLogStoreResponse
 from .logtail_config_detail import ApsaraFileConfigDetail, CommonRegLogConfigDetail, FullRegFileConfigDetail, JsonFileConfigDetail, LogtailConfigGenerator, SeperatorFileConfigDetail, SimpleFileConfigDetail, SyslogConfigDetail
 from .logtail_config_response import CreateLogtailConfigResponse, DeleteLogtailConfigResponse, GetLogtailConfigResponse, ListLogtailConfigResponse, UpdateLogtailConfigResponse
@@ -27,75 +41,33 @@ from .logtail_pipeline_config_detail import LogtailPipelineConfigDetail
 from .logtail_pipeline_config_response import CreateLogtailPipelineConfigResponse, DeleteLogtailPipelineConfigResponse, GetLogtailPipelineConfigResponse, ListLogtailPipelineConfigResponse, UpdateLogtailPipelineConfigResponse
 from .machine_group_detail import MachineGroupDetail
 from .machinegroup_response import ApplyConfigToMachineGroupResponse, CreateMachineGroupResponse, DeleteMachineGroupResponse, GetConfigAppliedMachineGroupsResponse, GetMachineGroupAppliedConfigResponse, GetMachineGroupResponse, ListMachineGroupResponse, ListMachinesResponse, RemoveConfigToMachineGroupResponse, UpdateMachineGroupResponse
-from .project_response import CreateProjectResponse, DeleteProjectResponse, GetProjectResponse, GetProjectTagsResponse, ListProjectResponse, UpdateProjectResponse
-from .putlogsrequest import PutLogsRequest
-from .rebuild_index_response import CreateRebuildIndexResponse, GetRebuildIndexResponse
-from .resource_params import Resource, ResourceRecord
-from .resource_response import CreateRecordResponse, CreateResourceResponse, DeleteRecordResponse, DeleteResourceResponse, GetRecordResponse, GetResourceResponse, ListRecordResponse, ListResourcesResponse, UpdateRecordResponse, UpdateResourceResponse, UpsertRecordResponse
-from .scheduled_sql import ScheduledSQL
-from .scheduled_sql_response import CreateScheduledSQLResponse, DeleteScheduledSQLResponse, GetScheduledSQLResponse, GetScheduledSqlJobInstanceResponse, ListScheduledSQLResponse, ListScheduledSqlJobInstancesResponse, ModifyScheduledSqlJobStateResponse, UpdateScheduledSQLResponse
-from .shard_response import DeleteShardResponse, ListShardResponse
-from .shipper_response import GetShipperTasksResponse, RetryShipperTasksResponse
-from .sql_instance_response import CreateSqlInstanceResponse, ListSqlInstanceResponse, UpdateSqlInstanceResponse
-from .store_view import StoreView
-from .submit_async_sql_request import SubmitAsyncSqlRequest
-from .substore_config_response import CreateSubStoreResponse, CreateMetricsStoreResponse, DeleteSubStoreResponse, GetSubStoreResponse, GetSubStoreTTLResponse, ListSubStoreResponse, UpdateSubStoreResponse, UpdateSubStoreTTLResponse
-from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
-from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
-
-
-from .store_view_response import ListStoreViewsResponse, CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse
-from .credentials import StaticCredentialsProvider
-from .scheduled_sql import ScheduledSQLConfiguration
-from .cursor_response import GetCursorResponse
-from .cursor_time_response import GetCursorTimeResponse
-from .gethistogramsresponse import GetHistogramsResponse
-from .deletelogssresponse import DeleteLogsResponse
-from .getlogsresponse import GetLogsResponse
-from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
-from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
-from .getcontextlogsresponse import GetContextLogsResponse
-from .index_config_response import *
-from .ingestion_response import *
-from .sql_instance_response import CreateSqlInstanceResponse, ListSqlInstanceResponse, UpdateSqlInstanceResponse
-from .listlogstoresresponse import ListLogstoresResponse
-from .listtopicsresponse import ListTopicsResponse
-from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
-    get_resource_usage, arrange_shard, transform_data, copy_dashboard, copy_alert
-from .logexception import LogException
-from .logstore_config_response import CreateLogStoreResponse, DeleteLogStoreResponse, GetLogStoreResponse, ListLogStoreResponse, UpdateLogStoreResponse
-from .substore_config_response import CreateSubStoreResponse, CreateMetricsStoreResponse, DeleteSubStoreResponse, GetSubStoreResponse, GetSubStoreTTLResponse, ListSubStoreResponse, UpdateSubStoreResponse, UpdateSubStoreTTLResponse
-from .logtail_config_response import CreateLogtailConfigResponse, DeleteLogtailConfigResponse, GetLogtailConfigResponse, UpdateLogtailConfigResponse, ListLogtailConfigResponse
-from .logtail_pipeline_config_response import CreateLogtailPipelineConfigResponse, DeleteLogtailPipelineConfigResponse, GetLogtailPipelineConfigResponse, UpdateLogtailPipelineConfigResponse, ListLogtailPipelineConfigResponse
-from .machinegroup_response import CreateMachineGroupResponse, DeleteMachineGroupResponse, GetMachineGroupResponse, UpdateMachineGroupResponse, ListMachineGroupResponse, ListMachinesResponse, ApplyConfigToMachineGroupResponse, RemoveConfigToMachineGroupResponse, GetMachineGroupAppliedConfigResponse, GetConfigAppliedMachineGroupsResponse
-from .rebuild_index_response import CreateRebuildIndexResponse, GetRebuildIndexResponse
-from .project_response import CreateProjectResponse, DeleteProjectResponse, GetProjectResponse, ListProjectResponse, UpdateProjectResponse, GetProjectTagsResponse
-from .pulllog_response import PullLogResponse
-from .putlogsresponse import PutLogsResponse
-from .shard_response import ListShardResponse, DeleteShardResponse
-from .shipper_response import CreateShipperResponse, UpdateShipperResponse, DeleteShipperResponse, GetShipperConfigResponse, ListShipperResponse, GetShipperTasksResponse, RetryShipperTasksResponse
-from .resource_response import CreateRecordResponse, CreateResourceResponse, DeleteRecordResponse, DeleteResourceResponse, GetRecordResponse, GetResourceResponse, ListRecordResponse, ListResourcesResponse, UpdateRecordResponse, UpdateResourceResponse, UpsertRecordResponse
-from .resource_params import Resource, ResourceRecord
-from .tag_response import GetResourceTagsResponse
-from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
-from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
-from .async_sql_response import AsyncSqlResponse
-from .get_async_sql_request import GetAsyncSqlRequest
-from .proto import LogGroupRaw as LogGroup
-from .external_store_config_response import CreateExternalStoreResponse, DeleteExternalStoreResponse, GetExternalStoreResponse, UpdateExternalStoreResponse, ListExternalStoreResponse
-from .logresponse import LogResponse
-from .etl_config_response import CreateEtlResponse, DeleteEtlResponse, GetEtlResponse, ListEtlsResponse, StartEtlResponse, StopEtlResponse, UpdateEtlResponse
-from .export_response import CreateExportResponse, DeleteExportResponse, GetExportResponse, ListExportResponse, UpdateExportResponse
-from .common_response import CreateEntityResponse, UpdateEntityResponse, DeleteEntityResponse, GetEntityResponse, ListEntityResponse
-from .compress import CompressType, Compressor
 from .metering_mode_response import GetLogStoreMeteringModeResponse, GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, UpdateMetricStoreMeteringModeResponse
 from .multimodal_config_response import GetLogStoreMultimodalConfigurationResponse, PutLogStoreMultimodalConfigurationResponse
 from .object_response import PutObjectResponse, GetObjectResponse
-from .version import API_VERSION
+from .project_response import CreateProjectResponse, DeleteProjectResponse, GetProjectResponse, GetProjectTagsResponse, ListProjectResponse, UpdateProjectResponse
+from .proto import LogGroupRaw as LogGroup
+from .pulllog_response import PullLogResponse
+from .putlogsrequest import PutLogsRequest
+from .putlogsresponse import PutLogsResponse
+from .rebuild_index_response import CreateRebuildIndexResponse, GetRebuildIndexResponse
+from .resource_params import Resource, ResourceRecord
+from .resource_response import CreateRecordResponse, CreateResourceResponse, DeleteRecordResponse, DeleteResourceResponse, GetRecordResponse, GetResourceResponse, ListRecordResponse, ListResourcesResponse, UpdateRecordResponse, UpdateResourceResponse, UpsertRecordResponse
+from .scheduled_sql import ScheduledSQL, ScheduledSQLConfiguration
+from .scheduled_sql_response import CreateScheduledSQLResponse, DeleteScheduledSQLResponse, GetScheduledSQLResponse, GetScheduledSqlJobInstanceResponse, ListScheduledSQLResponse, ListScheduledSqlJobInstancesResponse, ModifyScheduledSqlJobStateResponse, UpdateScheduledSQLResponse
+from .shard_response import DeleteShardResponse, ListShardResponse
+from .shipper_response import CreateShipperResponse, DeleteShipperResponse, GetShipperConfigResponse, GetShipperTasksResponse, ListShipperResponse, RetryShipperTasksResponse, UpdateShipperResponse
+from .sql_instance_response import CreateSqlInstanceResponse, ListSqlInstanceResponse, UpdateSqlInstanceResponse
+from .store_view import StoreView
+from .store_view_response import CreateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse, ListStoreViewsResponse, UpdateStoreViewResponse
+from .substore_config_response import CreateMetricsStoreResponse, CreateSubStoreResponse, DeleteSubStoreResponse, GetSubStoreResponse, GetSubStoreTTLResponse, ListSubStoreResponse, UpdateSubStoreResponse, UpdateSubStoreTTLResponse
+from .submit_async_sql_request import SubmitAsyncSqlRequest
+from .tag_response import GetResourceTagsResponse
+from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
+from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
 
 class LogClient(object):
     __version__: str
-    Version = __version__
+    Version: str
     def __init__(self, endpoint: str, accessKeyId: Optional[str] = ..., accessKey: Optional[str] = ..., securityToken: Optional[str] = ..., source: Optional[str] = ..., auth_version: str = ..., region: str = ..., credentials_provider: Optional[CredentialsProvider] = ...) -> None: ...
     def set_credentials_auto_refresher(self, refresher: Callable[[], Tuple[str, str, Optional[str]]]) -> None: ...
     @property
