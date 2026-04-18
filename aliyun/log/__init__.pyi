@@ -6,45 +6,45 @@ from .getlogsrequest import GetLogsRequest as GetLogsRequest, GetProjectLogsRequ
 from .index_config import IndexConfig as IndexConfig, IndexKeyConfig as IndexKeyConfig, IndexLineConfig as IndexLineConfig
 from .listtopicsrequest import ListTopicsRequest as ListTopicsRequest
 from .listlogstoresrequest import ListLogstoresRequest as ListLogstoresRequest
-from .logtail_config_detail import *
-from .logtail_pipeline_config_detail import *
-from .logtail_pipeline_config_response import *
+from .logtail_config_detail import PluginConfigDetail as PluginConfigDetail, SeperatorFileConfigDetail as SeperatorFileConfigDetail, SimpleFileConfigDetail as SimpleFileConfigDetail, FullRegFileConfigDetail as FullRegFileConfigDetail, JsonFileConfigDetail as JsonFileConfigDetail, ApsaraFileConfigDetail as ApsaraFileConfigDetail, SyslogConfigDetail as SyslogConfigDetail, LogtailConfigGenerator as LogtailConfigGenerator, CommonRegLogConfigDetail as CommonRegLogConfigDetail
+from .logtail_pipeline_config_detail import LogtailPipelineConfigDetail as LogtailPipelineConfigDetail
+from .logtail_pipeline_config_response import CreateLogtailPipelineConfigResponse as CreateLogtailPipelineConfigResponse, DeleteLogtailPipelineConfigResponse as DeleteLogtailPipelineConfigResponse, GetLogtailPipelineConfigResponse as GetLogtailPipelineConfigResponse, UpdateLogtailPipelineConfigResponse as UpdateLogtailPipelineConfigResponse, ListLogtailPipelineConfigResponse as ListLogtailPipelineConfigResponse
 from .machine_group_detail import MachineGroupDetail as MachineGroupDetail
 from .putlogsrequest import PutLogsRequest as PutLogsRequest
 from .shipper_config import ShipperTask as ShipperTask, OssShipperConfig as OssShipperConfig, OdpsShipperConfig as OdpsShipperConfig
 from .version import __version__ as __version__
 from .logitem import LogItem as LogItem
-from .consumer_group_request import *
-from .external_store_config import *
+from .consumer_group_request import CreateConsumerGroupRequest as CreateConsumerGroupRequest, ConsumerGroupGetCheckPointRequest as ConsumerGroupGetCheckPointRequest, ConsumerGroupHeartBeatRequest as ConsumerGroupHeartBeatRequest, ConsumerGroupUpdateCheckPointRequest as ConsumerGroupUpdateCheckPointRequest
+from .external_store_config import ExternalStoreConfig as ExternalStoreConfig, ExternalStoreConfigBase as ExternalStoreConfigBase, ExternalStoreCsvConfig as ExternalStoreCsvConfig, ExternalStoreOssConfig as ExternalStoreOssConfig
 
 # response class
-from .consumer_group_response import *
+from .consumer_group_response import ConsumerGroupEntity as ConsumerGroupEntity, ConsumerGroupCheckPointResponse as ConsumerGroupCheckPointResponse, ConsumerGroupHeartBeatResponse as ConsumerGroupHeartBeatResponse, ConsumerGroupUpdateCheckPointResponse as ConsumerGroupUpdateCheckPointResponse, CreateConsumerGroupResponse as CreateConsumerGroupResponse, DeleteConsumerGroupResponse as DeleteConsumerGroupResponse, ListConsumerGroupResponse as ListConsumerGroupResponse, UpdateConsumerGroupResponse as UpdateConsumerGroupResponse
 from .cursor_response import GetCursorResponse as GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse as GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse as GetHistogramsResponse
 from .getlogsresponse import GetLogsResponse as GetLogsResponse
 from .histogram import Histogram as Histogram
 from .queriedlog import QueriedLog as QueriedLog
-from .index_config_response import *
+from .index_config_response import CreateIndexResponse as CreateIndexResponse, UpdateIndexResponse as UpdateIndexResponse, DeleteIndexResponse as DeleteIndexResponse, GetIndexResponse as GetIndexResponse
 from .listlogstoresresponse import ListLogstoresResponse as ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse as ListTopicsResponse
 from .logresponse import LogResponse as LogResponse
-from .logtail_config_response import *
-from .machinegroup_response import *
-from .project_response import *
+from .logtail_config_response import CreateLogtailConfigResponse as CreateLogtailConfigResponse, DeleteLogtailConfigResponse as DeleteLogtailConfigResponse, GetLogtailConfigResponse as GetLogtailConfigResponse, UpdateLogtailConfigResponse as UpdateLogtailConfigResponse, ListLogtailConfigResponse as ListLogtailConfigResponse
+from .machinegroup_response import CreateMachineGroupResponse as CreateMachineGroupResponse, DeleteMachineGroupResponse as DeleteMachineGroupResponse, GetMachineGroupResponse as GetMachineGroupResponse, UpdateMachineGroupResponse as UpdateMachineGroupResponse, ListMachineGroupResponse as ListMachineGroupResponse, ListMachinesResponse as ListMachinesResponse, ApplyConfigToMachineGroupResponse as ApplyConfigToMachineGroupResponse, RemoveConfigToMachineGroupResponse as RemoveConfigToMachineGroupResponse, GetMachineGroupAppliedConfigResponse as GetMachineGroupAppliedConfigResponse, GetConfigAppliedMachineGroupsResponse as GetConfigAppliedMachineGroupsResponse
+from .project_response import CreateProjectResponse as CreateProjectResponse, UpdateProjectResponse as UpdateProjectResponse, DeleteProjectResponse as DeleteProjectResponse, GetProjectResponse as GetProjectResponse, ListProjectResponse as ListProjectResponse, GetProjectTagsResponse as GetProjectTagsResponse
 from .pulllog_response import PullLogResponse as PullLogResponse
-from .shard_response import *
-from .shipper_response import *
-from .common_response import *
-from .external_store_config_response import *
+from .shard_response import ListShardResponse as ListShardResponse, DeleteShardResponse as DeleteShardResponse
+from .shipper_response import CreateShipperResponse as CreateShipperResponse, UpdateShipperResponse as UpdateShipperResponse, DeleteShipperResponse as DeleteShipperResponse, GetShipperConfigResponse as GetShipperConfigResponse, ListShipperResponse as ListShipperResponse, GetShipperTasksResponse as GetShipperTasksResponse, RetryShipperTasksResponse as RetryShipperTasksResponse
+from .common_response import CreateEntityResponse as CreateEntityResponse, UpdateEntityResponse as UpdateEntityResponse, DeleteEntityResponse as DeleteEntityResponse, GetEntityResponse as GetEntityResponse, ListEntityResponse as ListEntityResponse
+from .external_store_config_response import CreateExternalStoreResponse as CreateExternalStoreResponse, DeleteExternalStoreResponse as DeleteExternalStoreResponse, GetExternalStoreResponse as GetExternalStoreResponse, UpdateExternalStoreResponse as UpdateExternalStoreResponse, ListExternalStoreResponse as ListExternalStoreResponse
 from .proto import LogGroupRaw as LogGroup
-from .rebuild_index_response import *
-from .deletelogsrequest import *
-from .deletelogssresponse import *
-from .getdeletelogsstatusrequest import *
-from .getdeletelogsstatusresponse import *
-from .listdeletelogsstasksrequest import *
-from .listdeletelogsstasksresponse import *
+from .rebuild_index_response import CreateRebuildIndexResponse as CreateRebuildIndexResponse, GetRebuildIndexResponse as GetRebuildIndexResponse
+from .deletelogsrequest import DeleteLogsRequest as DeleteLogsRequest
+from .deletelogssresponse import DeleteLogsResponse as DeleteLogsResponse
+from .getdeletelogsstatusrequest import GetDeleteLogsStatusRequest as GetDeleteLogsStatusRequest
+from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse as GetDeleteLogsStatusResponse
+from .listdeletelogsstasksrequest import ListDeleteLogsTasksRequest as ListDeleteLogsTasksRequest
+from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse as ListDeleteLogsTasksResponse
 # logging handler
 from .logger_hanlder import SimpleLogHandler as SimpleLogHandler, QueuedLogHandler as QueuedLogHandler, LogFields as LogFields, UwsgiQueuedLogHandler as UwsgiQueuedLogHandler
 from .metering_mode_response import GetLogStoreMeteringModeResponse as GetLogStoreMeteringModeResponse, \

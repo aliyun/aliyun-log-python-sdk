@@ -44,21 +44,9 @@ from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
 from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
 
 
-import json
-import requests
-import six
-import time
-from datetime import datetime
-import logging
-import re
 from .store_view_response import ListStoreViewsResponse, CreateStoreViewResponse, UpdateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse
 from .credentials import StaticCredentialsProvider
 from .scheduled_sql import ScheduledSQLConfiguration
-from .scheduled_sql_response import *
-from itertools import cycle
-from .consumer_group_request import *
-from .consumer_group_response import *
-from .getlogsrequest import *
 from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
@@ -69,72 +57,44 @@ from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
 from .getcontextlogsresponse import GetContextLogsResponse
 from .index_config_response import *
 from .ingestion_response import *
-from .sql_instance_response import *
+from .sql_instance_response import CreateSqlInstanceResponse, ListSqlInstanceResponse, UpdateSqlInstanceResponse
 from .listlogstoresresponse import ListLogstoresResponse
 from .listtopicsresponse import ListTopicsResponse
 from .logclient_operator import copy_project, list_more, query_more, pull_log_dump, copy_logstore, copy_data, \
     get_resource_usage, arrange_shard, transform_data, copy_dashboard, copy_alert
 from .logexception import LogException
-from .logstore_config_response import *
-from .substore_config_response import *
-from .logtail_config_response import *
-from .logtail_pipeline_config_response import *
-from .machinegroup_response import *
-from .rebuild_index_response import *
-from .project_response import *
+from .logstore_config_response import CreateLogStoreResponse, DeleteLogStoreResponse, GetLogStoreResponse, ListLogStoreResponse, UpdateLogStoreResponse
+from .substore_config_response import CreateSubStoreResponse, CreateMetricsStoreResponse, DeleteSubStoreResponse, GetSubStoreResponse, GetSubStoreTTLResponse, ListSubStoreResponse, UpdateSubStoreResponse, UpdateSubStoreTTLResponse
+from .logtail_config_response import CreateLogtailConfigResponse, DeleteLogtailConfigResponse, GetLogtailConfigResponse, UpdateLogtailConfigResponse, ListLogtailConfigResponse
+from .logtail_pipeline_config_response import CreateLogtailPipelineConfigResponse, DeleteLogtailPipelineConfigResponse, GetLogtailPipelineConfigResponse, UpdateLogtailPipelineConfigResponse, ListLogtailPipelineConfigResponse
+from .machinegroup_response import CreateMachineGroupResponse, DeleteMachineGroupResponse, GetMachineGroupResponse, UpdateMachineGroupResponse, ListMachineGroupResponse, ListMachinesResponse, ApplyConfigToMachineGroupResponse, RemoveConfigToMachineGroupResponse, GetMachineGroupAppliedConfigResponse, GetConfigAppliedMachineGroupsResponse
+from .rebuild_index_response import CreateRebuildIndexResponse, GetRebuildIndexResponse
+from .project_response import CreateProjectResponse, DeleteProjectResponse, GetProjectResponse, ListProjectResponse, UpdateProjectResponse, GetProjectTagsResponse
 from .pulllog_response import PullLogResponse
 from .putlogsresponse import PutLogsResponse
-from .shard_response import *
-from .shipper_response import *
-from .resource_response import *
-from .resource_params import *
+from .shard_response import ListShardResponse, DeleteShardResponse
+from .shipper_response import CreateShipperResponse, UpdateShipperResponse, DeleteShipperResponse, GetShipperConfigResponse, ListShipperResponse, GetShipperTasksResponse, RetryShipperTasksResponse
+from .resource_response import CreateRecordResponse, CreateResourceResponse, DeleteRecordResponse, DeleteResourceResponse, GetRecordResponse, GetResourceResponse, ListRecordResponse, ListResourcesResponse, UpdateRecordResponse, UpdateResourceResponse, UpsertRecordResponse
+from .resource_params import Resource, ResourceRecord
 from .tag_response import GetResourceTagsResponse
-from .topostore_response import *
-from .topostore_params import *
-from .util import base64_encodestring as b64e
-from .util import base64_encodestring as e64, base64_decodestring as d64, Util
-from .version import API_VERSION, USER_AGENT
-if six.PY3:
-    from .async_sql_response import AsyncSqlResponse
-    from .get_async_sql_request import GetAsyncSqlRequest
+from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
+from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
+from .async_sql_response import AsyncSqlResponse
+from .get_async_sql_request import GetAsyncSqlRequest
 from .proto import LogGroupRaw as LogGroup
-from .external_store_config_response import *
-import struct
+from .external_store_config_response import CreateExternalStoreResponse, DeleteExternalStoreResponse, GetExternalStoreResponse, UpdateExternalStoreResponse, ListExternalStoreResponse
 from .logresponse import LogResponse
-from copy import copy
-from .pluralize import pluralize
-from .etl_config_response import *
-from .export_response import *
-from .common_response import *
-from .auth import *
+from .etl_config_response import CreateEtlResponse, DeleteEtlResponse, GetEtlResponse, ListEtlsResponse, StartEtlResponse, StopEtlResponse, UpdateEtlResponse
+from .export_response import CreateExportResponse, DeleteExportResponse, GetExportResponse, ListExportResponse, UpdateExportResponse
+from .common_response import CreateEntityResponse, UpdateEntityResponse, DeleteEntityResponse, GetEntityResponse, ListEntityResponse
 from .compress import CompressType, Compressor
-from .metering_mode_response import GetLogStoreMeteringModeResponse, \
-    GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, \
-        UpdateMetricStoreMeteringModeResponse
-from .multimodal_config_response import GetLogStoreMultimodalConfigurationResponse, \
-    PutLogStoreMultimodalConfigurationResponse
+from .metering_mode_response import GetLogStoreMeteringModeResponse, GetMetricStoreMeteringModeResponse, UpdateLogStoreMeteringModeResponse, UpdateMetricStoreMeteringModeResponse
+from .multimodal_config_response import GetLogStoreMultimodalConfigurationResponse, PutLogStoreMultimodalConfigurationResponse
 from .object_response import PutObjectResponse, GetObjectResponse
-from .util import require_python3, object_name_encode
-logger = logging.getLogger(__name__)
-if six.PY3:
-    xrange = range
-CONNECTION_TIME_OUT = 120
-MAX_LIST_PAGING_SIZE = 500
-MAX_GET_LOG_PAGING_SIZE = 100
-DEFAULT_QUERY_RETRY_COUNT = 5
-DEFAULT_QUERY_RETRY_INTERVAL = 0.5
-DEFAULT_REFRESH_RETRY_COUNT = 5
-DEFAULT_REFRESH_RETRY_DELAY = 30
-MIN_REFRESH_INTERVAL = 300
-_auth_code_set = {'Unauthorized', 'InvalidAccessKeyId.NotFound', 'SecurityToken.Expired', 'InvalidAccessKeyId', 'SecurityTokenExpired'}
-_auth_partial_code_set = {'Unauthorized', 'InvalidAccessKeyId', 'SecurityToken'}
-
-def _is_auth_err(status, code, msg): ...
-
-def _apply_cn_keys_patch(): ...
+from .version import API_VERSION
 
 class LogClient(object):
-    __version__ = API_VERSION
+    __version__: str
     Version = __version__
     def __init__(self, endpoint: str, accessKeyId: Optional[str] = ..., accessKey: Optional[str] = ..., securityToken: Optional[str] = ..., source: Optional[str] = ..., auth_version: str = ..., region: str = ..., credentials_provider: Optional[CredentialsProvider] = ...) -> None: ...
     def set_credentials_auto_refresher(self, refresher: Callable[[], Tuple[str, str, Optional[str]]]) -> None: ...
@@ -158,11 +118,8 @@ class LogClient(object):
     def get_log_all_v2(self, project: str, logstore: str, from_time: Union[int, str], to_time: Union[int, str], topic: Optional[str] = ..., query: Optional[str] = ..., reverse: bool = ..., offset: int = ..., power_sql: bool = ..., scan: bool = ..., forward: bool = ...) -> Iterator[GetLogsResponse]: ...
     def execute_logstore_sql(self, project: str, logstore: str, from_time: Union[int, str], to_time: Union[int, str], sql: str, power_sql: bool) -> GetLogsResponse: ...
     def execute_project_sql(self, project: str, sql: str, power_sql: bool) -> GetLogsResponse: ...
-    @require_python3
     def submit_async_sql(self, request: SubmitAsyncSqlRequest) -> AsyncSqlResponse: ...
-    @require_python3
     def get_async_sql(self, request: GetAsyncSqlRequest) -> AsyncSqlResponse: ...
-    @require_python3
     def delete_async_sql(self, request: DeleteAsyncSqlRequest) -> AsyncSqlResponse: ...
     def get_context_logs(self, project: str, logstore: str, pack_id: str, pack_meta: str, back_lines: int, forward_lines: int) -> GetContextLogsResponse: ...
     def get_project_logs(self, request: GetProjectLogsRequest) -> GetLogsResponse: ...
