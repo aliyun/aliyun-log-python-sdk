@@ -79,6 +79,12 @@ packages = [
     'aliyun.log._proto_py2',
 ]
 
+package_data = {
+    'aliyun': ['*.pyi', 'py.typed'],
+    'aliyun.log': ['*.pyi', 'py.typed'],
+    'aliyun.log.consumer': ['*.pyi', 'py.typed'],
+}
+
 version = ''
 with open('aliyun/log/version.py', 'r') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
@@ -112,6 +118,7 @@ setup(
     url='https://github.com/aliyun/aliyun-log-python-sdk',
     install_requires=requirements,
     packages=packages,
+    package_data=package_data,
     classifiers=classifiers,
     long_description=long_description,
     extras_require = {
