@@ -23,7 +23,7 @@ def main():
     os.chdir(tempfile.gettempdir())
     cmd = (
         [sys.executable, '-m', 'mypy.stubtest', '--ignore-missing-stub',
-         '--allowlist', ALLOWLIST_FILE]
+         '--ignore-unused-allowlist', '--allowlist', ALLOWLIST_FILE]
         + modules
     )
     subprocess.check_call(cmd)
