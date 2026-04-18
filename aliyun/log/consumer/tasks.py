@@ -214,8 +214,7 @@ def consumer_fetch_task(loghub_client_adapter, preprocessor, shard_id, cursor, m
 
     for retry_times in range(3):
         try:
-            # type: PullLogResponse
-            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query, processor=consume_processor)
+            response = loghub_client_adapter.pull_logs(shard_id, cursor, count=max_fetch_log_group_size, end_cursor=end_cursor, query=query, processor=consume_processor)  # type: PullLogResponse
             data = preprocessor(response)
             next_cursor = response.get_next_cursor()
             raw_size = response.get_raw_size()

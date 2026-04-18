@@ -1,0 +1,9 @@
+# -*- coding: utf-8 -*-
+from typing import Any, Dict
+
+from .logresponse import LogResponse
+
+class GetCursorTimeResponse(LogResponse):
+    def __init__(self, resp: Dict[str, Any], header: Dict[str, Any]) -> None: ...
+    def get_cursor_time(self) -> int: ...
+    def log_print(self) -> None: ...

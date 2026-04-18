@@ -1,0 +1,20 @@
+# stubtest allowlist
+# Private methods that are intentionally omitted from stubs
+aliyun\.log\.logclient\.LogClient\._replace_credentials
+aliyun\.log\.logclient\.LogClient\._setendpoint
+aliyun\.log\.logclient\.LogClient\._loadJson
+aliyun\.log\.logclient\.LogClient\._get_http_sender
+aliyun\.log\.logclient\.LogClient\._getHttpResponse
+aliyun\.log\.logclient\.LogClient\._sendRequest
+aliyun\.log\.logclient\.LogClient\._send
+aliyun\.log\.logclient\.LogClient\._get_unicode
+aliyun\.log\.logclient\.LogClient\._get_binary
+aliyun\.log\.logclient\.LogClient\._get_cursor_as_int
+aliyun\.log\.logclient\._is_auth_err
+aliyun\.log\.logclient\._apply_cn_keys_patch
+# Internal helpers in pulllog_response
+aliyun\.log\.pulllog_response\.PullLogResponse\._parse_loggroup_list
+aliyun\.log\.pulllog_response\.PullLogResponse\._transfer_to_json
+aliyun\.log\.pulllog_response\.PullLogResponse\._b2u
+# Internal method in getlogsresponse
+aliyun\.log\.getlogsresponse\.GetLogsResponse\._from_v1_resp

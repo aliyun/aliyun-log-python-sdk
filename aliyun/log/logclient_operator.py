@@ -25,8 +25,8 @@ MAX_INIT_SHARD_COUNT = 100
 logger = logging.getLogger(__name__)
 
 
-# type: (LogClient, LogClient, str, str, bool, bool, bool) -> None
 def copy_project(from_client, to_client, from_project, to_project, copy_machine_group=False, copy_dashboards=False, copy_alerts=False):
+    # type: (LogClient, LogClient, str, str, bool, bool, bool) -> None
     """
     copy project, logstore, machine group and logtail config to target project,
     will create the target project if it doesn't exist
@@ -1141,5 +1141,4 @@ def copy_alert(from_client, from_project, from_alert_name, to_project=None, to_a
             pass
         else:
             raise
-
 

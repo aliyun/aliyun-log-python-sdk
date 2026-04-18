@@ -1,0 +1,2 @@
+recursive-include aliyun *.pyi py.typed
+recursive-include aliyun/log *.pyi py.typed
