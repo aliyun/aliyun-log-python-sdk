@@ -59,7 +59,7 @@ class ExternalStoreConfig(ExternalStoreConfigBase):
         json_value["storeType"] = self.storeType
         param = {}
         param["vpc-id"] = self.vpcId
-        param["instance-id"] = self.instanceId
+        param["instance-id"] = self.instanceId or ""
         param["host"] = self.host
         param["port"] = self.port
         param["username"] = self.username
