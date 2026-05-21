@@ -7,15 +7,22 @@ require a real SLS endpoint.
 
 ```
 tests/
-  _helpers/         shared env + mock infrastructure
-  unit/             no network, runs in CI on every push
-  e2e/              hits a real SLS endpoint, gated by env vars
-  samples/          runnable example scripts (NOT collected by pytest)
-  examples/         topic-grouped example scripts (NOT collected by pytest)
+  _helpers/                shared env + mock infrastructure
+  unit/                    no network, runs in CI on every push
+  e2e/                     hits a real SLS endpoint, gated by env vars
+  ci/build-test/           Python 2/3 compile + protobuf smoke check (py2-build.yaml)
+  sample*.py               runnable sample scripts (NOT collected by pytest)
+  consumer_group_examples/ topic-grouped example scripts
+  export_examples/
+  jupyter_magic_test/
+  rebuild_index_examples/
+  es_migration/            migration_manager example scripts
 ```
 
-`pyproject.toml` sets `testpaths = ["tests/unit", "tests/e2e"]`, so anything
-outside those two roots is ignored by `pytest` collection.
+`pyproject.toml` sets `testpaths = ["tests/unit", "tests/e2e"]`, so the sample
+and example scripts are ignored by `pytest` collection. They are run directly
+(e.g. via `tox.ini` for `tests/sample.py` and `tests/sample_consumer.py`) or
+referenced from the README and tutorial docs.
 
 ## Running unit tests
 
