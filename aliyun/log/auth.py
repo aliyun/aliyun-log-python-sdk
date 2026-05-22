@@ -165,20 +165,14 @@ class AuthV4(AuthBase):
 
     @staticmethod
     def _v4_uri_encode(raw_text):
-        raw_text = str(raw_text)
-
-        res = ''
-        for b in raw_text:
-            if isinstance(b, int):
-                c = chr(b)
-            else:
-                c = b
-            if ('A' <= c <= 'Z') or ('a' <= c <= 'z') \
-                    or ('0' <= c <= '9') or c in ['_', '-', '~', '.']:
-                res += c
-            else:
-                res += "%{0:02X}".format(ord(c))
-        return res
+        # RFC 3986 unreserved = A-Z a-z 0-9 _ . - ~; everything else
+        # percent-encoded as UTF-8 bytes. Py2 urllib.quote omits ~ from
+        # its default safe set, so we pass safe='~' for parity with py3.
+        if isinstance(raw_text, bytes):
+            data = raw_text
+        else:
+            data = u'{0}'.format(raw_text).encode('utf-8')
+        return urlquote(data, safe='~')
 
     @staticmethod
     def build_sign_key(key, region, date, string_to_sign):

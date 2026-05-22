@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Unit tests for AuthV4 signing and URI encoding.
-
-The unicode-encoding case is marked xfail because the existing
-``AuthV4._v4_uri_encode`` implementation encodes non-ASCII characters using
-``%{ord(c):02X}`` (raw codepoint) rather than UTF-8 byte sequences. Fixing
-that would change SDK behavior, which is out of scope for the test split.
-"""
-
-import pytest
+"""Unit tests for AuthV4 signing and URI encoding."""
 
 from aliyun.log.auth import AuthV4
 from aliyun.log.credentials import StaticCredentialsProvider
@@ -18,7 +10,6 @@ def test_v4_uri_encode_ascii():
         == '123abc%21%40%23%24%25%5E%26%2A%28%29-%3D_%2B%20~%7C%5C%2F'
 
 
-@pytest.mark.xfail(reason="pre-existing: _v4_uri_encode emits codepoint hex, not UTF-8 bytes", strict=False)
 def test_v4_uri_encode_unicode():
     assert AuthV4._v4_uri_encode(u'!@#$%^&*()=-+ ~./_[()]%20你好\0đ❤\U0001f613') \
         == '%21%40%23%24%25%5E%26%2A%28%29%3D-%2B%20~.%2F_%5B%28%29%5D%2520%E4%BD%A0%E5%A5%BD%00%C4%91%E2%9D%A4%F0%9F%98%93'
