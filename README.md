@@ -2,10 +2,21 @@
 
 [![Documentation Status](https://readthedocs.org/projects/aliyun-log-python-sdk/badge/?version=latest)](http://aliyun-log-python-sdk.readthedocs.io/?badge=latest)
 [![Pypi Version](https://badge.fury.io/py/aliyun-log-python-sdk.svg)](https://badge.fury.io/py/aliyun-log-python-sdk)
-[![Travis CI](https://travis-ci.org/aliyun/aliyun-log-python-sdk.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-log-python-sdk)
+[![Py3 build/test](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/build.yaml/badge.svg?branch=master)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/build.yaml)
+[![Legacy Python build/test](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/py2-build.yaml/badge.svg?branch=master)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/py2-build.yaml)
 [![Development Status](https://img.shields.io/pypi/status/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![Python version](https://img.shields.io/pypi/pyversions/aliyun-log-python-sdk.svg)](https://pypi.python.org/pypi/aliyun-log-python-sdk/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/LICENSE)
+
+### CI status
+
+| Python | Status |
+|---|---|
+| 2.7 | [![py 2.7](https://img.shields.io/github/actions/workflow/status/aliyun/aliyun-log-python-sdk/py2-build.yaml?branch=master&label=py%202.7)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/py2-build.yaml?query=branch%3Amaster) |
+| 3.6 | [![py 3.6](https://img.shields.io/github/actions/workflow/status/aliyun/aliyun-log-python-sdk/py2-build.yaml?branch=master&label=py%203.6)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/py2-build.yaml?query=branch%3Amaster) |
+| 3.7 | [![py 3.7](https://img.shields.io/github/actions/workflow/status/aliyun/aliyun-log-python-sdk/py2-build.yaml?branch=master&label=py%203.7)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/py2-build.yaml?query=branch%3Amaster) |
+| 3.8 | [![py 3.8](https://img.shields.io/github/actions/workflow/status/aliyun/aliyun-log-python-sdk/build.yaml?branch=master&label=py%203.8)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/build.yaml?query=branch%3Amaster) |
+| 3.12 | [![py 3.12](https://img.shields.io/github/actions/workflow/status/aliyun/aliyun-log-python-sdk/build.yaml?branch=master&label=py%203.12)](https://github.com/aliyun/aliyun-log-python-sdk/actions/workflows/build.yaml?query=branch%3Amaster) |
 
 [中文版README](https://github.com/aliyun/aliyun-log-python-sdk/blob/master/README_CN.md)
 
