@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/e2e"]
+markers = [
+  "e2e: requires real SLS endpoint (LOG_TEST_* env vars)",
+]
+filterwarnings = ["ignore::DeprecationWarning"]

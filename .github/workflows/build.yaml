@@ -5,25 +5,27 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  build-test:
+    name: build-test (py ${{ matrix.python-version }})
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.12]
+        python-version: ["3.8", "3.10", "3.12"]
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
- 
+      uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -40,17 +42,75 @@ jobs:
     - name: Run build tests
       run: |
         python -m pip install pytest
-        python -m pytest tests/ci/build-test/
+        python -m pytest tests/ci/build-test/ -v
+
+  unit-test:
+    name: unit-test (py ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.12"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies (with test extras)
+      run: |
+        python -V
+        python -m pip install --upgrade pip setuptools
+        python -m pip install -e .[test]
+
+    - name: Run unit tests (no network)
+      run: |
+        python -m pytest tests/unit/ -v
+
+  e2e-test:
+    # Manual-only: hits a real SLS endpoint via LOG_TEST_* secrets.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies (with test extras)
+      run: |
+        python -V
+        python -m pip install --upgrade pip setuptools
+        python -m pip install -e .[test]
+
+    - name: Run e2e tests
+      env:
+        LOG_TEST_ENDPOINT: ${{ secrets.LOG_TEST_ENDPOINT }}
+        LOG_TEST_ACCESS_KEY_ID: ${{ secrets.LOG_TEST_ACCESS_KEY_ID }}
+        LOG_TEST_ACCESS_KEY_SECRET: ${{ secrets.LOG_TEST_ACCESS_KEY_SECRET }}
+        LOG_TEST_PROJECT: ${{ secrets.LOG_TEST_PROJECT }}
+        LOG_TEST_LOGSTORE: ${{ secrets.LOG_TEST_LOGSTORE }}
+      run: |
+        python -m pytest tests/e2e/ -v -m e2e
 
   typing:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 

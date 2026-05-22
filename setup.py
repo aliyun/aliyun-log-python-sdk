@@ -51,6 +51,8 @@ requirements_py2 = [
 
 test_requirements = [
     'pytest',
+    'pytest-mock',
+    'responses',
     'lz4',
     'virtualenv',
     'zstandard'
