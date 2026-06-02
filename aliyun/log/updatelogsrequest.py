@@ -15,8 +15,8 @@ class UpdateLogsRequest(LogRequest):
                  query=None, rowId=None, updateMode=None, data=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
-        self.fromTime = parse_timestamp(fromTime)
-        self.toTime = parse_timestamp(toTime)
+        self.fromTime = parse_timestamp(fromTime) if fromTime is not None else fromTime
+        self.toTime = parse_timestamp(toTime) if toTime is not None else toTime
         self.query = query
         self.rowId = rowId
         self.updateMode = updateMode
@@ -50,7 +50,7 @@ class UpdateLogsRequest(LogRequest):
         :type fromTime: int/string
         :param fromTime: begin time
         """
-        self.fromTime = parse_timestamp(fromTime)
+        self.fromTime = parse_timestamp(fromTime) if fromTime is not None else fromTime
 
     def get_to(self):
         """Get end time.
@@ -65,7 +65,7 @@ class UpdateLogsRequest(LogRequest):
         :type toTime: int/string
         :param toTime: end time
         """
-        self.toTime = parse_timestamp(toTime)
+        self.toTime = parse_timestamp(toTime) if toTime is not None else toTime
 
     def get_query(self):
         """Get user defined query.

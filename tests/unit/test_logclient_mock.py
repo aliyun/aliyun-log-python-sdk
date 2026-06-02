@@ -179,6 +179,41 @@ def test_delete_logs_v2_posts_backend_body_and_parses_affected_rows():
         "rowId": "row-1",
     }
     assert resp.get_affected_rows() == 3
+    assert resp.affected_rows == 3
+
+
+@responses.activate
+def test_delete_logs_v2_accepts_documented_keyword_arguments():
+    """DeleteLogsV2 supports the documented project/logstore/rowid call shape."""
+    client = make_client(endpoint="cn-mock.example.com", project="mock-proj")
+
+    captured = {}
+
+    def request_callback(request):
+        captured["body"] = json.loads(request.body.decode("utf-8"))
+        return (
+            200,
+            {
+                "x-log-requestid": "mock-request-id",
+                "Content-Type": "application/json",
+            },
+            json.dumps({"affected_rows": 1}),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        re.compile(r"https?://mock-proj\.cn-mock\.example\.com.*?/logstores/store-1/deletelogs$"),
+        callback=request_callback,
+    )
+
+    resp = client.delete_logs_v2(
+        project="mock-proj",
+        logstore="store-1",
+        rowid="row-1",
+    )
+
+    assert captured["body"] == {"rowId": "row-1"}
+    assert resp.affected_rows == 1
 
 
 @responses.activate
@@ -230,6 +265,88 @@ def test_update_logs_posts_backend_body_and_parses_affected_rows():
 
 
 @responses.activate
+def test_update_logs_accepts_documented_log_item_keyword_arguments():
+    """UpdateLogs supports the documented LogItem keyword call shape."""
+    client = make_client(endpoint="cn-mock.example.com", project="mock-proj")
+
+    captured = {}
+
+    def request_callback(request):
+        captured["body"] = json.loads(request.body.decode("utf-8"))
+        return (
+            200,
+            {
+                "x-log-requestid": "mock-request-id",
+                "Content-Type": "application/json",
+            },
+            json.dumps({"affected_rows": 1}),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        re.compile(r"https?://mock-proj\.cn-mock\.example\.com.*?/logstores/store-1/updatelogs$"),
+        callback=request_callback,
+    )
+
+    resp = client.update_logs(
+        project="mock-proj",
+        logstore="store-1",
+        rowid="row-1",
+        log_item=LogItem(contents=[("status", "REFUNDED")]),
+    )
+
+    assert captured["body"] == {
+        "rowId": "row-1",
+        "data": '{"status": "REFUNDED"}',
+    }
+    assert resp.affected_rows == 1
+
+
+@responses.activate
+def test_update_logs_accepts_documented_dict_keyword_arguments():
+    """UpdateLogs supports dict log_item and row_id aliases from the docs."""
+    client = make_client(endpoint="cn-mock.example.com", project="mock-proj")
+
+    captured = {}
+
+    def request_callback(request):
+        captured["body"] = json.loads(request.body.decode("utf-8"))
+        return (
+            200,
+            {
+                "x-log-requestid": "mock-request-id",
+                "Content-Type": "application/json",
+            },
+            json.dumps({"affected_rows": 2}),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        re.compile(r"https?://mock-proj\.cn-mock\.example\.com.*?/logstores/store-1/updatelogs$"),
+        callback=request_callback,
+    )
+
+    resp = client.update_logs(
+        project="mock-proj",
+        logstore="store-1",
+        from_time=1700000000,
+        to_time=1700000100,
+        query='order_id: 12345 and status: "PENDING"',
+        row_id="",
+        log_item={"status": "REFUNDED", "refund_at": "2026-05-25T10:00:00Z"},
+    )
+
+    assert captured["body"] == {
+        "from": 1700000000,
+        "to": 1700000100,
+        "query": 'order_id: 12345 and status: "PENDING"',
+        "rowId": "",
+        "data": '{"status": "REFUNDED", "refund_at": "2026-05-25T10:00:00Z"}',
+    }
+    assert resp.affected_rows == 2
+
+
+@responses.activate
 def test_update_logs_error_response_raises_logexception():
     """A server error envelope from UpdateLogs is converted to LogException."""
     client = make_client(endpoint="cn-mock.example.com", project="mock-proj")
@@ -252,3 +369,38 @@ def test_update_logs_error_response_raises_logexception():
     with pytest.raises(LogException) as excinfo:
         client.update_logs(req)
     assert excinfo.value.get_error_code() == "ParameterInvalid"
+
+
+@responses.activate
+def test_create_logstore_supports_enable_modify():
+    """CreateLogstore includes enableModify when requested by docs."""
+    client = make_client(endpoint="cn-mock.example.com", project="mock-proj")
+
+    captured = {}
+
+    def request_callback(request):
+        captured["body"] = json.loads(request.body.decode("utf-8"))
+        return (
+            200,
+            {
+                "x-log-requestid": "mock-request-id",
+                "Content-Type": "application/json",
+            },
+            "{}",
+        )
+
+    responses.add_callback(
+        responses.POST,
+        re.compile(r"https?://mock-proj\.cn-mock\.example\.com.*?/logstores$"),
+        callback=request_callback,
+    )
+
+    client.create_logstore(
+        project_name="mock-proj",
+        logstore_name="store-1",
+        ttl=30,
+        shard_count=1,
+        enable_modify=True,
+    )
+
+    assert captured["body"]["enableModify"] is True
