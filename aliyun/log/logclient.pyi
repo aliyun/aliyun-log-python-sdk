@@ -9,6 +9,8 @@ from .cursor_time_response import GetCursorTimeResponse
 from .delete_async_sql_request import DeleteAsyncSqlRequest
 from .deletelogsrequest import DeleteLogsRequest
 from .deletelogssresponse import DeleteLogsResponse
+from .deletelogsv2request import DeleteLogsV2Request
+from .deletelogsv2response import DeleteLogsV2Response
 from .etl_config_response import CreateEtlResponse, DeleteEtlResponse, GetEtlResponse, ListEtlsResponse, StartEtlResponse, StopEtlResponse, UpdateEtlResponse
 from .export_response import CreateExportResponse, DeleteExportResponse, GetExportResponse, ListExportResponse, UpdateExportResponse
 from .external_store_config import ExternalStoreConfigBase
@@ -61,6 +63,8 @@ from .store_view import StoreView
 from .store_view_response import CreateStoreViewResponse, DeleteStoreViewResponse, GetStoreViewResponse, ListStoreViewsResponse, UpdateStoreViewResponse
 from .substore_config_response import CreateMetricsStoreResponse, CreateSubStoreResponse, DeleteSubStoreResponse, GetSubStoreResponse, GetSubStoreTTLResponse, ListSubStoreResponse, UpdateSubStoreResponse, UpdateSubStoreTTLResponse
 from .submit_async_sql_request import SubmitAsyncSqlRequest
+from .updatelogsrequest import UpdateLogsRequest
+from .updatelogsresponse import UpdateLogsResponse
 from .tag_response import GetResourceTagsResponse
 from .topostore_params import Topostore, TopostoreNode, TopostoreRelation
 from .topostore_response import CreateTopostoreNodeResponse, CreateTopostoreRelationResponse, CreateTopostoreResponse, DeleteTopostoreNodeResponse, DeleteTopostoreRelationResponse, DeleteTopostoreResponse, GetTopostoreNodeResponse, GetTopostoreRelationResponse, GetTopostoreResponse, ListTopostoreNodesResponse, ListTopostoreRelationsResponse, ListTopostoresResponse, UpdateTopostoreNodeResponse, UpdateTopostoreRelationResponse, UpdateTopostoreResponse, UpsertTopostoreNodeResponse, UpsertTopostoreRelationResponse
@@ -82,6 +86,8 @@ class LogClient(object):
     def list_topics(self, request: ListTopicsRequest) -> ListTopicsResponse: ...
     def get_histograms(self, request: GetHistogramsRequest) -> GetHistogramsResponse: ...
     def delete_logs(self, request: DeleteLogsRequest) -> DeleteLogsResponse: ...
+    def delete_logs_v2(self, request: DeleteLogsV2Request) -> DeleteLogsV2Response: ...
+    def update_logs(self, request: UpdateLogsRequest) -> UpdateLogsResponse: ...
     def get_delete_logs_status(self, request: GetDeleteLogsStatusRequest) -> GetDeleteLogsStatusResponse: ...
     def list_delete_logs_tasks(self, request: ListDeleteLogsTasksRequest) -> ListDeleteLogsTasksResponse: ...
     def get_log(self, project: str, logstore: str, from_time: Union[int, str], to_time: Union[int, str], topic: Optional[str] = ..., query: Optional[str] = ..., reverse: bool = ..., offset: int = ..., size: int = ..., power_sql: bool = ..., scan: bool = ..., forward: bool = ..., accurate_query: bool = ..., from_time_nano_part: int = ..., to_time_nano_part: int = ...) -> GetLogsResponse: ...

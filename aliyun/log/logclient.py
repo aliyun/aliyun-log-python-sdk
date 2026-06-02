@@ -26,6 +26,8 @@ from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
 from .deletelogssresponse import DeleteLogsResponse
+from .deletelogsv2response import DeleteLogsV2Response
+from .updatelogsresponse import UpdateLogsResponse
 from .getlogsresponse import GetLogsResponse
 from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
 from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
@@ -597,6 +599,74 @@ class LogClient(object):
         headers["x-log-bodyrawsize"] = str(len(body_str))
         (resp, header) = self._send("POST", project, body_str, resource, None, headers)
         return DeleteLogsResponse(resp, header)
+
+    def delete_logs_v2(self, request):
+        """Delete logs from a logstore.
+
+        Unsuccessful operation will cause an LogException.
+
+        :type request: DeleteLogsV2Request
+        :param request: the DeleteLogsV2Request request parameters class.
+
+        :return: DeleteLogsV2Response
+
+        :raise: LogException
+        """
+        body = {
+            'from': request.get_from(),
+            'to': request.get_to()
+        }
+        if request.get_query() is not None:
+            body['query'] = request.get_query()
+        if request.get_row_id() is not None:
+            body['rowId'] = request.get_row_id()
+
+        body_str = six.b(json.dumps(body))
+        headers = {
+            'Content-Type': 'application/json',
+            'x-log-bodyrawsize': str(len(body_str))
+        }
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/deletelogs"
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers)
+        return DeleteLogsV2Response(resp, header)
+
+    def update_logs(self, request):
+        """Update logs in a logstore.
+
+        Unsuccessful operation will cause an LogException.
+
+        :type request: UpdateLogsRequest
+        :param request: the UpdateLogsRequest request parameters class.
+
+        :return: UpdateLogsResponse
+
+        :raise: LogException
+        """
+        body = {
+            'from': request.get_from(),
+            'to': request.get_to()
+        }
+        if request.get_query() is not None:
+            body['query'] = request.get_query()
+        if request.get_row_id() is not None:
+            body['rowId'] = request.get_row_id()
+        if request.get_update_mode() is not None:
+            body['updateMode'] = request.get_update_mode()
+        if request.get_data() is not None:
+            body['data'] = request.get_data()
+
+        body_str = six.b(json.dumps(body))
+        headers = {
+            'Content-Type': 'application/json',
+            'x-log-bodyrawsize': str(len(body_str))
+        }
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/updatelogs"
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers)
+        return UpdateLogsResponse(resp, header)
 
     def get_delete_logs_status(self, request):
         """ Get get_delete_logs_status of requested logstore from log service.
