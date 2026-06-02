@@ -39,6 +39,10 @@ from .proto import LogGroupRaw as LogGroup
 from .rebuild_index_response import *
 from .deletelogsrequest import *
 from .deletelogssresponse import *
+from .deletelogsv2request import *
+from .deletelogsv2response import *
+from .updatelogsrequest import *
+from .updatelogsresponse import *
 from .getdeletelogsstatusrequest import *
 from .getdeletelogsstatusresponse import *
 from .listdeletelogsstasksrequest import *

@@ -39,6 +39,10 @@ from .proto import LogGroupRaw as LogGroup
 from .rebuild_index_response import CreateRebuildIndexResponse as CreateRebuildIndexResponse, GetRebuildIndexResponse as GetRebuildIndexResponse
 from .deletelogsrequest import DeleteLogsRequest as DeleteLogsRequest
 from .deletelogssresponse import DeleteLogsResponse as DeleteLogsResponse
+from .deletelogsv2request import DeleteLogsV2Request as DeleteLogsV2Request
+from .deletelogsv2response import DeleteLogsV2Response as DeleteLogsV2Response
+from .updatelogsrequest import UpdateLogsRequest as UpdateLogsRequest
+from .updatelogsresponse import UpdateLogsResponse as UpdateLogsResponse
 from .getdeletelogsstatusrequest import GetDeleteLogsStatusRequest as GetDeleteLogsStatusRequest
 from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse as GetDeleteLogsStatusResponse
 from .listdeletelogsstasksrequest import ListDeleteLogsTasksRequest as ListDeleteLogsTasksRequest

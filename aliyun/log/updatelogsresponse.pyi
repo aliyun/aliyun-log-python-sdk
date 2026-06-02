@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+from typing import Any, Dict
+
+from .logresponse import LogResponse
+
+class UpdateLogsResponse(LogResponse):
+    affected_rows: int
+    def __init__(self, resp: Dict[str, Any], header: Dict[str, Any]) -> None: ...
+    def get_affected_rows(self) -> int: ...
+    def log_print(self) -> None: ...

@@ -26,6 +26,10 @@ from .cursor_response import GetCursorResponse
 from .cursor_time_response import GetCursorTimeResponse
 from .gethistogramsresponse import GetHistogramsResponse
 from .deletelogssresponse import DeleteLogsResponse
+from .deletelogsv2request import DeleteLogsV2Request
+from .deletelogsv2response import DeleteLogsV2Response
+from .updatelogsrequest import UpdateLogsRequest
+from .updatelogsresponse import UpdateLogsResponse
 from .getlogsresponse import GetLogsResponse
 from .getdeletelogsstatusresponse import GetDeleteLogsStatusResponse
 from .listdeletelogsstasksresponse import ListDeleteLogsTasksResponse
@@ -597,6 +601,153 @@ class LogClient(object):
         headers["x-log-bodyrawsize"] = str(len(body_str))
         (resp, header) = self._send("POST", project, body_str, resource, None, headers)
         return DeleteLogsResponse(resp, header)
+
+    @staticmethod
+    def _log_item_to_update_data(log_item):
+        if log_item is None:
+            return None
+        if hasattr(log_item, 'get_contents'):
+            return json.dumps(dict(log_item.get_contents()))
+        if isinstance(log_item, dict):
+            return json.dumps(log_item)
+        return log_item
+
+    @staticmethod
+    def _choose_row_id(rowid, row_id):
+        return rowid if rowid is not None else row_id
+
+    def delete_logs_v2(self, request=None, project=None, logstore=None, from_time=None, to_time=None,
+                       query=None, rowid=None, row_id=None):
+        """Delete logs from a logstore.
+
+        Unsuccessful operation will cause an LogException.
+
+        :type request: DeleteLogsV2Request
+        :param request: the DeleteLogsV2Request request parameters class.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin time
+
+        :type to_time: int/string
+        :param to_time: the end time
+
+        :type query: string
+        :param query: user defined query
+
+        :type rowid: string
+        :param rowid: row id of the log
+
+        :type row_id: string
+        :param row_id: row id of the log
+
+        :return: DeleteLogsV2Response
+
+        :raise: LogException
+        """
+        if request is None:
+            request = DeleteLogsV2Request(project, logstore, from_time, to_time, query,
+                                          self._choose_row_id(rowid, row_id))
+
+        body = {}
+        if request.get_from() is not None:
+            body['from'] = request.get_from()
+        if request.get_to() is not None:
+            body['to'] = request.get_to()
+        if request.get_query() is not None:
+            body['query'] = request.get_query()
+        if request.get_row_id() is not None:
+            body['rowId'] = request.get_row_id()
+
+        body_str = six.b(json.dumps(body))
+        headers = {
+            'Content-Type': 'application/json',
+            'x-log-bodyrawsize': str(len(body_str))
+        }
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/deletelogs"
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers)
+        return DeleteLogsV2Response(resp, header)
+
+    def update_logs(self, request=None, project=None, logstore=None, from_time=None, to_time=None,
+                    query=None, rowid=None, row_id=None, log_item=None, update_mode=None, data=None):
+        """Update logs in a logstore.
+
+        Unsuccessful operation will cause an LogException.
+
+        :type request: UpdateLogsRequest
+        :param request: the UpdateLogsRequest request parameters class.
+
+        :type project: string
+        :param project: project name
+
+        :type logstore: string
+        :param logstore: logstore name
+
+        :type from_time: int/string
+        :param from_time: the begin time
+
+        :type to_time: int/string
+        :param to_time: the end time
+
+        :type query: string
+        :param query: user defined query
+
+        :type rowid: string
+        :param rowid: row id of the log
+
+        :type row_id: string
+        :param row_id: row id of the log
+
+        :type log_item: LogItem/dict
+        :param log_item: fields to update
+
+        :type update_mode: string
+        :param update_mode: update mode
+
+        :type data: string
+        :param data: update data
+
+        :return: UpdateLogsResponse
+
+        :raise: LogException
+        """
+        if request is None:
+            if data is None:
+                data = self._log_item_to_update_data(log_item)
+            request = UpdateLogsRequest(project, logstore, from_time, to_time, query,
+                                        self._choose_row_id(rowid, row_id), update_mode, data)
+
+        body = {}
+        if request.get_from() is not None:
+            body['from'] = request.get_from()
+        if request.get_to() is not None:
+            body['to'] = request.get_to()
+        if request.get_query() is not None:
+            body['query'] = request.get_query()
+        if request.get_row_id() is not None:
+            body['rowId'] = request.get_row_id()
+        if request.get_update_mode() is not None:
+            body['updateMode'] = request.get_update_mode()
+        if request.get_data() is not None:
+            body['data'] = request.get_data()
+
+        body_str = six.b(json.dumps(body))
+        headers = {
+            'Content-Type': 'application/json',
+            'x-log-bodyrawsize': str(len(body_str))
+        }
+        logstore = request.get_logstore()
+        project = request.get_project()
+        resource = "/logstores/" + logstore + "/updatelogs"
+        (resp, header) = self._send("POST", project, body_str, resource, None, headers)
+        return UpdateLogsResponse(resp, header)
 
     def get_delete_logs_status(self, request):
         """ Get get_delete_logs_status of requested logstore from log service.
@@ -1482,7 +1633,8 @@ class LogClient(object):
                         telemetry_type='',
                         hot_ttl=-1,
                         mode = None,
-                        infrequent_access_ttl=-1
+                        infrequent_access_ttl=-1,
+                        enable_modify=False
                         ):
         """ create log store
         Unsuccessful operation will cause an LogException.
@@ -1538,6 +1690,9 @@ class LogClient(object):
         :type hot_ttl: int
         :param hot_ttl: the life cycle of hot storage,[0-hot_ttl]is hot storage, (hot_ttl-ttl] is warm storage, if hot_ttl=-1, it means [0-ttl]is all hot storage
 
+        :type enable_modify: bool
+        :param enable_modify: enable log modification and deletion, default is False
+
         :return: CreateLogStoreResponse
 
         :raise: LogException
@@ -1558,6 +1713,8 @@ class LogClient(object):
                 "appendMeta": append_meta,
                 "telemetryType": telemetry_type
                 }
+        if enable_modify:
+            body["enableModify"] = enable_modify
         if hot_ttl !=-1:
             body['hot_ttl'] = hot_ttl
         if encrypt_conf != None:
