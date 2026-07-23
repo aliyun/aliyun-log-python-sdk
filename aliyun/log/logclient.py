@@ -792,7 +792,7 @@ class LogClient(object):
         return ListDeleteLogsTasksResponse(resp, header)
 
     def get_log(self, project, logstore, from_time, to_time, topic=None,
-                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0):
+                query=None, reverse=False, offset=0, size=100, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0, session=None):
         """ Get logs from log service.
         will retry DEFAULT_QUERY_RETRY_COUNT when incomplete.
         Unsuccessful operation will cause an LogException.
@@ -843,6 +843,9 @@ class LogClient(object):
         :type to_time_nano_part: int
         :param to_time_nano_part: nano part of query end time
 
+        :type session: string
+        :param session: session parameter of the query, could be None. If set, it overrides the session implied by scan mode
+
         :return: GetLogsResponse
 
         :raise: LogException
@@ -865,7 +868,8 @@ class LogClient(object):
                 reverse=reverse,
                 accurate_query=accurate_query,
                 from_time_nano_part=from_time_nano_part,
-                to_time_nano_part=to_time_nano_part
+                to_time_nano_part=to_time_nano_part,
+                session=session
             )
 
         ret = None
@@ -888,6 +892,8 @@ class LogClient(object):
             if scan:
                 params['session'] = 'mode=scan'
                 params['forward'] = 'true' if forward else 'false'
+            if session:
+                params['session'] = session
             
             if self._get_logs_v2_enabled:
                 resource = "/logstores/" + logstore + "/logs"
@@ -946,9 +952,10 @@ class LogClient(object):
         accurate_query = request.get_accurate_query()
         from_time_nano_part = request.get_from_time_nano_part()
         to_time_nano_part = request.get_to_time_nano_part()
+        session = request.get_session()
 
         return self.get_log(project, logstore, from_time, to_time, topic,
-                            query, reverse, offset, size, power_sql, scan, forward, accurate_query, from_time_nano_part, to_time_nano_part)
+                            query, reverse, offset, size, power_sql, scan, forward, accurate_query, from_time_nano_part, to_time_nano_part, session)
 
     def get_log_all(self, project, logstore, from_time, to_time, topic=None,
                     query=None, reverse=False, offset=0, power_sql=False, accurate_query=True):

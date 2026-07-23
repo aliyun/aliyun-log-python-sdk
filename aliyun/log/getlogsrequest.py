@@ -54,10 +54,13 @@ class GetLogsRequest(LogRequest):
 
     :type to_time_nano_part: int
     :param to_time_nano_part: nano part of query end time
+
+    :type session: string
+    :param session: session parameter of the query, could be None
     """
 
     def __init__(self, project=None, logstore=None, fromTime=None, toTime=None, topic=None,
-                 query=None, line=100, offset=0, reverse=False, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0):
+                 query=None, line=100, offset=0, reverse=False, power_sql=False, scan=False, forward=True, accurate_query=True, from_time_nano_part=0, to_time_nano_part=0, session=None):
         LogRequest.__init__(self, project)
         self.logstore = logstore
         self.fromTime = fromTime
@@ -73,6 +76,7 @@ class GetLogsRequest(LogRequest):
         self.accurate_query = accurate_query
         self.from_time_nano_part = from_time_nano_part
         self.to_time_nano_part = to_time_nano_part
+        self.session = session
 
     def get_logstore(self):
         """ Get logstore name
@@ -283,6 +287,21 @@ class GetLogsRequest(LogRequest):
         :param to_time_nano_part: to_time_nano_part part of query end time
         """
         self.to_time_nano_part = to_time_nano_part
+
+    def get_session(self):
+        """ Get request session
+
+        :return: string, session
+        """
+        return self.session
+
+    def set_session(self, session):
+        """ Set request session
+
+        :type session: string
+        :param session: session parameter of the query
+        """
+        self.session = session
 
 class GetProjectLogsRequest(LogRequest):
     """ The request used to get logs by a query from log cross multiple logstores.
