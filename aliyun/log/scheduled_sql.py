@@ -63,6 +63,8 @@ class ScheduledSQLConfiguration:
         self.__fromTime = 0
         self.__toTime = 0
         self.__dataFormat = "log2log"
+        self.__forceComplete = False
+        self.__usingExactlyOnce = False
         self.__parameters = ScheduledSQLParameters()
 
     def configurationToDict(self):
@@ -84,9 +86,23 @@ class ScheduledSQLConfiguration:
             "toTime": self.__toTime,
             "dataFormat": self.__dataFormat,
             "parameters": self.__parameters if isinstance(self.__parameters, dict) else self.__parameters.toDict(
-                self.__dataFormat)
+                self.__dataFormat),
+            "forceComplete": self.__forceComplete,
+            "usingExactlyOnce": self.__usingExactlyOnce
         }
         return config
+
+    def getForceComplete(self):
+        return self.__forceComplete
+
+    def setForceComplete(self, forceComplete):
+        self.__forceComplete = forceComplete
+
+    def getUsingExactlyOnce(self):
+        return self.__usingExactlyOnce
+
+    def setUsingExactlyOnce(self, usingExactlyOnce):
+        self.__usingExactlyOnce = usingExactlyOnce
 
     def getSourceLogstore(self):
         return self.__sourceLogstore
