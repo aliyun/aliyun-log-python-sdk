@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.51 (2026-09-07)
+
+**Breaking Changes**
+
+- create_metric_store now creates MetricStore V2 by using the labels type for __labels__ in the default prom substore.
+
 ## 0.9.43 (2026-02-04)
 
 **Breaking Changes**

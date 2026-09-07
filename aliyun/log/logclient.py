@@ -4917,7 +4917,7 @@ class LogClient(object):
         time.sleep(1)
         keys = [
             {'name': '__name__', 'type': 'text'},
-            {'name': '__labels__', 'type': 'text'},
+            {'name': '__labels__', 'type': 'labels'},
             {'name': '__time_nano__', 'type': 'long'},
             {'name': '__value__', 'type': 'double'},
         ]
