@@ -4,7 +4,7 @@
 
 **Feature**
 
-- support auto_text_keys in index creation, updates and responses, with auto_key_detect defaulting to False and auto_text_keys to an empty list. The field list remains effective when auto discovery is disabled. Updates replace the full auto_text_keys list; preserve existing fields when changing other index settings.
+- support auto_text_keys in index creation, updates and responses, with auto_key_detect defaulting to False and auto_text_keys to an empty list. Disabling auto discovery retains the existing auto_text_keys unless explicitly cleared. Updates replace the full auto_text_keys list; preserve existing fields when changing other index settings.
 
 - keys in auto_text_keys are treated as automatically discovered text field indexes with statistical analysis enabled; tokenization and case sensitivity inherit the full-text index settings.
 

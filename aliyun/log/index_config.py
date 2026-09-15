@@ -199,12 +199,10 @@ class IndexLineConfig(object):
     :param auto_text_keys: keys treated as automatically discovered text field indexes,
         defaults to an empty list. Statistical analysis is enabled for these field
         indexes. Tokenization and case sensitivity inherit the full-text (line)
-        index settings. Fields remain effective when auto_key_detect is False;
-        disabling detection only stops new fields from being discovered.
-        Updates replace the complete list; preserve existing fields when changing
-        other index settings.
-        To use a numeric type or custom settings, move the field to explicit keys
-        and remove it from this list.
+        index settings. Disabling auto_key_detect stops discovery of new fields;
+        existing auto_text_keys remain effective and are retained unless explicitly
+        cleared. Updates replace the complete list; preserve existing fields when
+        changing other index settings.
 
     """
 
