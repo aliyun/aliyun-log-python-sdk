@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.52 (2026-09-15)
+
+**Feature**
+
+- support auto_text_keys in index creation, updates and responses, with auto_key_detect defaulting to False and auto_text_keys to an empty list. Updates replace the full auto_text_keys list; preserve existing fields when changing other index settings.
+
 ## 0.9.51 (2026-09-07)
 
 **Breaking Changes**

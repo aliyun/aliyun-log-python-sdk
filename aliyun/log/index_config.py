@@ -190,15 +190,22 @@ class IndexLineConfig(object):
     :param chinese: enable Chinese words segmentation
 
     :type auto_key_detect: bool
-    :param auto_key_detect: enable auto key detection
+    :param auto_key_detect: enable auto key detection, defaults to False
 
     :type auto_key_count_limit: int
     :param auto_key_count_limit: limit for auto key count, only effective when auto_key_detect is True
 
+    :type auto_text_keys: string list
+    :param auto_text_keys: automatically discovered text fields, defaults to an empty list.
+        Fields reuse the line token and case-sensitivity settings. Updates replace the
+        complete list; preserve existing fields when changing other index settings.
+        To use a numeric type or custom settings, move the field to explicit keys
+        and remove it from this list.
+
     """
 
     def __init__(self, token_list=None, case_sensitive=False, include_keys=None, exclude_keys=None, chinese=None, 
-                 auto_key_detect=None, auto_key_count_limit=None):
+                 auto_key_detect=False, auto_key_count_limit=None, auto_text_keys=None):
         if token_list is None:
             token_list = []
         self.token_list = token_list
@@ -206,9 +213,11 @@ class IndexLineConfig(object):
         self.chn = bool(chinese)
         self.auto_key_detect = auto_key_detect
         self.auto_key_count_limit = auto_key_count_limit
+        self.auto_text_keys = list(auto_text_keys) if auto_text_keys is not None else []
 
     def to_json(self):
-        json_value = {"token": self.token_list, "caseSensitive": bool(self.case_sensitive)}
+        json_value = {"token": self.token_list, "caseSensitive": bool(self.case_sensitive),
+                      "auto_text_keys": self.auto_text_keys}
         if self.chn is not None:
             json_value["chn"] = bool(self.chn)
 
@@ -223,7 +232,8 @@ class IndexLineConfig(object):
         self.token_list = json_value["token"]
         self.case_sensitive = bool(json_value.get("caseSensitive", False))
         self.chn = bool(json_value["chn"]) if "chn" in json_value else None
-        self.auto_key_detect = bool(json_value["auto_key_detect"]) if "auto_key_detect" in json_value else None
+        self.auto_key_detect = bool(json_value.get("auto_key_detect", False))
+        self.auto_text_keys = list(json_value.get("auto_text_keys") or [])
         self.auto_key_count_limit = int(json_value["auto_key_count_limit"]) if "auto_key_count_limit" in json_value else None
 
 
