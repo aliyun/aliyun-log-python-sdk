@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from aliyun.log import IndexConfig, IndexLineConfig, LogClient
 
 
@@ -17,12 +19,13 @@ def test_auto_index_defaults_and_legacy_response():
     assert line.auto_text_keys == []
 
 
-def test_auto_index_create_get_update(monkeypatch):
+@pytest.mark.parametrize('auto_key_detect', [True, False])
+def test_auto_index_create_get_update(monkeypatch, auto_key_detect):
     client = LogClient('cn-mock.example.com', 'mock-id', 'mock-key')
     requests = []
     returned_line = {
         'token': [',', ' '], 'caseSensitive': False,
-        'auto_key_detect': True, 'auto_text_keys': ['host', 'request_id', 'latency'],
+        'auto_key_detect': auto_key_detect, 'auto_text_keys': ['host', 'request_id', 'latency'],
     }
 
     def send(method, project, body, resource, params, headers):
@@ -34,11 +37,11 @@ def test_auto_index_create_get_update(monkeypatch):
         return {}, {}
 
     monkeypatch.setattr(client, '_send', send)
-    line = IndexLineConfig(token_list=[',', ' '], auto_key_detect=True,
+    line = IndexLineConfig(token_list=[',', ' '], auto_key_detect=auto_key_detect,
                            auto_text_keys=['host', 'request_id', 'latency'])
     client.create_index('my-project', 'my-logs', IndexConfig(line_config=line))
     config = client.get_index_config('my-project', 'my-logs').get_index_config()
-    assert config.line_config.auto_key_detect is True
+    assert config.line_config.auto_key_detect is auto_key_detect
     assert config.line_config.auto_text_keys == returned_line['auto_text_keys']
     config.line_config.case_sensitive = True
     client.update_index('my-project', 'my-logs', config)
@@ -48,7 +51,7 @@ def test_auto_index_create_get_update(monkeypatch):
     client.update_index('my-project', 'my-logs', config)
 
     assert [method for method, body in requests] == ['POST', 'PUT', 'PUT', 'PUT']
-    assert requests[0][1]['line']['auto_key_detect'] is True
+    assert all(body['line']['auto_key_detect'] is auto_key_detect for method, body in requests)
     assert requests[0][1]['line']['auto_text_keys'] == returned_line['auto_text_keys']
     assert requests[1][1]['line']['auto_text_keys'] == returned_line['auto_text_keys']
     assert requests[1][1]['line']['caseSensitive'] is True

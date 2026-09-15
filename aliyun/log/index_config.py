@@ -197,6 +197,8 @@ class IndexLineConfig(object):
 
     :type auto_text_keys: string list
     :param auto_text_keys: automatically discovered text fields, defaults to an empty list.
+        Fields remain effective when auto_key_detect is False; disabling detection
+        only stops new fields from being discovered.
         Fields reuse the line token and case-sensitivity settings. Updates replace the
         complete list; preserve existing fields when changing other index settings.
         To use a numeric type or custom settings, move the field to explicit keys
