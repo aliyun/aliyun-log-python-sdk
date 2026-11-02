@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.53 (2026-10-26)
+
+**Feature**
+
+- support position_index and default_phrase_query in index creation, updates and responses, including type hints and setters. Both options default to None and are omitted from requests; explicit False is preserved so default phrase queries can be disabled. Enabling default_phrase_query requires position_index=True.
+
 ## 0.9.52 (2026-09-15)
 
 **Feature**

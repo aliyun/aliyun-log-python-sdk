@@ -260,9 +260,18 @@ class IndexConfig(object):
     :type scan_index: bool
     :param scan_index: if to enable scan index
 
+    :type position_index: bool or None
+    :param position_index: enable position indexes; None omits the option from requests
+
+    :type default_phrase_query: bool or None
+    :param default_phrase_query: use phrase matching for ordinary quoted searches;
+        True requires position_index=True, False explicitly disables the option,
+        and None omits it so updates preserve the existing server setting
+
     """
 
-    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None, log_reduce=None, scan_index=None):
+    def __init__(self, ttl=1, line_config=None, key_config_list=None, all_keys_config=None, log_reduce=None, scan_index=None,
+                 position_index=None, default_phrase_query=None):
         if key_config_list is None:
             key_config_list = {}
         self.ttl = ttl
@@ -275,6 +284,8 @@ class IndexConfig(object):
         self.log_reduce_white_list = None
         self.docvalue_max_text_len = 0
         self.scan_index = scan_index
+        self.position_index = position_index
+        self.default_phrase_query = default_phrase_query
     '''
     :type max_len : int
     :param max_len : the max len  of the docvalue
@@ -302,6 +313,12 @@ class IndexConfig(object):
     def set_scan_index(self, scan_index):
         self.scan_index = scan_index
 
+    def set_position_index(self, position_index):
+        self.position_index = position_index
+
+    def set_default_phrase_query(self, default_phrase_query):
+        self.default_phrase_query = default_phrase_query
+
     def to_json(self):
         json_value = {}
         if self.line_config is not None:
@@ -327,10 +344,18 @@ class IndexConfig(object):
         if self.scan_index is not None:
             json_value["scan_index"] = self.scan_index
 
+        if self.position_index is not None:
+            json_value["position_index"] = self.position_index
+
+        if self.default_phrase_query is not None:
+            json_value["default_phrase_query"] = self.default_phrase_query
+
         return json_value
 
     def from_json(self, json_value):
         self.ttl = json_value.get("ttl", 0)
+        self.position_index = json_value.get('position_index', None)
+        self.default_phrase_query = json_value.get('default_phrase_query', None)
         if "all_keys" in json_value:
             self.all_keys_config = IndexKeyConfig()
             self.all_keys_config.from_json(json_value["all_keys"])
