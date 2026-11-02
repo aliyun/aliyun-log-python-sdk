@@ -340,6 +340,10 @@ class QueuedLogHandler(SimpleLogHandler):
     """
     Queued Log Handler, tuned async log handler.
 
+    flush() waits up to close_wait seconds for queued sends to complete and
+    leaves the worker running. close() stops the worker after draining the
+    queue within the shutdown timeout.
+
     :param end_point: log service endpoint
 
     :param access_key_id: access key id
@@ -438,7 +442,23 @@ class QueuedLogHandler(SimpleLogHandler):
         atexit.register(self.stop)
 
     def flush(self):
-        self.stop()
+        """Wait for queued sends without shutting down the worker."""
+        if not hasattr(self, 'queue'):
+            return
+        deadline = time() + self.close_wait
+        with self.queue.all_tasks_done:
+            while self.queue.unfinished_tasks:
+                remaining = deadline - time()
+                if remaining <= 0:
+                    break
+                self.queue.all_tasks_done.wait(remaining)
+
+    def close(self):
+        try:
+            if hasattr(self, 'queue'):
+                self.stop()
+        finally:
+            super(QueuedLogHandler, self).close()
 
     def stop(self):
         self.stop_time = time()
@@ -454,14 +474,12 @@ class QueuedLogHandler(SimpleLogHandler):
             self.handleError(record)
 
     def _get_batch_requests(self, timeout=None):
-        """try to get request as fast as possible, once empty and stop flag or time-out, just return Empty"""
+        """Return a merged request and its queue item count, or raise Empty."""
         reqs = []
         s = time()
         while len(reqs) < self.batch_size and (time() - s) < timeout:
             try:
                 req = self.queue.get(block=False)
-                self.queue.task_done()
-
                 reqs.append(req)
             except Empty as ex:
                 if self.stop_flag:
@@ -472,7 +490,7 @@ class QueuedLogHandler(SimpleLogHandler):
         if not reqs:
             raise Empty
         elif len(reqs) <= 1:
-            return reqs[0]
+            return reqs[0], 1
         else:
             logitems = []
             req = reqs[0]
@@ -482,14 +500,14 @@ class QueuedLogHandler(SimpleLogHandler):
             ret = PutLogsRequest(self.project, self.log_store, req.topic, logitems=logitems, logtags=self._log_tags)
             ret.__record__ = req.__record__
 
-            return ret
+            return ret, len(reqs)
 
     def _post(self):
         while not self.stop_flag or (time() - self.stop_time) <= self.close_wait:
             try:
-                req = self._get_batch_requests(timeout=self.put_wait)
+                req, request_count = self._get_batch_requests(timeout=self.put_wait)
             except Empty as ex:
-                if self.stop_flag:
+                if self.stop_flag and self.queue.empty():
                     break
                 else:
                     continue
@@ -498,6 +516,9 @@ class QueuedLogHandler(SimpleLogHandler):
                 self.send(req)
             except Exception as ex:
                 self.handleError(req.__record__)
+            finally:
+                for _ in range(request_count):
+                    self.queue.task_done()
 
 
 class UwsgiQueuedLogHandler(QueuedLogHandler):
