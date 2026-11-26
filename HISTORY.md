@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.55 (2026-11-26)
+
+**Fixing**
+
+- fix ETL configuration parser imports on Python 3.14 and preserve literal validation on older Python versions.
+
 ## 0.9.54 (2026-11-26)
 
 **Feature**
