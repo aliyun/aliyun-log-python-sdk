@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.54 (2026-11-26)
+
+**Feature**
+
+- support Protobuf 3.20.3 through 7.x on Python 3 by selecting generated bindings for the installed Protobuf major version.
+
 ## 0.9.53 (2026-10-26)
 
 **Feature**

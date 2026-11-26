@@ -44,6 +44,32 @@ jobs:
         python -m pip install pytest
         python -m pytest tests/ci/build-test/ -v
 
+  protobuf-compatibility:
+    name: protobuf ${{ matrix.protobuf-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        protobuf-version: ["3.20.3", "4.21.1", "5.26.0", "6.30.0", "7.34.0"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install SDK and protobuf
+      run: python -m pip install . pytest "protobuf==${{ matrix.protobuf-version }}"
+
+    - name: Test installed bindings
+      run: |
+        cd "$RUNNER_TEMP"
+        python -m pytest "$GITHUB_WORKSPACE/tests/ci/build-test/test_proto_use.py" -v
+
   unit-test:
     name: unit-test (py ${{ matrix.python-version }})
     runs-on: ubuntu-latest

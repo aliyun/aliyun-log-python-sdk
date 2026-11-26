@@ -32,7 +32,7 @@ requirements_py3 = [
     'elasticsearch',
     'jmespath',
     'dateparser',
-    'protobuf>=3.20.3,<6.0.0',
+    'protobuf>=3.20.3,<8',
     'lz4',
 ]
 requirements_py2 = [
@@ -79,6 +79,12 @@ packages = [
     'aliyun.log.consumer',
     'aliyun.log.es_migration',
     'aliyun.log._proto_py2',
+    'aliyun.log._protobuf',
+    'aliyun.log._protobuf.v3',
+    'aliyun.log._protobuf.v4',
+    'aliyun.log._protobuf.v5',
+    'aliyun.log._protobuf.v6',
+    'aliyun.log._protobuf.v7',
 ]
 
 package_data = {

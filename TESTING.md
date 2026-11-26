@@ -34,6 +34,32 @@ pytest tests/unit/ -v
 Unit tests must not touch the network. The repo includes
 `tests/unit/test_logclient_mock.py` as a worked example using `responses`.
 
+## Regenerating Protobuf bindings
+
+On Python 3, the SDK supports `protobuf>=3.20.3,<8`. The modules under
+`aliyun/log/_protobuf` are generated from the three `.proto` files in
+`aliyun/log`. Use the following compiler versions so the output loads on the
+earliest runtime supported by each package.
+
+| Package | protoc release | First runtime |
+| --- | --- | --- |
+| `v3` | 3.20.3 | 3.20.3 |
+| `v4` | 21.0 | 4.21.0 |
+| `v5` | 26.0 | 5.26.0 |
+| `v6` | 30.0 | 6.30.0 |
+| `v7` | 34.0 | 7.34.0 |
+
+For each row, put the corresponding `protoc` on PATH and run the command
+with the matching output package. For example, with protoc 26.0 run
+
+```sh
+protoc --proto_path=aliyun/log --python_out=aliyun/log/_protobuf/v5 aliyun/log/*.proto
+```
+
+The build workflow installs the SDK with an early runtime from each major
+version and runs `tests/ci/build-test/test_proto_use.py`. Python 2 uses
+`protobuf==3.17.3` and its log bindings in `aliyun/log/_proto_py2`.
+
 ## Running e2e tests
 
 ```sh
