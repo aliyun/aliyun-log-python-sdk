@@ -4,13 +4,16 @@ import six
 import sys
 
 
-TRUST_AST_TYPES = (ast.Call, ast.Module, ast.List, ast.Tuple, ast.Dict, ast.Name, ast.Num, ast.Str,
-                   ast.Assign, ast.Load)
+TRUST_AST_TYPES = (ast.Call, ast.Module, ast.List, ast.Tuple, ast.Dict, ast.Name, ast.Assign, ast.Load)
 
-if sys.version_info[:2] == (3, 3):
-    TRUST_AST_TYPES = TRUST_AST_TYPES + (ast.Bytes,)
-elif six.PY3:
-    TRUST_AST_TYPES = TRUST_AST_TYPES + (ast.Bytes, ast.NameConstant)
+if sys.version_info >= (3, 8):
+    TRUST_AST_TYPES += (ast.Constant,)
+else:
+    TRUST_AST_TYPES += (ast.Num, ast.Str)
+    if sys.version_info[:2] == (3, 3):
+        TRUST_AST_TYPES += (ast.Bytes,)
+    elif six.PY3:
+        TRUST_AST_TYPES += (ast.Bytes, ast.NameConstant)
 
 
 class InvalidETLConfig(Exception):
@@ -68,6 +71,12 @@ class RestrictConfigParser(ast.NodeVisitor):
                 raise InvalidETLConfig('unknown load detected: ', node.id)
         else:
             raise InvalidETLConfig("unknown Name: {0}".format(node.id))
+
+    def visit_Constant(self, node):
+        # Constant also represents Ellipsis, which was outside the legacy allowlist.
+        if type(node.value) not in (int, float, complex, str, bytes, bool, type(None)):
+            raise InvalidETLConfig("unknown type detected: {0}".format(type(node)))
+        self.generic_visit(node)
 
     def generic_visit(self, node):
         if isinstance(node, TRUST_AST_TYPES):
