@@ -1,5 +1,5 @@
 requests
-protobuf>=3.4.0
+protobuf>=3.20.3,<8
 six
 enum34
 python-dateutil
